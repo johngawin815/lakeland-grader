@@ -58,6 +58,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
   const [roster, setRoster] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false); 
+  const [filterUnit, setFilterUnit] = useState("All");
 
   // FORM HOOKS
   const { register, handleSubmit, reset } = useForm();
@@ -135,6 +136,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
   // --- VIEW B: ROSTER (3x2 GRID - NO SCROLL) ---
   if (!activeStudentName || !profileData) {
     const grouped = getGroupedData();
+    const displayedUnits = filterUnit === "All" ? UNIT_CONFIG : UNIT_CONFIG.filter(u => u.key === filterUnit);
 
     return (
       <div style={styles.container}>
@@ -151,6 +153,25 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
             >
                 {showAddForm ? "Cancel" : "＋ Add Resident"}
             </button>
+        </div>
+
+        {/* FILTER BAR */}
+        <div style={styles.filterBar}>
+            <button 
+                onClick={() => setFilterUnit("All")}
+                style={filterUnit === "All" ? styles.filterBtnActive : styles.filterBtn}
+            >
+                All Units
+            </button>
+            {UNIT_CONFIG.map(u => (
+                <button 
+                    key={u.key} 
+                    onClick={() => setFilterUnit(u.key)}
+                    style={filterUnit === u.key ? {...styles.filterBtnActive, background: u.bg, color: "white", border: "none"} : styles.filterBtn}
+                >
+                    {u.icon} {u.label}
+                </button>
+            ))}
         </div>
 
         {/* NEW DATA INPUT FORM */}
@@ -174,8 +195,8 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
         )}
         
         {/* ROSTER GRID - 3 COLUMNS, 2 ROWS */}
-        <div style={styles.grid}>
-            {UNIT_CONFIG.map(theme => {
+        <div style={filterUnit === "All" ? styles.grid : styles.gridSingle}>
+            {displayedUnits.map(theme => {
                 const students = grouped[theme.key] || [];
                 return (
                     <div key={theme.key} style={styles.card}>
@@ -296,10 +317,14 @@ const ScoreBar = ({ label, pre, post, color }) => {
 
 // --- STYLES ---
 const styles = {
-    container: { maxWidth: "100%", height: "100%", padding: "20px 30px", boxSizing: "border-box", display: "flex", flexDirection: "column", fontFamily: "'Inter', 'Segoe UI', sans-serif" },
+    container: { maxWidth: "100%", minHeight: "100%", padding: "20px 30px", boxSizing: "border-box", display: "flex", flexDirection: "column", fontFamily: "'Inter', 'Segoe UI', sans-serif" },
     header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexShrink: 0 },
     addBtn: { background: "#2c3e50", color: "white", border: "none", padding: "10px 20px", borderRadius: "30px", fontWeight: "bold", cursor: "pointer", fontSize: "13px", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" },
     cancelBtn: { background: "#f8f9fa", color: "#333", border: "1px solid #ddd", padding: "10px 20px", borderRadius: "30px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" },
+
+    filterBar: { display: "flex", gap: "10px", marginBottom: "25px", flexWrap: "wrap" },
+    filterBtn: { background: "white", border: "1px solid #e0e0e0", padding: "8px 16px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", color: "#7f8c8d", cursor: "pointer", transition: "all 0.2s" },
+    filterBtnActive: { background: "#2c3e50", border: "1px solid #2c3e50", padding: "8px 16px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", color: "white", cursor: "pointer", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" },
 
     formContainer: { background: "white", padding: "25px", borderRadius: "16px", marginBottom: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", border: "1px solid #f0f0f0", position: "absolute", top: "80px", left: "30px", right: "30px", zIndex: 50 },
     formGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px" },
@@ -308,16 +333,17 @@ const styles = {
     select: { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e0e0e0", fontSize: "13px", background: "white", boxSizing: "border-box" },
     saveBtn: { width: "100%", padding: "10px", background: "#27ae60", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" },
 
-    // THE FIX: Grid fits perfectly on screen (approx 300px height per card allows 2 rows)
-    grid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gridTemplateRows: "repeat(2, 1fr)", gap: "20px", height: "calc(100vh - 140px)", minHeight: "600px" },
+    // THE FIX: Auto-expanding grid instead of fixed height
+    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "25px", paddingBottom: "60px" },
+    gridSingle: { display: "flex", flexDirection: "column", maxWidth: "800px", margin: "0 auto", paddingBottom: "60px" },
     
     card: { background: "white", borderRadius: "16px", border: "1px solid rgba(0,0,0,0.04)", overflow: "hidden", boxShadow: "0 4px 15px rgba(0,0,0,0.03)", display: "flex", flexDirection: "column" },
     cardHeader: { padding: "15px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "white", flexShrink: 0 },
     unitTitle: { fontSize: "15px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "1px", textShadow: "0 2px 4px rgba(0,0,0,0.1)" },
     badge: { background: "rgba(255,255,255,0.25)", borderRadius: "20px", padding: "4px 10px", fontSize: "11px", fontWeight: "700", backdropFilter: "blur(4px)" },
     
-    // LIST SCROLLS INTERNALLY
-    list: { flex: 1, overflowY: "auto", paddingBottom: "10px" },
+    // LIST EXPANDS (No internal scroll)
+    list: { padding: "10px 0" },
     listItem: { padding: "12px 20px", borderBottom: "1px solid #f7f9fa", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "background 0.2s" },
     studentName: { fontWeight: "700", color: "#2c3e50", fontSize: "13px", marginBottom: "2px" },
     gradeLevel: { fontSize: "11px", color: "#95a5a6", fontWeight: "500" },
