@@ -1,11 +1,9 @@
 import { CosmosClient } from "@azure/cosmos";
 
-// ⚠️ PRODUCTION NOTE: Move keys to Environment Variables
-const ENDPOINT = "INSERT_ENDPOINT_HERE";
-const KEY = "INSERT_AZURE_KEY_HERE"; 
-const DATABASE_ID = "INSERT_DB_ID_HERE";
-const CONTAINER_ID = "INSERT_CONTAINER_ID_HERE"; 
-
+const ENDPOINT = process.env.REACT_APP_COSMOS_ENDPOINT;
+const KEY = process.env.REACT_APP_COSMOS_KEY;
+const DATABASE_ID = process.env.REACT_APP_COSMOS_DATABASE_ID || "StudentServicesDB";
+const CONTAINER_ID = process.env.REACT_APP_COSMOS_CONTAINER_ID || "audit_logs";
 const client = new CosmosClient({ endpoint: ENDPOINT, key: KEY });
 
 async function getContainer() {
