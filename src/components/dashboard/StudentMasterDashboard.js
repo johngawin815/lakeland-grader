@@ -52,7 +52,7 @@ const MOCK_ROSTER = generateMockRoster();
 
 // --- SKELETON LOADER ---
 const SkeletonLoader = () => (
-  <div className="w-full min-h-full p-8 box-border flex flex-col font-sans">
+  <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto">
     <div className="flex justify-between items-center mb-5 shrink-0">
       <div>
         <div className="h-8 w-48 bg-slate-200 rounded animate-pulse mb-2"></div>
@@ -166,7 +166,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
     const displayedUnits = filterUnit === "All" ? UNIT_CONFIG : UNIT_CONFIG.filter(u => u.key === filterUnit);
 
     return (
-      <div className="w-full min-h-full p-8 box-border flex flex-col font-sans">
+      <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
         
         {/* HEADER AREA */}
         <div className="flex justify-between items-center mb-5 shrink-0">
@@ -249,7 +249,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
 
   // --- VIEW C: STUDENT PROFILE (Unchanged) ---
   return (
-    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans">
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto">
         <div className="bg-white p-8 rounded-2xl flex items-center gap-8 border border-gray-100 mb-8 shadow-sm">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-200 to-blue-200 text-white flex justify-center items-center text-3xl font-bold shadow-inner">
                 {profileData.studentName.charAt(0)}
