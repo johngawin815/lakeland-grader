@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { cosmosService } from '../../services/cosmosService';
+import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X } from 'lucide-react';
 
 function KTEAReporter({ user, activeStudent }) {
   const { register, handleSubmit, reset, setValue } = useForm();
@@ -177,49 +178,49 @@ function KTEAReporter({ user, activeStudent }) {
 
   // --- RENDER ---
   return (
-    <div style={styles.container}>
+    <div className="h-full flex flex-col text-slate-800 font-sans p-6">
       
       {/* HEADER */}
-      <div style={styles.headerBar}>
-        <div style={{display: "flex", alignItems: "center", gap: "15px"}}>
-            <h2 style={styles.appTitle}>📝 KTEA Reporter</h2>
-            <div style={styles.connectedBadge}>Azure Online</div>
+      <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-200">
+        <div className="flex items-center gap-3">
+            <h2 className="m-0 text-slate-800 font-extrabold text-2xl flex items-center gap-2"><ClipboardList className="w-6 h-6 text-red-500" /> KTEA Reporter</h2>
+            <div className="text-[10px] bg-sky-100 text-sky-700 px-2.5 py-0.5 rounded-full font-bold border border-sky-200">Azure Online</div>
         </div>
-        <div style={{display: "flex", gap: "10px"}}>
-            <button onClick={generatePreviewData} style={styles.previewBtn}>
-                {loadingPreview ? "Loading..." : "👁️ Spreadsheet Preview"}
+        <div className="flex gap-2">
+            <button onClick={generatePreviewData} className="bg-purple-600 border border-purple-700 px-3 py-1.5 rounded-md text-xs font-bold text-white shadow-sm hover:bg-purple-700 flex items-center gap-1.5 transition-colors">
+                {loadingPreview ? <span className="animate-spin">⏳</span> : <Eye className="w-3.5 h-3.5" />} Spreadsheet Preview
             </button>
-            <button onClick={downloadReport} style={styles.exportBtn}>📊 Master Export</button>
+            <button onClick={downloadReport} className="bg-white border border-gray-300 px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors shadow-sm"><Download className="w-3.5 h-3.5" /> Master Export</button>
         </div>
       </div>
 
-      {msg && <div style={styles.toast}>{msg}</div>}
+      {msg && <div className="absolute top-5 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-green-600 text-white rounded-full text-sm font-bold shadow-lg z-50 flex items-center gap-2 animate-in fade-in slide-in-from-top-2"><CheckCircle className="w-4 h-4" /> {msg}</div>}
 
-      <div style={styles.workspace}>
+      <div className="flex gap-5 flex-1 overflow-hidden">
         {/* MAIN FORM AREA */}
-        <div style={styles.mainForm}>
-            <form onSubmit={handleSubmit(onSubmit)} style={{height: "100%", display: "flex", flexDirection: "column"}}>
-                <div style={styles.contextRow}>
-                    <div style={{flex: 1}}> <label style={styles.label}>Teacher</label> <input {...register("teacherName")} style={styles.input} /> </div>
-                    <div style={{flex: 1}}> <label style={styles.label}>Unit</label> <select {...register("unitName")} style={styles.input}><option value="">Select...</option><option value="Determination">Determination</option><option value="Discovery">Discovery</option><option value="Freedom">Freedom</option><option value="Harmony">Harmony</option><option value="Integrity">Integrity</option><option value="Serenity">Serenity</option></select> </div>
-                    <div style={{flex: 1.5}}> <label style={styles.label}>Student Name</label> <input {...register("studentName")} style={{...styles.input, fontWeight: "bold", borderLeft: "3px solid #3498db"}} /> </div>
-                    <div style={{width: "70px"}}> <label style={styles.label}>Grade</label> <select {...register("gradeLevel")} style={styles.input}><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select> </div>
-                    <div style={{width: "120px"}}> <label style={styles.label}>Admit</label> <input type="date" {...register("admitDate")} style={styles.input} /> </div>
-                    <div style={{width: "120px"}}> <label style={styles.label}>Discharge</label> <input type="date" {...register("dischargeDate")} style={styles.input} /> </div>
+        <div className="flex-1 bg-white/80 backdrop-blur-md rounded-xl p-6 shadow-sm flex flex-col border border-gray-200 overflow-y-auto">
+            <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col">
+                <div className="flex gap-3 mb-6 items-end">
+                    <div className="flex-1"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Teacher</label> <input {...register("teacherName")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" /> </div>
+                    <div className="flex-1"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Unit</label> <select {...register("unitName")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="">Select...</option><option value="Determination">Determination</option><option value="Discovery">Discovery</option><option value="Freedom">Freedom</option><option value="Harmony">Harmony</option><option value="Integrity">Integrity</option><option value="Serenity">Serenity</option></select> </div>
+                    <div className="flex-[1.5]"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Student Name</label> <input {...register("studentName")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold border-l-4 border-l-blue-500" /> </div>
+                    <div className="w-[70px]"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Grade</label> <select {...register("gradeLevel")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select> </div>
+                    <div className="w-[130px]"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Admit</label> <input type="date" {...register("admitDate")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" /> </div>
+                    <div className="w-[130px]"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Discharge</label> <input type="date" {...register("dischargeDate")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" /> </div>
                 </div>
 
-                <div style={styles.scoreGrid}>
-                    <div style={styles.scorePanel}>
-                        <div style={{...styles.panelHeader, color: "#2980b9", background: "rgba(52, 152, 219, 0.1)"}}>PRE-TEST</div>
-                        <div style={styles.panelBody}>
+                <div className="flex gap-5 flex-1 mb-6">
+                    <div className="flex-1 bg-white rounded-xl border border-blue-100 overflow-hidden flex flex-col shadow-sm">
+                        <div className="p-3 text-center font-extrabold text-xs tracking-widest text-blue-600 bg-blue-50/50 border-b border-blue-100">PRE-TEST</div>
+                        <div className="p-5">
                             <ScoreRow label="Reading Comp" type="preReading" register={register} />
                             <ScoreRow label="Math Concepts" type="preMath" register={register} />
                             <ScoreRow label="Writing Fluency" type="preWriting" register={register} />
                         </div>
                     </div>
-                    <div style={styles.scorePanel}>
-                        <div style={{...styles.panelHeader, color: "#27ae60", background: "rgba(46, 204, 113, 0.1)"}}>POST-TEST</div>
-                        <div style={styles.panelBody}>
+                    <div className="flex-1 bg-white rounded-xl border border-green-100 overflow-hidden flex flex-col shadow-sm">
+                        <div className="p-3 text-center font-extrabold text-xs tracking-widest text-green-600 bg-green-50/50 border-b border-green-100">POST-TEST</div>
+                        <div className="p-5">
                             <ScoreRow label="Reading Comp" type="postReading" register={register} />
                             <ScoreRow label="Math Concepts" type="postMath" register={register} />
                             <ScoreRow label="Writing Fluency" type="postWriting" register={register} />
@@ -227,45 +228,47 @@ function KTEAReporter({ user, activeStudent }) {
                     </div>
                 </div>
 
-                <div style={styles.actionFooter}>
+                <div className="mt-auto flex gap-3 pt-4 border-t border-gray-100">
                     {editingId ? (
-                        <button type="submit" style={styles.btnUpdate}>⚡ UPDATE RECORD</button>
+                        <button type="submit" className="flex-[2] p-3 bg-orange-500 text-white rounded-lg font-bold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 shadow-md"><Zap className="w-4 h-4" /> UPDATE RECORD</button>
                     ) : (
                         <>
-                            <button type="submit" onClick={() => setSubmitMode('queue')} style={styles.btnAdd}>⬇️ ADD TO QUEUE</button>
-                            <button type="submit" onClick={() => setSubmitMode('direct')} style={styles.btnDirect}>🚀 SAVE & SUBMIT</button>
+                            <button type="submit" onClick={() => setSubmitMode('queue')} className="flex-1 p-3 bg-slate-700 text-white rounded-lg font-bold hover:bg-slate-600 transition-colors shadow-md flex items-center justify-center gap-2"><ArrowDown className="w-4 h-4" /> ADD TO QUEUE</button>
+                            <button type="submit" onClick={() => setSubmitMode('direct')} className="flex-1 p-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors shadow-md flex items-center justify-center gap-2"><Send className="w-4 h-4" /> SAVE & SUBMIT</button>
                         </>
                     )}
-                    <button type="button" onClick={() => reset()} style={styles.btnClear}>Clear</button>
+                    <button type="button" onClick={() => reset()} className="px-6 py-3 bg-white border border-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 font-bold transition-colors">Clear</button>
                 </div>
             </form>
         </div>
 
         {/* QUEUE SIDEBAR */}
-        <div style={styles.queueSidebar}>
-            <div style={styles.queueHeader}>
-                <strong>Batch Queue</strong> <span style={styles.queueCount}>{queue.length}</span>
+        <div className="w-72 bg-white rounded-xl p-5 flex flex-col border border-gray-200 shadow-sm">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100 text-sm text-slate-700">
+                <strong className="flex items-center gap-2"><ClipboardList className="w-4 h-4 text-slate-400" /> Batch Queue</strong> 
+                <span className="bg-red-500 text-white rounded-full px-2 py-0.5 text-[10px] font-bold">{queue.length}</span>
             </div>
-            <div style={styles.queueList}>
+            <div className="flex-1 overflow-y-auto mb-4 space-y-2 pr-1">
                 {queue.map((item) => (
-                  <div key={item.tempId} style={styles.queueItem}>
-                    <div><div style={{fontWeight: "bold", fontSize: "13px"}}>{item.studentName}</div></div>
-                    <button onClick={() => setQueue(queue.filter(q => q.tempId !== item.tempId))} style={styles.btnRemove}>×</button>
+                  <div key={item.tempId} className="bg-gray-50 p-3 rounded-lg flex justify-between items-center border border-gray-100 group hover:border-gray-300 transition-colors">
+                    <div><div className="font-bold text-xs text-slate-700">{item.studentName}</div></div>
+                    <button onClick={() => setQueue(queue.filter(q => q.tempId !== item.tempId))} className="text-gray-400 hover:text-red-500 p-1 transition-colors"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}
+                {queue.length === 0 && <div className="text-center text-gray-300 text-xs italic mt-10">Queue is empty</div>}
             </div>
-            <button onClick={uploadBatch} disabled={saving || queue.length === 0} style={styles.btnSubmit}>{saving ? "Saving..." : "🚀 SUBMIT BATCH"}</button>
+            <button onClick={uploadBatch} disabled={saving || queue.length === 0} className="w-full p-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md">{saving ? "Saving..." : <><Send className="w-4 h-4" /> SUBMIT BATCH</>}</button>
         </div>
       </div>
       
       {/* SEARCH DROPDOWN */}
       {searchResults.length > 0 && (
-         <div style={styles.searchDropdown}>
-             <div style={{padding: "10px", borderBottom: "1px solid #eee", fontSize: "11px", fontWeight: "bold", color: "#777"}}>DB RESULTS</div>
+         <div className="absolute top-[70px] right-5 w-80 bg-white rounded-xl shadow-2xl z-50 overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
+             <div className="p-3 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50">DB Results</div>
              {searchResults.map(s => (
-               <div key={s.id} onClick={() => loadStudent(s)} style={styles.resultItem}>
-                 <div><strong>{s.studentName}</strong> <span style={{fontSize:"11px"}}>({s.gradeLevel}th)</span></div>
-                 <button onClick={(e) => handleDelete(s.id, s.studentName, e)} style={styles.btnDelete}>🗑️</button>
+               <div key={s.id} onClick={() => loadStudent(s)} className="p-3 border-b border-gray-50 cursor-pointer flex justify-between items-center hover:bg-blue-50 transition-colors group">
+                 <div className="text-sm text-slate-700"><strong className="group-hover:text-blue-600 transition-colors">{s.studentName}</strong> <span className="text-xs text-gray-400">({s.gradeLevel}th)</span></div>
+                 <button onClick={(e) => handleDelete(s.id, s.studentName, e)} className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
                </div>
              ))}
          </div>
@@ -273,76 +276,76 @@ function KTEAReporter({ user, activeStudent }) {
 
       {/* --- SPREADSHEET PREVIEW MODAL --- */}
       {showPreview && (
-        <div style={styles.modalOverlay}>
-            <div style={styles.modalContent}>
-                <div style={styles.modalHeader}>
-                    <h3>👁️ Spreadsheet Preview</h3>
-                    <button onClick={() => setShowPreview(false)} style={styles.closeModalBtn}>Close</button>
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex justify-center items-center backdrop-blur-sm p-10">
+            <div className="bg-white w-full h-full max-w-6xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h3 className="m-0 text-lg font-bold text-slate-700 flex items-center gap-2"><Eye className="w-5 h-5 text-purple-500" /> Spreadsheet Preview</h3>
+                    <button onClick={() => setShowPreview(false)} className="bg-white border border-gray-300 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-100 hover:text-red-600 transition-colors flex items-center gap-1"><X className="w-4 h-4" /> Close</button>
                 </div>
-                <div style={styles.modalBody}>
-                    {Object.keys(previewData).length === 0 ? <p>No data found.</p> : 
+                <div className="flex-1 p-8 overflow-auto bg-slate-50">
+                    {Object.keys(previewData).length === 0 ? <p className="text-center text-gray-400">No data found.</p> : 
                      Object.keys(previewData).sort().map(unit => (
-                        <div key={unit} style={{marginBottom: "40px"}}>
-                            <h4 style={{background: "#eee", padding: "10px", margin: 0, border: "1px solid #ccc", borderBottom: "none"}}>{unit}</h4>
-                            <div style={{overflowX: "auto"}}>
-                                <table style={styles.previewTable}>
+                        <div key={unit} className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                            <h4 className="bg-gray-100 p-3 m-0 border-b border-gray-200 font-bold text-sm text-slate-700 uppercase tracking-wider">{unit}</h4>
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse text-[11px] font-mono">
                                     <thead>
                                         {/* Row 1: Main Headers */}
-                                        <tr style={{background: "black", color: "white"}}>
-                                            <th colSpan="2" style={styles.th}>Student Info</th>
-                                            <th colSpan="9" style={{...styles.th, borderRight: "2px solid white"}}>PRE-TEST</th>
-                                            <th colSpan="9" style={styles.th}>POST-TEST</th>
-                                            <th colSpan="3" style={styles.th}>Dates</th>
+                                        <tr className="bg-slate-800 text-white">
+                                            <th colSpan="2" className="border border-slate-600 p-2">Student Info</th>
+                                            <th colSpan="9" className="border border-slate-600 p-2 border-r-2 border-r-white/20">PRE-TEST</th>
+                                            <th colSpan="9" className="border border-slate-600 p-2">POST-TEST</th>
+                                            <th colSpan="3" className="border border-slate-600 p-2">Dates</th>
                                         </tr>
                                         {/* Row 2: Subjects */}
-                                        <tr style={{background: "#333", color: "white", fontSize: "10px"}}>
-                                            <th style={styles.th}>Name</th>
-                                            <th style={styles.th}>Grd</th>
+                                        <tr className="bg-slate-700 text-white text-[10px]">
+                                            <th className="border border-slate-600 p-1.5">Name</th>
+                                            <th className="border border-slate-600 p-1.5">Grd</th>
                                             
                                             {/* Pre Subjects */}
-                                            <th colSpan="3" style={styles.th}>Reading</th>
-                                            <th colSpan="3" style={styles.th}>Math</th>
-                                            <th colSpan="3" style={{...styles.th, borderRight: "2px solid white"}}>Writing</th>
+                                            <th colSpan="3" className="border border-slate-600 p-1.5">Reading</th>
+                                            <th colSpan="3" className="border border-slate-600 p-1.5">Math</th>
+                                            <th colSpan="3" className="border border-slate-600 p-1.5 border-r-2 border-r-white/20">Writing</th>
                                             
                                             {/* Post Subjects */}
-                                            <th colSpan="3" style={styles.th}>Reading</th>
-                                            <th colSpan="3" style={styles.th}>Math</th>
-                                            <th colSpan="3" style={styles.th}>Writing</th>
+                                            <th colSpan="3" className="border border-slate-600 p-1.5">Reading</th>
+                                            <th colSpan="3" className="border border-slate-600 p-1.5">Math</th>
+                                            <th colSpan="3" className="border border-slate-600 p-1.5">Writing</th>
 
-                                            <th style={styles.th}>Admit</th>
-                                            <th style={styles.th}>Discharge</th>
-                                            <th style={styles.th}>Teacher</th>
+                                            <th className="border border-slate-600 p-1.5">Admit</th>
+                                            <th className="border border-slate-600 p-1.5">Discharge</th>
+                                            <th className="border border-slate-600 p-1.5">Teacher</th>
                                         </tr>
                                         {/* Row 3: Sub-Headers (Raw/Std/GE) */}
-                                        <tr style={{fontSize: "9px", textAlign: "center", fontWeight: "bold", background: "#f0f0f0"}}>
-                                            <td style={styles.td}></td>
-                                            <td style={styles.td}></td>
+                                        <tr className="text-[9px] text-center font-bold bg-gray-100 text-gray-500">
+                                            <td className="border border-gray-300 p-1"></td>
+                                            <td className="border border-gray-300 p-1"></td>
                                             {/* Pre Loop */}
-                                            {[1,2,3].map(i => <><td style={styles.tdRaw}>Raw</td><td style={styles.tdStd}>Std</td><td style={styles.td}>GE</td></>)}
+                                            {[1,2,3].map(i => <React.Fragment key={i}><td className="border border-gray-300 p-1 bg-yellow-50 text-yellow-700">Raw</td><td className="border border-gray-300 p-1">Std</td><td className="border border-gray-300 p-1">GE</td></React.Fragment>)}
                                             {/* Post Loop */}
-                                            {[1,2,3].map(i => <><td style={styles.tdRaw}>Raw</td><td style={styles.tdStd}>Std</td><td style={styles.td}>GE</td></>)}
-                                            <td colSpan="3"></td>
+                                            {[1,2,3].map(i => <React.Fragment key={i}><td className="border border-gray-300 p-1 bg-yellow-50 text-yellow-700">Raw</td><td className="border border-gray-300 p-1">Std</td><td className="border border-gray-300 p-1">GE</td></React.Fragment>)}
+                                            <td colSpan="3" className="border border-gray-300 p-1"></td>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {previewData[unit].map((s, idx) => (
-                                            <tr key={idx} style={{background: idx % 2 === 0 ? "white" : "#f9f9f9"}}>
-                                                <td style={styles.td}>{s.studentName}</td>
-                                                <td style={styles.td}>{s.gradeLevel}</td>
+                                            <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                                <td className="border border-gray-200 p-1.5 text-left font-bold text-slate-700 whitespace-nowrap">{s.studentName}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center">{s.gradeLevel}</td>
                                                 
                                                 {/* Pre Scores */}
-                                                <td style={styles.tdRaw}>{s.preReadingRaw}</td><td style={styles.tdStd}>{s.preReadingStd}</td><td style={styles.td}>{s.preReadingGE}</td>
-                                                <td style={styles.tdRaw}>{s.preMathRaw}</td><td style={styles.tdStd}>{s.preMathStd}</td><td style={styles.td}>{s.preMathGE}</td>
-                                                <td style={styles.tdRaw}>{s.preWritingRaw}</td><td style={styles.tdStd}>{s.preWritingStd}</td><td style={{...styles.td, borderRight: "2px solid #333"}}>{s.preWritingGE}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.preReadingRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.preReadingStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.preReadingGE}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.preMathRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.preMathStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.preMathGE}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.preWritingRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.preWritingStd}</td><td className="border-r-2 border-r-gray-300 border-y border-y-gray-200 p-1.5 text-center font-bold">{s.preWritingGE}</td>
 
                                                 {/* Post Scores */}
-                                                <td style={styles.tdRaw}>{s.postReadingRaw}</td><td style={styles.tdStd}>{s.postReadingStd}</td><td style={styles.td}>{s.postReadingGE}</td>
-                                                <td style={styles.tdRaw}>{s.postMathRaw}</td><td style={styles.tdStd}>{s.postMathStd}</td><td style={styles.td}>{s.postMathGE}</td>
-                                                <td style={styles.tdRaw}>{s.postWritingRaw}</td><td style={styles.tdStd}>{s.postWritingStd}</td><td style={styles.td}>{s.postWritingGE}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.postReadingRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.postReadingStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.postReadingGE}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.postMathRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.postMathStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.postMathGE}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.postWritingRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.postWritingStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.postWritingGE}</td>
 
-                                                <td style={styles.td}>{s.admitDate}</td>
-                                                <td style={styles.td}>{s.dischargeDate}</td>
-                                                <td style={styles.td}>{s.teacherName}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center whitespace-nowrap text-gray-500">{s.admitDate}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center whitespace-nowrap text-gray-500">{s.dischargeDate}</td>
+                                                <td className="border border-gray-200 p-1.5 text-center whitespace-nowrap text-gray-500">{s.teacherName}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -363,12 +366,12 @@ function KTEAReporter({ user, activeStudent }) {
 // --- HELPERS ---
 function ScoreRow({ label, type, register }) {
     return (
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-            <label style={{flex: 1, fontSize: "12px", fontWeight: "600", color: "#555"}}>{label}</label>
-            <div style={{display: "flex", gap: "5px", flex: 2}}>
-                <input {...register(`${type}Raw`)} placeholder="Raw" type="number" style={styles.inputSmall} />
-                <input {...register(`${type}Std`)} placeholder="Std" type="number" style={styles.inputSmall} />
-                <input {...register(`${type}GE`)} placeholder="GE" type="text" style={styles.inputSmall} />
+        <div className="flex items-center mb-3">
+            <label className="flex-1 text-xs font-bold text-gray-500">{label}</label>
+            <div className="flex gap-1.5 flex-[2]">
+                <input {...register(`${type}Raw`)} placeholder="Raw" type="number" className="w-full p-2 rounded border border-gray-200 bg-gray-50 text-xs text-center focus:ring-2 focus:ring-blue-500 outline-none" />
+                <input {...register(`${type}Std`)} placeholder="Std" type="number" className="w-full p-2 rounded border border-gray-200 bg-gray-50 text-xs text-center focus:ring-2 focus:ring-blue-500 outline-none" />
+                <input {...register(`${type}GE`)} placeholder="GE" type="text" className="w-full p-2 rounded border border-gray-200 bg-gray-50 text-xs text-center focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
         </div>
     )
@@ -382,60 +385,5 @@ function formatName(name) {
     const first = parts.join(" ");
     return last.charAt(0).toUpperCase() + last.slice(1) + ", " + first.charAt(0).toUpperCase() + first.slice(1);
 }
-
-// --- STYLES ---
-const styles = {
-    container: { height: "100%", display: "flex", flexDirection: "column", color: "#333", fontFamily: "Segoe UI, sans-serif" },
-    headerBar: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "15px", marginBottom: "10px", borderBottom: "1px solid rgba(0,0,0,0.05)" },
-    appTitle: { margin: 0, color: "#2c3e50", fontWeight: "800", fontSize: "20px" },
-    connectedBadge: { fontSize: "10px", background: "#e1f5fe", color: "#0288d1", padding: "3px 8px", borderRadius: "10px", fontWeight: "bold" },
-    
-    workspace: { display: "flex", gap: "20px", flex: 1, overflow: "hidden" },
-    mainForm: { flex: 1, background: "rgba(255,255,255,0.85)", backdropFilter: "blur(10px)", borderRadius: "12px", padding: "20px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" },
-    contextRow: { display: "flex", gap: "10px", marginBottom: "20px", alignItems: "flex-end" },
-    input: { width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #dcdde1", background: "white", fontSize: "13px", boxSizing: "border-box" },
-    label: { fontSize: "11px", fontWeight: "bold", color: "#7f8c8d", marginBottom: "4px", display: "block", textTransform: "uppercase" },
-    
-    scoreGrid: { display: "flex", gap: "20px", flex: 1 },
-    scorePanel: { flex: 1, background: "white", borderRadius: "8px", border: "1px solid #eee", overflow: "hidden", display: "flex", flexDirection: "column" },
-    panelHeader: { padding: "10px", textAlign: "center", fontWeight: "bold", fontSize: "12px", letterSpacing: "1px" },
-    panelBody: { padding: "20px" },
-    inputSmall: { width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #eee", background: "#f9f9f9", fontSize: "12px", textAlign: "center" },
-
-    actionFooter: { marginTop: "20px", display: "flex", gap: "10px" },
-    btnAdd: { flex: 1, padding: "15px", background: "#34495e", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" },
-    btnDirect: { flex: 1, padding: "15px", background: "#27ae60", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 10px rgba(39, 174, 96, 0.3)" },
-    btnUpdate: { flex: 2, padding: "15px", background: "#e67e22", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "14px" },
-    btnClear: { padding: "15px 25px", background: "transparent", border: "1px solid #ccc", borderRadius: "8px", cursor: "pointer", color: "#777" },
-
-    queueSidebar: { width: "260px", background: "white", borderRadius: "12px", padding: "15px", display: "flex", flexDirection: "column", border: "1px solid #eee" },
-    queueHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", paddingBottom: "10px", borderBottom: "1px solid #f0f0f0" },
-    queueCount: { background: "#e74c3c", color: "white", borderRadius: "10px", padding: "2px 8px", fontSize: "11px", fontWeight: "bold" },
-    queueList: { flex: 1, overflowY: "auto", marginBottom: "15px" },
-    queueItem: { background: "#f8f9fa", padding: "10px", borderRadius: "6px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #eee" },
-    btnRemove: { background: "#ff7675", color: "white", border: "none", borderRadius: "4px", width: "20px", height: "20px", cursor: "pointer", fontSize: "12px", display: "flex", alignItems: "center", justifyContent: "center" },
-    btnSubmit: { width: "100%", padding: "12px", background: "#27ae60", color: "white", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" },
-    emptyQueue: { textAlign: "center", color: "#bdc3c7", marginTop: "20px", fontSize: "12px", fontStyle: "italic" },
-
-    toast: { position: "absolute", top: "20px", left: "50%", transform: "translateX(-50%)", padding: "10px 20px", background: "#27ae60", color: "white", borderRadius: "30px", fontSize: "13px", fontWeight: "bold", boxShadow: "0 5px 15px rgba(0,0,0,0.2)", zIndex: 100 },
-    previewBtn: { background: "#8e44ad", border: "1px solid #7d3c98", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "11px", fontWeight: "bold", color: "white", boxShadow: "0 2px 5px rgba(0,0,0,0.1)" },
-    exportBtn: { background: "white", border: "1px solid #dcdde1", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "11px", fontWeight: "bold", color: "#2c3e50" },
-    
-    searchDropdown: { position: "absolute", top: "70px", right: "20px", width: "300px", background: "white", borderRadius: "8px", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", zIndex: 50, overflow: "hidden" },
-    resultItem: { padding: "12px", borderBottom: "1px solid #f9f9f9", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" },
-    btnDelete: { background: "#e74c3c", color: "white", border: "none", borderRadius: "4px", padding: "4px 8px", cursor: "pointer", fontSize: "10px" },
-
-    // Modal Styles
-    modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", justifyContent: "center", alignItems: "center" },
-    modalContent: { background: "white", width: "90%", height: "90%", borderRadius: "10px", display: "flex", flexDirection: "column", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" },
-    modalHeader: { padding: "15px 20px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8f9fa" },
-    closeModalBtn: { background: "#e74c3c", color: "white", border: "none", padding: "8px 15px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-    modalBody: { flex: 1, padding: "20px", overflow: "auto" },
-    previewTable: { width: "100%", borderCollapse: "collapse", border: "1px solid #000", fontSize: "11px" },
-    th: { border: "1px solid #555", padding: "5px", textAlign: "center" },
-    td: { border: "1px solid #ccc", padding: "4px", textAlign: "center", color: "#333" },
-    tdRaw: { border: "1px solid #ccc", padding: "4px", textAlign: "center", background: "#ffffcc", fontWeight: "bold" }, // Yellow for Raw
-    tdStd: { border: "1px solid #ccc", padding: "4px", textAlign: "center", background: "#e0e0e0" } // Gray for Standard
-};
 
 export default KTEAReporter;

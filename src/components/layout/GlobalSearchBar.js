@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, UserCheck, X, CheckCircle } from 'lucide-react';
+import { Search, X, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { findStudentByName } from '../pages/studentService'; 
 import { useStudent } from '../../context/StudentContext';

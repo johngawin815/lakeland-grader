@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { cosmosService } from '../../services/cosmosService';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, Folder, FileText, ClipboardList } from 'lucide-react';
 
 // --- CONFIGURATION: MODERN GRADIENT THEMES ---
 const UNIT_CONFIG = [
-  { key: "Determination", label: "Determination", bg: "linear-gradient(135deg, #cb2d3e 0%, #ef473a 100%)", icon: "🎯" },
-  { key: "Discovery", label: "Discovery", bg: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", icon: "🔭" },
-  { key: "Freedom", label: "Freedom", bg: "linear-gradient(135deg, #00b09b 0%, #96c93d 100%)", icon: "🕊️" },
-  { key: "Harmony", label: "Harmony", bg: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", icon: "🌿" },
-  { key: "Integrity", label: "Integrity", bg: "linear-gradient(135deg, #FF9966 0%, #FF5E62 100%)", icon: "🔥" },
-  { key: "Serenity", label: "Serenity", bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", icon: "💧" }
+  { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target },
+  { key: "Discovery", label: "Discovery", bg: "bg-gradient-to-br from-indigo-500 to-purple-600", icon: Telescope },
+  { key: "Freedom", label: "Freedom", bg: "bg-gradient-to-br from-teal-500 to-lime-500", icon: Bird },
+  { key: "Harmony", label: "Harmony", bg: "bg-gradient-to-br from-emerald-600 to-green-400", icon: Leaf },
+  { key: "Integrity", label: "Integrity", bg: "bg-gradient-to-br from-orange-400 to-red-400", icon: Flame },
+  { key: "Serenity", label: "Serenity", bg: "bg-gradient-to-br from-sky-400 to-cyan-300", icon: Droplets }
 ];
 
-const OTHER_THEME = { key: "Other", label: "Other / Unassigned", bg: "linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%)", icon: "📂" };
+const OTHER_THEME = { key: "Other", label: "Other / Unassigned", bg: "bg-gradient-to-br from-gray-400 to-slate-700", icon: Folder };
 
 // --- DATA GENERATOR (Creates 108 Fictional Students) ---
 const generateMockRoster = () => {
@@ -131,7 +132,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
     return diff > 0 ? diff : 0;
   };
 
-  if (loading) return <div style={{padding: "60px", textAlign: "center", color: "#888", fontWeight: "300"}}>Loading Records...</div>;
+  if (loading) return <div className="p-16 text-center text-gray-400 font-light">Loading Records...</div>;
 
   // --- VIEW B: ROSTER (3x2 GRID - NO SCROLL) ---
   if (!activeStudentName || !profileData) {
@@ -139,27 +140,27 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
     const displayedUnits = filterUnit === "All" ? UNIT_CONFIG : UNIT_CONFIG.filter(u => u.key === filterUnit);
 
     return (
-      <div style={styles.container}>
+      <div className="w-full min-h-full p-8 box-border flex flex-col font-sans">
         
         {/* HEADER AREA */}
-        <div style={styles.header}>
+        <div className="flex justify-between items-center mb-5 shrink-0">
             <div>
-                <h2 style={{margin: 0, color: "#2c3e50", fontSize: "24px", fontWeight: "800", letterSpacing: "-0.5px"}}>Resident Roster</h2>
-                <p style={{margin: "5px 0 0 0", color: "#95a5a6", fontSize: "13px"}}>Manage active students and unit assignments.</p>
+                <h2 className="m-0 text-slate-800 text-2xl font-extrabold tracking-tight">Resident Roster</h2>
+                <p className="m-1 text-slate-400 text-xs">Manage active students and unit assignments.</p>
             </div>
             <button 
                 onClick={() => setShowAddForm(!showAddForm)} 
-                style={showAddForm ? styles.cancelBtn : styles.addBtn}
+                className={`px-5 py-2.5 rounded-full font-bold text-xs cursor-pointer transition-all ${showAddForm ? 'bg-gray-100 text-gray-800 border border-gray-200' : 'bg-slate-800 text-white shadow-md hover:bg-slate-700'}`}
             >
                 {showAddForm ? "Cancel" : "＋ Add Resident"}
             </button>
         </div>
 
         {/* FILTER BAR */}
-        <div style={styles.filterBar}>
+        <div className="flex gap-2.5 mb-6 flex-wrap">
             <button 
                 onClick={() => setFilterUnit("All")}
-                style={filterUnit === "All" ? styles.filterBtnActive : styles.filterBtn}
+                className={`px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all ${filterUnit === "All" ? 'bg-slate-800 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
             >
                 All Units
             </button>
@@ -167,64 +168,64 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                 <button 
                     key={u.key} 
                     onClick={() => setFilterUnit(u.key)}
-                    style={filterUnit === u.key ? {...styles.filterBtnActive, background: u.bg, color: "white", border: "none"} : styles.filterBtn}
+                    className={`px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${filterUnit === u.key ? 'text-white shadow-md border-transparent' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    style={filterUnit === u.key ? { backgroundImage: u.bg } : {}}
                 >
-                    {u.icon} {u.label}
+                    <u.icon className="w-3 h-3" /> {u.label}
                 </button>
             ))}
         </div>
 
         {/* NEW DATA INPUT FORM */}
         {showAddForm && (
-            <div style={styles.formContainer}>
-                {/* (Form content same as previous - hidden for brevity unless clicked) */}
-                <h3 style={{margin: "0 0 15px 0", fontSize: "14px", color: "#34495e", textTransform: "uppercase", letterSpacing: "1px"}}>New Intake Form</h3>
+            <div className="bg-white p-6 rounded-2xl mb-5 shadow-xl border border-gray-100 absolute top-20 left-8 right-8 z-50">
+                <h3 className="m-0 mb-4 text-sm text-slate-600 uppercase tracking-widest font-bold">New Intake Form</h3>
                 <form onSubmit={handleSubmit(onAddStudent)}>
-                    <div style={styles.formGrid}>
-                        <div><label style={styles.label}>Name</label><input {...register("studentName")} style={styles.input} /></div>
-                        <div><label style={styles.label}>Unit</label><select {...register("unitName")} style={styles.select}>{UNIT_CONFIG.map(u=><option key={u.key}>{u.key}</option>)}</select></div>
-                        <div><label style={styles.label}>Grade</label><select {...register("gradeLevel")} style={styles.select}><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
-                        <div><label style={styles.label}>Admit</label><input type="date" {...register("admitDate")} style={styles.input} /></div>
-                        <div><label style={styles.label}>Discharge</label><input type="date" {...register("dischargeDate")} style={styles.input} /></div>
-                        <div><label style={styles.label}>IEP</label><select {...register("iepStatus")} style={styles.select}><option>No</option><option>Yes</option></select></div>
-                        <div style={{gridColumn: "span 2"}}><label style={styles.label}>District</label><input {...register("district")} style={styles.input} /></div>
-                        <div style={{display: "flex", alignItems: "flex-end"}}><button type="submit" style={styles.saveBtn}>Save</button></div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Name</label><input {...register("studentName")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Unit</label><select {...register("unitName")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">{UNIT_CONFIG.map(u=><option key={u.key}>{u.key}</option>)}</select></div>
+                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Grade</label><select {...register("gradeLevel")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
+                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Admit</label><input type="date" {...register("admitDate")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Discharge</label><input type="date" {...register("dischargeDate")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">IEP</label><select {...register("iepStatus")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"><option>No</option><option>Yes</option></select></div>
+                        <div className="col-span-2"><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">District</label><input {...register("district")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+                        <div className="flex items-end"><button type="submit" className="w-full p-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors">Save</button></div>
                     </div>
                 </form>
             </div>
         )}
         
-        {/* ROSTER GRID - 3 COLUMNS, 2 ROWS */}
-        <div style={filterUnit === "All" ? styles.grid : styles.gridSingle}>
+        {/* ROSTER GRID */}
+        <div className={filterUnit === "All" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16" : "flex flex-col max-w-3xl mx-auto pb-16 gap-6"}>
             {displayedUnits.map(theme => {
                 const students = grouped[theme.key] || [];
                 return (
-                    <div key={theme.key} style={styles.card}>
-                        <div style={{...styles.cardHeader, background: theme.bg}}>
-                            <div style={{display:"flex", alignItems:"center", gap:"8px"}}>
-                                <span style={{fontSize: "18px", textShadow: "0 2px 5px rgba(0,0,0,0.1)"}}>{theme.icon}</span>
-                                <span style={styles.unitTitle}>{theme.label}</span>
+                    <div key={theme.key} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex flex-col h-full">
+                        <div className={`p-4 flex justify-between items-center text-white ${theme.bg}`}>
+                            <div className="flex items-center gap-2">
+                                <theme.icon className="w-5 h-5 drop-shadow-md" />
+                                <span className="text-sm font-extrabold uppercase tracking-wider drop-shadow-md">{theme.label}</span>
                             </div>
-                            <span style={styles.badge}>{students.length} Residents</span>
+                            <span className="bg-white/20 rounded-full px-2.5 py-1 text-[10px] font-bold backdrop-blur-sm">{students.length} Residents</span>
                         </div>
                         
-                        <div style={styles.list}>
+                        <div className="py-2 flex-1">
                             {students.length === 0 ? (
-                                <div style={styles.emptyUnit}>No active residents</div>
+                                <div className="text-center p-8 text-gray-300 text-xs italic">No active residents</div>
                             ) : (
                                 students.map(s => (
                                     <div 
                                         key={s.id} 
                                         onClick={() => setActiveStudent(s.studentName)}
-                                        style={styles.listItem}
+                                        className="px-5 py-3 border-b border-gray-50 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors group"
                                     >
                                         <div>
-                                            <div style={styles.studentName}>{s.studentName}</div>
-                                            <div style={styles.gradeLevel}>
+                                            <div className="font-bold text-slate-700 text-sm mb-0.5 group-hover:text-blue-600 transition-colors">{s.studentName}</div>
+                                            <div className="text-[10px] text-slate-400 font-medium">
                                                 GR: {s.gradeLevel} {s.district ? `• ${s.district}` : ""}
                                             </div>
                                         </div>
-                                        {s.iep === "Yes" && <span style={styles.iepBadge}>IEP</span>}
+                                        {s.iep === "Yes" && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold">IEP</span>}
                                     </div>
                                 ))
                             )}
@@ -239,50 +240,52 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
 
   // --- VIEW C: STUDENT PROFILE (Unchanged) ---
   return (
-    <div style={styles.container}>
-        <div style={styles.profileHeader}>
-            <div style={styles.avatarLarge}>{profileData.studentName.charAt(0)}</div>
-            <div style={{flex: 1}}>
-                <h1 style={{margin: 0, color: "#2c3e50", fontSize: "28px", fontWeight: "800"}}>{profileData.studentName}</h1>
-                <div style={{display: "flex", gap: "10px", marginTop: "12px", flexWrap: "wrap"}}>
-                    <div style={styles.tag}>Unit: <strong>{profileData.unitName}</strong></div>
-                    <div style={styles.tag}>Grade: <strong>{profileData.gradeLevel}</strong></div>
-                    <div style={styles.tag}>IEP: <strong>{profileData.iep || "No"}</strong></div>
-                    <div style={styles.tag}>District: <strong>{profileData.district || "N/A"}</strong></div>
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans">
+        <div className="bg-white p-8 rounded-2xl flex items-center gap-8 border border-gray-100 mb-8 shadow-sm">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-200 to-blue-200 text-white flex justify-center items-center text-3xl font-bold shadow-inner">
+                {profileData.studentName.charAt(0)}
+            </div>
+            <div className="flex-1">
+                <h1 className="m-0 text-slate-800 text-3xl font-extrabold">{profileData.studentName}</h1>
+                <div className="flex gap-2.5 mt-3 flex-wrap">
+                    <div className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs text-gray-600 border border-gray-200">Unit: <strong>{profileData.unitName}</strong></div>
+                    <div className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs text-gray-600 border border-gray-200">Grade: <strong>{profileData.gradeLevel}</strong></div>
+                    <div className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs text-gray-600 border border-gray-200">IEP: <strong>{profileData.iep || "No"}</strong></div>
+                    <div className="bg-gray-100 px-3 py-1.5 rounded-lg text-xs text-gray-600 border border-gray-200">District: <strong>{profileData.district || "N/A"}</strong></div>
                 </div>
             </div>
-            <div style={styles.statBox}>
-                <div style={{fontSize: "11px", textTransform: "uppercase", fontWeight: "700", color: "#7f8c8d"}}>Days in Care</div>
-                <div style={{fontSize: "32px", fontWeight: "800", color: "#2c3e50"}}>{getDaysInProgram(profileData.admitDate)}</div>
+            <div className="bg-gray-50 p-4 rounded-xl text-center min-w-[120px]">
+                <div className="text-[10px] uppercase font-bold text-gray-400 mb-1">Days in Care</div>
+                <div className="text-3xl font-extrabold text-slate-700">{getDaysInProgram(profileData.admitDate)}</div>
             </div>
         </div>
-        <div style={styles.profileGrid}>
-            <div style={{...styles.card, flex: 2}}>
-                <div style={styles.detailHeader}>
+        <div className="flex gap-8 flex-wrap">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex flex-col flex-[2]">
+                <div className="p-5 border-b border-gray-100 font-bold text-slate-700 flex justify-between items-center bg-gray-50/50">
                     Academic Progress (KTEA-III)
-                    <button onClick={() => setView('ktea')} style={styles.editBtn}>Edit Data</button>
+                    <button onClick={() => setView('ktea')} className="bg-transparent border border-gray-300 px-3 py-1.5 rounded-md cursor-pointer text-[11px] font-bold text-gray-500 hover:bg-gray-50 transition-colors">Edit Data</button>
                 </div>
-                <div style={{padding: "25px"}}>
+                <div className="p-6">
                     <ScoreBar label="Reading" pre={profileData.preReadingGE} post={profileData.postReadingGE} color="#3498db" />
                     <ScoreBar label="Math" pre={profileData.preMathGE} post={profileData.postMathGE} color="#e74c3c" />
                     <ScoreBar label="Writing" pre={profileData.preWritingGE} post={profileData.postWritingGE} color="#f1c40f" />
                 </div>
             </div>
-            <div style={{...styles.card, flex: 1}}>
-                <div style={styles.detailHeader}>Quick Actions</div>
-                <div style={{padding: "20px"}}>
-                    <button onClick={() => setView('discharge')} style={styles.actionBtn}>
-                        <div style={styles.actionIcon}>📄</div>
-                        <div style={{textAlign: "left"}}>
-                            <div style={{fontWeight: "700", color: "#2c3e50"}}>Discharge Letter</div>
-                            <div style={{fontSize: "12px", color: "#95a5a6"}}>Generate PDF Report</div>
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex flex-col flex-1 h-fit">
+                <div className="p-5 border-b border-gray-100 font-bold text-slate-700 bg-gray-50/50">Quick Actions</div>
+                <div className="p-5 flex flex-col gap-3">
+                    <button onClick={() => setView('discharge')} className="w-full flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl cursor-pointer transition-all hover:shadow-md hover:border-blue-200 group">
+                        <div className="text-xl bg-blue-50 w-10 h-10 flex items-center justify-center rounded-lg text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors"><FileText className="w-5 h-5" /></div>
+                        <div className="text-left">
+                            <div className="font-bold text-slate-700 text-sm">Discharge Letter</div>
+                            <div className="text-[11px] text-slate-400">Generate PDF Report</div>
                         </div>
                     </button>
-                    <button onClick={() => setView('ktea')} style={styles.actionBtn}>
-                        <div style={styles.actionIcon}>📝</div>
-                        <div style={{textAlign: "left"}}>
-                            <div style={{fontWeight: "700", color: "#2c3e50"}}>KTEA Assessment</div>
-                            <div style={{fontSize: "12px", color: "#95a5a6"}}>Input Test Scores</div>
+                    <button onClick={() => setView('ktea')} className="w-full flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl cursor-pointer transition-all hover:shadow-md hover:border-purple-200 group">
+                        <div className="text-xl bg-purple-50 w-10 h-10 flex items-center justify-center rounded-lg text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors"><ClipboardList className="w-5 h-5" /></div>
+                        <div className="text-left">
+                            <div className="font-bold text-slate-700 text-sm">KTEA Assessment</div>
+                            <div className="text-[11px] text-slate-400">Input Test Scores</div>
                         </div>
                     </button>
                 </div>
@@ -299,67 +302,20 @@ const ScoreBar = ({ label, pre, post, color }) => {
     const w1 = Math.min((p1 / 13) * 100, 100);
     const w2 = Math.min((p2 / 13) * 100, 100);
     return (
-        <div style={{marginBottom: "25px"}}>
-            <div style={{display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: "600", marginBottom: "8px", color: "#34495e"}}>
+        <div className="mb-6">
+            <div className="flex justify-between text-[13px] font-bold mb-2 text-slate-600">
                 <span>{label}</span>
-                <span style={{color: (p2-p1) > 0 ? "#27ae60" : "#95a5a6", fontSize: "12px"}}>Growth: {((p2 - p1) > 0 ? "+" : "") + (p2 - p1).toFixed(1)} GE</span>
+                <span className={`text-xs ${p2 - p1 > 0 ? "text-green-600" : "text-gray-400"}`}>Growth: {((p2 - p1) > 0 ? "+" : "") + (p2 - p1).toFixed(1)} GE</span>
             </div>
-            <div style={{height: "12px", background: "#ecf0f1", borderRadius: "6px", position: "relative", overflow: "hidden"}}>
-                <div style={{position: "absolute", left: 0, top: 0, height: "100%", width: `${w2}%`, background: color, opacity: 0.3, borderRadius: "6px"}}></div>
-                <div style={{position: "absolute", left: 0, top: 0, height: "100%", width: `${w1}%`, background: color, borderRadius: "6px"}}></div>
+            <div className="h-3 bg-gray-100 rounded-full relative overflow-hidden">
+                <div className="absolute left-0 top-0 h-full rounded-full opacity-30 transition-all duration-500" style={{ width: `${w2}%`, background: color }}></div>
+                <div className="absolute left-0 top-0 h-full rounded-full transition-all duration-500" style={{ width: `${w1}%`, background: color }}></div>
             </div>
-            <div style={{display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "11px", color: "#7f8c8d", fontWeight: "500"}}>
+            <div className="flex justify-between mt-1 text-[10px] text-slate-400 font-medium">
                 <span>Pre: {pre}</span><span>Post: {post}</span>
             </div>
         </div>
     )
 }
-
-// --- STYLES ---
-const styles = {
-    container: { maxWidth: "100%", minHeight: "100%", padding: "20px 30px", boxSizing: "border-box", display: "flex", flexDirection: "column", fontFamily: "'Inter', 'Segoe UI', sans-serif" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexShrink: 0 },
-    addBtn: { background: "#2c3e50", color: "white", border: "none", padding: "10px 20px", borderRadius: "30px", fontWeight: "bold", cursor: "pointer", fontSize: "13px", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" },
-    cancelBtn: { background: "#f8f9fa", color: "#333", border: "1px solid #ddd", padding: "10px 20px", borderRadius: "30px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" },
-
-    filterBar: { display: "flex", gap: "10px", marginBottom: "25px", flexWrap: "wrap" },
-    filterBtn: { background: "white", border: "1px solid #e0e0e0", padding: "8px 16px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", color: "#7f8c8d", cursor: "pointer", transition: "all 0.2s" },
-    filterBtnActive: { background: "#2c3e50", border: "1px solid #2c3e50", padding: "8px 16px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", color: "white", cursor: "pointer", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" },
-
-    formContainer: { background: "white", padding: "25px", borderRadius: "16px", marginBottom: "20px", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", border: "1px solid #f0f0f0", position: "absolute", top: "80px", left: "30px", right: "30px", zIndex: 50 },
-    formGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px" },
-    label: { display: "block", fontSize: "11px", fontWeight: "700", color: "#7f8c8d", marginBottom: "5px", textTransform: "uppercase" },
-    input: { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e0e0e0", fontSize: "13px", boxSizing: "border-box" },
-    select: { width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #e0e0e0", fontSize: "13px", background: "white", boxSizing: "border-box" },
-    saveBtn: { width: "100%", padding: "10px", background: "#27ae60", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" },
-
-    // THE FIX: Auto-expanding grid instead of fixed height
-    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "25px", paddingBottom: "60px" },
-    gridSingle: { display: "flex", flexDirection: "column", maxWidth: "800px", margin: "0 auto", paddingBottom: "60px" },
-    
-    card: { background: "white", borderRadius: "16px", border: "1px solid rgba(0,0,0,0.04)", overflow: "hidden", boxShadow: "0 4px 15px rgba(0,0,0,0.03)", display: "flex", flexDirection: "column" },
-    cardHeader: { padding: "15px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "white", flexShrink: 0 },
-    unitTitle: { fontSize: "15px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "1px", textShadow: "0 2px 4px rgba(0,0,0,0.1)" },
-    badge: { background: "rgba(255,255,255,0.25)", borderRadius: "20px", padding: "4px 10px", fontSize: "11px", fontWeight: "700", backdropFilter: "blur(4px)" },
-    
-    // LIST EXPANDS (No internal scroll)
-    list: { padding: "10px 0" },
-    listItem: { padding: "12px 20px", borderBottom: "1px solid #f7f9fa", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "background 0.2s" },
-    studentName: { fontWeight: "700", color: "#2c3e50", fontSize: "13px", marginBottom: "2px" },
-    gradeLevel: { fontSize: "11px", color: "#95a5a6", fontWeight: "500" },
-    iepBadge: { fontSize: "10px", background: "#fff3cd", color: "#856404", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold", border: "1px solid #ffeeba" },
-    emptyUnit: { textAlign: "center", padding: "30px", color: "#bdc3c7", fontSize: "12px", fontStyle: "italic" },
-
-    // Profile View (keeps max width for readability)
-    profileHeader: { background: "white", padding: "35px", borderRadius: "16px", display: "flex", alignItems: "center", gap: "30px", border: "1px solid rgba(0,0,0,0.04)", marginBottom: "30px", boxShadow: "0 10px 40px rgba(0,0,0,0.03)" },
-    avatarLarge: { width: "80px", height: "80px", borderRadius: "50%", background: "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)", color: "white", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "32px", fontWeight: "bold" },
-    statBox: { background: "#f8f9fa", padding: "15px 30px", borderRadius: "12px", textAlign: "center" },
-    tag: { background: "#f1f3f5", padding: "6px 14px", borderRadius: "8px", fontSize: "12px", color: "#495057", border: "1px solid #e5e7eb" },
-    profileGrid: { display: "flex", gap: "30px", flexWrap: "wrap" },
-    detailHeader: { padding: "20px 25px", borderBottom: "1px solid #f1f3f5", fontWeight: "700", color: "#2c3e50", display: "flex", justifyContent: "space-between", alignItems: "center" },
-    editBtn: { background: "transparent", border: "1px solid #dcdde1", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "11px", fontWeight: "700", color: "#7f8c8d" },
-    actionBtn: { width: "100%", display: "flex", alignItems: "center", gap: "15px", padding: "15px", background: "white", border: "1px solid #eaebed", borderRadius: "12px", marginBottom: "15px", cursor: "pointer", transition: "all 0.2s", boxShadow: "0 2px 5px rgba(0,0,0,0.02)" },
-    actionIcon: { fontSize: "20px", background: "#f8f9fa", width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "10px" }
-};
 
 export default StudentMasterDashboard;

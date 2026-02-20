@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Search, LogOut, LayoutDashboard, GraduationCap, FileText, Map, X, ChevronRight, School, ClipboardList, Shield } from 'lucide-react';
 
 // --- MODULE IMPORTS ---
 import KTEAReporter from '../ktea/KTEAReporter';
@@ -6,6 +7,7 @@ import DischargeGenerator from '../discharge/DischargeGenerator';
 import CurriculumMaps from '../curriculum/CurriculumMaps'; 
 import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
 import GradeReporter from '../grading/GradeReporter'; 
+import AuditLog from '../audit/AuditLog';
 
 const HubShell = () => {
   const [user, setUser] = useState(null); 
@@ -44,6 +46,7 @@ const HubShell = () => {
             <NavButton label="KTEA-III" active={currentView === 'ktea'} onClick={() => setCurrentView('ktea')} />
             <NavButton label="Discharge" active={currentView === 'discharge'} onClick={() => setCurrentView('discharge')} />
             <NavButton label="Curriculum" active={currentView === 'curriculum'} onClick={() => setCurrentView('curriculum')} />
+            <NavButton label="Audit" active={currentView === 'audit'} onClick={() => setCurrentView('audit')} />
           </nav>
         </div>
 
@@ -120,6 +123,13 @@ const HubShell = () => {
                 onClick={() => setCurrentView('curriculum')}
               />
 
+              <LaunchCard 
+                Icon={Shield} color="#475569" title="Audit Log" desc="Security & Compliance"
+                hovered={hoveredCard === 'audit'} 
+                onEnter={() => setHoveredCard('audit')} onLeave={() => setHoveredCard(null)}
+                onClick={() => setCurrentView('audit')}
+              />
+
             </div>
           </div>
         )}
@@ -132,6 +142,7 @@ const HubShell = () => {
                 {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
                 {currentView === 'discharge' && <DischargeGenerator user={user} activeStudent={activeStudent} />}
                 {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
             </div>
         )}
 

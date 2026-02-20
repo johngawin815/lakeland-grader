@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, BookOpen, Calculator, FlaskConical, Shapes, Layers, FileText, Video } from 'lucide-react';
+import { Globe, BookOpen, Calculator, FlaskConical, Shapes, Layers, FileText, Video, Printer } from 'lucide-react';
 
 // --- CONFIGURATION: CLOUD STORAGE ---
 // The centralized Base URL for your Azure container
@@ -18,29 +18,41 @@ export default function CurriculumMaps() {
 
   // SUBJECT CARDS DATA
   const subjects = [
-    { id: 'social', label: 'Social Studies', icon: Globe, color: '#00695c' },
-    { id: 'english', label: 'English (6-12)', icon: BookOpen, color: '#455a64' },
-    { id: 'math', label: 'Math (6-12)', icon: Calculator, color: '#2980b9' },
-    { id: 'science', label: 'Science (6-12)', icon: FlaskConical, color: '#27ae60' },
-    { id: 'lower', label: 'Lower Elem', icon: Shapes, color: '#e67e22' },
-    { id: 'upper', label: 'Upper Elem', icon: Layers, color: '#8e44ad' },
+    { id: 'social', label: 'Social Studies', icon: Globe, colorClass: 'text-teal-700' },
+    { id: 'english', label: 'English (6-12)', icon: BookOpen, colorClass: 'text-slate-600' },
+    { id: 'math', label: 'Math (6-12)', icon: Calculator, colorClass: 'text-blue-600' },
+    { id: 'science', label: 'Science (6-12)', icon: FlaskConical, colorClass: 'text-green-600' },
+    { id: 'lower', label: 'Lower Elem', icon: Shapes, colorClass: 'text-orange-500' },
+    { id: 'upper', label: 'Upper Elem', icon: Layers, colorClass: 'text-purple-600' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-16 font-sans">
+    <div className="min-h-screen bg-gray-100 pb-16 font-sans print:bg-white print:pb-0">
       {/* --- HEADER --- */}
-      <header className="bg-gradient-to-br from-slate-800 to-black text-white py-12 px-4 text-center shadow-md">
+      <header className="bg-gradient-to-br from-slate-800 to-black text-white py-12 px-4 text-center shadow-md relative print:hidden">
         <h1 className="text-4xl font-extrabold tracking-tight m-0">LAKELAND CURRICULUM HUB</h1>
         <p className="opacity-80 mt-1 text-sm tracking-widest">ACADEMIC YEAR 2024-2025</p>
+        <button 
+            onClick={() => window.print()}
+            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-all print:hidden"
+            title="Print Curriculum Map"
+        >
+            <Printer className="w-6 h-6" />
+        </button>
       </header>
 
+      {/* PRINT HEADER (Visible only when printing) */}
+      <div className="hidden print:block text-center mb-6 border-b-2 border-black pb-4 pt-4">
+          <h1 className="text-2xl font-bold uppercase">Lakeland Regional School</h1>
+          <h2 className="text-xl">Curriculum Map: {subjects.find(s => s.id === activeSubject)?.label}</h2>
+      </div>
+
       {/* --- NAVIGATION DECK --- */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 px-5 -mt-8 mb-8 max-w-6xl mx-auto relative z-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 px-5 -mt-8 mb-8 max-w-6xl mx-auto relative z-10 print:hidden">
         {subjects.map((sub) => (
             <div 
               key={sub.id} 
-              className={`bg-white p-4 rounded-xl text-center cursor-pointer transition-all duration-200 border-2 shadow-sm opacity-70 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 hover:opacity-100 hover:shadow-lg ${activeSubject === sub.id ? '!opacity-100 !bg-white border-current !shadow-xl -translate-y-1' : 'border-transparent'}`}
-              style={{ color: activeSubject === sub.id ? sub.color : '#64748b' }}
+              className={`bg-white p-4 rounded-xl text-center cursor-pointer transition-all duration-200 border-2 shadow-sm opacity-70 flex flex-col items-center justify-center gap-2 hover:-translate-y-1 hover:opacity-100 hover:shadow-lg ${activeSubject === sub.id ? `!opacity-100 !bg-white border-current !shadow-xl -translate-y-1 ${sub.colorClass}` : 'border-transparent text-slate-500'}`}
               onClick={() => setActiveSubject(sub.id)}
             >
                 <sub.icon className="w-6 h-6 mb-1" />
@@ -49,17 +61,17 @@ export default function CurriculumMaps() {
         ))}
       </div>
 
-      <div className="p-2 md:p-4">
+      <div className="p-2 md:p-4 print:p-0">
         
         {/* --- DYNAMIC CONTENT SWITCHER --- */}
         {activeSubject === 'social' && <SocialStudiesContent />}
         {activeSubject === 'english' && <EnglishContent />}
         
         {/* Placeholders for future subjects */}
-        {activeSubject === 'math' && <PlaceholderContent title="Math Curriculum" Icon={Calculator} color="#2980b9" />}
-        {activeSubject === 'science' && <PlaceholderContent title="Science Curriculum" Icon={FlaskConical} color="#27ae60" />}
-        {activeSubject === 'lower' && <PlaceholderContent title="Lower Elementary" Icon={Shapes} color="#e67e22" />}
-        {activeSubject === 'upper' && <PlaceholderContent title="Upper Elementary" Icon={Layers} color="#8e44ad" />}
+        {activeSubject === 'math' && <PlaceholderContent title="Math Curriculum" Icon={Calculator} colorClass="text-blue-600" />}
+        {activeSubject === 'science' && <PlaceholderContent title="Science Curriculum" Icon={FlaskConical} colorClass="text-green-600" />}
+        {activeSubject === 'lower' && <PlaceholderContent title="Lower Elementary" Icon={Shapes} colorClass="text-orange-500" />}
+        {activeSubject === 'upper' && <PlaceholderContent title="Upper Elementary" Icon={Layers} colorClass="text-purple-600" />}
 
       </div>
     </div>
@@ -68,10 +80,10 @@ export default function CurriculumMaps() {
 
 // --- SUB-COMPONENTS ---
 
-function PlaceholderContent({ title, Icon, color }) {
+function PlaceholderContent({ title, Icon, colorClass }) {
     return (
         <div className="text-center p-16 bg-white rounded-xl shadow-sm max-w-3xl mx-auto">
-            <div className="text-6xl mb-5 opacity-20 flex justify-center" style={{ color: color }}>
+            <div className={`text-6xl mb-5 opacity-20 flex justify-center ${colorClass}`}>
                 <Icon className="w-24 h-24" />
             </div>
             <h2 className="text-slate-700 text-2xl mb-2 font-bold">{title}</h2>
@@ -87,13 +99,13 @@ function SocialStudiesContent() {
     const getRes = (folder, file) => `${AZURE_BASE_URL}${folder}/${file}`;
     
     // Common Classes
-    const tableClass = "w-full min-w-[1200px] border-collapse text-[13px] table-fixed";
-    const blockClass = "bg-white max-w-[1400px] mx-auto mb-10 rounded-xl shadow-sm border border-gray-200 overflow-x-auto";
-    const thSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold text-gray-900 border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)]";
-    const thMonthClass = "text-white p-3 uppercase text-lg font-extrabold tracking-wider border-r border-white/20";
+    const tableClass = "w-full min-w-[1200px] border-collapse text-[13px] table-fixed print:min-w-0 print:w-full";
+    const blockClass = "bg-white max-w-[1400px] mx-auto mb-10 rounded-xl shadow-sm border border-gray-200 overflow-x-auto print:shadow-none print:border-none print:overflow-visible print:mb-8";
+    const thSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold text-gray-900 border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)] print:static print:shadow-none print:border-r";
+    const thMonthClass = "text-white p-3 uppercase text-lg font-extrabold tracking-wider border-r border-white/20 print:text-black print:border-black";
     const thWeekClass = "bg-gray-700 text-gray-100 text-[11px] font-semibold p-1.5 text-center border-r border-gray-600 w-[11%]";
     const tdClass = "p-2 border-b border-r border-gray-300 align-top h-[120px] bg-white w-[11%]";
-    const tdSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)]";
+    const tdSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)] print:static print:shadow-none print:border-r";
     const breakClass = "bg-slate-100 text-slate-400 text-center align-middle font-bold italic border border-dashed border-slate-300";
     
     const Topic = ({ name, code, desc, pdf, vid }) => (
@@ -382,13 +394,13 @@ function EnglishContent() {
     const getGrammar = (monthPrefix, type) => `${AZURE_BASE}grammar/all_grammar_${monthPrefix}_${type}.pdf`;
 
     // Common Classes (reused)
-    const tableClass = "w-full min-w-[1200px] border-collapse text-[13px] table-fixed";
-    const blockClass = "bg-white max-w-[1400px] mx-auto mb-10 rounded-xl shadow-sm border border-gray-200 overflow-x-auto";
-    const thSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold text-gray-900 border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)]";
-    const thMonthClass = "text-white p-3 uppercase text-lg font-extrabold tracking-wider border-r border-white/20";
+    const tableClass = "w-full min-w-[1200px] border-collapse text-[13px] table-fixed print:min-w-0 print:w-full";
+    const blockClass = "bg-white max-w-[1400px] mx-auto mb-10 rounded-xl shadow-sm border border-gray-200 overflow-x-auto print:shadow-none print:border-none print:overflow-visible print:mb-8";
+    const thSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold text-gray-900 border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)] print:static print:shadow-none print:border-r";
+    const thMonthClass = "text-white p-3 uppercase text-lg font-extrabold tracking-wider border-r border-white/20 print:text-black print:border-black";
     const thWeekClass = "bg-gray-700 text-gray-100 text-[11px] font-semibold p-1.5 text-center border-r border-gray-600 w-[11%]";
     const tdClass = "p-2 border-b border-r border-gray-300 align-top h-[120px] bg-white w-[11%]";
-    const tdSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)]";
+    const tdSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)] print:static print:shadow-none print:border-r";
     const breakClass = "bg-slate-100 text-slate-400 text-center align-middle font-bold italic border border-dashed border-slate-300";
 
     const Topic = ({ name, code, desc, slides, keyPdf }) => (
