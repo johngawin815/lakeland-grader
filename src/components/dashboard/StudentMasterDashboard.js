@@ -1,24 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { cosmosService } from '../../services/cosmosService';
-import { Target, Telescope, Bird, Leaf, Flame, Droplets, Folder, FileText, ClipboardList } from 'lucide-react';
-
-// --- CONFIGURATION: MODERN GRADIENT THEMES ---
-const UNIT_CONFIG = [
-  { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target },
-  { key: "Discovery", label: "Discovery", bg: "bg-gradient-to-br from-indigo-500 to-purple-600", icon: Telescope },
-  { key: "Freedom", label: "Freedom", bg: "bg-gradient-to-br from-teal-500 to-lime-500", icon: Bird },
-  { key: "Harmony", label: "Harmony", bg: "bg-gradient-to-br from-emerald-600 to-green-400", icon: Leaf },
-  { key: "Integrity", label: "Integrity", bg: "bg-gradient-to-br from-orange-400 to-red-400", icon: Flame },
-  { key: "Serenity", label: "Serenity", bg: "bg-gradient-to-br from-sky-400 to-cyan-300", icon: Droplets }
-];
-
-const OTHER_THEME = { key: "Other", label: "Other / Unassigned", bg: "bg-gradient-to-br from-gray-400 to-slate-700", icon: Folder };
+import IntakeForm from './IntakeForm';
+import { FileText, ClipboardList } from 'lucide-react';
+import { UNIT_CONFIG } from '../../config/units';
 
 // --- DATA GENERATOR (Creates 108 Fictional Students) ---
 const generateMockRoster = () => {
   const students = [];
-  const units = ["Determination", "Discovery", "Freedom", "Harmony", "Integrity", "Serenity"];
+  const units = UNIT_CONFIG.map(u => u.key);
   const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
   const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
   
@@ -53,6 +42,39 @@ const generateMockRoster = () => {
 
 const MOCK_ROSTER = generateMockRoster();
 
+// --- SKELETON LOADER ---
+const SkeletonLoader = () => (
+  <div className="w-full min-h-full p-8 box-border flex flex-col font-sans">
+    <div className="flex justify-between items-center mb-5 shrink-0">
+      <div>
+        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse mb-2"></div>
+        <div className="h-3 w-64 bg-slate-100 rounded animate-pulse"></div>
+      </div>
+      <div className="h-9 w-32 bg-slate-200 rounded-full animate-pulse"></div>
+    </div>
+    <div className="flex gap-2.5 mb-6">
+      {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <div key={i} className="h-8 w-24 bg-slate-100 rounded-full animate-pulse"></div>
+      ))}
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm h-full min-h-[300px] flex flex-col">
+          <div className="h-14 bg-slate-100 animate-pulse border-b border-slate-50"></div>
+          <div className="p-0 flex-1">
+            {[1, 2, 3, 4].map((j) => (
+              <div key={j} className="px-5 py-4 border-b border-gray-50 flex flex-col gap-2">
+                <div className="h-4 bg-slate-100 rounded w-3/4 animate-pulse"></div>
+                <div className="h-3 bg-slate-50 rounded w-1/2 animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }) => {
   // STATE
   const [profileData, setProfileData] = useState(null);
@@ -60,9 +82,6 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false); 
   const [filterUnit, setFilterUnit] = useState("All");
-
-  // FORM HOOKS
-  const { register, handleSubmit, reset } = useForm();
 
   // --- 1. DATA LOADING ---
   useEffect(() => {
@@ -104,7 +123,6 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
     };
 
     setRoster([...roster, newStudent]);
-    reset();
     setShowAddForm(false);
     alert(`✅ Added ${data.studentName} to ${data.unitName}`);
   };
@@ -132,7 +150,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
     return diff > 0 ? diff : 0;
   };
 
-  if (loading) return <div className="p-16 text-center text-gray-400 font-light">Loading Records...</div>;
+  if (loading) return <SkeletonLoader />;
 
   // --- VIEW B: ROSTER (3x2 GRID - NO SCROLL) ---
   if (!activeStudentName || !profileData) {
@@ -177,23 +195,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
         </div>
 
         {/* NEW DATA INPUT FORM */}
-        {showAddForm && (
-            <div className="bg-white p-6 rounded-2xl mb-5 shadow-xl border border-gray-100 absolute top-20 left-8 right-8 z-50">
-                <h3 className="m-0 mb-4 text-sm text-slate-600 uppercase tracking-widest font-bold">New Intake Form</h3>
-                <form onSubmit={handleSubmit(onAddStudent)}>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Name</label><input {...register("studentName")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Unit</label><select {...register("unitName")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">{UNIT_CONFIG.map(u=><option key={u.key}>{u.key}</option>)}</select></div>
-                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Grade</label><select {...register("gradeLevel")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
-                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Admit</label><input type="date" {...register("admitDate")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">Discharge</label><input type="date" {...register("dischargeDate")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                        <div><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">IEP</label><select {...register("iepStatus")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"><option>No</option><option>Yes</option></select></div>
-                        <div className="col-span-2"><label className="block text-[11px] font-bold text-slate-400 mb-1 uppercase">District</label><input {...register("district")} className="w-full p-2.5 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                        <div className="flex items-end"><button type="submit" className="w-full p-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors">Save</button></div>
-                    </div>
-                </form>
-            </div>
-        )}
+        {showAddForm && <IntakeForm onSave={onAddStudent} units={UNIT_CONFIG} />}
         
         {/* ROSTER GRID */}
         <div className={filterUnit === "All" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16" : "flex flex-col max-w-3xl mx-auto pb-16 gap-6"}>

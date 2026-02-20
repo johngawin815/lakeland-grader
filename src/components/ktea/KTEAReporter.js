@@ -3,10 +3,11 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { cosmosService } from '../../services/cosmosService';
-import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X } from 'lucide-react';
+import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator } from 'lucide-react';
+import { UNIT_CONFIG } from '../../config/units';
 
 function KTEAReporter({ user, activeStudent }) {
-  const { register, handleSubmit, reset, setValue } = useForm();
+  const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm();
   
   // STATE
   const [queue, setQueue] = useState([]); 
@@ -123,6 +124,20 @@ function KTEAReporter({ user, activeStudent }) {
     setSaving(false);
   };
 
+  const calculateGrowth = () => {
+    const data = getValues();
+    const calc = (pre, post) => {
+        const p1 = parseFloat(pre);
+        const p2 = parseFloat(post);
+        if (isNaN(p1) || isNaN(p2)) return "N/A";
+        const diff = (p2 - p1).toFixed(1);
+        return (diff > 0 ? "+" : "") + diff;
+    };
+
+    const msg = `📊 Growth Calculation:\n\nReading: ${calc(data.preReadingGE, data.postReadingGE)}\nMath: ${calc(data.preMathGE, data.postMathGE)}\nWriting: ${calc(data.preWritingGE, data.postWritingGE)}`;
+    alert(msg);
+  };
+
   // --- 3. EXPORT & PREVIEW ---
   
   const generatePreviewData = async () => {
@@ -187,6 +202,9 @@ function KTEAReporter({ user, activeStudent }) {
             <div className="text-[10px] bg-sky-100 text-sky-700 px-2.5 py-0.5 rounded-full font-bold border border-sky-200">Azure Online</div>
         </div>
         <div className="flex gap-2">
+            <button onClick={calculateGrowth} className="bg-white border border-gray-300 px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors shadow-sm">
+                <Calculator className="w-3.5 h-3.5" /> Calc Growth
+            </button>
             <button onClick={generatePreviewData} className="bg-purple-600 border border-purple-700 px-3 py-1.5 rounded-md text-xs font-bold text-white shadow-sm hover:bg-purple-700 flex items-center gap-1.5 transition-colors">
                 {loadingPreview ? <span className="animate-spin">⏳</span> : <Eye className="w-3.5 h-3.5" />} Spreadsheet Preview
             </button>
@@ -202,7 +220,7 @@ function KTEAReporter({ user, activeStudent }) {
             <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col">
                 <div className="flex gap-3 mb-6 items-end">
                     <div className="flex-1"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Teacher</label> <input {...register("teacherName")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" /> </div>
-                    <div className="flex-1"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Unit</label> <select {...register("unitName")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="">Select...</option><option value="Determination">Determination</option><option value="Discovery">Discovery</option><option value="Freedom">Freedom</option><option value="Harmony">Harmony</option><option value="Integrity">Integrity</option><option value="Serenity">Serenity</option></select> </div>
+                    <div className="flex-1"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Unit</label> <select {...register("unitName")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="">Select...</option>{UNIT_CONFIG.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}</select> </div>
                     <div className="flex-[1.5]"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Student Name</label> <input {...register("studentName")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold border-l-4 border-l-blue-500" /> </div>
                     <div className="w-[70px]"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Grade</label> <select {...register("gradeLevel")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select> </div>
                     <div className="w-[130px]"> <label className="text-[11px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Admit</label> <input type="date" {...register("admitDate")} className="w-full p-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" /> </div>
@@ -213,17 +231,17 @@ function KTEAReporter({ user, activeStudent }) {
                     <div className="flex-1 bg-white rounded-xl border border-blue-100 overflow-hidden flex flex-col shadow-sm">
                         <div className="p-3 text-center font-extrabold text-xs tracking-widest text-blue-600 bg-blue-50/50 border-b border-blue-100">PRE-TEST</div>
                         <div className="p-5">
-                            <ScoreRow label="Reading Comp" type="preReading" register={register} />
-                            <ScoreRow label="Math Concepts" type="preMath" register={register} />
-                            <ScoreRow label="Writing Fluency" type="preWriting" register={register} />
+                            <ScoreRow label="Reading Comp" type="preReading" register={register} errors={errors} />
+                            <ScoreRow label="Math Concepts" type="preMath" register={register} errors={errors} />
+                            <ScoreRow label="Writing Fluency" type="preWriting" register={register} errors={errors} />
                         </div>
                     </div>
                     <div className="flex-1 bg-white rounded-xl border border-green-100 overflow-hidden flex flex-col shadow-sm">
                         <div className="p-3 text-center font-extrabold text-xs tracking-widest text-green-600 bg-green-50/50 border-b border-green-100">POST-TEST</div>
                         <div className="p-5">
-                            <ScoreRow label="Reading Comp" type="postReading" register={register} />
-                            <ScoreRow label="Math Concepts" type="postMath" register={register} />
-                            <ScoreRow label="Writing Fluency" type="postWriting" register={register} />
+                            <ScoreRow label="Reading Comp" type="postReading" register={register} errors={errors} />
+                            <ScoreRow label="Math Concepts" type="postMath" register={register} errors={errors} />
+                            <ScoreRow label="Writing Fluency" type="postWriting" register={register} errors={errors} />
                         </div>
                     </div>
                 </div>
@@ -364,13 +382,22 @@ function KTEAReporter({ user, activeStudent }) {
 }
 
 // --- HELPERS ---
-function ScoreRow({ label, type, register }) {
+function ScoreRow({ label, type, register, errors }) {
+    const rawError = errors?.[`${type}Raw`];
+    const stdError = errors?.[`${type}Std`];
+
     return (
         <div className="flex items-center mb-3">
             <label className="flex-1 text-xs font-bold text-gray-500">{label}</label>
             <div className="flex gap-1.5 flex-[2]">
-                <input {...register(`${type}Raw`)} placeholder="Raw" type="number" className="w-full p-2 rounded border border-gray-200 bg-gray-50 text-xs text-center focus:ring-2 focus:ring-blue-500 outline-none" />
-                <input {...register(`${type}Std`)} placeholder="Std" type="number" className="w-full p-2 rounded border border-gray-200 bg-gray-50 text-xs text-center focus:ring-2 focus:ring-blue-500 outline-none" />
+                <div className="w-full relative">
+                    <input {...register(`${type}Raw`, { min: { value: 0, message: "Min 0" } })} placeholder="Raw" type="number" className={`w-full p-2 rounded border text-xs text-center focus:ring-2 outline-none ${rawError ? 'border-red-500 bg-red-50 focus:ring-red-200' : 'border-gray-200 bg-gray-50 focus:ring-blue-500'}`} />
+                    {rawError && <div className="absolute -top-6 left-0 right-0 bg-red-500 text-white text-[9px] rounded px-1 py-0.5 text-center shadow-sm z-10">{rawError.message}</div>}
+                </div>
+                <div className="w-full relative">
+                    <input {...register(`${type}Std`, { min: { value: 40, message: "Min 40" }, max: { value: 160, message: "Max 160" } })} placeholder="Std" type="number" className={`w-full p-2 rounded border text-xs text-center focus:ring-2 outline-none ${stdError ? 'border-red-500 bg-red-50 focus:ring-red-200' : 'border-gray-200 bg-gray-50 focus:ring-blue-500'}`} />
+                    {stdError && <div className="absolute -top-6 left-0 right-0 bg-red-500 text-white text-[9px] rounded px-1 py-0.5 text-center shadow-sm z-10">{stdError.message}</div>}
+                </div>
                 <input {...register(`${type}GE`)} placeholder="GE" type="text" className="w-full p-2 rounded border border-gray-200 bg-gray-50 text-xs text-center focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
         </div>
