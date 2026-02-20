@@ -1,3 +1,4 @@
+// Unit Configuration
 import { Target, Telescope, Bird, Leaf, Flame, Droplets, Folder } from 'lucide-react';
 
 export const UNIT_CONFIG = [
