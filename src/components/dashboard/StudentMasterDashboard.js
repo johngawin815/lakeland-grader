@@ -186,8 +186,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                 <button 
                     key={u.key} 
                     onClick={() => setFilterUnit(u.key)}
-                    className={`px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${filterUnit === u.key ? 'text-white shadow-md border-transparent' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                    style={filterUnit === u.key ? { backgroundImage: u.bg } : {}}
+                    className={`px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${filterUnit === u.key ? `text-white shadow-md border-transparent ${u.bg}` : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
                 >
                     <u.icon className="w-3 h-3" /> {u.label}
                 </button>
