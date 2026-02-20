@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { cosmosService } from '../../services/cosmosService';
 import IntakeForm from './IntakeForm';
-import { FileText, ClipboardList } from 'lucide-react';
-import { UNIT_CONFIG } from '../../config/units';
+import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets } from 'lucide-react';
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target },
+  { key: "Discovery", label: "Discovery", bg: "bg-gradient-to-br from-indigo-500 to-purple-600", icon: Telescope },
+  { key: "Freedom", label: "Freedom", bg: "bg-gradient-to-br from-teal-500 to-lime-500", icon: Bird },
+  { key: "Harmony", label: "Harmony", bg: "bg-gradient-to-br from-emerald-600 to-green-400", icon: Leaf },
+  { key: "Integrity", label: "Integrity", bg: "bg-gradient-to-br from-orange-400 to-red-400", icon: Flame },
+  { key: "Serenity", label: "Serenity", bg: "bg-gradient-to-br from-sky-400 to-cyan-300", icon: Droplets }
+];
 
 // --- DATA GENERATOR (Creates 108 Fictional Students) ---
 const generateMockRoster = () => {

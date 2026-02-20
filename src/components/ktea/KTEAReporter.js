@@ -3,8 +3,16 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { cosmosService } from '../../services/cosmosService';
-import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator } from 'lucide-react';
-import { UNIT_CONFIG } from '../../config/units';
+import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets } from 'lucide-react';
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target },
+  { key: "Discovery", label: "Discovery", bg: "bg-gradient-to-br from-indigo-500 to-purple-600", icon: Telescope },
+  { key: "Freedom", label: "Freedom", bg: "bg-gradient-to-br from-teal-500 to-lime-500", icon: Bird },
+  { key: "Harmony", label: "Harmony", bg: "bg-gradient-to-br from-emerald-600 to-green-400", icon: Leaf },
+  { key: "Integrity", label: "Integrity", bg: "bg-gradient-to-br from-orange-400 to-red-400", icon: Flame },
+  { key: "Serenity", label: "Serenity", bg: "bg-gradient-to-br from-sky-400 to-cyan-300", icon: Droplets }
+];
 
 function KTEAReporter({ user, activeStudent }) {
   const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm();
@@ -21,7 +29,6 @@ function KTEAReporter({ user, activeStudent }) {
   const [loadingPreview, setLoadingPreview] = useState(false);
 
   // SEARCH STATE
-  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [editingId, setEditingId] = useState(null); 
   const [currentDoc, setCurrentDoc] = useState(null);
@@ -29,26 +36,16 @@ function KTEAReporter({ user, activeStudent }) {
   // --- 1. CONNECTIVITY ---
   useEffect(() => {
     if (activeStudent) {
-      setSearchTerm(activeStudent);
-      handleSearch(null, activeStudent);
+      if (activeStudent.trim()) {
+        cosmosService.searchStudents(activeStudent)
+          .then(setSearchResults)
+          .catch(error => console.error("Azure Search error:", error));
+      }
       if (!editingId) setValue("studentName", activeStudent);
     }
   }, [activeStudent, setValue, editingId]);
 
   // --- 2. AZURE ACTIONS ---
-  const handleSearch = async (e, overrideTerm = null) => {
-    if (e) e.preventDefault(); 
-    const term = overrideTerm || searchTerm;
-    if (!term.trim()) return;
-
-    try {
-      const results = await cosmosService.searchStudents(term);
-      setSearchResults(results);
-    } catch (error) {
-      console.error("Azure Search error:", error);
-    }
-  };
-
   const handleDelete = async (id, name, e) => {
     e.stopPropagation(); 
     if (!window.confirm(`⚠️ Delete record for ${name}?`)) return;
@@ -62,7 +59,6 @@ function KTEAReporter({ user, activeStudent }) {
     setEditingId(student.id); 
     setCurrentDoc(student);
     setSearchResults([]); 
-    setSearchTerm("");
     
     const fields = [
       "studentName", "gradeLevel", "admitDate", "dischargeDate", "teacherName", "unitName",
