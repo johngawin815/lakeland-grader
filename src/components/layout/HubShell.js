@@ -7,7 +7,7 @@ import DischargeGenerator from '../discharge/DischargeGenerator';
 import CurriculumMaps from '../curriculum/CurriculumMaps'; 
 import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
 import GradeReporter from '../grading/GradeReporter'; 
-import AuditLog from '../audit/AuditLog';
+import AuditLog from './AuditLog';
 
 const HubShell = () => {
   const [user, setUser] = useState(null); 
