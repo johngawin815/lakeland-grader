@@ -174,11 +174,56 @@ function KTEAReporter({ user, activeStudent }) {
 
       const workbook = new ExcelJS.Workbook();
       Object.keys(units).sort().forEach(unitName => {
-        const sheet = workbook.addWorksheet(unitName); 
-        // Logic similar to preview would go here for actual Excel generation
-        // (Simplified for brevity as we focused on preview visual)
-        sheet.addRow(["Student", "Grade", "Admit", "Discharge", "Pre-Read", "Post-Read"]); 
-        units[unitName].forEach(s => sheet.addRow([s.studentName, s.gradeLevel, s.admitDate, s.dischargeDate, s.preReadingGE, s.postReadingGE]));
+        const sheet = workbook.addWorksheet(unitName);
+        
+        // Define Columns
+        sheet.columns = [
+            { header: 'Student Name', key: 'studentName', width: 25 },
+            { header: 'Grade', key: 'gradeLevel', width: 8 },
+            { header: 'Admit Date', key: 'admitDate', width: 12 },
+            { header: 'Discharge Date', key: 'dischargeDate', width: 12 },
+            { header: 'Teacher', key: 'teacherName', width: 20 },
+            
+            // Pre-Test
+            { header: 'Pre Read Raw', key: 'preReadingRaw', width: 10 },
+            { header: 'Pre Read Std', key: 'preReadingStd', width: 10 },
+            { header: 'Pre Read GE', key: 'preReadingGE', width: 10 },
+            { header: 'Pre Math Raw', key: 'preMathRaw', width: 10 },
+            { header: 'Pre Math Std', key: 'preMathStd', width: 10 },
+            { header: 'Pre Math GE', key: 'preMathGE', width: 10 },
+            { header: 'Pre Writ Raw', key: 'preWritingRaw', width: 10 },
+            { header: 'Pre Writ Std', key: 'preWritingStd', width: 10 },
+            { header: 'Pre Writ GE', key: 'preWritingGE', width: 10 },
+
+            // Post-Test
+            { header: 'Post Read Raw', key: 'postReadingRaw', width: 10 },
+            { header: 'Post Read Std', key: 'postReadingStd', width: 10 },
+            { header: 'Post Read GE', key: 'postReadingGE', width: 10 },
+            { header: 'Post Math Raw', key: 'postMathRaw', width: 10 },
+            { header: 'Post Math Std', key: 'postMathStd', width: 10 },
+            { header: 'Post Math GE', key: 'postMathGE', width: 10 },
+            { header: 'Post Writ Raw', key: 'postWritingRaw', width: 10 },
+            { header: 'Post Writ Std', key: 'postWritingStd', width: 10 },
+            { header: 'Post Writ GE', key: 'postWritingGE', width: 10 },
+        ];
+
+        // Style Header Row
+        sheet.getRow(1).font = { bold: true };
+        sheet.getRow(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFEEEEEE' }
+        };
+
+        // Add Data
+        units[unitName].forEach(s => {
+            sheet.addRow({
+                ...s,
+                // Ensure numeric values are treated as numbers if possible
+                preReadingRaw: parseFloat(s.preReadingRaw) || s.preReadingRaw,
+                preReadingStd: parseFloat(s.preReadingStd) || s.preReadingStd,
+            });
+        });
       });
 
       const buffer = await workbook.xlsx.writeBuffer();
