@@ -18,7 +18,7 @@ export default function CurriculumMaps() {
   // SUBJECT CARDS DATA
   const subjects = [
     { id: 'social', label: 'Social Studies', icon: 'fa-globe-americas', color: '#00695c' },
-    { id: 'english', label: 'English (6-12)', icon: 'fa-book-open', color: '#c0392b' },
+    { id: 'english', label: 'English (6-12)', icon: 'fa-book-open', color: '#455a64' },
     { id: 'math', label: 'Math (6-12)', icon: 'fa-calculator', color: '#2980b9' },
     { id: 'science', label: 'Science (6-12)', icon: 'fa-flask', color: '#27ae60' },
     { id: 'lower', label: 'Lower Elem', icon: 'fa-shapes', color: '#e67e22' },
@@ -449,8 +449,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className="col-subject-header" rowSpan="2">Strand</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#c0392b'}}>August</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#e74c3c'}}>September</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#455a64'}}>August</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#78909c'}}>September</th>
                     </tr>
                     <tr>
                         <th className="week-header">Week 1</th><th className="week-header">Week 2</th><th className="week-header">Week 3</th><th className="week-header">Week 4</th>
@@ -459,7 +459,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className="col-subject" style={{color: '#c0392b'}}>Literature</td>
+                        <td className="col-subject" style={{color: '#455a64'}}>Literature</td>
                         <td><div className="topic-content"><span className="topic-name">Holes / Out of My Mind</span><span className="mls" data-desc="Read and comprehend literature, including stories, dramas, and poems.">RL.1.A</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Novel Study</span><span className="mls" data-desc="Determine a theme or central idea of a text and analyze its development.">RL.1.D</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Character vs. Nature</span><span className="mls" data-desc="Analyze how complex characters develop over the course of a text.">RL.1.B</span></div></td>
@@ -515,8 +515,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className="col-subject-header" rowSpan="2">Strand</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#c0392b'}}>October</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#e74c3c'}}>November</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#455a64'}}>October</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#78909c'}}>November</th>
                     </tr>
                     <tr>
                         <th className="week-header">Week 1</th><th className="week-header">Week 2</th><th className="week-header">Week 3</th><th className="week-header">Week 4</th>
@@ -525,7 +525,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className="col-subject" style={{color: '#c0392b'}}>Literature</td>
+                        <td className="col-subject" style={{color: '#455a64'}}>Literature</td>
                         <td><div className="topic-content"><span className="topic-name">The Giver (Cont.)</span><span className="mls" data-desc="Analyze how particular lines of dialogue or incidents in a story or drama propel the action.">RL.1.A</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Sci-Fi Elements</span><span className="mls" data-desc="Compare and contrast the structure of two or more texts.">RL.2.A</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Theme: Memory</span><span className="mls" data-desc="Determine a theme or central idea of a text and analyze its development over the course of the text.">RL.1.D</span></div></td>
@@ -581,8 +581,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className="col-subject-header" rowSpan="2">Strand</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#c0392b'}}>December</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#e74c3c'}}>January</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#455a64'}}>December</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#78909c'}}>January</th>
                     </tr>
                     <tr>
                         <th className="week-header">Week 1</th><th className="week-header">Week 2</th><th className="week-header">Week 3</th><th className="week-header">Week 4</th>
@@ -591,7 +591,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className="col-subject" style={{color: '#c0392b'}}>Literature</td>
+                        <td className="col-subject" style={{color: '#455a64'}}>Literature</td>
                         <td><div className="topic-content"><span className="topic-name">Call of the Wild</span><span className="mls" data-desc="Analyze how a modern work of fiction draws on themes from myths or traditional stories.">RL.3.C</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Mrs. Frisby / NIMH</span><span className="mls" data-desc="Analyze how particular elements of a story interact (e.g., how setting shapes the characters).">RL.1.B</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Survival Themes</span><span className="mls" data-desc="Determine a theme or central idea of a text.">RL.1.D</span></div></td>
@@ -647,8 +647,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className="col-subject-header" rowSpan="2">Strand</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#c0392b'}}>February</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#e74c3c'}}>March</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#455a64'}}>February</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#78909c'}}>March</th>
                     </tr>
                     <tr>
                         <th className="week-header">Week 1</th><th className="week-header">Week 2</th><th className="week-header">Week 3</th><th className="week-header">Week 4</th>
@@ -657,7 +657,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className="col-subject" style={{color: '#c0392b'}}>Literature</td>
+                        <td className="col-subject" style={{color: '#455a64'}}>Literature</td>
                         <td><div className="topic-content"><span className="topic-name">Ready Player One</span><span className="mls" data-desc="Analyze how an author draws on and transforms source material in a specific work.">RL.3.C</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Virtual Reality Themes</span><span className="mls" data-desc="Evaluate the advantages and disadvantages of using different mediums.">RL.3.B</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Quest Narratives</span><span className="mls" data-desc="Analyze the structure of texts, including how specific sentences develop the concept.">RL.2.B</span></div></td>
@@ -713,8 +713,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className="col-subject-header" rowSpan="2">Strand</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#c0392b'}}>April</th>
-                        <th colSpan="4" className="month-header" style={{backgroundColor: '#e74c3c'}}>May</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#455a64'}}>April</th>
+                        <th colSpan="4" className="month-header" style={{backgroundColor: '#78909c'}}>May</th>
                     </tr>
                     <tr>
                         <th className="week-header">Week 1</th><th className="week-header">Week 2</th><th className="week-header">Week 3</th><th className="week-header">Week 4</th>
@@ -723,7 +723,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className="col-subject" style={{color: '#c0392b'}}>Literature</td>
+                        <td className="col-subject" style={{color: '#455a64'}}>Literature</td>
                         <td><div className="topic-content"><span className="topic-name">Greek Mythology</span><span className="mls" data-desc="Analyze how a modern work of fiction draws on themes, patterns of events, or character types from myths.">RL.3.C</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">The Odyssey</span><span className="mls" data-desc="Read and comprehend literature in the 6-12 text complexity band.">RL.3.D</span></div></td>
                         <td><div className="topic-content"><span className="topic-name">Epic Heroes</span><span className="mls" data-desc="Analyze how complex characters develop over the course of a text.">RL.1.B</span></div></td>
