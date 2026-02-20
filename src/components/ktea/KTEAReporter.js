@@ -176,44 +176,52 @@ function KTEAReporter({ user, activeStudent }) {
       Object.keys(units).sort().forEach(unitName => {
         const sheet = workbook.addWorksheet(unitName);
         
+        // Styles
+        const preStyle = { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3F2FD' } } }; // Light Blue
+        const postStyle = { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E9' } } }; // Light Green
+        const infoStyle = { alignment: { horizontal: 'left' } };
+
         // Define Columns
         sheet.columns = [
-            { header: 'Student Name', key: 'studentName', width: 25 },
-            { header: 'Grade', key: 'gradeLevel', width: 8 },
-            { header: 'Admit Date', key: 'admitDate', width: 12 },
-            { header: 'Discharge Date', key: 'dischargeDate', width: 12 },
-            { header: 'Teacher', key: 'teacherName', width: 20 },
+            { header: 'Student Name', key: 'studentName', width: 25, style: infoStyle },
+            { header: 'Grade', key: 'gradeLevel', width: 8, style: { alignment: { horizontal: 'center' } } },
+            { header: 'Admit Date', key: 'admitDate', width: 12, style: { alignment: { horizontal: 'center' } } },
+            { header: 'Discharge Date', key: 'dischargeDate', width: 12, style: { alignment: { horizontal: 'center' } } },
+            { header: 'Teacher', key: 'teacherName', width: 20, style: infoStyle },
             
             // Pre-Test
-            { header: 'Pre Read Raw', key: 'preReadingRaw', width: 10 },
-            { header: 'Pre Read Std', key: 'preReadingStd', width: 10 },
-            { header: 'Pre Read GE', key: 'preReadingGE', width: 10 },
-            { header: 'Pre Math Raw', key: 'preMathRaw', width: 10 },
-            { header: 'Pre Math Std', key: 'preMathStd', width: 10 },
-            { header: 'Pre Math GE', key: 'preMathGE', width: 10 },
-            { header: 'Pre Writ Raw', key: 'preWritingRaw', width: 10 },
-            { header: 'Pre Writ Std', key: 'preWritingStd', width: 10 },
-            { header: 'Pre Writ GE', key: 'preWritingGE', width: 10 },
+            { header: 'Pre Read Raw', key: 'preReadingRaw', width: 12, style: preStyle },
+            { header: 'Pre Read Std', key: 'preReadingStd', width: 12, style: preStyle },
+            { header: 'Pre Read GE', key: 'preReadingGE', width: 12, style: preStyle },
+            { header: 'Pre Math Raw', key: 'preMathRaw', width: 12, style: preStyle },
+            { header: 'Pre Math Std', key: 'preMathStd', width: 12, style: preStyle },
+            { header: 'Pre Math GE', key: 'preMathGE', width: 12, style: preStyle },
+            { header: 'Pre Writ Raw', key: 'preWritingRaw', width: 12, style: preStyle },
+            { header: 'Pre Writ Std', key: 'preWritingStd', width: 12, style: preStyle },
+            { header: 'Pre Writ GE', key: 'preWritingGE', width: 12, style: preStyle },
 
             // Post-Test
-            { header: 'Post Read Raw', key: 'postReadingRaw', width: 10 },
-            { header: 'Post Read Std', key: 'postReadingStd', width: 10 },
-            { header: 'Post Read GE', key: 'postReadingGE', width: 10 },
-            { header: 'Post Math Raw', key: 'postMathRaw', width: 10 },
-            { header: 'Post Math Std', key: 'postMathStd', width: 10 },
-            { header: 'Post Math GE', key: 'postMathGE', width: 10 },
-            { header: 'Post Writ Raw', key: 'postWritingRaw', width: 10 },
-            { header: 'Post Writ Std', key: 'postWritingStd', width: 10 },
-            { header: 'Post Writ GE', key: 'postWritingGE', width: 10 },
+            { header: 'Post Read Raw', key: 'postReadingRaw', width: 12, style: postStyle },
+            { header: 'Post Read Std', key: 'postReadingStd', width: 12, style: postStyle },
+            { header: 'Post Read GE', key: 'postReadingGE', width: 12, style: postStyle },
+            { header: 'Post Math Raw', key: 'postMathRaw', width: 12, style: postStyle },
+            { header: 'Post Math Std', key: 'postMathStd', width: 12, style: postStyle },
+            { header: 'Post Math GE', key: 'postMathGE', width: 12, style: postStyle },
+            { header: 'Post Writ Raw', key: 'postWritingRaw', width: 12, style: postStyle },
+            { header: 'Post Writ Std', key: 'postWritingStd', width: 12, style: postStyle },
+            { header: 'Post Writ GE', key: 'postWritingGE', width: 12, style: postStyle },
         ];
 
         // Style Header Row
-        sheet.getRow(1).font = { bold: true };
-        sheet.getRow(1).fill = {
+        const headerRow = sheet.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        headerRow.fill = {
             type: 'pattern',
             pattern: 'solid',
-            fgColor: { argb: 'FFEEEEEE' }
+            fgColor: { argb: 'FF263238' } // Dark Slate
         };
+        headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        headerRow.height = 24;
 
         // Add Data
         units[unitName].forEach(s => {
