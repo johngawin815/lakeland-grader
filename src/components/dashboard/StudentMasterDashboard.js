@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { cosmosService } from '../../services/cosmosService';
 import IntakeForm from './IntakeForm';
-import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X } from 'lucide-react';
+import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X, Users, ChevronRight, Plus, StickyNote } from 'lucide-react';
 
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target },
@@ -41,7 +41,12 @@ const generateMockRoster = () => {
         preMathGE: (Math.random() * 5 + 4).toFixed(1),
         postMathGE: (Math.random() * 5 + 5).toFixed(1),
         preWritingGE: (Math.random() * 5 + 4).toFixed(1),
-        postWritingGE: (Math.random() * 5 + 5).toFixed(1)
+        postWritingGE: (Math.random() * 5 + 5).toFixed(1),
+        // Mock MTP Updates
+        mtpUpdates: [
+            { date: "2024-02-15", text: "Student is showing improved focus during group therapy. Needs reminders to complete independent work.", author: "Staff" },
+            { date: "2024-01-10", text: "Initial MTP goals established. Student is hesitant but cooperative.", author: "Staff" }
+        ]
       });
       idCounter++;
     }
@@ -183,8 +188,6 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
 
   // --- VIEW B: ROSTER (3x2 GRID - NO SCROLL) ---
   if (!activeStudentName || !profileData) {
-    const grouped = getGroupedData();
-    const displayedUnits = filterUnit === "All" ? UNIT_CONFIG : UNIT_CONFIG.filter(u => u.key === filterUnit);
 
     return (
       <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
@@ -211,71 +214,86 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
             </button>
         </div>
 
-        {/* FILTER BAR */}
-        <div className="flex gap-2.5 mb-6 flex-wrap">
+        {/* 1. TABBED NAVIGATION (The "Binder" Metaphor) */}
+        <div className="flex gap-2 mb-0 overflow-x-auto pb-2 scrollbar-hide">
             <button 
                 onClick={() => setFilterUnit("All")}
-                className={`px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all ${filterUnit === "All" ? 'bg-slate-800 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                className={`px-6 py-3 rounded-t-xl font-bold text-sm transition-all flex items-center gap-2 border-t border-x ${filterUnit === "All" ? 'bg-white border-gray-200 text-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 relative top-[1px]' : 'bg-gray-100 border-transparent text-gray-400 hover:bg-gray-200 hover:text-gray-600'}`}
             >
-                All Units
+                <Users className="w-4 h-4" /> Master List
             </button>
             {UNIT_CONFIG.map(u => (
                 <button 
                     key={u.key} 
                     onClick={() => setFilterUnit(u.key)}
-                    className={`px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${filterUnit === u.key ? `text-white shadow-md border-transparent ${u.bg}` : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    className={`px-6 py-3 rounded-t-xl font-bold text-sm transition-all flex items-center gap-2 border-t border-x ${filterUnit === u.key ? 'bg-white border-gray-200 text-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 relative top-[1px]' : 'bg-gray-100 border-transparent text-gray-400 hover:bg-gray-200 hover:text-gray-600'}`}
                 >
-                    <u.icon className="w-3 h-3" /> {u.label}
+                    <u.icon className={`w-4 h-4 ${filterUnit === u.key ? 'text-blue-600' : ''}`} /> {u.label}
                 </button>
             ))}
         </div>
 
-        {/* NEW DATA INPUT FORM */}
-        {showAddForm && <IntakeForm onSave={onAddStudent} units={UNIT_CONFIG} />}
-        
-        {/* ROSTER GRID */}
-        <div className={filterUnit === "All" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16" : "w-full pb-16"}>
-            {displayedUnits.map(theme => {
-                const students = grouped[theme.key] || [];
-                return (
-                    <div key={theme.key} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex flex-col h-full">
-                        <div className={`p-4 flex justify-between items-center text-white ${theme.bg}`}>
-                            <div className="flex items-center gap-2">
-                                <theme.icon className="w-5 h-5 drop-shadow-md" />
-                                <span className="text-sm font-extrabold uppercase tracking-wider drop-shadow-md">{theme.label}</span>
+        {/* 2. MAIN CONTENT AREA (White "Paper" Background) */}
+        <div className="bg-white border border-gray-200 rounded-b-2xl rounded-tr-2xl shadow-sm min-h-[500px] p-6 relative z-0">
+            
+            {/* NEW DATA INPUT FORM */}
+            {showAddForm && <IntakeForm onSave={onAddStudent} units={UNIT_CONFIG} />}
+
+            {/* VIEW A: MASTER LIST (TABLE) */}
+            {filterUnit === "All" && (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                <th className="p-3">Student Name</th>
+                                <th className="p-3">Unit</th>
+                                <th className="p-3">Grade</th>
+                                <th className="p-3">District</th>
+                                <th className="p-3 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {roster.map(s => (
+                                <tr key={s.id} onClick={() => setEditingStudent(s)} className="hover:bg-blue-50 cursor-pointer transition-colors group">
+                                    <td className="p-3 font-bold text-slate-700 group-hover:text-blue-600">{s.studentName}</td>
+                                    <td className="p-3 text-sm text-slate-500"><span className="px-2 py-1 bg-gray-100 rounded text-xs font-bold">{s.unitName}</span></td>
+                                    <td className="p-3 text-sm text-slate-500">{s.gradeLevel}th</td>
+                                    <td className="p-3 text-sm text-slate-500">{s.district || "-"}</td>
+                                    <td className="p-3 text-right">
+                                        {s.iep === "Yes" && <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-bold border border-amber-200">IEP</span>}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* VIEW B: UNIT FOCUS (CARD GRID) */}
+            {filterUnit !== "All" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {roster.filter(s => s.unitName === filterUnit).length === 0 ? (
+                        <div className="col-span-full text-center py-20 text-gray-300 italic">No students assigned to this unit.</div>
+                    ) : (
+                        roster.filter(s => s.unitName === filterUnit).map(s => (
+                            <div 
+                                key={s.id} 
+                                onClick={() => setEditingStudent(s)}
+                                className="p-4 border border-gray-200 rounded-xl hover:shadow-lg hover:border-blue-300 bg-white cursor-pointer transition-all group flex flex-col gap-2"
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div className="font-bold text-slate-700 text-lg group-hover:text-blue-600">{s.studentName}</div>
+                                    {s.iep === "Yes" && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold">IEP</span>}
+                                </div>
+                                <div className="text-xs text-slate-400 font-medium flex justify-between items-center mt-auto">
+                                    <span>Grade {s.gradeLevel}</span>
+                                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500" />
+                                </div>
                             </div>
-                            <span className="bg-white/20 rounded-full px-2.5 py-1 text-[10px] font-bold backdrop-blur-sm">{students.length} Residents</span>
-                        </div>
-                        
-                        <div className={filterUnit === "All" ? "py-2 flex-1 max-h-[400px] overflow-y-auto" : "p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
-                            {students.length === 0 ? (
-                                <div className="text-center p-8 text-gray-300 text-xs italic">No active residents</div>
-                            ) : (
-                                students.map(s => (
-                                    <div 
-                                        key={s.id} 
-                                        onClick={() => setEditingStudent(s)}
-                                        className={`cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-all duration-200 group hover:ring-2 hover:ring-blue-400 ${filterUnit === "All" ? "px-5 py-3 border-b border-gray-50" : "p-4 border border-gray-200 rounded-xl hover:shadow-md bg-white"}`}
-                                    >
-                                        <div>
-                                            <div className="font-bold text-slate-700 text-sm mb-0.5 group-hover:text-blue-600 transition-colors">{s.studentName}</div>
-                                            <div className="text-[10px] text-slate-400 font-medium">
-                                                GR: {s.gradeLevel} {s.district ? `• ${s.district}` : ""}
-                                            </div>
-                                        </div>
-                                        {s.iep === "Yes" && (
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold">IEP</span>
-                                                <span className={`text-[9px] mt-0.5 ${s.iepDueDate && new Date(s.iepDueDate) < new Date() ? "text-red-600 font-bold" : "text-slate-400"}`}>Due: {s.iepDueDate || "N/A"}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                );
-            })}
+                        ))
+                    )}
+                </div>
+            )}
         </div>
 
         {/* EDIT MODAL */}
@@ -372,7 +390,11 @@ const ScoreBar = ({ label, pre, post, color }) => {
 
 // --- EDIT MODAL COMPONENT ---
 const EditStudentModal = ({ student, onClose, onSave }) => {
-    const [formData, setFormData] = useState(student);
+    const [formData, setFormData] = useState({
+        ...student,
+        mtpUpdates: student.mtpUpdates || []
+    });
+    const [newNote, setNewNote] = useState("");
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -382,49 +404,130 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
         }));
     };
 
+    const handleAddNote = () => {
+        if (!newNote.trim()) return;
+        const note = {
+            date: new Date().toISOString().split('T')[0],
+            text: newNote,
+            author: "Staff" // In a real app, this would come from the user context
+        };
+        setFormData(prev => ({
+            ...prev,
+            mtpUpdates: [note, ...prev.mtpUpdates]
+        }));
+        setNewNote("");
+    };
+
+    const colors = {
+        yellow: { body: "bg-[#fef08a]", header: "bg-[#fde047]", text: "text-yellow-900", border: "border-yellow-200", btn: "hover:bg-yellow-300", empty: "text-yellow-700/50" },
+        pink: { body: "bg-[#fbcfe8]", header: "bg-[#f9a8d4]", text: "text-pink-900", border: "border-pink-200", btn: "hover:bg-pink-300", empty: "text-pink-700/50" },
+        blue: { body: "bg-[#bae6fd]", header: "bg-[#7dd3fc]", text: "text-sky-900", border: "border-sky-200", btn: "hover:bg-sky-300", empty: "text-sky-700/50" },
+        green: { body: "bg-[#bbf7d0]", header: "bg-[#86efac]", text: "text-green-900", border: "border-green-200", btn: "hover:bg-green-300", empty: "text-green-700/50" },
+    };
+
+    const activeColor = colors[formData.noteColor] || colors.yellow;
+
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">Edit Student Details</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors"><X className="w-5 h-5" /></button>
-                </div>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
                 
-                <div className="p-6 space-y-4 overflow-y-auto">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name</label>
-                        <input name="studentName" value={formData.studentName} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-slate-700" />
+                {/* LEFT COLUMN: FORM DATA */}
+                <div className="flex-1 flex flex-col min-w-0 bg-white">
+                    <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">Edit Student Details</h3>
+                        <button onClick={onClose} className="md:hidden text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
+                    
+                    <div className="p-6 space-y-4 overflow-y-auto flex-1">
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Grade Level</label>
-                            <select name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white text-slate-700">
-                                {[9, 10, 11, 12].map(g => <option key={g} value={g}>{g}th Grade</option>)}
-                            </select>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name</label>
+                            <input name="studentName" value={formData.studentName} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-slate-700" />
                         </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Grade Level</label>
+                                <select name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white text-slate-700">
+                                    {[9, 10, 11, 12].map(g => <option key={g} value={g}>{g}th Grade</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Unit Assignment</label>
+                                <select name="unitName" value={formData.unitName} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white text-slate-700">
+                                    {UNIT_CONFIG.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Unit Assignment</label>
-                            <select name="unitName" value={formData.unitName} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white text-slate-700">
-                                {UNIT_CONFIG.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
-                            </select>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Local School District</label>
+                            <input name="district" value={formData.district || ""} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700" placeholder="e.g. Springfield Public Schools" />
+                        </div>
+
+                        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                            <input type="checkbox" name="iep" checked={formData.iep === "Yes"} onChange={handleChange} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                            <label className="text-sm font-bold text-slate-700">Student has an Active IEP</label>
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Local School District</label>
-                        <input name="district" value={formData.district || ""} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700" placeholder="e.g. Springfield Public Schools" />
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                        <input type="checkbox" name="iep" checked={formData.iep === "Yes"} onChange={handleChange} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
-                        <label className="text-sm font-bold text-slate-700">Student has an Active IEP</label>
+                    <div className="p-5 border-t border-gray-100 flex gap-3 bg-gray-50">
+                        <button onClick={onClose} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+                        <button onClick={() => onSave(formData)} className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md">Save Changes</button>
                     </div>
                 </div>
 
-                <div className="p-5 border-t border-gray-100 flex gap-3 bg-gray-50">
-                    <button onClick={onClose} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
-                    <button onClick={() => onSave(formData)} className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md">Save Changes</button>
+                {/* RIGHT COLUMN: WINDOWS 11 STYLE STICKY NOTE */}
+                <div className={`w-full md:w-[400px] ${activeColor.body} flex flex-col border-l ${activeColor.border} shadow-inner relative transition-colors duration-300`}>
+                    {/* Sticky Header */}
+                    <div className={`h-12 ${activeColor.header} flex items-center justify-between px-4 shrink-0 transition-colors duration-300`}>
+                        <div className={`font-bold ${activeColor.text} flex items-center gap-2 text-sm`}>
+                            <StickyNote className="w-4 h-4" /> MTP Updates
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1 mr-1">
+                                {Object.keys(colors).map(c => (
+                                    <button 
+                                        key={c}
+                                        onClick={() => setFormData(prev => ({ ...prev, noteColor: c }))}
+                                        className={`w-3 h-3 rounded-full border border-black/10 ${colors[c].header} ${formData.noteColor === c ? 'ring-1 ring-offset-1 ring-black/30 scale-110' : 'hover:scale-110'} transition-all`}
+                                        title={c.charAt(0).toUpperCase() + c.slice(1)}
+                                    />
+                                ))}
+                            </div>
+                            <button onClick={handleAddNote} className={`p-1 ${activeColor.btn} rounded transition-colors ${activeColor.text}`}>
+                                <Plus className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Sticky Body (Scrollable) */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 font-sans">
+                        {/* New Note Input */}
+                        <div className="bg-white/50 rounded-lg p-3 shadow-sm focus-within:bg-white focus-within:shadow-md transition-all">
+                            <textarea 
+                                value={newNote}
+                                onChange={(e) => setNewNote(e.target.value)}
+                                placeholder="Type a new update..." 
+                                className="w-full bg-transparent border-none outline-none text-sm text-slate-800 placeholder:text-slate-400 resize-none min-h-[60px]"
+                            />
+                            <div className="text-[10px] text-slate-400 text-right mt-1">Press + to add</div>
+                        </div>
+
+                        {/* Note List */}
+                        {formData.mtpUpdates.map((note, idx) => (
+                            <div key={idx} className={`bg-white/60 p-3 rounded-lg shadow-sm border ${activeColor.border} animate-in slide-in-from-top-2 duration-300`}>
+                                <div className={`text-[10px] font-bold ${activeColor.text} mb-1 flex justify-between`}>
+                                    <span>{note.date}</span>
+                                    <span className="opacity-70">{note.author}</span>
+                                </div>
+                                <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">{note.text}</p>
+                            </div>
+                        ))}
+                        
+                        {formData.mtpUpdates.length === 0 && (
+                            <div className={`text-center ${activeColor.empty} text-sm italic mt-10`}>No updates recorded yet.</div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
