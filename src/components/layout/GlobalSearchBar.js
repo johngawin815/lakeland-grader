@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, X, CheckCircle } from 'lucide-react';
+import { Search, X, CheckCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { findStudentByName } from '../pages/studentService'; 
 import { useStudent } from '../../context/StudentContext';
@@ -36,34 +36,32 @@ const GlobalSearchBar = () => {
       setResults([]);
       setQuery("");
       setHasSearched(false);
-      // We do NOT force navigation here, so you can stay on your current task
-      // but if you want to go to dashboard immediately, uncomment line below:
+      // Optional: navigate to dashboard on selection
       // navigate('/student-dashboard'); 
   };
 
   return (
-    <div className="sticky top-0 z-50 shadow-md">
+    <div className="sticky top-0 z-50 shadow-sm">
       
-      {/* 1. TOP ROW: ALWAYS VISIBLE SEARCH BAR */}
-      <div className="bg-white border-b border-gray-200 p-3 relative z-50">
-        <form onSubmit={handleSearch} className="flex gap-2 max-w-4xl mx-auto relative">
+      {/* Search Bar */}
+      <div className="bg-white border-b border-slate-200 p-3 relative z-50">
+        <form onSubmit={handleSearch} className="flex gap-3 max-w-4xl mx-auto relative">
           
-          {/* Logo / Home Button */}
           <button 
              type="button"
              onClick={() => navigate('/')} 
-             className="font-extrabold text-slate-700 tracking-tight flex items-center px-2 hover:bg-slate-50 rounded-lg transition"
+             className="font-extrabold text-slate-700 tracking-tight flex items-center px-3 hover:bg-slate-100 rounded-lg transition"
+             title="Return to Dashboard"
           >
-             LRS<span className="text-blue-600">Hub</span>
+             LRS<span className="text-sky-600">Hub</span>
           </button>
 
-          {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input 
               type="text" 
-              placeholder="Search student..." 
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-slate-50 focus:bg-white text-sm"
+              placeholder="Search for a student..." 
+              className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none transition bg-slate-50 focus:bg-white text-base"
               value={query}
               onChange={(e) => { setQuery(e.target.value); setHasSearched(false); }}
             />
@@ -71,45 +69,46 @@ const GlobalSearchBar = () => {
           <button 
             type="submit" 
             disabled={isSearching}
-            className="bg-slate-800 text-white px-5 py-2 rounded-lg font-bold hover:bg-slate-700 transition text-sm disabled:opacity-50"
+            className="bg-sky-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-sky-700 transition text-sm disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 flex items-center gap-2"
           >
-            {isSearching ? "..." : "Find"}
+            {isSearching ? <Loader2 className="w-5 h-5 animate-spin"/> : <Search className="w-5 h-5" />}
+            {isSearching ? "Searching..." : "Find"}
           </button>
         </form>
 
-        {/* SEARCH RESULTS DROPDOWN */}
+        {/* Search Results Dropdown */}
         {(results.length > 0 || (hasSearched && !isSearching)) && (
-          <div className="absolute top-full left-0 right-0 max-w-4xl mx-auto bg-white shadow-2xl rounded-b-xl border border-gray-200 mt-0 overflow-hidden z-50">
+          <div className="absolute top-full left-0 right-0 max-w-4xl mx-auto bg-white shadow-xl rounded-b-lg border border-slate-200 mt-0 overflow-hidden z-50">
             {results.map((student) => (
               <div 
                 key={student.id}
                 onClick={() => handleSelect(student)}
-                className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0 flex justify-between items-center group transition"
+                className="p-4 hover:bg-sky-50 cursor-pointer border-b border-slate-100 last:border-0 flex justify-between items-center group transition"
               >
                 <div>
-                  <span className="font-bold text-slate-700 group-hover:text-blue-700">{student.studentName}</span>
-                  <span className="text-xs text-gray-400 ml-2">Grade: {student.gradeLevel || "?"}</span>
+                  <span className="font-bold text-slate-800 group-hover:text-sky-700">{student.studentName}</span>
+                  <span className="text-sm text-slate-500 ml-3">Grade: {student.gradeLevel || "N/A"}</span>
                 </div>
-                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded group-hover:bg-blue-100 group-hover:text-blue-700">Load</span>
+                <span className="text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-md group-hover:bg-sky-100 group-hover:text-sky-700 font-bold">Load</span>
               </div>
             ))}
             {hasSearched && results.length === 0 && (
-              <div className="p-4 text-center text-slate-500 text-sm">No student found.</div>
+              <div className="p-5 text-center text-slate-500 text-sm">No student found matching your search.</div>
             )}
           </div>
         )}
       </div>
 
-      {/* 2. BOTTOM ROW: ACTIVE STUDENT CONTEXT (If Selected) */}
+      {/* Active Student Context Bar */}
       {activeStudent && (
-        <div className="bg-blue-600 text-white px-4 py-2 flex justify-center items-center gap-4 text-sm shadow-inner relative z-40 transition-all duration-300">
+        <div className="bg-sky-600 text-white px-4 py-2 flex justify-center items-center gap-4 text-sm shadow-inner relative z-40 transition-all duration-300">
            <div className="flex items-center gap-2">
-              <CheckCircle size={16} className="text-green-300" />
+              <CheckCircle size={16} className="text-teal-300" />
               <span className="opacity-80 uppercase text-xs font-bold tracking-wider">Active:</span>
               <span className="font-bold text-white">{activeStudent.studentName}</span>
            </div>
            
-           <div className="hidden sm:flex items-center gap-4 text-blue-100 text-xs">
+           <div className="hidden sm:flex items-center gap-4 text-sky-100 text-xs">
               <span>Admit: {activeStudent.admitDate || "N/A"}</span>
               <span>•</span>
               <span>Unit: {activeStudent.unitName || "N/A"}</span>
@@ -117,14 +116,13 @@ const GlobalSearchBar = () => {
 
            <button 
              onClick={clearStudent} 
-             className="ml-2 hover:bg-blue-700 p-1 rounded-full text-blue-200 hover:text-white transition"
+             className="ml-2 hover:bg-sky-700 p-1.5 rounded-full text-sky-200 hover:text-white transition"
              title="Clear Active Student"
            >
-             <X size={16} />
+             <X size={18} />
            </button>
         </div>
       )}
-
     </div>
   );
 };

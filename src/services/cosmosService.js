@@ -9,6 +9,7 @@ const client = new CosmosClient({ endpoint: ENDPOINT, key: KEY });
 const database = client.database("LakelandHubDB");
 const container = database.container("KTEA_Reports");
 const auditContainer = database.container("Audit_Logs");
+const gradebookContainer = database.container("Gradebooks");
 
 export const cosmosService = {
   // 1. CREATE (Add to Queue/Submit)
@@ -57,6 +58,11 @@ export const cosmosService = {
     } catch (e) {
       console.error("Audit Logging Failed", e);
     }
+  },
+
+  saveGradebook: async (data) => {
+    const { resource } = await gradebookContainer.items.upsert(data);
+    return resource;
   },
 
   // 6. GET ALL (For Master Export)

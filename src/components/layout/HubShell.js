@@ -13,7 +13,6 @@ const HubShell = () => {
   const [user, setUser] = useState(null); 
   const [currentView, setCurrentView] = useState("home"); 
   const [activeStudent, setActiveStudent] = useState(null); 
-  const [hoveredCard, setHoveredCard] = useState(null);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -30,113 +29,98 @@ const HubShell = () => {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-sky-600" /> },
+    { id: 'grades', title: 'Grade Reporter', desc: 'Enter Grades', icon: <GraduationCap size={28} className="text-sky-600" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-sky-600" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-sky-600" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-sky-600" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-sky-600" /> },
+  ];
+
   return (
-    <div style={styles.layoutContainer}>
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
       
       {/* 1. TOP NAVIGATION BAR */}
-      <header style={styles.topBar}>
-        <div style={styles.brandingArea}>
-          <div style={styles.logo} onClick={() => setCurrentView('home')}>
-            <span style={{fontSize: "24px", marginRight: "10px"}}>🎓</span> 
-            LRS HUB
+      <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-6 z-20 shrink-0">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-sky-600" />
+            <span className="text-xl font-extrabold text-slate-800 tracking-tight">LRS Hub</span>
           </div>
-          <nav style={styles.navLinks}>
-            <NavButton label="Dashboard" active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} />
-            <NavButton label="Grades" active={currentView === 'grades'} onClick={() => setCurrentView('grades')} />
-            <NavButton label="KTEA-III" active={currentView === 'ktea'} onClick={() => setCurrentView('ktea')} />
-            <NavButton label="Discharge" active={currentView === 'discharge'} onClick={() => setCurrentView('discharge')} />
-            <NavButton label="Curriculum" active={currentView === 'curriculum'} onClick={() => setCurrentView('curriculum')} />
-            <NavButton label="Audit" active={currentView === 'audit'} onClick={() => setCurrentView('audit')} />
+          <nav className="flex gap-2">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
           </nav>
         </div>
 
-        <div style={styles.searchWrapper}>
-            <div style={styles.searchIcon}>🔍</div>
-            <input 
-              placeholder="Search Student Context..." 
-              style={styles.globalSearch}
-              onChange={(e) => setActiveStudent(e.target.value)} 
-              value={activeStudent || ""}
-            />
-            {activeStudent && (
-              <button onClick={() => setActiveStudent("")} style={styles.clearBtn}>×</button>
-            )}
-        </div>
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none transition bg-slate-100 focus:bg-white text-sm"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
 
-        <div style={styles.userArea}>
-          <div style={styles.userAvatar}>{user.name.charAt(0)}</div>
-          <button onClick={handleLogout} style={styles.logoutBtn}>Sign Out</button>
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
+                <div className="w-10 h-10 rounded-full bg-sky-600 flex items-center justify-center font-bold text-white text-sm">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-800">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-500 hover:text-sky-600 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
         </div>
       </header>
 
       {/* 2. MAIN CONTENT AREA */}
-      <main style={styles.mainContent}>
-        
-        {/* VIEW: LAUNCHPAD (Optimized for Single View / No Scroll) */}
+      <main className="flex-1 overflow-y-auto">
         {currentView === 'home' && (
-          <div style={styles.launchpadContainer}>
-            
-            <div style={styles.heroSection}>
-              <h1 style={styles.heroTitle}>Welcome, {user.name.split(" ")[0]}</h1>
-              <p style={styles.heroSubtitle}>Select a tool to begin.</p>
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
+            <div className="text-center mb-10">
+              <h1 className="text-4xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
               {activeStudent && (
-                 <div style={styles.activeContextBadge}>
-                    🟢 Context: <strong>{activeStudent}</strong>
+                 <div className="inline-flex items-center gap-2 mt-4 bg-teal-100 text-teal-700 font-bold px-4 py-2 rounded-full text-sm border border-teal-200">
+                    <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                    Active Context: <strong>{activeStudent}</strong>
                  </div>
               )}
             </div>
             
-            <div style={styles.cardGrid}>
-              
-              <LaunchCard 
-                icon={<LayoutDashboard size={24} color="white" />} color="#8E2DE2" title="Dashboard" desc="Rosters & Profiles"
-                hovered={hoveredCard === 'dashboard'} 
-                onEnter={() => setHoveredCard('dashboard')} onLeave={() => setHoveredCard(null)}
-                onClick={() => setCurrentView('dashboard')}
-              />
-
-              <LaunchCard 
-                icon={<GraduationCap size={24} color="white" />} color="#F2994A" title="Grade Reporter" desc="Enter Grades"
-                hovered={hoveredCard === 'grades'} 
-                onEnter={() => setHoveredCard('grades')} onLeave={() => setHoveredCard(null)}
-                onClick={() => setCurrentView('grades')}
-              />
-
-              <LaunchCard 
-                icon={<ClipboardList size={24} color="white" />} color="#FF5E62" title="KTEA Reporter" desc="Assessments"
-                hovered={hoveredCard === 'ktea'} 
-                onEnter={() => setHoveredCard('ktea')} onLeave={() => setHoveredCard(null)}
-                onClick={() => setCurrentView('ktea')}
-              />
-
-              <LaunchCard 
-                icon={<FileText size={24} color="white" />} color="#56CCF2" title="Discharge Writer" desc="Exit Summaries"
-                hovered={hoveredCard === 'discharge'} 
-                onEnter={() => setHoveredCard('discharge')} onLeave={() => setHoveredCard(null)}
-                onClick={() => setCurrentView('discharge')}
-              />
-
-              <LaunchCard 
-                icon={<Map size={24} color="white" />} color="#11998e" title="Curriculum" desc="Maps & Standards"
-                hovered={hoveredCard === 'curriculum'} 
-                onEnter={() => setHoveredCard('curriculum')} onLeave={() => setHoveredCard(null)}
-                onClick={() => setCurrentView('curriculum')}
-              />
-
-              <LaunchCard 
-                icon={<Shield size={24} color="white" />} color="#475569" title="Audit Log" desc="Security & Compliance"
-                hovered={hoveredCard === 'audit'} 
-                onEnter={() => setHoveredCard('audit')} onLeave={() => setHoveredCard(null)}
-                onClick={() => setCurrentView('audit')}
-              />
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
             </div>
           </div>
         )}
 
-        {/* VIEW: TOOLS CANVAS */}
         {currentView !== 'home' && (
-            <div style={styles.toolCanvas}>
+            <div className="p-4 sm:p-6">
                 {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
                 {currentView === 'grades' && <GradeReporter activeStudent={activeStudent} />}
                 {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
@@ -145,136 +129,56 @@ const HubShell = () => {
                 {currentView === 'audit' && <AuditLog />}
             </div>
         )}
-
       </main>
     </div>
   );
 };
 
-// --- HELPER COMPONENTS ---
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
 
 const NavButton = ({ label, active, onClick }) => (
     <button 
         onClick={onClick}
-        style={{
-            background: active ? "rgba(255,255,255,0.2)" : "transparent",
-            color: "white",
-            border: active ? "1px solid rgba(255,255,255,0.4)" : "none",
-            padding: "6px 12px",
-            borderRadius: "20px",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: "600",
-            transition: "all 0.2s ease",
-            backdropFilter: active ? "blur(10px)" : "none",
-            whiteSpace: "nowrap"
-        }}
+        className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-150 ${
+          active 
+          ? 'bg-sky-100 text-sky-700' 
+          : 'bg-transparent text-slate-600 hover:bg-slate-100'
+        }`}
     >
         {label}
     </button>
 );
 
-const LaunchCard = ({ icon, color, title, desc, hovered, onEnter, onLeave, onClick }) => (
+const LaunchCard = ({ icon, title, desc, onClick }) => (
     <div 
-        style={{
-            ...styles.launchCard, 
-            ...(hovered ? styles.launchCardHover : {})
-        }}
-        onMouseEnter={onEnter}
-        onMouseLeave={onLeave}
         onClick={onClick}
+        className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 group cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-sky-300 hover:-translate-y-1"
     >
-        <div style={{...styles.iconCircle, background: `linear-gradient(135deg, ${color}88 0%, ${color} 100%)`}}>{icon}</div>
-        <h3 style={styles.cardTitle}>{title}</h3>
-        <p style={styles.cardDesc}>{desc}</p>
-        <div style={styles.cardAction}>Launch →</div>
+        <div className="flex items-start justify-between">
+            {icon}
+            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-sky-600 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
     </div>
 );
 
 const LoginScreen = ({ onLogin }) => (
-  <div style={styles.loginContainer}>
-    <div style={styles.loginBox}>
-      <h1 style={{color: "#003366", margin: "0 0 10px 0"}}>Lakeland Secure Hub</h1>
-      <p style={{color: "#666", fontSize: "14px", marginBottom: "30px"}}>Authorized Staff Access Only</p>
-      <button onClick={onLogin} style={styles.loginBtn}>Sign in with Microsoft</button>
+  <div className="w-full h-screen flex items-center justify-center bg-slate-50">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-sky-600 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-slate-800">Lakeland Secure Hub</h1>
+      <p className="text-slate-500 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-sky-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-colors duration-200 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
     </div>
   </div>
 );
-
-// --- STYLES (COMPACT & MODERN) ---
-const styles = {
-  layoutContainer: { 
-    display: "flex", flexDirection: "column", height: "100vh", 
-    fontFamily: "'Segoe UI', 'Inter', sans-serif", 
-    background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
-    color: "white", overflow: "hidden" 
-  },
-  
-  topBar: { 
-    height: "60px", background: "rgba(255, 255, 255, 0.05)", backdropFilter: "blur(12px)",
-    borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", 
-    justifyContent: "space-between", padding: "0 20px", zIndex: 100, flexShrink: 0
-  },
-  brandingArea: { display: "flex", alignItems: "center", gap: "20px" },
-  logo: { fontWeight: "800", fontSize: "18px", cursor: "pointer", letterSpacing: "1px", display: "flex", alignItems: "center", whiteSpace: "nowrap" },
-  navLinks: { display: "flex", gap: "5px" },
-
-  searchWrapper: { position: "relative", width: "300px", display: "flex", alignItems: "center", margin: "0 20px" },
-  searchIcon: { position: "absolute", left: "15px", opacity: 0.7, fontSize: "12px" },
-  globalSearch: { 
-    width: "100%", background: "rgba(0, 0, 0, 0.2)", border: "1px solid rgba(255,255,255,0.1)", 
-    color: "white", padding: "8px 10px 8px 35px", borderRadius: "30px", outline: "none", fontSize: "12px", transition: "all 0.2s"
-  },
-  clearBtn: { position: "absolute", right: "10px", background: "none", border: "none", color: "white", cursor: "pointer", fontSize: "14px" },
-
-  userArea: { display: "flex", alignItems: "center", gap: "10px" },
-  userAvatar: { width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(to right, #f12711, #f5af19)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px", boxShadow: "0 2px 5px rgba(0,0,0,0.2)" },
-  logoutBtn: { background: "transparent", color: "rgba(255,255,255,0.7)", border: "none", fontSize: "11px", cursor: "pointer", fontWeight: "600" },
-
-  mainContent: { flex: 1, overflowY: "auto", position: "relative", display: "flex", flexDirection: "column" },
-
-  // COMPACT LAUNCHPAD
-  launchpadContainer: { 
-    flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", 
-    padding: "20px", animation: "fadeIn 0.5s ease-in-out"
-  },
-  heroSection: { textAlign: "center", marginBottom: "30px" }, // Reduced margin
-  heroTitle: { fontSize: "36px", fontWeight: "800", margin: "0 0 5px 0", background: "linear-gradient(to right, #fff, #b2bec3)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
-  heroSubtitle: { fontSize: "14px", color: "rgba(255,255,255,0.6)", fontWeight: "400", margin: 0 },
-  activeContextBadge: { marginTop: "10px", background: "rgba(46, 204, 113, 0.2)", color: "#2ecc71", padding: "5px 12px", borderRadius: "20px", fontSize: "11px", border: "1px solid rgba(46, 204, 113, 0.4)", display: "inline-block" },
-
-  cardGrid: { display: "flex", gap: "20px", flexWrap: "wrap", justifyContent: "center", maxWidth: "1200px" },
-  
-  // SMALLER GLASS CARDS
-  launchCard: { 
-    background: "rgba(255, 255, 255, 0.05)", backdropFilter: "blur(10px)",
-    width: "180px", // Smaller width
-    padding: "20px 15px", // Smaller padding
-    borderRadius: "16px", textAlign: "center", 
-    border: "1px solid rgba(255, 255, 255, 0.1)",
-    cursor: "pointer", transition: "all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)",
-    boxShadow: "0 10px 20px rgba(0,0,0,0.1)" 
-  },
-  launchCardHover: {
-    transform: "translateY(-5px)",
-    background: "rgba(255, 255, 255, 0.1)",
-    border: "1px solid rgba(255, 255, 255, 0.3)",
-    boxShadow: "0 15px 30px rgba(0,0,0,0.2)"
-  },
-  iconCircle: {
-    width: "45px", height: "45px", borderRadius: "50%", margin: "0 auto 15px auto",
-    display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px",
-    boxShadow: "0 5px 10px rgba(0,0,0,0.2)"
-  },
-  cardTitle: { fontSize: "15px", fontWeight: "700", margin: "0 0 5px 0", color: "white" },
-  cardDesc: { fontSize: "11px", color: "rgba(255,255,255,0.6)", lineHeight: "1.4", marginBottom: "15px", minHeight: "30px" },
-  cardAction: { fontSize: "10px", fontWeight: "bold", color: "#4facfe", textTransform: "uppercase", letterSpacing: "1px" },
-
-  toolCanvas: { background: "#f4f6f8", height: "100%", width: "100%", overflowY: "auto", position: "relative" },
-
-  loginContainer: { height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#ecf0f1" },
-  loginBox: { background: "white", padding: "50px", borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", textAlign: "center", width: "400px" },
-  loginBtn: { background: "#003366", color: "white", padding: "12px 24px", border: "none", borderRadius: "4px", fontSize: "16px", cursor: "pointer", width: "100%", fontWeight: "bold" }
-};
 
 export default HubShell;
