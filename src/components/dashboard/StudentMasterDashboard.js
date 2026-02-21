@@ -399,13 +399,13 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Grade Level</label>
-                            <select name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
+                            <select name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white text-slate-700">
                                 {[9, 10, 11, 12].map(g => <option key={g} value={g}>{g}th Grade</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Unit Assignment</label>
-                            <select name="unitName" value={formData.unitName} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
+                            <select name="unitName" value={formData.unitName} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white text-slate-700">
                                 {UNIT_CONFIG.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
                             </select>
                         </div>
@@ -413,7 +413,7 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
 
                     <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Local School District</label>
-                        <input name="district" value={formData.district || ""} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. Springfield Public Schools" />
+                        <input name="district" value={formData.district || ""} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-700" placeholder="e.g. Springfield Public Schools" />
                     </div>
 
                     <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
