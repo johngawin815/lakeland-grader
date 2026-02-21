@@ -205,7 +205,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
         {showAddForm && <IntakeForm onSave={onAddStudent} units={UNIT_CONFIG} />}
         
         {/* ROSTER GRID */}
-        <div className={filterUnit === "All" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16" : "flex flex-col max-w-3xl mx-auto pb-16 gap-6"}>
+        <div className={filterUnit === "All" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16" : "w-full pb-16"}>
             {displayedUnits.map(theme => {
                 const students = grouped[theme.key] || [];
                 return (
@@ -218,7 +218,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                             <span className="bg-white/20 rounded-full px-2.5 py-1 text-[10px] font-bold backdrop-blur-sm">{students.length} Residents</span>
                         </div>
                         
-                        <div className="py-2 flex-1">
+                        <div className={filterUnit === "All" ? "py-2 flex-1" : "p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
                             {students.length === 0 ? (
                                 <div className="text-center p-8 text-gray-300 text-xs italic">No active residents</div>
                             ) : (
@@ -226,7 +226,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                                     <div 
                                         key={s.id} 
                                         onClick={() => setActiveStudent(s.studentName)}
-                                        className="px-5 py-3 border-b border-gray-50 cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors group"
+                                        className={`cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors group ${filterUnit === "All" ? "px-5 py-3 border-b border-gray-50" : "p-4 border border-gray-200 rounded-xl hover:shadow-md bg-white"}`}
                                     >
                                         <div>
                                             <div className="font-bold text-slate-700 text-sm mb-0.5 group-hover:text-blue-600 transition-colors">{s.studentName}</div>
