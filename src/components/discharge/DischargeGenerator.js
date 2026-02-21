@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from "docx";
+import { saveAs } from "file-saver";
 import { cosmosService } from '../../services/cosmosService';
-import { Printer, FileText, Loader2, CheckCircle } from 'lucide-react';
+import { Printer, FileText, Loader2, CheckCircle, Save, Download } from 'lucide-react';
 
 // Boilerplate text from your template
 const BOILERPLATE_INTRO = "Lakeland Regional School operates within a Level IV residential treatment center. Students are admitted for clinical treatment, and the school provides academic instruction during their stay. Classrooms include students from multiple states and a wide range of grade and ability levels. Instruction is based on Missouri’s Major Instructional Goals, and collaboration with sending schools occurs when possible.";
 
-// FIX: Added the missing "=>" below
 const DischargeGenerator = ({ user, activeStudent }) => {
-  const { register, setValue, watch } = useForm();
+  const { register, setValue, watch, handleSubmit, getValues } = useForm();
   const [loading, setLoading] = useState(false);
   const [dbRecord, setDbRecord] = useState(null);
+
+  // Watch all fields for live preview
+  const values = watch();
 
   // --- 1. CONNECTIVITY: Listen for Student Change ---
   useEffect(() => {
@@ -57,142 +61,360 @@ const DischargeGenerator = ({ user, activeStudent }) => {
     window.print();
   };
 
-  return (
-    <div className="flex h-full bg-gray-50">
-      
-      {/* LEFT: CONTROLS (Screen Only) */}
-      <div className="w-[300px] p-6 bg-slate-800 text-white flex flex-col print:hidden">
-        <h2 className="text-white m-0 mb-2.5 text-xl font-bold flex items-center gap-2"><FileText className="w-5 h-5" /> Discharge Writer</h2>
-        
-        {loading ? (
-           <div className="p-2.5 rounded-md bg-blue-600 text-center font-bold text-xs mt-2.5 flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Syncing with Azure...</div>
-        ) : dbRecord ? (
-           <div className="p-2.5 rounded-md bg-green-600 text-center font-bold text-xs mt-2.5 flex items-center justify-center gap-2"><CheckCircle className="w-4 h-4" /> Data Loaded from KTEA</div>
-        ) : (
-           <div className="p-2.5 rounded-md bg-slate-500 text-center font-bold text-xs mt-2.5">Waiting for Student...</div>
-        )}
+  const handleDownloadDocx = async () => {
+    const data = getValues();
+    
+    // Helper to calculate change for the Word Doc
+    const getChange = (pre, post) => {
+        const p1 = parseFloat(pre);
+        const p2 = parseFloat(post);
+        if (isNaN(p1) || isNaN(p2)) return "--";
+        const diff = (p2 - p1).toFixed(1);
+        return (diff > 0 ? "+" : "") + diff;
+    };
 
-        <div className="mt-5">
-            <p className="text-slate-300 text-xs leading-relaxed">
-               This tool automatically pulls dates and scores from the KTEA Reporter. 
-               Review the generated narrative below and edit as needed.
-            </p>
-            <button onClick={handlePrint} className="w-full p-4 bg-blue-500 text-white border-none rounded-lg font-bold text-base cursor-pointer mt-5 hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 shadow-md"><Printer className="w-5 h-5" /> Print / Save PDF</button>
+    // Helper for table cells
+    const createCell = (text, bold = false) => {
+        return new TableCell({
+            children: [new Paragraph({ 
+                children: [new TextRun({ text: text || "-", bold: bold, size: 22 })], // 11pt
+                alignment: AlignmentType.CENTER 
+            })],
+            verticalAlign: "center",
+        });
+    };
+
+    const doc = new Document({
+        sections: [{
+            properties: {},
+            children: [
+                // HEADER
+                new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    children: [new TextRun({ text: "LAKELAND REGIONAL SCHOOL", bold: true, size: 28 })], // 14pt
+                    spacing: { after: 100 }
+                }),
+                new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    children: [new TextRun({ text: "EDUCATIONAL DISCHARGE NARRATIVE", bold: true, size: 24 })], // 12pt
+                    spacing: { after: 400 }
+                }),
+
+                // STUDENT INFO ROW 1
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "Student Name: ", bold: true }),
+                        new TextRun({ text: data.studentName || "" }),
+                        new TextRun({ text: "\t\tGrade: ", bold: true }),
+                        new TextRun({ text: data.gradeLevel || "" }),
+                        new TextRun({ text: "\t\tDOB/Age: ", bold: true }),
+                        new TextRun({ text: data.age || "" }),
+                    ],
+                    tabStops: [
+                        { type: "left", position: 4000 },
+                        { type: "left", position: 7000 },
+                    ]
+                }),
+                // STUDENT INFO ROW 2
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: "Admission Date: ", bold: true }),
+                        new TextRun({ text: data.admitDate || "" }),
+                        new TextRun({ text: "\t\tDischarge Date: ", bold: true }),
+                        new TextRun({ text: data.dischargeDate || "" }),
+                    ],
+                    tabStops: [
+                        { type: "left", position: 4000 },
+                    ],
+                    spacing: { after: 400 }
+                }),
+
+                // NARRATIVES
+                new Paragraph({ children: [new TextRun(data.admissionReason || "")] }),
+                new Paragraph({ children: [new TextRun(BOILERPLATE_INTRO)], spacing: { before: 200 } }),
+
+                // BEHAVIOR HEADER
+                new Paragraph({
+                    children: [new TextRun({ text: "CLASSROOM PERFORMANCE & BEHAVIOR", bold: true, underline: { type: "single" } })],
+                    spacing: { before: 400, after: 100 }
+                }),
+                new Paragraph({ children: [new TextRun(data.behaviorNarrative || "")] }),
+
+                // SCORES HEADER
+                new Paragraph({
+                    children: [new TextRun({ text: "KTEA III ASSESSMENT RESULTS", bold: true, underline: { type: "single" } })],
+                    spacing: { before: 400, after: 100 }
+                }),
+
+                // SCORES TABLE
+                new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        new TableRow({ children: [createCell("Subject", true), createCell("Pre Test (GE)", true), createCell("Post Test (GE)", true), createCell("Change", true)] }),
+                        new TableRow({ children: [createCell("Reading", true), createCell(data.preReading), createCell(data.postReading), createCell(getChange(data.preReading, data.postReading))] }),
+                        new TableRow({ children: [createCell("Math", true), createCell(data.preMath), createCell(data.postMath), createCell(getChange(data.preMath, data.postMath))] }),
+                        new TableRow({ children: [createCell("Writing", true), createCell(data.preWriting), createCell(data.postWriting), createCell(getChange(data.preWriting, data.postWriting))] }),
+                    ]
+                }),
+
+                // ANALYSIS
+                new Paragraph({ children: [new TextRun(data.analysisNarrative || "")], spacing: { before: 200 } }),
+
+                // FOOTER
+                new Paragraph({
+                    children: [new TextRun(`${data.studentName || "The student"} was discharged successfully from residential care on ${data.dischargeDate || "[Date]"}. If further information is needed, please contact Lakeland Regional School.`)],
+                    spacing: { before: 600, after: 400 }
+                }),
+                new Paragraph({
+                    children: [new TextRun({ text: "John Gawin, MSEd, School Instructor", bold: true })]
+                }),
+                new Paragraph({ text: "Lakeland Regional School – 1-417-680-0166" }),
+                new Paragraph({ text: "john.gawin@lakelandbehavioralhealth.com" }),
+            ]
+        }]
+    });
+
+    // Generate and Save
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `${data.studentName || "Student"}_Discharge_Summary.docx`);
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row h-full bg-slate-50 overflow-hidden font-sans">
+      
+      {/* LEFT COLUMN: EDITOR FORM */}
+      <div className="w-full lg:w-1/3 p-6 flex flex-col gap-4 overflow-y-auto border-r border-gray-200 bg-white print:hidden shadow-lg z-10">
+        
+        {/* Header / Status */}
+        <div className="mb-2">
+            <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2 mb-1">
+                <FileText className="w-6 h-6 text-blue-600" /> Discharge Writer
+            </h2>
+            <p className="text-slate-500 text-sm">Edit the narrative below. The preview updates automatically.</p>
+            
+            {loading ? (
+                <div className="mt-3 p-3 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold flex items-center gap-2 animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Syncing with Azure...
+                </div>
+            ) : dbRecord ? (
+                <div className="mt-3 p-3 bg-green-50 text-green-700 rounded-lg text-xs font-bold flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" /> Data Loaded from KTEA
+                </div>
+            ) : (
+                <div className="mt-3 p-3 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold">
+                    Ready for input
+                </div>
+            )}
+        </div>
+
+        {/* Form Fields */}
+        <form className="flex flex-col gap-6">
+            
+            {/* Section: Student Info */}
+            <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Student Information</h3>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Student Name</label>
+                        <input {...register("studentName")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Grade Level</label>
+                        <input {...register("gradeLevel")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">DOB / Age</label>
+                        <input {...register("age")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Admit Date</label>
+                        <input type="date" {...register("admitDate")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Discharge Date</label>
+                        <input type="date" {...register("dischargeDate")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Section: Narratives */}
+            <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Narratives</h3>
+                
+                <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Reason for Admission</label>
+                    <textarea 
+                        {...register("admissionReason")} 
+                        rows={3}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="e.g. was admitted for educational services..."
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Classroom Performance & Behavior</label>
+                    <textarea 
+                        {...register("behaviorNarrative")} 
+                        rows={5}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Describe work ethic, behavior, strengths..."
+                    />
+                </div>
+            </div>
+
+            {/* Section: Scores */}
+            <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">KTEA-III Scores (GE)</h3>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="text-[10px] font-bold text-slate-500">Subject</div>
+                    <div className="text-[10px] font-bold text-slate-500">Pre</div>
+                    <div className="text-[10px] font-bold text-slate-500">Post</div>
+
+                    <div className="text-xs font-bold text-slate-700 self-center text-left pl-1">Reading</div>
+                    <input {...register("preReading")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+                    <input {...register("postReading")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+
+                    <div className="text-xs font-bold text-slate-700 self-center text-left pl-1">Math</div>
+                    <input {...register("preMath")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+                    <input {...register("postMath")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+
+                    <div className="text-xs font-bold text-slate-700 self-center text-left pl-1">Writing</div>
+                    <input {...register("preWriting")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+                    <input {...register("postWriting")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+                </div>
+            </div>
+
+            {/* Section: Analysis */}
+            <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Analysis</h3>
+                <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Score Analysis</label>
+                    <textarea 
+                        {...register("analysisNarrative")} 
+                        rows={4}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="The comparative data indicates..."
+                    />
+                </div>
+            </div>
+
+        </form>
+
+        {/* Action Button */}
+        <div className="mt-auto pt-4 border-t border-gray-100 flex gap-2">
+            <button 
+                onClick={handlePrint} 
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2"
+            >
+                <Printer className="w-5 h-5" /> Print / Save PDF
+            </button>
+            <button 
+                onClick={handleDownloadDocx} 
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2"
+            >
+                <Download className="w-5 h-5" /> Word Doc
+            </button>
         </div>
       </div>
 
-      {/* RIGHT: THE DOCUMENT (Visual Representation) */}
-      <div className="flex-1 p-10 overflow-y-auto flex justify-center bg-gray-100 print:p-0 print:bg-white print:overflow-visible">
-        <div className="page bg-white w-[8.5in] min-h-[11in] p-[0.75in] shadow-xl font-serif text-black print:shadow-none print:w-full print:m-0 print:absolute print:top-0 print:left-0">
+      {/* RIGHT COLUMN: LIVE PREVIEW */}
+      <div className="flex-1 bg-slate-200 p-8 overflow-y-auto flex justify-center print:p-0 print:bg-white print:overflow-visible">
+        <div className="page bg-white w-[8.5in] min-h-[11in] p-[0.75in] shadow-2xl text-black font-serif print:shadow-none print:w-full print:m-0 print:absolute print:top-0 print:left-0">
             
-            {/* HEADER */}
-            <header className="text-center mb-8 border-b-2 border-black pb-2">
-                <h1 className="m-0 text-2xl uppercase tracking-widest font-bold">LAKELAND REGIONAL SCHOOL</h1>
-                <div className="text-base font-bold mt-1">EDUCATIONAL DISCHARGE NARRATIVE</div>
+            {/* DOCUMENT HEADER */}
+            <header className="text-center mb-8 border-b-2 border-black pb-4">
+                <h1 className="m-0 text-2xl uppercase tracking-widest font-bold text-black">LAKELAND REGIONAL SCHOOL</h1>
+                <div className="text-base font-bold mt-2 text-black">EDUCATIONAL DISCHARGE NARRATIVE</div>
             </header>
 
-            {/* DEMOGRAPHICS GRID */}
-            <section className="flex flex-col gap-2.5 mb-6 border border-gray-300 p-4 print:border-black">
-                <div className="flex gap-5 items-baseline">
-                    <div className="flex items-baseline gap-1">
-                        <span className="font-bold text-[11pt]">Student Name:</span>
-                        <input {...register("studentName")} className="border-none border-b border-gray-300 font-serif text-[11pt] w-[180px] px-1 py-0.5 text-black focus:outline-none focus:border-black bg-transparent print:border-none" />
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                        <span className="font-bold text-[11pt]">Grade:</span>
-                        <input {...register("gradeLevel")} className="border-none border-b border-gray-300 font-serif text-[11pt] w-[50px] px-1 py-0.5 text-black focus:outline-none focus:border-black bg-transparent print:border-none" />
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                        <span className="font-bold text-[11pt]">DOB/Age:</span>
-                        <input {...register("age")} className="border-none border-b border-gray-300 font-serif text-[11pt] w-[50px] px-1 py-0.5 text-black focus:outline-none focus:border-black bg-transparent print:border-none" />
-                    </div>
+            {/* DEMOGRAPHICS */}
+            <section className="flex flex-col gap-2 mb-6 border border-black p-4 text-[11pt]">
+                <div className="flex justify-between">
+                    <div><span className="font-bold">Student Name:</span> {values.studentName}</div>
+                    <div><span className="font-bold">Grade:</span> {values.gradeLevel}</div>
+                    <div><span className="font-bold">DOB/Age:</span> {values.age}</div>
                 </div>
-                <div className="flex gap-5 items-baseline">
-                    <div className="flex items-baseline gap-1">
-                        <span className="font-bold text-[11pt]">Admission Date:</span>
-                        <input {...register("admitDate")} className="border-none border-b border-gray-300 font-serif text-[11pt] w-[180px] px-1 py-0.5 text-black focus:outline-none focus:border-black bg-transparent print:border-none" />
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                        <span className="font-bold text-[11pt]">Discharge Date:</span>
-                        <input {...register("dischargeDate")} className="border-none border-b border-gray-300 font-serif text-[11pt] w-[180px] px-1 py-0.5 text-black focus:outline-none focus:border-black bg-transparent print:border-none" />
-                    </div>
+                <div className="flex justify-between">
+                    <div><span className="font-bold">Admission Date:</span> {values.admitDate}</div>
+                    <div><span className="font-bold">Discharge Date:</span> {values.dischargeDate}</div>
                 </div>
             </section>
 
-            {/* NARRATIVE SECTIONS */}
-            <section className="text-[12pt] leading-relaxed">
+            {/* CONTENT */}
+            <section className="text-[12pt] leading-relaxed space-y-4">
                 
-                {/* 1. Admission Context */}
-                <div className="mb-4">
-                    <textarea 
-                        {...register("admissionReason")} 
-                        className="w-full border border-dashed border-gray-300 p-1 font-serif text-[11pt] resize-y leading-relaxed focus:outline-none focus:border-black bg-transparent print:border-none print:resize-none" 
-                        placeholder="[Student Name] was admitted for educational services while receiving residential treatment..."
-                        defaultValue={watch("studentName") ? `${watch("studentName")} was admitted for educational services...` : ""}
-                    />
+                {/* Intro */}
+                <div className="text-justify">
+                    {values.admissionReason || "[Student Name] was admitted for educational services..."}
                 </div>
 
-                <div className="mb-4 text-justify">{BOILERPLATE_INTRO}</div>
+                <div className="text-justify">{BOILERPLATE_INTRO}</div>
 
-                {/* 2. Behavior/Academics */}
-                <h4 className="text-[12pt] uppercase border-b border-gray-300 mt-5 mb-2 font-bold print:border-black">Classroom Performance & Behavior</h4>
-                <textarea 
-                    {...register("behaviorNarrative")} 
-                    className="w-full border border-dashed border-gray-300 p-1 font-serif text-[11pt] resize-y leading-relaxed focus:outline-none focus:border-black bg-transparent h-[120px] print:border-none print:resize-none" 
-                    placeholder="Describe student's work ethic, behavior, and strengths..."
-                />
+                {/* Behavior */}
+                <div>
+                    <h4 className="text-[12pt] uppercase border-b border-black mt-6 mb-2 font-bold">Classroom Performance & Behavior</h4>
+                    <div className="whitespace-pre-wrap text-justify min-h-[2rem]">
+                        {values.behaviorNarrative || "No behavior narrative provided."}
+                    </div>
+                </div>
 
-                {/* 3. KTEA TABLE */}
-                <h4 className="text-[12pt] uppercase border-b border-gray-300 mt-5 mb-2 font-bold print:border-black">KTEA III Assessment Results</h4>
-                <table className="w-full border-collapse mb-5 mt-2">
-                    <thead>
-                        <tr>
-                            <th className="border border-black p-2 bg-gray-100 text-center font-bold print:bg-gray-200">Subject</th>
-                            <th className="border border-black p-2 bg-gray-100 text-center font-bold print:bg-gray-200">Pre Test (GE)</th>
-                            <th className="border border-black p-2 bg-gray-100 text-center font-bold print:bg-gray-200">Post Test (GE)</th>
-                            <th className="border border-black p-2 bg-gray-100 text-center font-bold print:bg-gray-200">Change</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td className="border border-black p-2 text-center">Reading</td>
-                            <td className="border border-black p-2 text-center"><input {...register("preReading")} className="w-full border-none text-center font-serif text-[11pt] bg-transparent focus:outline-none" /></td>
-                            <td className="border border-black p-2 text-center"><input {...register("postReading")} className="w-full border-none text-center font-serif text-[11pt] bg-transparent focus:outline-none" /></td>
-                            <td className="border border-black p-2 text-center">--</td>
-                        </tr>
-                        <tr>
-                            <td className="border border-black p-2 text-center">Math</td>
-                            <td className="border border-black p-2 text-center"><input {...register("preMath")} className="w-full border-none text-center font-serif text-[11pt] bg-transparent focus:outline-none" /></td>
-                            <td className="border border-black p-2 text-center"><input {...register("postMath")} className="w-full border-none text-center font-serif text-[11pt] bg-transparent focus:outline-none" /></td>
-                            <td className="border border-black p-2 text-center">--</td>
-                        </tr>
-                        <tr>
-                            <td className="border border-black p-2 text-center">Writing</td>
-                            <td className="border border-black p-2 text-center"><input {...register("preWriting")} className="w-full border-none text-center font-serif text-[11pt] bg-transparent focus:outline-none" /></td>
-                            <td className="border border-black p-2 text-center"><input {...register("postWriting")} className="w-full border-none text-center font-serif text-[11pt] bg-transparent focus:outline-none" /></td>
-                            <td className="border border-black p-2 text-center">--</td>
-                        </tr>
-                    </tbody>
-                </table>
+                {/* Scores Table */}
+                <div>
+                    <h4 className="text-[12pt] uppercase border-b border-black mt-6 mb-2 font-bold">KTEA III Assessment Results</h4>
+                    <table className="w-full border-collapse mb-4 mt-2 text-[11pt]">
+                        <thead>
+                            <tr className="bg-gray-100 print:bg-gray-100">
+                                <th className="border border-black p-2 text-center font-bold">Subject</th>
+                                <th className="border border-black p-2 text-center font-bold">Pre Test (GE)</th>
+                                <th className="border border-black p-2 text-center font-bold">Post Test (GE)</th>
+                                <th className="border border-black p-2 text-center font-bold">Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="border border-black p-2 text-center font-bold">Reading</td>
+                                <td className="border border-black p-2 text-center">{values.preReading || "-"}</td>
+                                <td className="border border-black p-2 text-center">{values.postReading || "-"}</td>
+                                <td className="border border-black p-2 text-center">
+                                    {calculateChange(values.preReading, values.postReading)}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="border border-black p-2 text-center font-bold">Math</td>
+                                <td className="border border-black p-2 text-center">{values.preMath || "-"}</td>
+                                <td className="border border-black p-2 text-center">{values.postMath || "-"}</td>
+                                <td className="border border-black p-2 text-center">
+                                    {calculateChange(values.preMath, values.postMath)}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="border border-black p-2 text-center font-bold">Writing</td>
+                                <td className="border border-black p-2 text-center">{values.preWriting || "-"}</td>
+                                <td className="border border-black p-2 text-center">{values.postWriting || "-"}</td>
+                                <td className="border border-black p-2 text-center">
+                                    {calculateChange(values.preWriting, values.postWriting)}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                {/* 4. Analysis */}
-                <div className="mb-4">
-                    <textarea 
-                        {...register("analysisNarrative")} 
-                        className="w-full border border-dashed border-gray-300 p-1 font-serif text-[11pt] resize-y leading-relaxed focus:outline-none focus:border-black bg-transparent h-[100px] print:border-none print:resize-none" 
-                        placeholder="The comparative data indicates..."
-                    />
+                {/* Analysis */}
+                <div>
+                    <div className="whitespace-pre-wrap text-justify min-h-[2rem]">
+                        {values.analysisNarrative || "The comparative data indicates..."}
+                    </div>
                 </div>
             </section>
 
             {/* FOOTER */}
-            <footer className="mt-10 border-t border-gray-300 pt-5 text-[11pt] print:border-black">
-                <p>
-                    {watch("studentName")} was discharged successfully from residential care on {watch("dischargeDate")}. 
+            <footer className="mt-12 border-t border-black pt-6 text-[11pt]">
+                <p className="text-justify">
+                    {values.studentName || "The student"} was discharged successfully from residential care on {values.dischargeDate || "[Date]"}. 
                     If further information is needed, please contact Lakeland Regional School.
                 </p>
-                <div className="mt-5">
-                    <div className="font-bold mt-10">John Gawin, MSEd, School Instructor</div>
+                <div className="mt-8">
+                    <div className="font-bold">John Gawin, MSEd, School Instructor</div>
                     <div>Lakeland Regional School – 1-417-680-0166</div>
                     <div>john.gawin@lakelandbehavioralhealth.com</div>
                 </div>
@@ -204,13 +426,24 @@ const DischargeGenerator = ({ user, activeStudent }) => {
   );
 };
 
+// Helper for score change
+const calculateChange = (pre, post) => {
+    const p1 = parseFloat(pre);
+    const p2 = parseFloat(post);
+    if (isNaN(p1) || isNaN(p2)) return "--";
+    const diff = (p2 - p1).toFixed(1);
+    return (diff > 0 ? "+" : "") + diff;
+};
+
 // CSS for Print Mode
 const printStyles = `
   @media print {
-    body * { visibility: hidden; height: 0; overflow: hidden; }
+    @page { margin: 0; size: auto; }
+    body * { visibility: hidden; }
     .page, .page * { visibility: visible; }
-    .page { position: absolute; left: 0; top: 0; margin: 0; padding: 0.5in; box-shadow: none; width: 100%; height: auto; overflow: visible; }
-    input, textarea { border: none !important; resize: none; background: transparent; }
+    .page { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0.5in; box-shadow: none !important; }
+    /* Hide scrollbars in print */
+    ::-webkit-scrollbar { display: none; }
   }
 `;
 

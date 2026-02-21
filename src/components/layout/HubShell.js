@@ -89,42 +89,42 @@ const HubShell = () => {
             <div style={styles.cardGrid}>
               
               <LaunchCard 
-                icon="👥" color="#8E2DE2" title="Dashboard" desc="Rosters & Profiles"
+                icon={<LayoutDashboard size={24} color="white" />} color="#8E2DE2" title="Dashboard" desc="Rosters & Profiles"
                 hovered={hoveredCard === 'dashboard'} 
                 onEnter={() => setHoveredCard('dashboard')} onLeave={() => setHoveredCard(null)}
                 onClick={() => setCurrentView('dashboard')}
               />
 
               <LaunchCard 
-                icon="🏫" color="#F2994A" title="Grade Reporter" desc="Enter Grades"
+                icon={<GraduationCap size={24} color="white" />} color="#F2994A" title="Grade Reporter" desc="Enter Grades"
                 hovered={hoveredCard === 'grades'} 
                 onEnter={() => setHoveredCard('grades')} onLeave={() => setHoveredCard(null)}
                 onClick={() => setCurrentView('grades')}
               />
 
               <LaunchCard 
-                icon="📝" color="#FF5E62" title="KTEA Reporter" desc="Assessments"
+                icon={<ClipboardList size={24} color="white" />} color="#FF5E62" title="KTEA Reporter" desc="Assessments"
                 hovered={hoveredCard === 'ktea'} 
                 onEnter={() => setHoveredCard('ktea')} onLeave={() => setHoveredCard(null)}
                 onClick={() => setCurrentView('ktea')}
               />
 
               <LaunchCard 
-                icon="📄" color="#56CCF2" title="Discharge Writer" desc="Exit Summaries"
+                icon={<FileText size={24} color="white" />} color="#56CCF2" title="Discharge Writer" desc="Exit Summaries"
                 hovered={hoveredCard === 'discharge'} 
                 onEnter={() => setHoveredCard('discharge')} onLeave={() => setHoveredCard(null)}
                 onClick={() => setCurrentView('discharge')}
               />
 
               <LaunchCard 
-                icon="🗺️" color="#11998e" title="Curriculum" desc="Maps & Standards"
+                icon={<Map size={24} color="white" />} color="#11998e" title="Curriculum" desc="Maps & Standards"
                 hovered={hoveredCard === 'curriculum'} 
                 onEnter={() => setHoveredCard('curriculum')} onLeave={() => setHoveredCard(null)}
                 onClick={() => setCurrentView('curriculum')}
               />
 
               <LaunchCard 
-                Icon={Shield} color="#475569" title="Audit Log" desc="Security & Compliance"
+                icon={<Shield size={24} color="white" />} color="#475569" title="Audit Log" desc="Security & Compliance"
                 hovered={hoveredCard === 'audit'} 
                 onEnter={() => setHoveredCard('audit')} onLeave={() => setHoveredCard(null)}
                 onClick={() => setCurrentView('audit')}
