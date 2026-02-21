@@ -40,10 +40,10 @@ const HubShell = () => {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+    <div className="flex flex-col h-screen bg-slate-100 font-sans">
       
       {/* 1. TOP NAVIGATION BAR */}
-      <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-6 z-20 shrink-0">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200/80 h-20 flex items-center justify-between px-6 z-20 shrink-0">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentView('home')}>
             <School size={32} className="text-sky-600" />
@@ -152,7 +152,7 @@ const NavButton = ({ label, active, onClick }) => (
 const LaunchCard = ({ icon, title, desc, onClick }) => (
     <div 
         onClick={onClick}
-        className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 group cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-sky-300 hover:-translate-y-1"
+        className="bg-white/60 backdrop-blur-sm shadow-sm border border-slate-200 rounded-lg p-6 group cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-sky-300 hover:-translate-y-1"
     >
         <div className="flex items-start justify-between">
             {icon}
@@ -166,8 +166,8 @@ const LaunchCard = ({ icon, title, desc, onClick }) => (
 );
 
 const LoginScreen = ({ onLogin }) => (
-  <div className="w-full h-screen flex items-center justify-center bg-slate-50">
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 w-full max-w-sm text-center">
+  <div className="w-full h-screen flex items-center justify-center bg-slate-100">
+    <div className="bg-white/60 backdrop-blur-sm shadow-sm border border-slate-200 rounded-lg p-8 w-full max-w-sm text-center">
       <School size={48} className="text-sky-600 mx-auto mb-4" />
       <h1 className="text-2xl font-extrabold text-slate-800">Lakeland Secure Hub</h1>
       <p className="text-slate-500 mt-2 mb-8">Authorized staff access only.</p>

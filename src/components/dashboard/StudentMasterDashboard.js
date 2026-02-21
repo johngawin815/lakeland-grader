@@ -4,11 +4,11 @@ import IntakeForm from './IntakeForm';
 import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X, Users, ChevronRight, Plus, StickyNote } from 'lucide-react';
 
 const UNIT_CONFIG = [
-  { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target, border: "border-red-500", badge: "bg-red-50 text-red-700", hover: "hover:bg-red-50" },
+  { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-amber-600 to-amber-500", icon: Target, border: "border-amber-500", badge: "bg-amber-50 text-amber-700", hover: "hover:bg-amber-50" },
   { key: "Discovery", label: "Discovery", bg: "bg-gradient-to-br from-indigo-500 to-purple-600", icon: Telescope, border: "border-indigo-500", badge: "bg-indigo-50 text-indigo-700", hover: "hover:bg-indigo-50" },
   { key: "Freedom", label: "Freedom", bg: "bg-gradient-to-br from-teal-500 to-lime-500", icon: Bird, border: "border-teal-500", badge: "bg-teal-50 text-teal-700", hover: "hover:bg-teal-50" },
   { key: "Harmony", label: "Harmony", bg: "bg-gradient-to-br from-emerald-600 to-green-400", icon: Leaf, border: "border-emerald-500", badge: "bg-emerald-50 text-emerald-700", hover: "hover:bg-emerald-50" },
-  { key: "Integrity", label: "Integrity", bg: "bg-gradient-to-br from-orange-400 to-red-400", icon: Flame, border: "border-orange-500", badge: "bg-orange-50 text-orange-700", hover: "hover:bg-orange-50" },
+  { key: "Integrity", label: "Integrity", bg: "bg-gradient-to-br from-orange-500 to-amber-500", icon: Flame, border: "border-orange-500", badge: "bg-orange-50 text-orange-700", hover: "hover:bg-orange-50" },
   { key: "Serenity", label: "Serenity", bg: "bg-gradient-to-br from-sky-400 to-cyan-300", icon: Droplets, border: "border-sky-500", badge: "bg-sky-50 text-sky-700", hover: "hover:bg-sky-50" }
 ];
 
@@ -73,7 +73,7 @@ const SkeletonLoader = () => (
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-16">
       {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm h-full min-h-[300px] flex flex-col">
+        <div key={i} className="bg-white/60 rounded-2xl border border-gray-100 overflow-hidden shadow-sm h-full min-h-[300px] flex flex-col">
           <div className="h-14 bg-slate-100 animate-pulse border-b border-slate-50"></div>
           <div className="p-0 flex-1">
             {[1, 2, 3, 4].map((j) => (
@@ -204,7 +204,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
         <div className="flex gap-2 mb-0 overflow-x-auto pb-2 scrollbar-hide">
             <button 
                 onClick={() => setFilterUnit("All")}
-                className={`px-6 py-3 rounded-t-xl font-bold text-sm transition-all flex items-center gap-2 border-t border-x ${filterUnit === "All" ? 'bg-white border-gray-200 text-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 relative top-[1px]' : 'bg-gray-100 border-transparent text-gray-400 hover:bg-gray-200 hover:text-gray-600'}`}
+                className={`px-6 py-3 rounded-t-xl font-bold text-sm transition-all flex items-center gap-2 border-t border-x ${filterUnit === "All" ? 'bg-white/80 backdrop-blur-sm border-gray-200 text-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 relative top-[1px]' : 'bg-gray-100 border-transparent text-gray-400 hover:bg-gray-200 hover:text-gray-600'}`}
             >
                 <Users className="w-4 h-4" /> Master List
             </button>
@@ -212,7 +212,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                 <button 
                     key={u.key} 
                     onClick={() => setFilterUnit(u.key)}
-                    className={`px-6 py-3 rounded-t-xl font-bold text-sm transition-all flex items-center gap-2 border-t border-x ${filterUnit === u.key ? 'bg-white border-gray-200 text-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 relative top-[1px]' : 'bg-gray-100 border-transparent text-gray-400 hover:bg-gray-200 hover:text-gray-600'}`}
+                    className={`px-6 py-3 rounded-t-xl font-bold text-sm transition-all flex items-center gap-2 border-t border-x ${filterUnit === u.key ? 'bg-white/80 backdrop-blur-sm border-gray-200 text-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 relative top-[1px]' : 'bg-gray-100 border-transparent text-gray-400 hover:bg-gray-200 hover:text-gray-600'}`}
                 >
                     <u.icon className={`w-4 h-4 ${filterUnit === u.key ? 'text-blue-600' : ''}`} /> {u.label}
                 </button>
@@ -220,7 +220,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
         </div>
 
         {/* 2. MAIN CONTENT AREA (White "Paper" Background) */}
-        <div className="bg-white border border-gray-200 rounded-b-2xl rounded-tr-2xl shadow-sm min-h-[500px] p-6 relative z-0">
+        <div className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-b-2xl rounded-tr-2xl shadow-sm min-h-[500px] p-6 relative z-0">
             
             {/* NEW DATA INPUT FORM */}
             {showAddForm && <IntakeForm onSave={onAddStudent} units={UNIT_CONFIG} />}
@@ -269,7 +269,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                             <div 
                                 key={s.id} 
                                 onClick={() => setEditingStudent(s)}
-                                className={`p-4 border border-gray-200 rounded-xl shadow-sm bg-white cursor-pointer transition-all group flex flex-col gap-2 border-t-4 ${unit.border} ${unit.hover} hover:shadow-md`}
+                                className={`p-4 border border-gray-200 rounded-xl shadow-sm bg-white/60 backdrop-blur-sm cursor-pointer transition-all group flex flex-col gap-2 border-t-4 ${unit.border} ${unit.hover} hover:shadow-md`}
                             >
                                 <div className="flex justify-between items-start">
                                     <div className="font-bold text-slate-700 text-lg group-hover:text-blue-600">{s.studentName}</div>
