@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { cosmosService } from '../../services/cosmosService';
-import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets } from 'lucide-react';
+import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer } from 'lucide-react';
 
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target },
@@ -343,76 +343,110 @@ function KTEAReporter({ user, activeStudent }) {
 
       {/* --- SPREADSHEET PREVIEW MODAL --- */}
       {showPreview && (
-        <div className="fixed inset-0 bg-black/60 z-[1000] flex justify-center items-center backdrop-blur-sm p-10">
-            <div className="bg-white w-full h-full max-w-6xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+        <div className="fixed inset-0 bg-black/60 z-[1000] flex justify-center items-center backdrop-blur-sm p-10 print:p-0">
+            <div className="bg-white w-full h-full max-w-6xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 print:max-w-none print:max-h-none print:rounded-none print:shadow-none print:h-auto print:w-auto print:absolute print:inset-0 print:z-[9999]">
+                <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50 print:hidden">
                     <h3 className="m-0 text-lg font-bold text-slate-700 flex items-center gap-2"><Eye className="w-5 h-5 text-purple-500" /> Spreadsheet Preview</h3>
-                    <button onClick={() => setShowPreview(false)} className="bg-white border border-gray-300 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-100 hover:text-red-600 transition-colors flex items-center gap-1"><X className="w-4 h-4" /> Close</button>
+                    <div className="flex gap-2">
+                        <button onClick={() => window.print()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors flex items-center gap-1"><Printer className="w-4 h-4" /> Print</button>
+                        <button onClick={() => setShowPreview(false)} className="bg-white border border-gray-300 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-100 hover:text-red-600 transition-colors flex items-center gap-1"><X className="w-4 h-4" /> Close</button>
+                    </div>
                 </div>
-                <div className="flex-1 p-8 overflow-auto bg-slate-50">
+                <div className="flex-1 p-8 overflow-auto bg-slate-50 print:bg-white print:p-4 print:overflow-visible">
                     {Object.keys(previewData).length === 0 ? <p className="text-center text-gray-400">No data found.</p> : 
                      Object.keys(previewData).sort().map(unit => (
                         <div key={unit} className="mb-8 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                            <h4 className="bg-gray-100 p-3 m-0 border-b border-gray-200 font-bold text-sm text-slate-700 uppercase tracking-wider">{unit}</h4>
+                            <h4 className="bg-slate-100 p-3 m-0 border-b border-gray-200 font-bold text-sm text-slate-700 uppercase tracking-wider flex justify-between items-center">
+                                <span>{unit}</span>
+                                <span className="text-[10px] bg-white border border-gray-300 px-2 py-0.5 rounded-full text-slate-500">{previewData[unit].length} Students</span>
+                            </h4>
                             <div className="overflow-x-auto">
-                                <table className="w-full border-collapse text-[11px] font-mono">
+                                <table className="w-full border-collapse text-[10px] font-sans">
                                     <thead>
-                                        {/* Row 1: Main Headers */}
-                                        <tr className="bg-slate-800 text-white">
-                                            <th colSpan="2" className="border border-slate-600 p-2">Student Info</th>
-                                            <th colSpan="9" className="border border-slate-600 p-2 border-r-2 border-r-white/20">PRE-TEST</th>
-                                            <th colSpan="9" className="border border-slate-600 p-2">POST-TEST</th>
-                                            <th colSpan="3" className="border border-slate-600 p-2">Dates</th>
+                                        <tr className="bg-slate-800 text-white print:bg-black">
+                                            <th colSpan="2" className="border border-slate-600 p-1">Student</th>
+                                            <th colSpan="9" className="border border-slate-600 p-1 bg-sky-700 text-sky-50">PRE-TEST (Entry)</th>
+                                            <th colSpan="9" className="border border-slate-600 p-1 bg-emerald-700 text-emerald-50">POST-TEST (Exit)</th>
+                                            <th colSpan="3" className="border border-slate-600 p-1">Admin</th>
                                         </tr>
-                                        {/* Row 2: Subjects */}
-                                        <tr className="bg-slate-700 text-white text-[10px]">
-                                            <th className="border border-slate-600 p-1.5">Name</th>
-                                            <th className="border border-slate-600 p-1.5">Grd</th>
+                                        <tr className="bg-slate-100 text-slate-600 font-bold text-[9px] uppercase tracking-wider">
+                                            <th className="border border-slate-300 p-1 w-32 text-left">Name</th>
+                                            <th className="border border-slate-300 p-1 w-8">Gr</th>
                                             
-                                            {/* Pre Subjects */}
-                                            <th colSpan="3" className="border border-slate-600 p-1.5">Reading</th>
-                                            <th colSpan="3" className="border border-slate-600 p-1.5">Math</th>
-                                            <th colSpan="3" className="border border-slate-600 p-1.5 border-r-2 border-r-white/20">Writing</th>
-                                            
-                                            {/* Post Subjects */}
-                                            <th colSpan="3" className="border border-slate-600 p-1.5">Reading</th>
-                                            <th colSpan="3" className="border border-slate-600 p-1.5">Math</th>
-                                            <th colSpan="3" className="border border-slate-600 p-1.5">Writing</th>
+                                            {/* Pre Headers */}
+                                            <th className="border border-slate-300 p-1 bg-sky-50 text-sky-800" colSpan="3">Reading</th>
+                                            <th className="border border-slate-300 p-1 bg-sky-50 text-sky-800" colSpan="3">Math</th>
+                                            <th className="border border-slate-300 p-1 bg-sky-50 text-sky-800" colSpan="3">Writing</th>
 
-                                            <th className="border border-slate-600 p-1.5">Admit</th>
-                                            <th className="border border-slate-600 p-1.5">Discharge</th>
-                                            <th className="border border-slate-600 p-1.5">Teacher</th>
+                                            {/* Post Headers */}
+                                            <th className="border border-slate-300 p-1 bg-emerald-50 text-emerald-800" colSpan="3">Reading</th>
+                                            <th className="border border-slate-300 p-1 bg-emerald-50 text-emerald-800" colSpan="3">Math</th>
+                                            <th className="border border-slate-300 p-1 bg-emerald-50 text-emerald-800" colSpan="3">Writing</th>
+
+                                            <th className="border border-slate-300 p-1 w-16">Admit</th>
+                                            <th className="border border-slate-300 p-1 w-16">Disch</th>
+                                            <th className="border border-slate-300 p-1 w-20">Teacher</th>
                                         </tr>
-                                        {/* Row 3: Sub-Headers (Raw/Std/GE) */}
-                                        <tr className="text-[9px] text-center font-bold bg-gray-100 text-gray-500">
-                                            <td className="border border-gray-300 p-1"></td>
-                                            <td className="border border-gray-300 p-1"></td>
-                                            {/* Pre Loop */}
-                                            {[1,2,3].map(i => <React.Fragment key={i}><td className="border border-gray-300 p-1 bg-yellow-50 text-yellow-700">Raw</td><td className="border border-gray-300 p-1">Std</td><td className="border border-gray-300 p-1">GE</td></React.Fragment>)}
-                                            {/* Post Loop */}
-                                            {[1,2,3].map(i => <React.Fragment key={i}><td className="border border-gray-300 p-1 bg-yellow-50 text-yellow-700">Raw</td><td className="border border-gray-300 p-1">Std</td><td className="border border-gray-300 p-1">GE</td></React.Fragment>)}
-                                            <td colSpan="3" className="border border-gray-300 p-1"></td>
+                                        <tr className="text-[8px] text-center text-slate-400 bg-white">
+                                            <td className="border border-slate-200"></td>
+                                            <td className="border border-slate-200"></td>
+                                            
+                                            {/* Pre Sub-headers */}
+                                            {[1,2,3].map(k => (
+                                                <React.Fragment key={k}>
+                                                    <td className="border border-slate-200 bg-sky-50/50">Raw</td>
+                                                    <td className="border border-slate-200 bg-sky-50/50">Std</td>
+                                                    <td className="border border-slate-200 bg-sky-50/50 font-bold text-sky-700">GE</td>
+                                                </React.Fragment>
+                                            ))}
+
+                                            {/* Post Sub-headers */}
+                                            {[1,2,3].map(k => (
+                                                <React.Fragment key={k}>
+                                                    <td className="border border-slate-200 bg-emerald-50/50">Raw</td>
+                                                    <td className="border border-slate-200 bg-emerald-50/50">Std</td>
+                                                    <td className="border border-slate-200 bg-emerald-50/50 font-bold text-emerald-700">GE</td>
+                                                </React.Fragment>
+                                            ))}
+                                            
+                                            <td colSpan="3" className="border border-slate-200"></td>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {previewData[unit].map((s, idx) => (
-                                            <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                                                <td className="border border-gray-200 p-1.5 text-left font-bold text-slate-700 whitespace-nowrap">{s.studentName}</td>
-                                                <td className="border border-gray-200 p-1.5 text-center">{s.gradeLevel}</td>
-                                                
+                                            <tr key={idx} className="hover:bg-gray-50 text-center border-b border-gray-200">
+                                                <td className="border-r border-gray-200 p-1 text-left font-bold text-slate-700 truncate max-w-[150px]">{s.studentName}</td>
+                                                <td className="border-r border-gray-200 p-1">{s.gradeLevel}</td>
+
                                                 {/* Pre Scores */}
-                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.preReadingRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.preReadingStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.preReadingGE}</td>
-                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.preMathRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.preMathStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.preMathGE}</td>
-                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.preWritingRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.preWritingStd}</td><td className="border-r-2 border-r-gray-300 border-y border-y-gray-200 p-1.5 text-center font-bold">{s.preWritingGE}</td>
+                                                <td className="p-1 bg-sky-50/30 border-r border-sky-100">{s.preReadingRaw}</td>
+                                                <td className="p-1 bg-sky-50/30 border-r border-sky-100">{s.preReadingStd}</td>
+                                                <td className="p-1 bg-sky-100/50 border-r border-sky-200 font-bold text-sky-900">{s.preReadingGE}</td>
+
+                                                <td className="p-1 bg-sky-50/30 border-r border-sky-100">{s.preMathRaw}</td>
+                                                <td className="p-1 bg-sky-50/30 border-r border-sky-100">{s.preMathStd}</td>
+                                                <td className="p-1 bg-sky-100/50 border-r border-sky-200 font-bold text-sky-900">{s.preMathGE}</td>
+
+                                                <td className="p-1 bg-sky-50/30 border-r border-sky-100">{s.preWritingRaw}</td>
+                                                <td className="p-1 bg-sky-50/30 border-r border-sky-100">{s.preWritingStd}</td>
+                                                <td className="p-1 bg-sky-100/50 border-r border-slate-300 font-bold text-sky-900">{s.preWritingGE}</td>
 
                                                 {/* Post Scores */}
-                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.postReadingRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.postReadingStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.postReadingGE}</td>
-                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.postMathRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.postMathStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.postMathGE}</td>
-                                                <td className="border border-gray-200 p-1.5 text-center bg-yellow-50/50">{s.postWritingRaw}</td><td className="border border-gray-200 p-1.5 text-center text-gray-500">{s.postWritingStd}</td><td className="border border-gray-200 p-1.5 text-center font-bold">{s.postWritingGE}</td>
+                                                <td className="p-1 bg-emerald-50/30 border-r border-emerald-100">{s.postReadingRaw}</td>
+                                                <td className="p-1 bg-emerald-50/30 border-r border-emerald-100">{s.postReadingStd}</td>
+                                                <td className="p-1 bg-emerald-100/50 border-r border-emerald-200 font-bold text-emerald-900">{s.postReadingGE}</td>
 
-                                                <td className="border border-gray-200 p-1.5 text-center whitespace-nowrap text-gray-500">{s.admitDate}</td>
-                                                <td className="border border-gray-200 p-1.5 text-center whitespace-nowrap text-gray-500">{s.dischargeDate}</td>
-                                                <td className="border border-gray-200 p-1.5 text-center whitespace-nowrap text-gray-500">{s.teacherName}</td>
+                                                <td className="p-1 bg-emerald-50/30 border-r border-emerald-100">{s.postMathRaw}</td>
+                                                <td className="p-1 bg-emerald-50/30 border-r border-emerald-100">{s.postMathStd}</td>
+                                                <td className="p-1 bg-emerald-100/50 border-r border-emerald-200 font-bold text-emerald-900">{s.postMathGE}</td>
+
+                                                <td className="p-1 bg-emerald-50/30 border-r border-emerald-100">{s.postWritingRaw}</td>
+                                                <td className="p-1 bg-emerald-50/30 border-r border-emerald-100">{s.postWritingStd}</td>
+                                                <td className="p-1 bg-emerald-100/50 border-r border-slate-300 font-bold text-emerald-900">{s.postWritingGE}</td>
+                                                
+                                                <td className="p-1 text-[9px] text-slate-500 border-r border-gray-200">{s.admitDate}</td>
+                                                <td className="p-1 text-[9px] text-slate-500 border-r border-gray-200">{s.dischargeDate}</td>
+                                                <td className="p-1 text-[9px] text-slate-500 truncate max-w-[80px]">{s.teacherName}</td>
                                             </tr>
                                         ))}
                                     </tbody>
