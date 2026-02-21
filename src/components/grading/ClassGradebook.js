@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Save, X, Calculator, TrendingUp, BookOpen, GraduationCap } from 'lucide-react';
+import { Plus, Save, X, Calculator, TrendingUp, BookOpen, GraduationCap, FileDown } from 'lucide-react';
+import ReportCardExportModal from './ReportCardExportModal';
 
 // --- STEP 1: DUMMY DATA SETUP ---
 // We define our initial data outside the component to simulate a database load.
@@ -46,6 +47,10 @@ const ClassGradebook = () => {
     categoryId: 'hw',
     maxScore: 100
   });
+
+  // Export Modal State
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [studentToExport, setStudentToExport] = useState(null);
 
   // --- STEP 5: THE MATH (WEIGHTED CALCULATION) ---
   // We use useMemo here so we don't re-calculate every single grade 
@@ -131,6 +136,16 @@ const ClassGradebook = () => {
     return cat ? cat.color : 'bg-gray-100 text-gray-800';
   };
 
+  // Opens the export modal for a specific student
+  const handleOpenExport = (student) => {
+    const finalPct = finalGrades[student.id] || 0;
+    setStudentToExport({
+      name: student.name,
+      finalPercentage: finalPct
+    });
+    setIsExportModalOpen(true);
+  };
+
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-slate-50 p-6 font-sans text-slate-800">
@@ -208,8 +223,19 @@ const ClassGradebook = () => {
                     
                     {/* Fixed First Column: Student Name */}
                     <td className="p-4 font-bold text-slate-800 border-r border-slate-200 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
-                      {student.name}
-                      <div className="text-[10px] text-slate-400 font-normal">ID: {student.id}</div>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          {student.name}
+                          <div className="text-[10px] text-slate-400 font-normal">ID: {student.id}</div>
+                        </div>
+                        <button 
+                          onClick={() => handleOpenExport(student)}
+                          className="text-slate-300 hover:text-blue-600 transition-colors p-1"
+                          title="Export Report Card"
+                        >
+                          <FileDown className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
 
                     {/* STEP 4: GRADE ENTRY CELLS */}
@@ -322,6 +348,14 @@ const ClassGradebook = () => {
           </div>
         </div>
       )}
+
+      {/* EXPORT MODAL INTEGRATION */}
+      <ReportCardExportModal 
+        isOpen={isExportModalOpen} 
+        onClose={() => setIsExportModalOpen(false)} 
+        student={studentToExport}
+        currentSubject="Elective 1" // In a real app, this might be dynamic based on the class selected
+      />
 
     </div>
   );
