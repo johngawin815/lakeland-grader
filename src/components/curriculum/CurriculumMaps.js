@@ -426,8 +426,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#455a64]`}>August</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#78909c]`}>September</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#5e35b1]`}>August</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1e88e5]`}>September</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -436,7 +436,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#455a64]`}>Literature</td>
+                        <td className={`${tdSubjectClass} text-[#4527a0]`}>Literature</td>
                         <td className={tdClass}><Topic name="Holes / Out of My Mind" code="RL.1.A" desc="Read and comprehend literature, including stories, dramas, and poems." /></td>
                         <td className={tdClass}><Topic name="Novel Study" code="RL.1.D" desc="Determine a theme or central idea of a text and analyze its development." /></td>
                         <td className={tdClass}><Topic name="Character vs. Nature" code="RL.1.B" desc="Analyze how complex characters develop over the course of a text." /></td>
@@ -447,7 +447,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Dystopian Genre" code="RL.3.C" desc="Analyze how a modern work of fiction draws on themes, patterns of events, or character types." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#d35400]`}>Writing</td>
+                        <td className={`${tdSubjectClass} text-[#d84315]`}>Writing</td>
                         <td className={tdClass}><Topic name="RACES Intro" code="W.2.A" desc="Produce clear and coherent writing in which the development, organization, and style are appropriate." /></td>
                         <td className={tdClass}><Topic name="Restate & Answer" code="W.1.A" desc="Introduce a topic clearly, previewing what is to follow." /></td>
                         <td className={tdClass}><Topic name="Citing Evidence" code="W.1.B" desc="Develop the topic with relevant, well-chosen facts, definitions, and concrete details." /></td>
@@ -458,7 +458,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Final Polish" code="L.1.A" desc="Demonstrate command of the conventions of standard English grammar and usage." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#27ae60]`}>Vocab & Lang</td>
+                        <td className={`${tdSubjectClass} text-[#00695c]`}>Vocab & Lang</td>
                         <td className={tdClass}><Topic name="Parts of Speech" slides={getGrammar('01_aug', 'slides')} keyPdf={getGrammar('01_aug', 'key')} code="L.1.A" desc="Explain the function of phrases and clauses in general and their function in specific sentences." /></td>
                         <td className={tdClass}><Topic name="Punctuation" code="L.1.B" desc="Demonstrate command of the conventions of standard English capitalization, punctuation, and spelling." /></td>
                         <td className={tdClass}><Topic name="Doodle Vocab" code="L.1.B" desc="Determine or clarify the meaning of unknown and multiple-meaning words." /></td>
@@ -478,8 +478,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#455a64]`}>October</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#78909c]`}>November</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#5e35b1]`}>October</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1e88e5]`}>November</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -488,7 +488,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#455a64]`}>Literature</td>
+                        <td className={`${tdSubjectClass} text-[#4527a0]`}>Literature</td>
                         <td className={tdClass}><Topic name="The Giver (Cont.)" code="RL.1.A" desc="Analyze how particular lines of dialogue or incidents in a story or drama propel the action." /></td>
                         <td className={tdClass}><Topic name="Sci-Fi Elements" code="RL.2.A" desc="Compare and contrast the structure of two or more texts." /></td>
                         <td className={tdClass}><Topic name="Theme: Memory" code="RL.1.D" desc="Determine a theme or central idea of a text and analyze its development over the course of the text." /></td>
@@ -499,7 +499,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Social Division" code="RI.2.D" desc="Delineate and evaluate the argument and specific claims in a text." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#d35400]`}>Writing</td>
+                        <td className={`${tdSubjectClass} text-[#d84315]`}>Writing</td>
                         <td className={tdClass}><Topic name="Expanded Paragraphs" code="W.1.A" desc="Write informative/explanatory texts to examine a topic and convey ideas." /></td>
                         <td className={tdClass}><Topic name="Topic Sentences" code="W.1.A" desc="Introduce a topic clearly, previewing what is to follow." /></td>
                         <td className={tdClass}><Topic name="Transitions" code="W.1.C" desc="Use appropriate and varied transitions to create cohesion." /></td>
@@ -510,7 +510,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Reflective Conclusion" code="W.1.B" desc="Provide a conclusion that follows from and reflects on the narrated experiences or events." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#27ae60]`}>Vocab & Lang</td>
+                        <td className={`${tdSubjectClass} text-[#00695c]`}>Vocab & Lang</td>
                         <td className={tdClass}><Topic name="Complex Sentences" slides={getGrammar('03_oct', 'slides')} keyPdf={getGrammar('03_oct', 'key')} code="L.1.A" desc="Produce complete sentences, recognizing and correcting inappropriate fragments and run-ons." /></td>
                         <td className={tdClass}><Topic name="Commas & Clauses" code="L.1.B" desc="Use punctuation (comma, ellipsis, dash) to indicate a pause or break." /></td>
                         <td className={tdClass}><Topic name="Doodle Vocab 2" code="L.2.B" desc="Acquire and use accurately grade-appropriate general academic words." /></td>
@@ -530,8 +530,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#455a64]`}>December</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#78909c]`}>January</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#5e35b1]`}>December</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1e88e5]`}>January</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -540,7 +540,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#455a64]`}>Literature</td>
+                        <td className={`${tdSubjectClass} text-[#4527a0]`}>Literature</td>
                         <td className={tdClass}><Topic name="Call of the Wild" code="RL.3.C" desc="Analyze how a modern work of fiction draws on themes from myths or traditional stories." /></td>
                         <td className={tdClass}><Topic name="Mrs. Frisby / NIMH" code="RL.1.B" desc="Analyze how particular elements of a story interact (e.g., how setting shapes the characters)." /></td>
                         <td className={tdClass}><Topic name="Survival Themes" code="RL.1.D" desc="Determine a theme or central idea of a text." /></td>
@@ -551,7 +551,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Hero's Journey" code="RL.2.B" desc="Analyze how an author's choices create such effects as mystery, tension, or surprise." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#d35400]`}>Writing</td>
+                        <td className={`${tdSubjectClass} text-[#d84315]`}>Writing</td>
                         <td className={tdClass}><Topic name="Argument Intro" code="W.2.A" desc="Write arguments to support claims with clear reasons and relevant evidence." /></td>
                         <td className={tdClass}><Topic name="Claim Statements" code="W.2.A" desc="Introduce claim(s), acknowledge and distinguish the claim(s) from alternate or opposing claims." /></td>
                         <td className={tdClass}><Topic name="Counter-Claims" code="W.2.A" desc="Develop claim(s) and counterclaims fairly, supplying evidence." /></td>
@@ -562,7 +562,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Citations" code="W.3.A" desc="Quote or paraphrase the data and conclusions of others while avoiding plagiarism." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#27ae60]`}>Vocab & Lang</td>
+                        <td className={`${tdSubjectClass} text-[#00695c]`}>Vocab & Lang</td>
                         <td className={tdClass}><Topic name="Greek Roots" slides={getGrammar('05_dec', 'slides')} keyPdf={getGrammar('05_dec', 'key')} code="L.1.B" desc="Use common, grade-appropriate Greek or Latin affixes and roots." /></td>
                         <td className={tdClass}><Topic name="Latin Roots" code="L.1.B" desc="Use common, grade-appropriate Greek or Latin affixes and roots." /></td>
                         <td className={tdClass}><Topic name="Affixes Review" code="L.1.B" desc="Determine or clarify the meaning of unknown words." /></td>
@@ -582,8 +582,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#455a64]`}>February</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#78909c]`}>March</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#5e35b1]`}>February</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1e88e5]`}>March</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -592,7 +592,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#455a64]`}>Literature</td>
+                        <td className={`${tdSubjectClass} text-[#4527a0]`}>Literature</td>
                         <td className={tdClass}><Topic name="Ready Player One" code="RL.3.C" desc="Analyze how an author draws on and transforms source material in a specific work." /></td>
                         <td className={tdClass}><Topic name="Virtual Reality Themes" code="RL.3.B" desc="Evaluate the advantages and disadvantages of using different mediums." /></td>
                         <td className={tdClass}><Topic name="Quest Narratives" code="RL.2.B" desc="Analyze the structure of texts, including how specific sentences develop the concept." /></td>
@@ -603,7 +603,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Fantasy Elements" code="RL.3.C" desc="Analyze how a modern work of fiction draws on themes, patterns of events, or character types." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#d35400]`}>Writing</td>
+                        <td className={`${tdSubjectClass} text-[#d84315]`}>Writing</td>
                         <td className={tdClass}><Topic name="Research Skills" code="W.3.A" desc="Conduct short as well as more sustained research projects." /></td>
                         <td className={tdClass}><Topic name="Source Integration" code="W.3.A" desc="Gather relevant information from multiple print and digital sources." /></td>
                         <td className={tdClass}><Topic name="Paraphrasing" code="W.3.A" desc="Quote or paraphrase the data and conclusions of others." /></td>
@@ -614,7 +614,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Presentation" code="SL.2.A" desc="Present claims and findings, emphasizing salient points in a focused manner." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#27ae60]`}>Vocab & Lang</td>
+                        <td className={`${tdSubjectClass} text-[#00695c]`}>Vocab & Lang</td>
                         <td className={tdClass}><Topic name="Greek/Latin III" slides={getGrammar('07_feb', 'slides')} keyPdf={getGrammar('07_feb', 'key')} code="L.1.B" desc="Use common, grade-appropriate Greek or Latin affixes and roots." /></td>
                         <td className={tdClass}><Topic name="Analogies" code="L.2.A" desc="Demonstrate understanding of word relationships and nuances in word meanings." /></td>
                         <td className={tdClass}><Topic name="Figures of Speech" code="L.2.A" desc="Interpret figures of speech (e.g., euphemism, oxymoron) in context." /></td>
@@ -634,8 +634,8 @@ function EnglishContent() {
                 <thead>
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#455a64]`}>April</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#78909c]`}>May</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#5e35b1]`}>April</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1e88e5]`}>May</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -644,7 +644,7 @@ function EnglishContent() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#455a64]`}>Literature</td>
+                        <td className={`${tdSubjectClass} text-[#4527a0]`}>Literature</td>
                         <td className={tdClass}><Topic name="Greek Mythology" code="RL.3.C" desc="Analyze how a modern work of fiction draws on themes, patterns of events, or character types from myths." /></td>
                         <td className={tdClass}><Topic name="The Odyssey" code="RL.3.D" desc="Read and comprehend literature in the 6-12 text complexity band." /></td>
                         <td className={tdClass}><Topic name="Epic Heroes" code="RL.1.B" desc="Analyze how complex characters develop over the course of a text." /></td>
@@ -655,7 +655,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="End of Year Review" code="RL.3.C" desc="Demonstrate knowledge of eighteenth-, nineteenth- and early-twentieth-century foundational works." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#d35400]`}>Writing</td>
+                        <td className={`${tdSubjectClass} text-[#d84315]`}>Writing</td>
                         <td className={tdClass}><Topic name="Creative Writing" code="W.1.B" desc="Write narratives to develop real or imagined experiences or events." /></td>
                         <td className={tdClass}><Topic name="Myth Creation" code="W.1.B" desc="Use narrative techniques, such as dialogue, pacing, and description." /></td>
                         <td className={tdClass}><Topic name="Descriptive Lang" code="W.1.B" desc="Use precise words and phrases, relevant descriptive details, and sensory language." /></td>
@@ -666,7 +666,7 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Summer Reading" code="RL.3.D" desc="Read and comprehend complex literary and informational texts proficiently." /></td>
                     </tr>
                     <tr>
-                        <td className={`${tdSubjectClass} text-[#27ae60]`}>Vocab & Lang</td>
+                        <td className={`${tdSubjectClass} text-[#00695c]`}>Vocab & Lang</td>
                         <td className={tdClass}><Topic name="Mythology Vocab" slides={getGrammar('09_apr', 'slides')} keyPdf={getGrammar('09_apr', 'key')} code="L.2.B" desc="Acquire and use accurately grade-appropriate general academic and domain-specific words." /></td>
                         <td className={tdClass}><Topic name="Allusions" code="L.2.A" desc="Demonstrate understanding of figurative language, word relationships, and nuances." /></td>
                         <td className={tdClass}><Topic name="Etymology" code="L.1.B" desc="Use etymology (e.g., origin, history) as a clue to the meaning of a word." /></td>
