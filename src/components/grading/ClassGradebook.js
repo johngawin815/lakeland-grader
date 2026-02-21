@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Save, X, Calculator, TrendingUp, BookOpen, GraduationCap, FileDown } from 'lucide-react';
+import { Plus, Save, X, Calculator, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock } from 'lucide-react';
 import ReportCardExportModal from './ReportCardExportModal';
 
 // --- STEP 1: DUMMY DATA SETUP ---
@@ -33,12 +33,22 @@ const INITIAL_GRADES = {
   3: { 'a1': 50, 'a2': 10, 'a3': 98 }, // John's grades
 };
 
+// Dummy Attendance Data: { date: { studentId: status } }
+const INITIAL_ATTENDANCE = {
+  '2026-02-20': { 1: 'Present', 2: 'Absent', 3: 'Present', 4: 'Tardy', 5: 'Present' },
+};
+
 const ClassGradebook = () => {
   // --- STATE MANAGEMENT ---
   const [students] = useState(INITIAL_STUDENTS);
   const [categories] = useState(INITIAL_CATEGORIES);
   const [assignments, setAssignments] = useState(INITIAL_ASSIGNMENTS);
   const [grades, setGrades] = useState(INITIAL_GRADES);
+
+  // Attendance State
+  const [activeTab, setActiveTab] = useState('grades'); // 'grades' | 'attendance'
+  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendance, setAttendance] = useState(INITIAL_ATTENDANCE);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -146,6 +156,25 @@ const ClassGradebook = () => {
     setIsExportModalOpen(true);
   };
 
+  // --- ATTENDANCE HELPERS ---
+
+  // Calculates total absences for a specific student across all recorded dates
+  const getTotalAbsences = (studentId) => {
+    let count = 0;
+    Object.values(attendance).forEach(dayRecord => {
+      if (dayRecord[studentId] === 'Absent') count++;
+    });
+    return count;
+  };
+
+  // Updates the attendance status for a student on the current date
+  const handleAttendanceUpdate = (studentId, status) => {
+    setAttendance(prev => ({
+      ...prev,
+      [currentDate]: { ...(prev[currentDate] || {}), [studentId]: status }
+    }));
+  };
+
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-slate-50 p-6 font-sans text-slate-800">
@@ -162,116 +191,174 @@ const ClassGradebook = () => {
           </p>
         </div>
 
-        {/* STEP 2: CONTROLS SECTION */}
-        <div className="flex gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-xs font-bold text-slate-500">
-            <Calculator className="w-4 h-4" />
-            <span>Weighted: {categories.map(c => `${c.name} ${c.weight}%`).join(', ')}</span>
+        {/* CONTROLS SECTION (Only visible on Grades tab) */}
+        {activeTab === 'grades' && (
+          <div className="flex gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-xs font-bold text-slate-500">
+              <Calculator className="w-4 h-4" />
+              <span>Weighted: {categories.map(c => `${c.name} ${c.weight}%`).join(', ')}</span>
+            </div>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md"
+            >
+              <Plus className="w-4 h-4" /> Add Assignment
+            </button>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md"
-          >
-            <Plus className="w-4 h-4" /> Add Assignment
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* STEP 2: GRADEBOOK GRID */}
-      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[75vh]">
-        
-        {/* The table container handles the scrolling */}
-        <div className="overflow-auto flex-1 relative">
-          <table className="w-full border-collapse min-w-[800px]">
-            <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-bold tracking-wider sticky top-0 z-20 shadow-sm">
-              <tr>
-                {/* Fixed First Column: Student Name */}
-                <th className="p-4 text-left border-b border-r border-slate-200 sticky left-0 bg-slate-100 z-30 w-48 min-w-[12rem]">
-                  Student Name
-                </th>
+      {/* STEP 2: TAB NAVIGATION UI */}
+      <div className="max-w-7xl mx-auto mb-0 flex gap-1 border-b border-slate-200">
+        <button 
+          onClick={() => setActiveTab('grades')}
+          className={`px-6 py-3 font-bold text-sm transition-all rounded-t-lg flex items-center gap-2 ${activeTab === 'grades' ? 'bg-white border-x border-t border-slate-200 text-blue-600 -mb-px' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+        >
+          <BookOpen className="w-4 h-4" /> Gradebook
+        </button>
+        <button 
+          onClick={() => setActiveTab('attendance')}
+          className={`px-6 py-3 font-bold text-sm transition-all rounded-t-lg flex items-center gap-2 ${activeTab === 'attendance' ? 'bg-white border-x border-t border-slate-200 text-blue-600 -mb-px' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+        >
+          <Calendar className="w-4 h-4" /> Attendance
+        </button>
+      </div>
 
-                {/* Dynamic Middle Columns: Assignments */}
-                {assignments.map(assignment => (
-                  <th key={assignment.id} className="p-3 text-center border-b border-slate-200 min-w-[8rem]">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="truncate max-w-[120px]" title={assignment.name}>{assignment.name}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${getCategoryBadge(assignment.categoryId)}`}>
-                        {categories.find(c => c.id === assignment.categoryId)?.name.substring(0, 3)}
-                      </span>
-                      <span className="text-[9px] text-slate-400 font-normal">Max: {assignment.maxScore}</span>
+      {/* MAIN CONTENT AREA */}
+      <div className="max-w-7xl mx-auto bg-white rounded-b-xl rounded-tr-xl shadow-sm border border-slate-200 border-t-0 overflow-hidden flex flex-col h-[75vh]">
+        
+        {/* --- TAB 1: GRADEBOOK GRID --- */}
+        {activeTab === 'grades' && (
+          <div className="overflow-auto flex-1 relative">
+            <table className="w-full border-collapse min-w-[800px]">
+              <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-bold tracking-wider sticky top-0 z-20 shadow-sm">
+                <tr>
+                  <th className="p-4 text-left border-b border-r border-slate-200 sticky left-0 bg-slate-100 z-30 w-48 min-w-[12rem]">
+                    Student Name
+                  </th>
+                  {assignments.map(assignment => (
+                    <th key={assignment.id} className="p-3 text-center border-b border-slate-200 min-w-[8rem]">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="truncate max-w-[120px]" title={assignment.name}>{assignment.name}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${getCategoryBadge(assignment.categoryId)}`}>
+                          {categories.find(c => c.id === assignment.categoryId)?.name.substring(0, 3)}
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-normal">Max: {assignment.maxScore}</span>
+                      </div>
+                    </th>
+                  ))}
+                  <th className="p-4 text-center border-b border-l border-slate-200 sticky right-0 bg-slate-100 z-30 w-32 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
+                    <div className="flex items-center justify-center gap-1">
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                      Overall
                     </div>
                   </th>
-                ))}
-
-                {/* Fixed Last Column: Final Grade */}
-                <th className="p-4 text-center border-b border-l border-slate-200 sticky right-0 bg-slate-100 z-30 w-32 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
-                  <div className="flex items-center justify-center gap-1">
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
-                    Overall
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            
-            <tbody className="text-sm text-slate-700 divide-y divide-slate-100">
-              {students.map((student, idx) => {
-                const finalGrade = finalGrades[student.id];
-                const isPassing = finalGrade >= 60;
-
-                return (
-                  <tr key={student.id} className="hover:bg-slate-50 transition-colors group">
-                    
-                    {/* Fixed First Column: Student Name */}
-                    <td className="p-4 font-bold text-slate-800 border-r border-slate-200 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          {student.name}
-                          <div className="text-[10px] text-slate-400 font-normal">ID: {student.id}</div>
+                </tr>
+              </thead>
+              <tbody className="text-sm text-slate-700 divide-y divide-slate-100">
+                {students.map((student) => {
+                  const finalGrade = finalGrades[student.id];
+                  const isPassing = finalGrade >= 60;
+                  return (
+                    <tr key={student.id} className="hover:bg-slate-50 transition-colors group">
+                      <td className="p-4 font-bold text-slate-800 border-r border-slate-200 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
+                        <div className="flex justify-between items-center">
+                          <div>{student.name}<div className="text-[10px] text-slate-400 font-normal">ID: {student.id}</div></div>
+                          <button onClick={() => handleOpenExport(student)} className="text-slate-300 hover:text-blue-600 transition-colors p-1" title="Export Report Card"><FileDown className="w-4 h-4" /></button>
                         </div>
-                        <button 
-                          onClick={() => handleOpenExport(student)}
-                          className="text-slate-300 hover:text-blue-600 transition-colors p-1"
-                          title="Export Report Card"
-                        >
-                          <FileDown className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+                      </td>
+                      {assignments.map(assignment => {
+                        const score = grades[student.id]?.[assignment.id] ?? '';
+                        return (
+                          <td key={assignment.id} className="p-2 text-center border-r border-slate-100">
+                            <input type="number" min="0" max={assignment.maxScore} value={score} onChange={(e) => handleGradeChange(student.id, assignment.id, e.target.value)} className="w-16 p-1.5 text-center border border-slate-200 rounded focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all font-mono text-slate-700 bg-slate-50 focus:bg-white" placeholder="-" />
+                          </td>
+                        );
+                      })}
+                      <td className="p-4 text-center font-bold border-l border-slate-200 sticky right-0 bg-white group-hover:bg-slate-50 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
+                        {finalGrade !== null ? <span className={`px-3 py-1 rounded-full text-xs ${isPassing ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{finalGrade.toFixed(1)}%</span> : <span className="text-slate-300 text-xs italic">N/A</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-                    {/* STEP 4: GRADE ENTRY CELLS */}
-                    {assignments.map(assignment => {
-                      const score = grades[student.id]?.[assignment.id] ?? '';
+        {/* --- TAB 2: ATTENDANCE UI --- */}
+        {activeTab === 'attendance' && (
+          <div className="flex flex-col h-full">
+            {/* Attendance Toolbar */}
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center gap-4">
+              <label className="text-sm font-bold text-slate-600 uppercase tracking-wider">Select Date:</label>
+              <input 
+                type="date" 
+                value={currentDate}
+                onChange={(e) => setCurrentDate(e.target.value)}
+                className="p-2 rounded border border-slate-300 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+              <div className="ml-auto text-xs text-slate-400 italic">
+                Changes are saved automatically to local state.
+              </div>
+            </div>
+
+            {/* Attendance Roster */}
+            <div className="overflow-auto flex-1 p-6">
+              <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-100 text-slate-500 font-bold uppercase text-xs">
+                    <tr>
+                      <th className="p-4 border-b border-slate-200">Student</th>
+                      <th className="p-4 border-b border-slate-200 text-center">Status</th>
+                      <th className="p-4 border-b border-slate-200 text-right">Total Absences</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {students.map(student => {
+                      const status = attendance[currentDate]?.[student.id] || 'Present'; // Default to Present
+                      const totalAbsences = getTotalAbsences(student.id);
+
                       return (
-                        <td key={assignment.id} className="p-2 text-center border-r border-slate-100">
-                          <input
-                            type="number"
-                            min="0"
-                            max={assignment.maxScore}
-                            value={score}
-                            onChange={(e) => handleGradeChange(student.id, assignment.id, e.target.value)}
-                            className="w-16 p-1.5 text-center border border-slate-200 rounded focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all font-mono text-slate-700 bg-slate-50 focus:bg-white"
-                            placeholder="-"
-                          />
-                        </td>
+                        <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 font-bold text-slate-700">{student.name}</td>
+                          <td className="p-4 flex justify-center gap-2">
+                            {/* Present Button */}
+                            <button 
+                              onClick={() => handleAttendanceUpdate(student.id, 'Present')}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold border transition-all ${status === 'Present' ? 'bg-green-100 border-green-300 text-green-700 shadow-sm' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+                            >
+                              <Check className="w-3 h-3" /> Present
+                            </button>
+                            
+                            {/* Absent Button */}
+                            <button 
+                              onClick={() => handleAttendanceUpdate(student.id, 'Absent')}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold border transition-all ${status === 'Absent' ? 'bg-red-100 border-red-300 text-red-700 shadow-sm' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+                            >
+                              <XCircle className="w-3 h-3" /> Absent
+                            </button>
+
+                            {/* Tardy Button */}
+                            <button 
+                              onClick={() => handleAttendanceUpdate(student.id, 'Tardy')}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold border transition-all ${status === 'Tardy' ? 'bg-yellow-100 border-yellow-300 text-yellow-700 shadow-sm' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+                            >
+                              <Clock className="w-3 h-3" /> Tardy
+                            </button>
+                          </td>
+                          <td className="p-4 text-right font-mono font-bold text-slate-600">
+                            {totalAbsences}
+                          </td>
+                        </tr>
                       );
                     })}
-
-                    {/* Fixed Last Column: Final Grade Display */}
-                    <td className="p-4 text-center font-bold border-l border-slate-200 sticky right-0 bg-white group-hover:bg-slate-50 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.1)]">
-                      {finalGrade !== null ? (
-                        <span className={`px-3 py-1 rounded-full text-xs ${isPassing ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                          {finalGrade.toFixed(1)}%
-                        </span>
-                      ) : (
-                        <span className="text-slate-300 text-xs italic">N/A</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* STEP 3: ADD ASSIGNMENT MODAL */}
