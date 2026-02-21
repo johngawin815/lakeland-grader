@@ -4,12 +4,12 @@ import IntakeForm from './IntakeForm';
 import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X, Users, ChevronRight, Plus, StickyNote } from 'lucide-react';
 
 const UNIT_CONFIG = [
-  { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target },
-  { key: "Discovery", label: "Discovery", bg: "bg-gradient-to-br from-indigo-500 to-purple-600", icon: Telescope },
-  { key: "Freedom", label: "Freedom", bg: "bg-gradient-to-br from-teal-500 to-lime-500", icon: Bird },
-  { key: "Harmony", label: "Harmony", bg: "bg-gradient-to-br from-emerald-600 to-green-400", icon: Leaf },
-  { key: "Integrity", label: "Integrity", bg: "bg-gradient-to-br from-orange-400 to-red-400", icon: Flame },
-  { key: "Serenity", label: "Serenity", bg: "bg-gradient-to-br from-sky-400 to-cyan-300", icon: Droplets }
+  { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target, border: "border-red-500", badge: "bg-red-50 text-red-700", hover: "hover:bg-red-50" },
+  { key: "Discovery", label: "Discovery", bg: "bg-gradient-to-br from-indigo-500 to-purple-600", icon: Telescope, border: "border-indigo-500", badge: "bg-indigo-50 text-indigo-700", hover: "hover:bg-indigo-50" },
+  { key: "Freedom", label: "Freedom", bg: "bg-gradient-to-br from-teal-500 to-lime-500", icon: Bird, border: "border-teal-500", badge: "bg-teal-50 text-teal-700", hover: "hover:bg-teal-50" },
+  { key: "Harmony", label: "Harmony", bg: "bg-gradient-to-br from-emerald-600 to-green-400", icon: Leaf, border: "border-emerald-500", badge: "bg-emerald-50 text-emerald-700", hover: "hover:bg-emerald-50" },
+  { key: "Integrity", label: "Integrity", bg: "bg-gradient-to-br from-orange-400 to-red-400", icon: Flame, border: "border-orange-500", badge: "bg-orange-50 text-orange-700", hover: "hover:bg-orange-50" },
+  { key: "Serenity", label: "Serenity", bg: "bg-gradient-to-br from-sky-400 to-cyan-300", icon: Droplets, border: "border-sky-500", badge: "bg-sky-50 text-sky-700", hover: "hover:bg-sky-50" }
 ];
 
 // --- DATA GENERATOR (Creates 108 Fictional Students) ---
@@ -162,20 +162,6 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
   };
 
   // --- 4. ROSTER LOGIC ---
-  const getGroupedData = () => {
-    const groups = {};
-    UNIT_CONFIG.forEach(u => groups[u.key] = []);
-    groups["Other"] = [];
-
-    roster.forEach(s => {
-      let u = s.unitName || "Other";
-      u = u.charAt(0).toUpperCase() + u.slice(1); 
-      if (groups[u]) groups[u].push(s);
-      else groups["Other"].push(s);
-    });
-    return groups;
-  };
-
   const getDaysInProgram = (admit) => {
     if (!admit) return "N/A";
     const start = new Date(admit);
@@ -244,7 +230,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            <tr className="bg-slate-50 border-b border-gray-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 <th className="p-3">Student Name</th>
                                 <th className="p-3">Unit</th>
                                 <th className="p-3">Grade</th>
@@ -253,17 +239,19 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {roster.map(s => (
-                                <tr key={s.id} onClick={() => setEditingStudent(s)} className="hover:bg-blue-50 cursor-pointer transition-colors group">
+                            {roster.map(s => {
+                                const unit = UNIT_CONFIG.find(u => u.key === s.unitName) || UNIT_CONFIG[0];
+                                return (
+                                <tr key={s.id} onClick={() => setEditingStudent(s)} className={`cursor-pointer transition-colors group border-l-4 ${unit.border} ${unit.hover}`}>
                                     <td className="p-3 font-bold text-slate-700 group-hover:text-blue-600">{s.studentName}</td>
-                                    <td className="p-3 text-sm text-slate-500"><span className="px-2 py-1 bg-gray-100 rounded text-xs font-bold">{s.unitName}</span></td>
+                                    <td className="p-3 text-sm text-slate-500"><span className={`px-2.5 py-1 rounded-md text-xs font-bold ${unit.badge}`}>{s.unitName}</span></td>
                                     <td className="p-3 text-sm text-slate-500">{s.gradeLevel}th</td>
                                     <td className="p-3 text-sm text-slate-500">{s.district || "-"}</td>
                                     <td className="p-3 text-right">
                                         {s.iep === "Yes" && <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-bold border border-amber-200">IEP</span>}
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                 </div>
@@ -275,11 +263,13 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                     {roster.filter(s => s.unitName === filterUnit).length === 0 ? (
                         <div className="col-span-full text-center py-20 text-gray-300 italic">No students assigned to this unit.</div>
                     ) : (
-                        roster.filter(s => s.unitName === filterUnit).map(s => (
+                        roster.filter(s => s.unitName === filterUnit).map(s => {
+                            const unit = UNIT_CONFIG.find(u => u.key === s.unitName) || UNIT_CONFIG[0];
+                            return (
                             <div 
                                 key={s.id} 
                                 onClick={() => setEditingStudent(s)}
-                                className="p-4 border border-gray-200 rounded-xl hover:shadow-lg hover:border-blue-300 bg-white cursor-pointer transition-all group flex flex-col gap-2"
+                                className={`p-4 border border-gray-200 rounded-xl shadow-sm bg-white cursor-pointer transition-all group flex flex-col gap-2 border-t-4 ${unit.border} ${unit.hover} hover:shadow-md`}
                             >
                                 <div className="flex justify-between items-start">
                                     <div className="font-bold text-slate-700 text-lg group-hover:text-blue-600">{s.studentName}</div>
@@ -290,7 +280,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                                     <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500" />
                                 </div>
                             </div>
-                        ))
+                        )})
                     )}
                 </div>
             )}
