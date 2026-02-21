@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { cosmosService } from '../../services/cosmosService';
 import IntakeForm from './IntakeForm';
-import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets } from 'lucide-react';
+import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X } from 'lucide-react';
 
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", bg: "bg-gradient-to-br from-red-600 to-red-500", icon: Target },
@@ -90,6 +90,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false); 
   const [filterUnit, setFilterUnit] = useState("All");
+  const [editingStudent, setEditingStudent] = useState(null);
 
   // --- 1. DATA LOADING ---
   useEffect(() => {
@@ -135,7 +136,26 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
     alert(`✅ Added ${data.studentName} to ${data.unitName}`);
   };
 
-  // --- 3. ROSTER LOGIC ---
+  // --- 3. UPDATE STUDENT HANDLER ---
+  const handleUpdateStudent = async (updatedData) => {
+    setLoading(true);
+    try {
+        // 1. Update in Database
+        await cosmosService.updateItem(updatedData.id, updatedData);
+
+        // 2. Update Local State
+        setRoster(prev => prev.map(s => s.id === updatedData.id ? updatedData : s));
+        
+        // 3. Close Modal
+        setEditingStudent(null);
+    } catch (error) {
+        console.error("Update failed", error);
+        alert("Failed to update student record.");
+    }
+    setLoading(false);
+  };
+
+  // --- 4. ROSTER LOGIC ---
   const getGroupedData = () => {
     const groups = {};
     UNIT_CONFIG.forEach(u => groups[u.key] = []);
@@ -225,8 +245,8 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                                 students.map(s => (
                                     <div 
                                         key={s.id} 
-                                        onClick={() => setActiveStudent(s.studentName)}
-                                        className={`cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors group ${filterUnit === "All" ? "px-5 py-3 border-b border-gray-50" : "p-4 border border-gray-200 rounded-xl hover:shadow-md bg-white"}`}
+                                        onClick={() => setEditingStudent(s)}
+                                        className={`cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-all duration-200 group hover:ring-2 hover:ring-blue-400 ${filterUnit === "All" ? "px-5 py-3 border-b border-gray-50" : "p-4 border border-gray-200 rounded-xl hover:shadow-md bg-white"}`}
                                     >
                                         <div>
                                             <div className="font-bold text-slate-700 text-sm mb-0.5 group-hover:text-blue-600 transition-colors">{s.studentName}</div>
@@ -243,6 +263,15 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                 );
             })}
         </div>
+
+        {/* EDIT MODAL */}
+        {editingStudent && (
+            <EditStudentModal 
+                student={editingStudent} 
+                onClose={() => setEditingStudent(null)} 
+                onSave={handleUpdateStudent} 
+            />
+        )}
       </div>
     );
   }
@@ -326,5 +355,66 @@ const ScoreBar = ({ label, pre, post, color }) => {
         </div>
     )
 }
+
+// --- EDIT MODAL COMPONENT ---
+const EditStudentModal = ({ student, onClose, onSave }) => {
+    const [formData, setFormData] = useState(student);
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? (checked ? "Yes" : "No") : value
+        }));
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">Edit Student Details</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 p-1 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                </div>
+                
+                <div className="p-6 space-y-4 overflow-y-auto">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name</label>
+                        <input name="studentName" value={formData.studentName} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-slate-700" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Grade Level</label>
+                            <select name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
+                                {[9, 10, 11, 12].map(g => <option key={g} value={g}>{g}th Grade</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Unit Assignment</label>
+                            <select name="unitName" value={formData.unitName} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white">
+                                {UNIT_CONFIG.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Local School District</label>
+                        <input name="district" value={formData.district || ""} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. Springfield Public Schools" />
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <input type="checkbox" name="iep" checked={formData.iep === "Yes"} onChange={handleChange} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
+                        <label className="text-sm font-bold text-slate-700">Student has an Active IEP</label>
+                    </div>
+                </div>
+
+                <div className="p-5 border-t border-gray-100 flex gap-3 bg-gray-50">
+                    <button onClick={onClose} className="flex-1 py-2.5 text-slate-600 font-bold hover:bg-gray-200 rounded-lg transition-colors">Cancel</button>
+                    <button onClick={() => onSave(formData)} className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default StudentMasterDashboard;
