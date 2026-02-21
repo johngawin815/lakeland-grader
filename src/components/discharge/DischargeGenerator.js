@@ -11,6 +11,7 @@ const BOILERPLATE_INTRO = "Lakeland Regional School operates within a Level IV r
 const DischargeGenerator = ({ user, activeStudent }) => {
   const { register, setValue, watch, handleSubmit, getValues } = useForm();
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [dbRecord, setDbRecord] = useState(null);
 
   // Watch all fields for live preview
@@ -59,6 +60,32 @@ const DischargeGenerator = ({ user, activeStudent }) => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSaveAndExport = async () => {
+    setSaving(true);
+    const data = getValues();
+
+    try {
+        // 1. Save Narratives to DB
+        if (dbRecord && dbRecord.id) {
+            const updatedData = {
+                ...dbRecord,
+                admissionReason: data.admissionReason,
+                behaviorNarrative: data.behaviorNarrative,
+                analysisNarrative: data.analysisNarrative
+            };
+            await cosmosService.updateItem(dbRecord.id, updatedData);
+        }
+
+        // 2. Log Audit
+        await cosmosService.logAudit(user, 'Generated Discharge', `Generated discharge summary for ${data.studentName}`);
+
+    } catch (error) {
+        console.error("Auto-save failed:", error);
+    } finally {
+        setSaving(false);
+    }
   };
 
   const handleDownloadDocx = async () => {
@@ -303,16 +330,26 @@ const DischargeGenerator = ({ user, activeStudent }) => {
         {/* Action Button */}
         <div className="mt-auto pt-4 border-t border-gray-100 flex gap-2">
             <button 
-                onClick={handlePrint} 
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                onClick={async () => {
+                    await handleSaveAndExport();
+                    handlePrint();
+                }} 
+                disabled={saving}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <Printer className="w-5 h-5" /> Print / Save PDF
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Printer className="w-5 h-5" />} 
+                {saving ? "Saving..." : "Print / Save PDF"}
             </button>
             <button 
-                onClick={handleDownloadDocx} 
-                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                onClick={async () => {
+                    await handleSaveAndExport();
+                    handleDownloadDocx();
+                }} 
+                disabled={saving}
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <Download className="w-5 h-5" /> Word Doc
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />} 
+                {saving ? "Saving..." : "Word Doc"}
             </button>
         </div>
       </div>
