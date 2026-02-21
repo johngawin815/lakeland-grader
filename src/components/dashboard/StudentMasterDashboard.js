@@ -34,6 +34,7 @@ const generateMockRoster = () => {
         admitDate: "2023-09-01",
         district: "Local School District",
         iep: i % 3 === 0 ? "Yes" : "No", // Every 3rd student has IEP
+        iepDueDate: i % 3 === 0 ? "2025-05-15" : null,
         // Scores
         preReadingGE: (Math.random() * 5 + 4).toFixed(1),
         postReadingGE: (Math.random() * 5 + 5).toFixed(1),
@@ -191,7 +192,15 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
         {/* HEADER AREA */}
         <div className="flex justify-between items-center mb-5 shrink-0">
             <div>
-                <h2 className="m-0 text-slate-800 text-2xl font-extrabold tracking-tight">Resident Roster</h2>
+                <h2 className="m-0 text-slate-800 text-2xl font-extrabold tracking-tight flex items-center gap-3">
+                    Resident Roster
+                    <span className="bg-blue-50 text-blue-600 text-sm px-3 py-1 rounded-full border border-blue-100 font-bold">
+                        {roster.length} Students
+                    </span>
+                    <span className="bg-amber-50 text-amber-600 text-sm px-3 py-1 rounded-full border border-amber-100 font-bold">
+                        {roster.filter(s => s.iep === "Yes").length} IEPs
+                    </span>
+                </h2>
                 <p className="m-1 text-slate-400 text-xs">Manage active students and unit assignments.</p>
             </div>
             <button 
@@ -238,7 +247,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                             <span className="bg-white/20 rounded-full px-2.5 py-1 text-[10px] font-bold backdrop-blur-sm">{students.length} Residents</span>
                         </div>
                         
-                        <div className={filterUnit === "All" ? "py-2 flex-1" : "p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
+                        <div className={filterUnit === "All" ? "py-2 flex-1 max-h-[400px] overflow-y-auto" : "p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
                             {students.length === 0 ? (
                                 <div className="text-center p-8 text-gray-300 text-xs italic">No active residents</div>
                             ) : (
@@ -254,7 +263,12 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                                                 GR: {s.gradeLevel} {s.district ? `• ${s.district}` : ""}
                                             </div>
                                         </div>
-                                        {s.iep === "Yes" && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold">IEP</span>}
+                                        {s.iep === "Yes" && (
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold">IEP</span>
+                                                <span className={`text-[9px] mt-0.5 ${s.iepDueDate && new Date(s.iepDueDate) < new Date() ? "text-red-600 font-bold" : "text-slate-400"}`}>Due: {s.iepDueDate || "N/A"}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}
