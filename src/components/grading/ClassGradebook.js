@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Save, X, Calculator, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock } from 'lucide-react';
+import { Plus, Save, X, Calculator, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2 } from 'lucide-react';
+import { cosmosService } from '../../services/cosmosService';
 import ReportCardExportModal from './ReportCardExportModal';
 
 // --- STEP 1: DUMMY DATA SETUP ---
@@ -49,6 +50,11 @@ const ClassGradebook = () => {
   const [activeTab, setActiveTab] = useState('grades'); // 'grades' | 'attendance'
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState(INITIAL_ATTENDANCE);
+
+  // Cosmos DB State
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [classId] = useState('dummy-class-101');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -156,6 +162,35 @@ const ClassGradebook = () => {
     setIsExportModalOpen(true);
   };
 
+  // --- STEP 2: THE SAVE FUNCTION ---
+  const handleSaveToCloud = async () => {
+    setIsSaving(true);
+    setSaveMessage(''); // Clear previous messages
+    
+    try {
+      // Package all the current state into a single object
+      const payload = { 
+        id: classId, 
+        students, 
+        categories, 
+        assignments, 
+        grades, 
+        attendance, 
+        lastUpdated: new Date().toISOString() 
+      };
+
+      await cosmosService.saveGradebook(payload);
+      
+      setSaveMessage('Saved Successfully!');
+      setTimeout(() => setSaveMessage(''), 3000); // Clear message after 3 seconds
+    } catch (error) {
+      console.error("Error saving gradebook:", error);
+      setSaveMessage('Error saving!');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // --- ATTENDANCE HELPERS ---
 
   // Calculates total absences for a specific student across all recorded dates
@@ -193,7 +228,18 @@ const ClassGradebook = () => {
 
         {/* CONTROLS SECTION (Only visible on Grades tab) */}
         {activeTab === 'grades' && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            {saveMessage && <span className="text-sm font-bold text-emerald-600 animate-pulse">{saveMessage}</span>}
+            
+            <button 
+              onClick={handleSaveToCloud}
+              disabled={isSaving}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />}
+              {isSaving ? 'Saving...' : 'Save to Cloud'}
+            </button>
+
             <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-xs font-bold text-slate-500">
               <Calculator className="w-4 h-4" />
               <span>Weighted: {categories.map(c => `${c.name} ${c.weight}%`).join(', ')}</span>
