@@ -49,13 +49,13 @@ export default function ResidentRoster() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-100 overflow-hidden font-sans relative">
+    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans relative">
       
       {/* --- LEFT RAIL --- */}
-      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col shadow-lg z-10">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-xl font-bold text-slate-800 tracking-tight">Resident Roster</h2>
-          <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">Select Unit</p>
+      <aside className="w-72 bg-slate-800 border-r border-slate-700/50 flex flex-col shadow-2xl z-10">
+        <div className="p-6 border-b border-slate-700/50">
+          <h2 className="text-xl font-bold text-white tracking-tight">Resident Roster</h2>
+          <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Select Unit</p>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -66,13 +66,13 @@ export default function ResidentRoster() {
               <button
                 key={unit.id}
                 onClick={() => setActiveUnitId(unit.id)}
-                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 group ${isActive ? 'bg-teal-600 text-white shadow' : 'text-slate-600 hover:bg-slate-100'}`}
+                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 group ${isActive ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-300 hover:bg-slate-700/50'}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-400'}`} />
-                  <span className={`font-semibold ${isActive ? 'text-white' : 'text-slate-700'}`}>{unit.label}</span>
+                  <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-500'}`} />
+                  <span className="font-semibold">{unit.label}</span>
                 </div>
-                <span className={`text-xs font-bold px-2 py-1 rounded-md ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'}`}>{count}</span>
+                <span className={`text-xs font-bold px-2 py-1 rounded-md ${isActive ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-300'}`}>{count}</span>
               </button>
             );
           })}
@@ -81,10 +81,10 @@ export default function ResidentRoster() {
 
       {/* --- RIGHT CONTENT --- */}
       <main className="flex-1 flex flex-col h-full relative z-0">
-        <header className="bg-white p-8 border-b border-slate-200 flex justify-between items-center shadow-sm">
+        <header className="bg-white/70 backdrop-blur-lg p-8 border-b border-slate-200/50 flex justify-between items-center shadow-sm">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-teal-100 text-teal-700`}>Current Unit</span>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-indigo-100 text-indigo-800`}>Current Unit</span>
               <span className="text-slate-500 text-sm font-medium">Academic Year 2025-2026</span>
             </div>
             <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">{activeUnit.label}</h1>
@@ -92,24 +92,24 @@ export default function ResidentRoster() {
           
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 shadow-md transition-colors duration-200"
+            className="flex items-center gap-2 bg-indigo-600 text-white font-semibold py-2.5 px-5 rounded-xl hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 shadow-lg shadow-indigo-500/10 transition-all duration-300"
           >
             <Plus size={18} />
             <span>Add Resident</span>
           </button>
         </header>
 
-        <div className="flex-1 p-8 overflow-y-auto bg-slate-100">
-          <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden min-h-[400px]">
+        <div className="flex-1 p-8 overflow-y-auto bg-slate-50">
+          <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl shadow-slate-200/60 overflow-hidden min-h-[400px]">
             {roster.length === 0 ? (
               <div className="p-12 text-center text-slate-500 mt-10">
-                <div className="mb-4 text-5xl">📭</div>
+                <div className="mb-4 text-6xl">📭</div>
                 <p className="text-lg font-medium">No residents assigned to {activeUnit.label} yet.</p>
-                <button onClick={() => setIsModalOpen(true)} className="text-teal-600 font-bold mt-2 hover:underline">Add the first one?</button>
+                <button onClick={() => setIsModalOpen(true)} className="text-indigo-600 font-bold mt-2 hover:underline">Add the first one?</button>
               </div>
             ) : (
               <table className="w-full text-left">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-100/80 backdrop-blur-sm border-b border-slate-200/50">
                   <tr>
                     <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase">Student Name</th>
                     <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase">Grade</th>
@@ -117,13 +117,13 @@ export default function ResidentRoster() {
                     <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase text-right">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-200/50">
                   {roster.map((student) => (
-                    <tr key={student.id} className="hover:bg-slate-50 transition-colors group cursor-pointer">
-                      <td className="py-4 px-6 font-bold text-slate-800">{student.name}</td>
-                      <td className="py-4 px-6"><span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-sm font-bold">{student.grade}th</span></td>
+                    <tr key={student.id} className="hover:bg-slate-100/50 transition-colors group cursor-pointer">
+                      <td className="py-4 px-6 font-bold text-slate-800 group-hover:text-indigo-600">{student.name}</td>
+                      <td className="py-4 px-6"><span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-sm font-bold">{student.grade}th</span></td>
                       <td className="py-4 px-6 text-slate-600 font-medium">{student.district}</td>
-                      <td className="py-4 px-6 text-right">{student.iep && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded border border-amber-200">IEP</span>}</td>
+                      <td className="py-4 px-6 text-right">{student.iep && <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full">IEP</span>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -135,23 +135,20 @@ export default function ResidentRoster() {
 
       {/* --- MODAL (POPUP) --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          {/* The Modal Box */}
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md relative z-10 overflow-hidden border border-slate-200">
-            {/* Header */}
-            <div className="p-6 border-b border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white/80 backdrop-blur-xl border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-md relative z-10 overflow-hidden">
+            <div className="p-6 border-b border-slate-200/80">
               <h3 className="text-xl font-bold text-slate-800">Add to {activeUnit.label}</h3>
               <p className="text-slate-500 text-sm">Enter new resident details below.</p>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSave} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-600 mb-1">Student Name</label>
+                <label className="block text-sm font-bold text-slate-600 mb-1.5">Student Name</label>
                 <input 
                   autoFocus
                   type="text" 
-                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
+                  className="w-full p-3 border border-slate-300/80 rounded-xl focus:ring-4 focus:ring-indigo-500/20 outline-none transition"
                   placeholder="e.g. Jordan Smith"
                   value={newStudent.name}
                   onChange={e => setNewStudent({...newStudent, name: e.target.value})}
@@ -160,9 +157,9 @@ export default function ResidentRoster() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">Grade Level</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-1.5">Grade Level</label>
                   <select 
-                    className="w-full p-3 border border-slate-300 rounded-lg outline-none bg-white focus:ring-2 focus:ring-teal-500"
+                    className="w-full p-3 border border-slate-300/80 rounded-xl outline-none bg-white focus:ring-4 focus:ring-indigo-500/20"
                     value={newStudent.grade}
                     onChange={e => setNewStudent({...newStudent, grade: e.target.value})}
                   >
@@ -170,10 +167,10 @@ export default function ResidentRoster() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1">IEP Status</label>
+                  <label className="block text-sm font-bold text-slate-600 mb-1.5">IEP Status</label>
                   <div 
                     onClick={() => setNewStudent({...newStudent, iep: !newStudent.iep})}
-                    className={`cursor-pointer w-full p-3 border rounded-lg flex items-center justify-center font-bold transition-colors ${newStudent.iep ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'}`}
+                    className={`cursor-pointer w-full p-3 border rounded-xl flex items-center justify-center font-bold transition-colors ${newStudent.iep ? 'bg-amber-100 border-amber-300/80 text-amber-800' : 'bg-slate-100 border-slate-200/80 text-slate-500 hover:bg-slate-200'}`}
                   >
                     {newStudent.iep ? 'Has IEP' : 'No IEP'}
                   </div>
@@ -181,27 +178,27 @@ export default function ResidentRoster() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-600 mb-1">Home District</label>
+                <label className="block text-sm font-bold text-slate-600 mb-1.5">Home District</label>
                 <input 
                   type="text" 
-                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  className="w-full p-3 border border-slate-300/80 rounded-xl focus:ring-4 focus:ring-indigo-500/20 outline-none"
                   placeholder="e.g. Lakeland Regional"
                   value={newStudent.district}
                   onChange={e => setNewStudent({...newStudent, district: e.target.value})}
                 />
               </div>
 
-              <div className="flex gap-3 mt-6 pt-4 border-t border-slate-200">
+              <div className="flex gap-3 mt-6 pt-4 border-t border-slate-200/80">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-lg font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
+                  className="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200/80 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 px-4 rounded-lg font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-md transition"
+                  className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all"
                 >
                   Save Resident
                 </button>

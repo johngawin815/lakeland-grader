@@ -168,46 +168,48 @@ const GradeGenerator = ({ user }) => {
       {/* HEADER & ACTIONS */}
       <div className="max-w-5xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-blue-600" /> 
+          <h1 className="text-4xl font-extrabold text-slate-900 flex items-center gap-3">
+            <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
+                <FileText className="w-8 h-8" /> 
+            </span>
             Grade Generator
           </h1>
-          <p className="text-slate-500 mt-1">Select a template, fill in the grades, and export.</p>
+          <p className="text-slate-500 mt-2 text-base">Select a template, fill in the grades, and export.</p>
         </div>
         
         <div className="flex gap-3 items-center">
-          {successMsg && <span className="text-green-600 font-bold text-sm flex items-center gap-1 animate-in fade-in"><CheckCircle className="w-4 h-4" /> {successMsg}</span>}
+          {successMsg && <span className="text-emerald-600 font-bold text-sm flex items-center gap-1 animate-in fade-in"><CheckCircle className="w-4 h-4" /> {successMsg}</span>}
           
-          <button onClick={() => setShowGradebook(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-colors shadow-md">
-            <BookOpen className="w-4 h-4" /> Gradebook
+          <button onClick={() => setShowGradebook(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition-colors shadow-lg shadow-slate-300/20 border border-slate-200/80">
+            <BookOpen className="w-4 h-4 text-indigo-500" /> Gradebook
           </button>
           
-          <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
-            <Printer className="w-4 h-4" /> Print
+          <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200/80 rounded-xl font-bold text-slate-700 hover:bg-slate-100 transition-colors shadow-lg shadow-slate-300/20">
+            <Printer className="w-4 h-4" />
           </button>
           
-          <button onClick={saveToCloud} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition-colors shadow-md disabled:opacity-50">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />} Save to Cloud
+          <button onClick={saveToCloud} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/10 disabled:opacity-50">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />} Save
           </button>
 
-          <button onClick={generateDocx} disabled={loading} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md disabled:opacity-50">
-            {loading ? 'Generating...' : <><FileDown className="w-4 h-4" /> Download .DOCX</>}
+          <button onClick={generateDocx} disabled={loading} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/10 disabled:opacity-50">
+            {loading ? 'Generating...' : <><FileDown className="w-4 h-4" /> Download</>}
           </button>
         </div>
       </div>
 
       {/* MAIN FORM CONTAINER */}
-      <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print:hidden">
-        <div className="bg-slate-100 p-6 border-b border-slate-200">
+      <div className="max-w-5xl mx-auto bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl shadow-slate-200/60 overflow-hidden print:hidden">
+        <div className="bg-slate-50/50 p-6 border-b border-slate-200/50">
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Select Template Type</label>
-          <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="w-full md:w-1/2 p-3 rounded-lg border border-slate-300 bg-white text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+          <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="w-full md:w-1/2 p-3 rounded-xl border border-slate-300/80 bg-white/80 text-slate-800 font-medium focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all">
             {Object.values(TEMPLATES).map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
         </div>
 
         <div className="p-8 space-y-8">
           <section>
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><User className="w-5 h-5 text-blue-500" /> Student Information</h3>
+            <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-3 pb-2 border-b border-slate-200/50"><User className="w-5 h-5 text-indigo-500" /> Student Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Jane Doe" />
               <Input label="Report Date" name="reportDate" type="date" value={formData.reportDate} onChange={handleChange} />
@@ -220,7 +222,7 @@ const GradeGenerator = ({ user }) => {
           </section>
 
           <section>
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><BookOpen className="w-5 h-5 text-green-500" /> Core Classes</h3>
+            <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-3 pb-2 border-b border-slate-200/50"><BookOpen className="w-5 h-5 text-indigo-500" /> Core Classes</h3>
             <div className="space-y-3">
               <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} />
               <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} />
@@ -231,7 +233,7 @@ const GradeGenerator = ({ user }) => {
 
           {currentConfig.hasElectives && (
             <section className="animate-in fade-in slide-in-from-top-4 duration-300">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><Music className="w-5 h-5 text-purple-500" /> Electives</h3>
+              <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-3 pb-2 border-b border-slate-200/50"><Music className="w-5 h-5 text-indigo-500" /> Electives</h3>
               <div className="space-y-3">
                 <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective />
                 <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective />
@@ -240,8 +242,8 @@ const GradeGenerator = ({ user }) => {
           )}
 
           <section>
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><FileText className="w-5 h-5 text-orange-500" /> Comments</h3>
-            <textarea name="comments" value={formData.comments} onChange={handleChange} className="w-full p-4 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none h-32 resize-y text-sm" placeholder="Enter overall comments..." />
+            <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center gap-3 pb-2 border-b border-slate-200/50"><FileText className="w-5 h-5 text-indigo-500" /> Comments</h3>
+            <textarea name="comments" value={formData.comments} onChange={handleChange} className="w-full p-4 rounded-xl border border-slate-300/80 focus:ring-4 focus:ring-indigo-500/20 outline-none h-32 resize-y text-base transition-all bg-white/80" placeholder="Enter overall comments..." />
           </section>
         </div>
       </div>
@@ -258,8 +260,8 @@ const GradeGenerator = ({ user }) => {
   );
 };
 
-const Input = ({ label, name, value, onChange, type = "text", placeholder }) => (<div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</label><input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="p-2.5 rounded border border-slate-200 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" /></div>);
-const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false }) => (<div className="flex flex-col md:flex-row gap-3 items-end md:items-center bg-slate-50 p-3 rounded-lg border border-slate-100"><div className="flex items-center gap-2 w-full md:w-48"><div className="text-slate-400">{icon}</div>{isElective ? <input name={`${prefix}Class`} value={data[`${prefix}Class`]} onChange={onChange} placeholder="Elective Name" className="w-full bg-transparent border-b border-slate-300 focus:border-blue-500 outline-none text-sm font-bold text-slate-700 pb-1" /> : <span className="text-sm font-bold text-slate-700">{label}</span>}</div><div className="flex gap-2 flex-1 w-full"><div className="flex-1"><input name={`${prefix}Grade`} value={data[`${prefix}Grade`]} onChange={onChange} placeholder="Letter Grade" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-blue-500 outline-none" /></div><div className="flex-1"><input name={`${prefix}Pct`} value={data[`${prefix}Pct`]} onChange={onChange} placeholder="Percentage" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-blue-500 outline-none" /></div></div></div>);
+const Input = ({ label, name, value, onChange, type = "text", placeholder }) => (<div className="flex flex-col gap-1.5"><label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</label><input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="p-3 rounded-xl border border-slate-300/80 text-base focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all bg-white/80" /></div>);
+const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false }) => (<div className="flex flex-col md:flex-row gap-3 items-end md:items-center bg-slate-100/50 p-3 rounded-xl border border-slate-200/50"><div className="flex items-center gap-3 w-full md:w-48"><div className="text-slate-400">{icon}</div>{isElective ? <input name={`${prefix}Class`} value={data[`${prefix}Class`]} onChange={onChange} placeholder="Elective Name" className="w-full bg-transparent border-b border-slate-300/80 focus:border-indigo-500 outline-none text-sm font-bold text-slate-700 pb-1" /> : <span className="text-sm font-bold text-slate-700">{label}</span>}</div><div className="flex gap-2 flex-1 w-full"><div className="flex-1"><input name={`${prefix}Grade`} value={data[`${prefix}Grade`]} onChange={onChange} placeholder="Letter" className="w-full p-2.5 rounded-lg border border-slate-200/80 text-sm text-center focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" /></div><div className="flex-1"><input name={`${prefix}Pct`} value={data[`${prefix}Pct`]} onChange={onChange} placeholder="Percent" className="w-full p-2.5 rounded-lg border border-slate-200/80 text-sm text-center focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all" /></div></div></div>);
 const PrintRow = ({ label, grade, pct }) => { if (!label && !grade) return null; return (<tr><td className="border border-black p-2">{label}</td><td className="border border-black p-2 text-center font-bold">{grade}</td><td className="border border-black p-2 text-center text-gray-600">{pct}</td></tr>); };
 
 export default GradeGenerator;

@@ -207,24 +207,25 @@ const DischargeGenerator = ({ user, activeStudent }) => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-slate-50 overflow-hidden font-sans">
+    <div className="flex flex-col lg:flex-row h-full bg-slate-100 overflow-hidden font-sans">
       
       {/* LEFT COLUMN: EDITOR FORM */}
-      <div className="w-full lg:w-1/3 p-6 flex flex-col gap-4 overflow-y-auto border-r border-gray-200 bg-white print:hidden shadow-lg z-10">
+      <div className="w-full lg:w-[35%] bg-white/70 backdrop-blur-xl p-6 flex flex-col gap-4 overflow-y-auto border-r border-slate-200/50 print:hidden shadow-2xl z-10">
         
         {/* Header / Status */}
         <div className="mb-2">
-            <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2 mb-1">
-                <FileText className="w-6 h-6 text-blue-600" /> Discharge Writer
+            <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-3 mb-1">
+                <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600"><FileText className="w-6 h-6" /></span>
+                Discharge Writer
             </h2>
             <p className="text-slate-500 text-sm">Edit the narrative below. The preview updates automatically.</p>
             
             {loading ? (
-                <div className="mt-3 p-3 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold flex items-center gap-2 animate-pulse">
+                <div className="mt-3 p-3 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold flex items-center gap-2 animate-pulse">
                     <Loader2 className="w-4 h-4 animate-spin" /> Syncing with Azure...
                 </div>
             ) : dbRecord ? (
-                <div className="mt-3 p-3 bg-green-50 text-green-700 rounded-lg text-xs font-bold flex items-center gap-2">
+                <div className="mt-3 p-3 bg-emerald-50 text-emerald-800 rounded-lg text-xs font-bold flex items-center gap-2 border border-emerald-200/50">
                     <CheckCircle className="w-4 h-4" /> Data Loaded from KTEA
                 </div>
             ) : (
@@ -238,88 +239,88 @@ const DischargeGenerator = ({ user, activeStudent }) => {
         <form className="flex flex-col gap-6">
             
             {/* Section: Student Info */}
-            <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Student Information</h3>
-                <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+                <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wider border-b border-slate-200/80 pb-2">Student Information</h3>
+                <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                        <label className="block text-xs font-bold text-slate-600 mb-1">Student Name</label>
-                        <input {...register("studentName")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <label className="block text-xs font-bold text-slate-500 mb-1">Student Name</label>
+                        <input {...register("studentName")} className="w-full p-2.5 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">Grade Level</label>
-                        <input {...register("gradeLevel")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <label className="block text-xs font-bold text-slate-500 mb-1">Grade Level</label>
+                        <input {...register("gradeLevel")} className="w-full p-2.5 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">DOB / Age</label>
-                        <input {...register("age")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <label className="block text-xs font-bold text-slate-500 mb-1">DOB / Age</label>
+                        <input {...register("age")} className="w-full p-2.5 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">Admit Date</label>
-                        <input type="date" {...register("admitDate")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <label className="block text-xs font-bold text-slate-500 mb-1">Admit Date</label>
+                        <input type="date" {...register("admitDate")} className="w-full p-2.5 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">Discharge Date</label>
-                        <input type="date" {...register("dischargeDate")} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <label className="block text-xs font-bold text-slate-500 mb-1">Discharge Date</label>
+                        <input type="date" {...register("dischargeDate")} className="w-full p-2.5 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" />
                     </div>
                 </div>
             </div>
 
             {/* Section: Narratives */}
-            <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Narratives</h3>
+            <div className="space-y-4">
+                <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wider border-b border-slate-200/80 pb-2">Narratives</h3>
                 
                 <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Reason for Admission</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Reason for Admission</label>
                     <textarea 
                         {...register("admissionReason")} 
                         rows={3}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full p-2.5 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
                         placeholder="e.g. was admitted for educational services..."
                     />
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Classroom Performance & Behavior</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Classroom Performance & Behavior</label>
                     <textarea 
                         {...register("behaviorNarrative")} 
                         rows={5}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full p-2.5 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
                         placeholder="Describe work ethic, behavior, strengths..."
                     />
                 </div>
             </div>
 
             {/* Section: Scores */}
-            <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">KTEA-III Scores (GE)</h3>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="text-[10px] font-bold text-slate-500">Subject</div>
-                    <div className="text-[10px] font-bold text-slate-500">Pre</div>
-                    <div className="text-[10px] font-bold text-slate-500">Post</div>
+            <div className="space-y-3 bg-slate-100/50 p-4 rounded-xl border border-slate-200/80">
+                <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wider border-b border-slate-200/80 pb-2">KTEA-III Scores (GE)</h3>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="text-xs font-bold text-slate-500">Subject</div>
+                    <div className="text-xs font-bold text-slate-500">Pre-Test</div>
+                    <div className="text-xs font-bold text-slate-500">Post-Test</div>
 
-                    <div className="text-xs font-bold text-slate-700 self-center text-left pl-1">Reading</div>
-                    <input {...register("preReading")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
-                    <input {...register("postReading")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+                    <div className="text-sm font-semibold text-slate-700 self-center text-left pl-1">Reading</div>
+                    <input {...register("preReading")} className="p-2 border border-slate-300/80 rounded-lg text-sm text-center focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" placeholder="-" />
+                    <input {...register("postReading")} className="p-2 border border-slate-300/80 rounded-lg text-sm text-center focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" placeholder="-" />
 
-                    <div className="text-xs font-bold text-slate-700 self-center text-left pl-1">Math</div>
-                    <input {...register("preMath")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
-                    <input {...register("postMath")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+                    <div className="text-sm font-semibold text-slate-700 self-center text-left pl-1">Math</div>
+                    <input {...register("preMath")} className="p-2 border border-slate-300/80 rounded-lg text-sm text-center focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" placeholder="-" />
+                    <input {...register("postMath")} className="p-2 border border-slate-300/80 rounded-lg text-sm text-center focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" placeholder="-" />
 
-                    <div className="text-xs font-bold text-slate-700 self-center text-left pl-1">Writing</div>
-                    <input {...register("preWriting")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
-                    <input {...register("postWriting")} className="p-1.5 border border-gray-300 rounded text-sm text-center" placeholder="-" />
+                    <div className="text-sm font-semibold text-slate-700 self-center text-left pl-1">Writing</div>
+                    <input {...register("preWriting")} className="p-2 border border-slate-300/80 rounded-lg text-sm text-center focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" placeholder="-" />
+                    <input {...register("postWriting")} className="p-2 border border-slate-300/80 rounded-lg text-sm text-center focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" placeholder="-" />
                 </div>
             </div>
 
             {/* Section: Analysis */}
             <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1">Analysis</h3>
+                <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wider border-b border-slate-200/80 pb-2">Analysis</h3>
                 <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">Score Analysis</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Score Analysis</label>
                     <textarea 
                         {...register("analysisNarrative")} 
                         rows={4}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full p-2.5 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
                         placeholder="The comparative data indicates..."
                     />
                 </div>
@@ -328,17 +329,17 @@ const DischargeGenerator = ({ user, activeStudent }) => {
         </form>
 
         {/* Action Button */}
-        <div className="mt-auto pt-4 border-t border-gray-100 flex gap-2">
+        <div className="mt-auto pt-5 border-t border-slate-200/80 flex gap-3">
             <button 
                 onClick={async () => {
                     await handleSaveAndExport();
                     handlePrint();
                 }} 
                 disabled={saving}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3 bg-white text-indigo-600 rounded-xl font-bold shadow-lg shadow-slate-200/50 border border-slate-300/80 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
                 {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Printer className="w-5 h-5" />} 
-                {saving ? "Saving..." : "Print / Save PDF"}
+                Print / PDF
             </button>
             <button 
                 onClick={async () => {
@@ -346,17 +347,17 @@ const DischargeGenerator = ({ user, activeStudent }) => {
                     handleDownloadDocx();
                 }} 
                 disabled={saving}
-                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
                 {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />} 
-                {saving ? "Saving..." : "Word Doc"}
+                Word Doc
             </button>
         </div>
       </div>
 
       {/* RIGHT COLUMN: LIVE PREVIEW */}
-      <div className="flex-1 bg-slate-200 p-8 overflow-y-auto flex justify-center print:p-0 print:bg-white print:overflow-visible">
-        <div className="page bg-white w-[8.5in] min-h-[11in] p-[0.75in] shadow-2xl text-black font-serif print:shadow-none print:w-full print:m-0 print:absolute print:top-0 print:left-0">
+      <div className="flex-1 bg-slate-100 p-8 overflow-y-auto flex justify-center print:p-0 print:bg-white print:overflow-visible">
+        <div className="page bg-white w-[8.5in] min-h-[11in] p-[0.75in] shadow-2xl shadow-slate-300/60 text-black font-serif print:shadow-none print:w-full print:m-0 print:absolute print:top-0 print:left-0">
             
             {/* DOCUMENT HEADER */}
             <header className="text-center mb-8 border-b-2 border-black pb-4">

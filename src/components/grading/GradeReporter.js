@@ -29,30 +29,37 @@ const GradeReporter = ({ activeStudent }) => {
 
   return (
     <div className="flex justify-center items-start p-10 h-full bg-slate-50">
-      <div className="bg-white p-8 rounded-xl shadow-sm w-full max-w-lg border border-gray-200">
-        <h2 className="m-0 mb-1 text-slate-800 text-2xl font-bold flex items-center gap-2"><School className="w-6 h-6 text-orange-500" /> Grade Reporter</h2>
-        <p className="m-0 mb-6 text-slate-400 text-sm">Enter academic progress for your students.</p>
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 p-8 rounded-2xl shadow-2xl shadow-slate-200/60 w-full max-w-lg">
+        <h2 className="m-0 mb-2 text-slate-800 text-3xl font-extrabold flex items-center gap-3">
+          <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600"><School className="w-7 h-7" /></span>
+          Grade Reporter
+        </h2>
+        <p className="m-0 mb-6 text-slate-500 text-base">Enter academic progress for your students.</p>
 
         {/* This message only shows up if 'saved' is true */}
-        {saved && <div className="bg-green-100 text-green-800 p-3 rounded-lg mb-5 text-center font-bold text-sm flex items-center justify-center gap-2"><CheckCircle className="w-4 h-4" /> Grades Saved Successfully!</div>}
+        {saved && (
+          <div className="bg-emerald-100 border border-emerald-200/80 text-emerald-800 p-4 rounded-xl mb-6 text-center font-bold text-sm flex items-center justify-center gap-2 animate-in fade-in-5 duration-300">
+            <CheckCircle className="w-5 h-5" /> Grades Saved Successfully!
+          </div>
+        )}
 
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
+        <form onSubmit={handleSave} className="flex flex-col gap-5">
           
           <div className="flex flex-col gap-1.5">
-            <label className="font-bold text-slate-600 text-xs uppercase tracking-wider">Student Name:</label>
+            <label className="font-bold text-slate-600 text-sm">Student Name:</label>
             <input 
               type="text" 
               value={studentName} 
               onChange={(e) => setStudentName(e.target.value)}
-              className="p-3 rounded-lg border border-gray-300 text-sm font-sans focus:ring-2 focus:ring-blue-500 outline-none"
+              className="p-3.5 rounded-xl border border-slate-300/80 text-base font-sans focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
               placeholder="e.g. Jane Doe"
               required
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-bold text-slate-600 text-xs uppercase tracking-wider">Subject:</label>
-            <select value={subject} onChange={(e) => setSubject(e.target.value)} className="p-3 rounded-lg border border-gray-300 text-sm font-sans bg-white focus:ring-2 focus:ring-blue-500 outline-none" required>
+            <label className="font-bold text-slate-600 text-sm">Subject:</label>
+            <select value={subject} onChange={(e) => setSubject(e.target.value)} className="p-3.5 rounded-xl border border-slate-300/80 text-base font-sans bg-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" required>
               <option value="">-- Select a Subject --</option>
               <option value="Math">Math</option>
               <option value="English">English / Language Arts</option>
@@ -62,28 +69,30 @@ const GradeReporter = ({ activeStudent }) => {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-bold text-slate-600 text-xs uppercase tracking-wider">Current Grade (% or Letter):</label>
+            <label className="font-bold text-slate-600 text-sm">Current Grade (% or Letter):</label>
             <input 
               type="text" 
               value={grade} 
               onChange={(e) => setGrade(e.target.value)}
-              className="p-3 rounded-lg border border-gray-300 text-sm font-sans focus:ring-2 focus:ring-blue-500 outline-none"
+              className="p-3.5 rounded-xl border border-slate-300/80 text-base font-sans focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
               placeholder="e.g. 85% or B+"
               required
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-bold text-slate-600 text-xs uppercase tracking-wider">Teacher Comments:</label>
+            <label className="font-bold text-slate-600 text-sm">Teacher Comments:</label>
             <textarea 
               value={comments} 
               onChange={(e) => setComments(e.target.value)}
-              className="p-3 rounded-lg border border-gray-300 text-sm font-sans focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-y"
+              className="p-3.5 rounded-xl border border-slate-300/80 text-base font-sans focus:ring-4 focus:ring-indigo-500/20 outline-none h-28 resize-y transition-all"
               placeholder="Notes on student progress..."
             />
           </div>
 
-          <button type="submit" className="mt-2 bg-blue-500 text-white p-3 rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"><Save className="w-4 h-4" /> Save Grades</button>
+          <button type="submit" className="mt-2 bg-indigo-600 text-white p-3.5 rounded-xl font-bold text-base hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/10 focus:outline-none focus:ring-4 focus:ring-indigo-300">
+            <Save className="w-5 h-5" /> Save Grades
+          </button>
         </form>
       </div>
     </div>

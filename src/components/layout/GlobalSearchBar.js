@@ -24,7 +24,7 @@ const GlobalSearchBar = () => {
       const data = await findStudentByName(query); 
       const list = Array.isArray(data) ? data : (data ? [data] : []);
       setResults(list);
-    } catch (err) {
+    } catch (err) => {
       console.error(err);
     } finally {
       setIsSearching(false);
@@ -41,19 +41,19 @@ const GlobalSearchBar = () => {
   };
 
   return (
-    <div className="sticky top-0 z-50 shadow-sm">
+    <div className="sticky top-0 z-50 shadow-2xl shadow-slate-300/40">
       
       {/* Search Bar */}
-      <div className="bg-white border-b border-slate-200 p-3 relative z-50">
+      <div className="bg-white/80 backdrop-blur-lg border-b border-slate-200/50 p-3 relative z-50">
         <form onSubmit={handleSearch} className="flex gap-3 max-w-4xl mx-auto relative">
           
           <button 
              type="button"
              onClick={() => navigate('/')} 
-             className="font-extrabold text-slate-700 tracking-tight flex items-center px-3 hover:bg-slate-100 rounded-lg transition"
+             className="font-extrabold text-slate-700 tracking-tight flex items-center px-4 hover:bg-slate-100 rounded-xl transition-colors duration-300"
              title="Return to Dashboard"
           >
-             LRS<span className="text-sky-600">Hub</span>
+             LRS<span className="text-indigo-600">Hub</span>
           </button>
 
           <div className="relative flex-1">
@@ -61,7 +61,7 @@ const GlobalSearchBar = () => {
             <input 
               type="text" 
               placeholder="Search for a student..." 
-              className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none transition bg-slate-50 focus:bg-white text-base"
+              className="w-full pl-12 pr-4 py-3 border border-slate-300/80 rounded-xl focus:ring-4 focus:ring-indigo-500/20 outline-none transition duration-300 bg-white/50 focus:bg-white text-base"
               value={query}
               onChange={(e) => { setQuery(e.target.value); setHasSearched(false); }}
             />
@@ -69,7 +69,7 @@ const GlobalSearchBar = () => {
           <button 
             type="submit" 
             disabled={isSearching}
-            className="bg-sky-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-sky-700 transition text-sm disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 flex items-center gap-2"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition text-sm disabled:opacity-50 focus:outline-none focus:ring-4 focus:ring-indigo-300 flex items-center gap-2 shadow-lg shadow-indigo-500/10"
           >
             {isSearching ? <Loader2 className="w-5 h-5 animate-spin"/> : <Search className="w-5 h-5" />}
             {isSearching ? "Searching..." : "Find"}
@@ -78,18 +78,18 @@ const GlobalSearchBar = () => {
 
         {/* Search Results Dropdown */}
         {(results.length > 0 || (hasSearched && !isSearching)) && (
-          <div className="absolute top-full left-0 right-0 max-w-4xl mx-auto bg-white shadow-xl rounded-b-lg border border-slate-200 mt-0 overflow-hidden z-50">
+          <div className="absolute top-full left-0 right-0 max-w-4xl mx-auto bg-white/90 backdrop-blur-lg shadow-2xl shadow-slate-300/50 rounded-b-xl border border-slate-200/50 mt-0 overflow-hidden z-50">
             {results.map((student) => (
               <div 
                 key={student.id}
                 onClick={() => handleSelect(student)}
-                className="p-4 hover:bg-sky-50 cursor-pointer border-b border-slate-100 last:border-0 flex justify-between items-center group transition"
+                className="p-4 hover:bg-indigo-50 cursor-pointer border-b border-slate-100/80 last:border-0 flex justify-between items-center group transition"
               >
                 <div>
-                  <span className="font-bold text-slate-800 group-hover:text-sky-700">{student.studentName}</span>
+                  <span className="font-bold text-slate-800 group-hover:text-indigo-700">{student.studentName}</span>
                   <span className="text-sm text-slate-500 ml-3">Grade: {student.gradeLevel || "N/A"}</span>
                 </div>
-                <span className="text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-md group-hover:bg-sky-100 group-hover:text-sky-700 font-bold">Load</span>
+                <span className="text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-lg group-hover:bg-indigo-100 group-hover:text-indigo-700 font-bold transition-all">Load</span>
               </div>
             ))}
             {hasSearched && results.length === 0 && (
@@ -101,22 +101,22 @@ const GlobalSearchBar = () => {
 
       {/* Active Student Context Bar */}
       {activeStudent && (
-        <div className="bg-sky-600 text-white px-4 py-2 flex justify-center items-center gap-4 text-sm shadow-inner relative z-40 transition-all duration-300">
+        <div className="bg-slate-900 text-white px-4 py-2 flex justify-center items-center gap-4 text-sm shadow-inner relative z-40 transition-all duration-300">
            <div className="flex items-center gap-2">
-              <CheckCircle size={16} className="text-teal-300" />
+              <CheckCircle size={16} className="text-emerald-400" />
               <span className="opacity-80 uppercase text-xs font-bold tracking-wider">Active:</span>
               <span className="font-bold text-white">{activeStudent.studentName}</span>
            </div>
            
-           <div className="hidden sm:flex items-center gap-4 text-sky-100 text-xs">
+           <div className="hidden sm:flex items-center gap-4 text-slate-300 text-xs">
               <span>Admit: {activeStudent.admitDate || "N/A"}</span>
-              <span>•</span>
+              <span className="text-slate-600">•</span>
               <span>Unit: {activeStudent.unitName || "N/A"}</span>
            </div>
 
            <button 
              onClick={clearStudent} 
-             className="ml-2 hover:bg-sky-700 p-1.5 rounded-full text-sky-200 hover:text-white transition"
+             className="ml-2 hover:bg-slate-700/50 p-1.5 rounded-full text-slate-400 hover:text-white transition"
              title="Clear Active Student"
            >
              <X size={18} />

@@ -76,24 +76,25 @@ const AuditLog = () => {
       {/* HEADER */}
       <div className="flex justify-between items-center mb-8">
         <div>
-            <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-                <Shield className="w-6 h-6 text-indigo-600" /> System Audit Log
+            <h2 className="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
+              <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600"><Shield className="w-7 h-7" /></span>
+              System Audit Log
             </h2>
-            <p className="text-slate-500 text-sm mt-1">Track user activity and data access for compliance.</p>
+            <p className="text-slate-500 text-base mt-2">Track user activity and data access for compliance.</p>
         </div>
-        <button className="bg-white border border-gray-300 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-50 flex items-center gap-2 shadow-sm transition-colors">
+        <button className="bg-white border border-slate-300/80 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-100/80 flex items-center gap-2 shadow-lg shadow-slate-300/20 transition-colors">
             <Download className="w-4 h-4" /> Export Log
         </button>
       </div>
 
       {/* CONTROLS */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col lg:flex-row gap-4 items-center">
+      <div className="bg-white/70 backdrop-blur-xl p-4 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 mb-6 flex flex-col lg:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input 
                 type="text" 
                 placeholder="Search user, action, or target..." 
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full pl-11 pr-4 py-3 border border-slate-300/80 rounded-xl text-base focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all bg-white/80"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -104,78 +105,78 @@ const AuditLog = () => {
                 type="date" 
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 w-full lg:w-auto"
+                className="border border-slate-300/80 rounded-xl px-4 py-3 text-sm font-medium text-slate-600 outline-none focus:ring-4 focus:ring-indigo-500/20 w-full lg:w-auto transition-all bg-white/80"
             />
-            <span className="text-slate-400 text-xs">to</span>
+            <span className="text-slate-400 text-sm font-bold">to</span>
             <input 
                 type="date" 
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 w-full lg:w-auto"
+                className="border border-slate-300/80 rounded-xl px-4 py-3 text-sm font-medium text-slate-600 outline-none focus:ring-4 focus:ring-indigo-500/20 w-full lg:w-auto transition-all bg-white/80"
             />
         </div>
 
-        <div className="flex gap-2 w-full lg:w-auto">
+        <div className="flex gap-1 w-full lg:w-auto bg-slate-100/80 p-1 rounded-xl border border-slate-200/80">
             <button 
                 onClick={() => setFilterType("ALL")}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${filterType === "ALL" ? "bg-slate-800 text-white" : "bg-gray-100 text-slate-600 hover:bg-gray-200"}`}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${filterType === "ALL" ? "bg-white text-indigo-700 shadow-sm border border-slate-200" : "text-slate-600 hover:bg-white/50"}`}
             >
                 All Events
             </button>
             <button 
                 onClick={() => setFilterType("WARNING")}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 ${filterType === "WARNING" ? "bg-amber-500 text-white" : "bg-gray-100 text-slate-600 hover:bg-gray-200"}`}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 ${filterType === "WARNING" ? "bg-white text-amber-700 shadow-sm border border-slate-200" : "text-slate-600 hover:bg-white/50"}`}
             >
-                <AlertTriangle className="w-3 h-3" /> Warnings
+                <AlertTriangle className="w-4 h-4" /> Warnings
             </button>
-            {(searchTerm || filterType !== "ALL" || startDate || endDate) && (
-                <button 
-                    onClick={clearFilters}
-                    className="px-4 py-2 rounded-lg text-xs font-bold transition-colors bg-white border border-gray-300 text-slate-600 hover:bg-gray-50 hover:text-red-600"
-                >
-                    Clear Filters
-                </button>
-            )}
         </div>
+        {(searchTerm || filterType !== "ALL" || startDate || endDate) && (
+            <button 
+                onClick={clearFilters}
+                className="px-4 py-3 rounded-xl text-sm font-bold transition-colors bg-white border border-slate-300/80 text-red-600 hover:bg-red-50"
+            >
+                Clear
+            </button>
+        )}
       </div>
 
       {/* TABLE */}
-      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+      <div className="flex-1 bg-white/70 backdrop-blur-xl rounded-2xl shadow-2xl shadow-slate-200/60 border border-slate-200/50 overflow-hidden flex flex-col">
         <div className="overflow-y-auto flex-1">
             <table className="w-full text-left border-collapse">
-                <thead className="bg-gray-50 sticky top-0 z-10">
+                <thead className="bg-slate-100/80 backdrop-blur-sm sticky top-0 z-10">
                     <tr>
-                        <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">Timestamp</th>
-                        <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">User</th>
-                        <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">Action</th>
-                        <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">Details</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200/80">Timestamp</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200/80">User</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200/80">Action</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200/80">Details</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-200/50">
                     {loading ? (
-                        <tr><td colSpan="4" className="p-8 text-center text-gray-400">Loading audit records...</td></tr>
+                        <tr><td colSpan="4" className="p-8 text-center text-slate-400">Loading audit records...</td></tr>
                     ) : filteredLogs.length === 0 ? (
-                        <tr><td colSpan="4" className="p-8 text-center text-gray-400">No matching records found.</td></tr>
+                        <tr><td colSpan="4" className="p-8 text-center text-slate-400">No matching records found.</td></tr>
                     ) : (
                         currentLogs.map((log) => (
-                            <tr key={log.id} className={`hover:bg-gray-50 transition-colors ${log.type === 'warning' ? 'bg-amber-50/30' : ''}`}>
+                            <tr key={log.id} className={`hover:bg-slate-100/50 transition-colors duration-200 ${log.type === 'warning' ? 'bg-amber-50/30' : ''}`}>
                                 <td className="p-4 text-sm text-slate-600 whitespace-nowrap flex items-center gap-2">
-                                    <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                    <Clock className="w-4 h-4 text-slate-400" />
                                     {new Date(log.timestamp).toLocaleString()}
                                 </td>
                                 <td className="p-4 text-sm font-bold text-slate-700">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-600">
-                                            <User className="w-3 h-3" />
+                                        <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs text-slate-600 shadow-inner">
+                                            <User className="w-4 h-4" />
                                         </div>
                                         {log.user}
                                     </div>
                                 </td>
                                 <td className="p-4">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${
                                         log.type === 'warning' 
-                                        ? 'bg-red-100 text-red-700 border-red-200' 
-                                        : 'bg-blue-50 text-blue-700 border-blue-100'
+                                        ? 'bg-red-100 text-red-800 border-red-200/80' 
+                                        : 'bg-indigo-100 text-indigo-800 border-indigo-200/80'
                                     }`}>
                                         {log.action}
                                     </span>
@@ -183,7 +184,7 @@ const AuditLog = () => {
                                 <td className="p-4 text-sm text-slate-600">
                                     <div className="flex flex-col">
                                         <span className="font-medium">{log.details}</span>
-                                        <span className="text-xs text-gray-400">Target: {log.target}</span>
+                                        <span className="text-xs text-slate-400">Target: {log.target}</span>
                                     </div>
                                 </td>
                             </tr>
@@ -195,27 +196,27 @@ const AuditLog = () => {
         
         {/* PAGINATION */}
         {!loading && filteredLogs.length > 0 && (
-            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-                <span className="text-xs text-gray-500 font-medium">
+            <div className="p-4 border-t border-slate-200/80 bg-slate-50/50 flex justify-between items-center">
+                <span className="text-sm text-slate-500 font-medium">
                     Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredLogs.length)} of {filteredLogs.length}
                 </span>
                 <div className="flex gap-2">
                     <button 
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
-                        className="p-2 rounded-lg border border-gray-300 bg-white text-slate-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-2.5 rounded-lg border border-slate-300/80 bg-white text-slate-600 hover:bg-slate-100/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <span className="px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-gray-300 rounded-lg flex items-center">
+                    <span className="px-5 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300/80 rounded-lg flex items-center shadow-sm">
                         Page {currentPage} of {totalPages}
                     </span>
                     <button 
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
-                        className="p-2 rounded-lg border border-gray-300 bg-white text-slate-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-2.5 rounded-lg border border-slate-300/80 bg-white text-slate-600 hover:bg-slate-100/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                     >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
             </div>

@@ -31,25 +31,25 @@ const HubShell = () => {
 
   // Define the module data in an array to simplify rendering
   const modules = [
-    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-teal-600" /> },
-    { id: 'grades', title: 'Grade Reporter', desc: 'Enter Grades', icon: <GraduationCap size={28} className="text-teal-600" /> },
-    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-teal-600" /> },
-    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-teal-600" /> },
-    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-teal-600" /> },
-    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-teal-600" /> },
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'grades', title: 'Grade Reporter', desc: 'Enter Grades', icon: <GraduationCap size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-slate-100 font-sans">
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
       
       {/* 1. TOP NAVIGATION BAR */}
-      <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-6 z-20 shrink-0">
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentView('home')}>
-            <School size={32} className="text-teal-600" />
-            <span className="text-xl font-extrabold text-slate-800 tracking-tight">LRS Hub</span>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
           </div>
-          <nav className="flex gap-2">
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
             {modules.map(m => (
               <NavButton 
                 key={m.id}
@@ -63,28 +63,28 @@ const HubShell = () => {
 
         <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input 
                 type="text" 
                 placeholder="Set Student Context..." 
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition bg-slate-100 focus:bg-white text-sm"
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
                 value={activeStudent || ""}
                 onChange={(e) => setActiveStudent(e.target.value)} 
               />
               {activeStudent && (
-                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
                    <X size={16} />
                  </button>
               )}
             </div>
 
-            <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-                <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center font-bold text-white text-sm">
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
                     {user.name.charAt(0)}
                 </div>
                 <div className="text-sm">
-                    <div className="font-bold text-slate-800">{user.name}</div>
-                    <button onClick={handleLogout} className="text-slate-500 hover:text-teal-600 font-semibold transition-colors">Sign Out</button>
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
                 </div>
             </div>
         </div>
@@ -93,19 +93,19 @@ const HubShell = () => {
       {/* 2. MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto">
         {currentView === 'home' && (
-          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
             <div className="text-center mb-10">
-              <h1 className="text-4xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
               <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
               {activeStudent && (
-                 <div className="inline-flex items-center gap-2 mt-4 bg-teal-100 text-teal-700 font-bold px-4 py-2 rounded-full text-sm border border-teal-200">
-                    <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
                     Active Context: <strong>{activeStudent}</strong>
                  </div>
               )}
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
               {modules.map(m => (
                  <LaunchCard 
                     key={m.id}
@@ -120,7 +120,7 @@ const HubShell = () => {
         )}
 
         {currentView !== 'home' && (
-            <div className="p-4 sm:p-6">
+            <div className="p-0">
                 {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
                 {currentView === 'grades' && <GradeReporter activeStudent={activeStudent} />}
                 {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
@@ -139,10 +139,10 @@ const HubShell = () => {
 const NavButton = ({ label, active, onClick }) => (
     <button 
         onClick={onClick}
-        className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-150 ${
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
           active 
-          ? 'bg-teal-100 text-teal-700' 
-          : 'bg-transparent text-slate-600 hover:bg-slate-100'
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
         }`}
     >
         {label}
@@ -152,11 +152,13 @@ const NavButton = ({ label, active, onClick }) => (
 const LaunchCard = ({ icon, title, desc, onClick }) => (
     <div 
         onClick={onClick}
-        className="bg-white shadow-sm border border-slate-200 rounded-xl p-6 group cursor-pointer transition-all duration-200 hover:shadow-md hover:border-teal-300 hover:-translate-y-1"
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
     >
         <div className="flex items-start justify-between">
-            {icon}
-            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-teal-600 transition-colors" />
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
         </div>
         <div className="mt-4">
             <h3 className="text-lg font-bold text-slate-800">{title}</h3>
@@ -166,14 +168,14 @@ const LaunchCard = ({ icon, title, desc, onClick }) => (
 );
 
 const LoginScreen = ({ onLogin }) => (
-  <div className="w-full h-screen flex items-center justify-center bg-slate-100">
-    <div className="bg-white shadow-md border border-slate-200 rounded-xl p-8 w-full max-w-sm text-center">
-      <School size={48} className="text-teal-600 mx-auto mb-4" />
-      <h1 className="text-2xl font-extrabold text-slate-800">Lakeland Secure Hub</h1>
-      <p className="text-slate-500 mt-2 mb-8">Authorized staff access only.</p>
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
       <button 
         onClick={onLogin} 
-        className="w-full bg-teal-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-200 ease-in-out"
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
       >
         Sign in with Microsoft
       </button>
