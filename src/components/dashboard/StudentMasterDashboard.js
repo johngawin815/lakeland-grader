@@ -209,8 +209,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200/50">
-                            {roster.filter(s => !filterIEP || s.iep === "Yes").map(s => (
-                                {
+                            {roster.filter(s => !filterIEP || s.iep === "Yes").map(s => {
                                     const effectiveUnit = getEffectiveUnit(s);
                                     return (
                                         <tr key={s.id} onClick={() => setEditingStudent(s)} className={`cursor-pointer transition-colors group border-l-4 border-transparent hover:bg-slate-100/50 hover:border-indigo-500`}>
@@ -223,8 +222,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                                             </td>
                                         </tr>
                                     );
-                                }
-                            ))}
+                                })}
                         </tbody>
                     </table>
                 </div>
