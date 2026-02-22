@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { cosmosService } from '../../services/cosmosService';
 import IntakeForm from './IntakeForm';
-import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X, Users, ChevronRight, Plus, StickyNote } from 'lucide-react';
+import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X, Users, ChevronRight, Plus, StickyNote, Archive } from 'lucide-react';
 
 const UNIT_CONFIG = [
-  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800" },
-  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800" },
-  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800" },
-  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800" },
-  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800" },
-  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800" }
+  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
 ];
 
 // --- DATA GENERATOR (Creates 108 Fictional Students) ---
@@ -89,6 +90,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false); 
   const [filterUnit, setFilterUnit] = useState("All");
+  const [filterIEP, setFilterIEP] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
 
   useEffect(() => {
@@ -144,6 +146,8 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
     return diff > 0 ? diff : 0;
   };
 
+  const getEffectiveUnit = (s) => s.dischargeDate ? "Discharged" : s.unitName;
+
   if (loading) return <SkeletonLoader />;
 
   if (!activeStudentName || !profileData) {
@@ -156,9 +160,10 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                     <span className="bg-slate-200 text-slate-700 text-sm px-3 py-1.5 rounded-full font-bold">
                         {roster.length} Students
                     </span>
-                    <span className="bg-amber-100 text-amber-800 text-sm px-3 py-1.5 rounded-full font-bold">
+                    <button onClick={() => setFilterIEP(!filterIEP)} className={`text-sm px-3 py-1.5 rounded-full font-bold transition-all border ${filterIEP ? 'bg-amber-100 text-amber-800 border-amber-300 ring-2 ring-amber-500/20' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200'}`}>
                         {roster.filter(s => s.iep === "Yes").length} IEPs
-                    </span>
+                        {filterIEP && <span className="ml-1.5 text-xs">▼</span>}
+                    </button>
                 </h2>
                 <p className="m-1 text-slate-500 text-base">Manage active students and unit assignments.</p>
             </div>
@@ -204,16 +209,21 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200/50">
-                            {roster.map(s => (
-                                <tr key={s.id} onClick={() => setEditingStudent(s)} className={`cursor-pointer transition-colors group border-l-4 border-transparent hover:bg-slate-100/50 hover:border-indigo-500`}>
-                                    <td className="p-4 font-bold text-slate-700 group-hover:text-indigo-600">{s.studentName}</td>
-                                    <td className="p-4 text-sm text-slate-500"><span className={`px-2.5 py-1 rounded-md text-xs font-bold ${UNIT_CONFIG.find(u => u.key === s.unitName)?.badge || 'bg-slate-100 text-slate-600'}`}>{s.unitName}</span></td>
-                                    <td className="p-4 text-sm text-slate-500">{s.gradeLevel}th</td>
-                                    <td className="p-4 text-sm text-slate-500">{s.district || "-"}</td>
-                                    <td className="p-4 text-right">
-                                        {s.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full font-bold">IEP</span>}
-                                    </td>
-                                </tr>
+                            {roster.filter(s => !filterIEP || s.iep === "Yes").map(s => (
+                                {
+                                    const effectiveUnit = getEffectiveUnit(s);
+                                    return (
+                                        <tr key={s.id} onClick={() => setEditingStudent(s)} className={`cursor-pointer transition-colors group border-l-4 border-transparent hover:bg-slate-100/50 hover:border-indigo-500`}>
+                                            <td className="p-4 font-bold text-slate-700 group-hover:text-indigo-600">{s.studentName}</td>
+                                            <td className="p-4 text-sm text-slate-500"><span className={`px-2.5 py-1 rounded-md text-xs font-bold ${UNIT_CONFIG.find(u => u.key === effectiveUnit)?.badge || 'bg-slate-100 text-slate-600'}`}>{effectiveUnit}</span></td>
+                                            <td className="p-4 text-sm text-slate-500">{s.gradeLevel}th</td>
+                                            <td className="p-4 text-sm text-slate-500">{s.district || "-"}</td>
+                                            <td className="p-4 text-right">
+                                                {s.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full font-bold">IEP</span>}
+                                            </td>
+                                        </tr>
+                                    );
+                                }
                             ))}
                         </tbody>
                     </table>
@@ -222,25 +232,33 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
 
             {!showAddForm && filterUnit !== "All" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {roster.filter(s => s.unitName === filterUnit).length === 0 ? (
-                        <div className="col-span-full text-center py-20 text-slate-400 italic">No students assigned to this unit.</div>
+                    {roster.filter(s => getEffectiveUnit(s) === filterUnit && (!filterIEP || s.iep === "Yes")).length === 0 ? (
+                        <div className="col-span-full text-center py-20 text-slate-400 italic">No students assigned to this unit{filterIEP ? " with an IEP" : ""}.</div>
                     ) : (
-                        roster.filter(s => s.unitName === filterUnit).map(s => (
-                            <div 
-                                key={s.id} 
-                                onClick={() => setEditingStudent(s)}
-                                className={`p-4 border border-slate-200/80 rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:border-indigo-400/50 hover:bg-white`}
-                            >
-                                <div className="flex justify-between items-start">
-                                    <div className="font-bold text-slate-800 text-lg group-hover:text-indigo-600">{s.studentName}</div>
-                                    {s.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+                        roster.filter(s => getEffectiveUnit(s) === filterUnit && (!filterIEP || s.iep === "Yes"))
+                        .sort((a, b) => (parseInt(a.gradeLevel) || 0) - (parseInt(b.gradeLevel) || 0))
+                        .map(s => {
+                            const unitStyle = UNIT_CONFIG.find(u => u.key === getEffectiveUnit(s));
+                            return (
+                                <div 
+                                    key={s.id} 
+                                    onClick={() => setEditingStudent(s)}
+                                    className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>{s.studentName}</div>
+                                        <div className="flex flex-col gap-1 items-end">
+                                            {s.dischargeDate && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 font-bold uppercase tracking-wide">Discharged</span>}
+                                            {s.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                                        <span>Grade {s.gradeLevel}</span>
+                                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+                                    </div>
                                 </div>
-                                <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
-                                    <span>Grade {s.gradeLevel}</span>
-                                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             )}
@@ -352,6 +370,16 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
         setNewNote("");
     };
     
+    const handleSave = () => {
+        if (formData.dischargeDate && !student.dischargeDate) {
+            if (window.confirm(`Are you sure you want to discharge ${formData.studentName}? This will move them to the Discharged Residents list.`)) {
+                onSave(formData);
+            }
+        } else {
+            onSave(formData);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-white/80 backdrop-blur-xl border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-5xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
@@ -386,6 +414,17 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
                             </div>
                         </div>
 
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-600 mb-1.5">Admit Date</label>
+                                <input type="date" name="admitDate" value={formData.admitDate || ""} onChange={handleChange} className="w-full p-3 border border-slate-300/80 rounded-xl focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-700 transition-all" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-600 mb-1.5">Discharge Date</label>
+                                <input type="date" name="dischargeDate" value={formData.dischargeDate || ""} onChange={handleChange} className="w-full p-3 border border-slate-300/80 rounded-xl focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-700 transition-all" />
+                            </div>
+                        </div>
+
                         <div>
                             <label className="block text-sm font-bold text-slate-600 mb-1.5">Local School District</label>
                             <input name="district" value={formData.district || ""} onChange={handleChange} className="w-full p-3 border border-slate-300/80 rounded-xl focus:ring-4 focus:ring-indigo-500/20 outline-none text-slate-700 transition-all" placeholder="e.g. Springfield Public Schools" />
@@ -399,7 +438,7 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
 
                     <div className="p-6 border-t border-slate-200/80 flex gap-3 bg-slate-50/50">
                         <button onClick={onClose} className="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200/80 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-colors">Cancel</button>
-                        <button onClick={() => onSave(formData)} className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all">Save Changes</button>
+                        <button onClick={handleSave} className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all">Save Changes</button>
                     </div>
                 </div>
                 

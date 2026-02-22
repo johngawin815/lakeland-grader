@@ -49,7 +49,7 @@ const IntakeForm = ({ onSave, units }) => {
                 {/* Discharge Date */}
                 <div>
                     <label className={labelClasses}>Exp. Discharge</label>
-                    <input type="date" {...register("dischargeDate")} className={inputClasses} />
+                    <input type="date" {...register("expectedDischargeDate")} className={inputClasses} />
                 </div>
 
                 {/* District */}
