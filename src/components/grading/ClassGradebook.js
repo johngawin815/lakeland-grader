@@ -43,7 +43,7 @@ const INITIAL_ATTENDANCE = {
 
 const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" }) => {
   // --- STATE MANAGEMENT ---
-  const [students, setStudents] = useState(INITIAL_STUDENTS);
+  const [students] = useState(INITIAL_STUDENTS);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [assignments, setAssignments] = useState(INITIAL_ASSIGNMENTS);
   const [grades, setGrades] = useState(INITIAL_GRADES);
@@ -99,6 +99,18 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
     loadGradebookData();
   }, [course]);
 
+  if (!course) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-10">
+        <BookOpen className="w-16 h-16 text-slate-300 mb-4" />
+        <h2 className="text-2xl font-bold text-slate-700">No Class Selected</h2>
+        <p className="text-slate-500 mt-2">
+          Please go to the <strong>Dashboard</strong> and select a class from the "My Classes" tab to view its gradebook.
+        </p>
+      </div>
+    )
+  }
+  
   // --- DERIVED STATE & CALCULATIONS ---
   const finalGrades = useMemo(() => {
     const results = {};

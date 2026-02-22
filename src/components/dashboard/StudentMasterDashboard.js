@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { cosmosService } from '../../services/cosmosService';
-import IntakeForm from './IntakeForm';
-import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X, Users, ChevronRight, Plus, StickyNote, Archive, BookOpen, UserCheck } from 'lucide-react';
+
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook'; // Import for later use
 
 
@@ -170,7 +169,7 @@ const MyClasses = ({ teacherName, onCourseSelect }) => {
         if (teacherName) {
             fetchCourses();
         }
-    }, [teacherName]);
+    }, [teacherName, MOCK_COURSES]);
 
     if (loading) {
         return <div className="text-center py-20 text-slate-400">Loading classes...</div>;
