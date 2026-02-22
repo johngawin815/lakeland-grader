@@ -39,18 +39,59 @@ const INITIAL_ATTENDANCE = {
 };
 
 
-const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
+import React, { useState, useMemo, useEffect } from 'react';
+import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, Trash2, ArrowDown } from 'lucide-react';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+import { saveAs } from 'file-saver';
+import { cosmosService } from '../../services/cosmosService';
+import ReportCardExportModal from './ReportCardExportModal';
+
+// --- DATA SETUP ---
+// Standardized data without presentational properties (like color).
+const INITIAL_STUDENTS = [
+  { id: 1, name: "David Everitt" },
+  { id: 2, name: "Jane Doe" },
+  { id: 3, name: "John Smith" },
+  { id: 4, name: "Emily Johnson" },
+  { id: 5, name: "Michael Brown" },
+];
+
+const INITIAL_CATEGORIES = [
+  { id: 'hw', name: 'Homework', weight: 20 },
+  { id: 'quiz', name: 'Quizzes', weight: 30 },
+  { id: 'test', name: 'Tests', weight: 50 },
+];
+
+const INITIAL_ASSIGNMENTS = [
+  { id: 'a1', name: 'Chapter 1 Quiz', categoryId: 'quiz', maxScore: 50 },
+  { id: 'a2', name: 'Homework 1.1', categoryId: 'hw', maxScore: 10 },
+  { id: 'a3', name: 'Unit 1 Test', categoryId: 'test', maxScore: 100 },
+];
+
+const INITIAL_GRADES = {
+  1: { 'a1': 45, 'a2': 10, 'a3': 92 },
+  2: { 'a1': 38, 'a2': 8, 'a3': 85 },
+  3: { 'a1': 50, 'a2': 10, 'a3': 98 },
+};
+
+const INITIAL_ATTENDANCE = {
+  '2026-02-20': { 1: 'Present', 2: 'Absent', 3: 'Present', 4: 'Tardy', 5: 'Present' },
+};
+
+
+const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" }) => {
   // --- STATE MANAGEMENT ---
-  const [students] = useState(INITIAL_STUDENTS);
+  const [students, setStudents] = useState(INITIAL_STUDENTS);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [assignments, setAssignments] = useState(INITIAL_ASSIGNMENTS);
   const [grades, setGrades] = useState(INITIAL_GRADES);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('grades');
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState(INITIAL_ATTENDANCE);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [classId] = useState('dummy-class-101');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ name: '', categoryId: 'hw', maxScore: 100 });
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -59,6 +100,43 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
   const [editingCategories, setEditingCategories] = useState([]);
   const [isBulkFillModalOpen, setIsBulkFillModalOpen] = useState(false);
   const [bulkFillData, setBulkFillData] = useState({ assignmentId: null, value: '' });
+
+  // --- DATA FETCHING ---
+  useEffect(() => {
+    const loadGradebookData = async () => {
+      if (!course?.id) {
+        setLoading(false);
+        return;
+      };
+
+      setLoading(true);
+      try {
+        // In a real app, you would fetch the gradebook state from Cosmos DB
+        // const savedState = await cosmosService.getGradebook(course.id);
+        
+        // For now, we'll fetch enrollments and create a student list.
+        // const enrollments = await cosmosService.getEnrollmentsByCourse(course.id);
+        // const studentIds = enrollments.map(e => e.studentId);
+        // const studentDetails = await cosmosService.getStudentsByIds(studentIds);
+        
+        // MOCKING the fetch for now:
+        console.log(`Fetching data for course: ${course.courseName} (${course.id})`);
+        
+        // This is where you would populate your state from the database
+        // setStudents(studentDetails);
+        // setGrades(savedState.grades || {});
+        // setAssignments(savedState.assignments || []);
+        // setCategories(savedState.categories || INITIAL_CATEGORIES);
+        
+      } catch (error) {
+        console.error("Failed to load gradebook data:", error);
+        // Handle error, maybe show a toast notification
+      }
+      setLoading(false);
+    };
+
+    loadGradebookData();
+  }, [course]);
 
   // --- DERIVED STATE & CALCULATIONS ---
   const finalGrades = useMemo(() => {
@@ -161,7 +239,7 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
     setIsSaving(true);
     setSaveMessage('');
     try {
-      const payload = { id: classId, students, categories, assignments, grades, attendance, lastUpdated: new Date().toISOString() };
+      const payload = { id: course.id, students, categories, assignments, grades, attendance, lastUpdated: new Date().toISOString() };
       await cosmosService.saveGradebook(payload);
       setSaveMessage('Saved Successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
@@ -210,7 +288,7 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
         report_date: new Date().toLocaleDateString(),
         teacher_name: user?.name || 'Teacher',
         total_credits: '3.5',
-        comments: `Current grade in Advanced React: ${grade.toFixed(1)}%. ${grade >= 70 ? 'Keep up the good work!' : 'Please see me for extra help.'}`,
+        comments: `Current grade in ${course.courseName}: ${grade.toFixed(1)}%. ${grade >= 70 ? 'Keep up the good work!' : 'Please see me for extra help.'}`,
         
         // Mock Core Classes
         eng_class: 'English 11', eng_grade: 'B+', eng_pct: '88',
@@ -219,7 +297,7 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
         soc_class: 'US History', soc_grade: 'A', soc_pct: '95',
         
         // Current Class
-        elec1_class: 'Advanced React', elec1_grade: letterGrade, elec1_pct: grade.toFixed(1),
+        elec1_class: course.courseName, elec1_grade: letterGrade, elec1_pct: grade.toFixed(1),
         elec2_class: 'Study Hall', elec2_grade: 'P', elec2_pct: '100',
       };
 
@@ -237,6 +315,15 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
     }
   };
 
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <span className="ml-4 text-lg font-bold text-slate-600">Loading Gradebook...</span>
+            </div>
+        );
+    }
+
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 font-sans text-slate-800">
@@ -253,10 +340,10 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
             <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
               <GraduationCap className="w-8 h-8" /> 
             </span>
-            Class Gradebook
+            {course.courseName || 'Class Gradebook'}
           </h1>
           <p className="text-slate-500 mt-2 text-base">
-            Period 1: Advanced React • {students.length} Students
+             {course.teacherName || user.name} • {students.length} Students
           </p>
         </div>
 
