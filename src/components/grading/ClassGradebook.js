@@ -39,6 +39,7 @@ const INITIAL_ATTENDANCE = {
 };
 
 
+import { calculateLetterGrade } from '../../utils/gradeCalculator';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, Trash2, ArrowDown } from 'lucide-react';
 import PizZip from 'pizzip';
@@ -235,19 +236,59 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
     setIsExportModalOpen(true);
   };
 
+  import { calculateLetterGrade } from '../../utils/gradeCalculator';
+
+// ... (other imports)
+
+// ... (inside ClassGradebook component)
+
   const handleSaveToCloud = async () => {
     setIsSaving(true);
     setSaveMessage('');
+    
+    const term = "Q1"; // Hardcoded as requested
+
     try {
-      const payload = { id: course.id, students, categories, assignments, grades, attendance, lastUpdated: new Date().toISOString() };
-      await cosmosService.saveGradebook(payload);
-      setSaveMessage('Saved Successfully!');
-      setTimeout(() => setSaveMessage(''), 3000);
+      const savePromises = students.map(student => {
+        const percentage = finalGrades[student.id];
+        
+        if (percentage === null || percentage === undefined) {
+          // Skip students with no grade
+          return Promise.resolve(null);
+        }
+        
+        const letterGrade = calculateLetterGrade(percentage);
+        
+        const enrollmentData = {
+          // The id for an enrollment should be unique, combining student and course is a good practice.
+          id: `${student.id}-${course.id}-${term}`, 
+          studentId: student.id,
+          courseId: course.id,
+          percentage: parseFloat(percentage.toFixed(2)),
+          letterGrade: letterGrade,
+          term: term
+        };
+        
+        return cosmosService.saveCourseGrade(enrollmentData);
+      });
+
+      await Promise.all(savePromises);
+      
+      // Also save the gradebook's own state (assignments, categories, etc.)
+      const gradebookPayload = { id: course.id, assignments, categories, attendance, lastUpdated: new Date().toISOString() };
+      await cosmosService.saveGradebook(gradebookPayload);
+
+
+      setSaveMessage('✅ Saved!');
+      cosmosService.logAudit(user, 'SaveGrades', `Saved ${students.length} student grades for course ${course.courseName}.`);
+
     } catch (error) {
-      console.error("Error saving gradebook:", error);
-      setSaveMessage('Error saving!');
+      console.error("Error saving grades to cloud:", error);
+      setSaveMessage('Error!');
+      alert('There was an error saving grades to the database. Please check the console for details.');
     } finally {
       setIsSaving(false);
+      setTimeout(() => setSaveMessage(''), 3000);
     }
   };
 

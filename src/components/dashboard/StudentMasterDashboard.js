@@ -4,9 +4,7 @@ import IntakeForm from './IntakeForm';
 import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X, Users, ChevronRight, Plus, StickyNote, Archive, BookOpen, UserCheck } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook'; // Import for later use
 
-const UNIT_CONFIG = [
-  // ... (Keep the existing UNIT_CONFIG)
-];
+
 
 // Mock user, as requested. In a real app, this would come from an auth context.
 const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };
