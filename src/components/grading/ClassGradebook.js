@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft } from 'lucide-react';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+import { saveAs } from 'file-saver';
 import { cosmosService } from '../../services/cosmosService';
 import ReportCardExportModal from './ReportCardExportModal';
 
@@ -36,7 +39,7 @@ const INITIAL_ATTENDANCE = {
 };
 
 
-const ClassGradebook = ({ onExit, backLabel = "Back to Generator" }) => {
+const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
   // --- STATE MANAGEMENT ---
   const [students] = useState(INITIAL_STUDENTS);
   const [categories] = useState(INITIAL_CATEGORIES);
@@ -133,6 +136,60 @@ const ClassGradebook = ({ onExit, backLabel = "Back to Generator" }) => {
 
   const handleAttendanceUpdate = (studentId, status) => {
     setAttendance(prev => ({ ...prev, [currentDate]: { ...(prev[currentDate] || {}), [studentId]: status } }));
+  };
+
+  const generateReportCard = async () => {
+    if (!studentToExport) return;
+
+    try {
+      // Load the template
+      const response = await fetch('/templates/quarter_card.docx');
+      if (!response.ok) throw new Error("Could not find template");
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const zip = new PizZip(arrayBuffer);
+      const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+
+      // Calculate data
+      const grade = studentToExport.finalPercentage;
+      const letterGrade = grade >= 90 ? 'A' : grade >= 80 ? 'B' : grade >= 70 ? 'C' : grade >= 60 ? 'D' : 'F';
+      
+      // Map data to template
+      // Note: In a real app, we would pull other classes from a central DB. 
+      // Here we fill the current class as Elective 1 and mock the others for the demo.
+      const data = {
+        student_name: studentToExport.name,
+        grade_level: '11',
+        school_year: '2025-2026',
+        quarter_name: 'Q3',
+        report_date: new Date().toLocaleDateString(),
+        teacher_name: user?.name || 'Teacher',
+        total_credits: '3.5',
+        comments: `Current grade in Advanced React: ${grade.toFixed(1)}%. ${grade >= 70 ? 'Keep up the good work!' : 'Please see me for extra help.'}`,
+        
+        // Mock Core Classes
+        eng_class: 'English 11', eng_grade: 'B+', eng_pct: '88',
+        math_class: 'Algebra II', math_grade: 'A-', math_pct: '92',
+        sci_class: 'Chemistry', sci_grade: 'B', sci_pct: '85',
+        soc_class: 'US History', soc_grade: 'A', soc_pct: '95',
+        
+        // Current Class
+        elec1_class: 'Advanced React', elec1_grade: letterGrade, elec1_pct: grade.toFixed(1),
+        elec2_class: 'Study Hall', elec2_grade: 'P', elec2_pct: '100',
+      };
+
+      doc.render(data);
+
+      const out = doc.getZip().generate({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+
+      saveAs(out, `${studentToExport.name}_ReportCard.docx`);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      alert("Failed to generate report card. Please ensure templates are available.");
+    }
   };
 
   // --- RENDER ---
@@ -337,7 +394,13 @@ const ClassGradebook = ({ onExit, backLabel = "Back to Generator" }) => {
       )}
 
       {/* EXPORT MODAL */}
-      <ReportCardExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} student={studentToExport} currentSubject="Elective 1" />
+      <ReportCardExportModal 
+        isOpen={isExportModalOpen} 
+        onClose={() => setIsExportModalOpen(false)} 
+        student={studentToExport} 
+        currentSubject="Advanced React"
+        onDownload={generateReportCard}
+      />
     </div>
   );
 };

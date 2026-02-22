@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, FileDown, Download } from 'lucide-react';
 
-const ReportCardExportModal = ({ isOpen, onClose, student, currentSubject }) => {
+const ReportCardExportModal = ({ isOpen, onClose, student, currentSubject, onDownload }) => {
   if (!isOpen || !student) return null;
 
   return (
@@ -43,8 +43,8 @@ const ReportCardExportModal = ({ isOpen, onClose, student, currentSubject }) => 
               Cancel
             </button>
             <button 
-              onClick={() => {
-                alert(`Downloading report for ${student.name}...`);
+              onClick={async () => {
+                await onDownload();
                 onClose();
               }}
               className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center justify-center gap-2"

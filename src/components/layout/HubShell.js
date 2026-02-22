@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Search, LogOut, LayoutDashboard, GraduationCap, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen } from 'lucide-react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen } from 'lucide-react';
 
 // --- MODULE IMPORTS ---
 import KTEAReporter from '../ktea/KTEAReporter';
 import DischargeGenerator from '../discharge/DischargeGenerator';
 import CurriculumMaps from '../curriculum/CurriculumMaps'; 
 import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
-import GradeGenerator from '../grading/GradeGenerator'; 
 import ClassGradebook from '../grading/ClassGradebook';
 import AuditLog from './AuditLog';
 
@@ -33,7 +32,6 @@ const HubShell = () => {
   // Define the module data in an array to simplify rendering
   const modules = [
     { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
-    { id: 'grades', title: 'Grade Reporter', desc: 'Enter Grades', icon: <GraduationCap size={28} className="text-indigo-500" /> },
     { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
     { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
     { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
@@ -124,8 +122,7 @@ const HubShell = () => {
         {currentView !== 'home' && (
             <div className="p-0">
                 {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
-                {currentView === 'grades' && <GradeGenerator user={user} activeStudent={activeStudent} />}
-                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'gradebook' && <ClassGradebook user={user} onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
                 {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
                 {currentView === 'discharge' && <DischargeGenerator user={user} activeStudent={activeStudent} />}
                 {currentView === 'curriculum' && <CurriculumMaps />}
