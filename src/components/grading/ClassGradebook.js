@@ -99,18 +99,6 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
     loadGradebookData();
   }, [course]);
 
-  if (!course) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-10">
-        <BookOpen className="w-16 h-16 text-slate-300 mb-4" />
-        <h2 className="text-2xl font-bold text-slate-700">No Class Selected</h2>
-        <p className="text-slate-500 mt-2">
-          Please go to the <strong>Dashboard</strong> and select a class from the "My Classes" tab to view its gradebook.
-        </p>
-      </div>
-    )
-  }
-  
   // --- DERIVED STATE & CALCULATIONS ---
   const finalGrades = useMemo(() => {
     const results = {};
@@ -334,178 +322,188 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 font-sans text-slate-800">
-      
-      {/* HEADER SECTION */}
-      <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          {onExit && (
-            <button onClick={onExit} className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors duration-300">
-              <ArrowLeft className="w-4 h-4" /> {backLabel}
-            </button>
-          )}
-          <h1 className="text-4xl font-extrabold text-slate-900 flex items-center gap-3">
-            <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
-              <GraduationCap className="w-8 h-8" /> 
-            </span>
-            {course.courseName || 'Class Gradebook'}
-          </h1>
-          <p className="text-slate-500 mt-2 text-base">
-             {course.teacherName || user.name} • {students.length} Students
+      {!course ? (
+        <div className="flex flex-col items-center justify-center h-full text-center p-10">
+          <BookOpen className="w-16 h-16 text-slate-300 mb-4" />
+          <h2 className="text-2xl font-bold text-slate-700">No Class Selected</h2>
+          <p className="text-slate-500 mt-2">
+            Please go to the <strong>Dashboard</strong> and select a class from the "My Classes" tab to view its gradebook.
           </p>
         </div>
-
-        {/* CONTROLS SECTION */}
-        {activeTab === 'grades' && (
-          <div className="flex gap-3 items-center">
-            {saveMessage && <span className={`text-sm font-bold ${saveMessage === 'Error!' ? 'text-red-500' : 'text-emerald-600'} animate-pulse`}>{saveMessage}</span>}
-            <button 
-              onClick={handleSaveToCloud}
-              disabled={isSaving}
-              className="bg-indigo-600 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (saveMessage === '✅ Saved!' ? <Check className="w-5 h-5" /> : <CloudUpload className="w-5 h-5" />)}
-              {isSaving ? 'Saving...' : (saveMessage === '✅ Saved!' ? 'Saved!' : 'Save to Cloud')}
-            </button>
-            <button 
-              onClick={handleOpenWeightModal}
-              className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
-            >
-              <Percent className="w-5 h-5 text-indigo-500" /> Weights
-            </button>
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5 text-indigo-500" /> Add Assignment
-            </button>
+      ) : (
+      <>
+        {/* HEADER SECTION */}
+        <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            {onExit && (
+              <button onClick={onExit} className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors duration-300">
+                <ArrowLeft className="w-4 h-4" /> {backLabel}
+              </button>
+            )}
+            <h1 className="text-4xl font-extrabold text-slate-900 flex items-center gap-3">
+              <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
+                <GraduationCap className="w-8 h-8" /> 
+              </span>
+              {course.courseName || 'Class Gradebook'}
+            </h1>
+            <p className="text-slate-500 mt-2 text-base">
+               {course.teacherName || user.name} • {students.length} Students
+            </p>
           </div>
-        )}
-      </div>
 
-      {/* TAB NAVIGATION */}
-      <div className="max-w-7xl mx-auto mb-0 flex gap-2 border-b border-slate-200/80">
-        <button onClick={() => setActiveTab('grades')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'grades' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-          <BookOpen className="w-5 h-5" /> Gradebook
-        </button>
-        <button onClick={() => setActiveTab('attendance')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'attendance' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-          <Calendar className="w-5 h-5" /> Attendance
-        </button>
-      </div>
+          {/* CONTROLS SECTION */}
+          {activeTab === 'grades' && (
+            <div className="flex gap-3 items-center">
+              {saveMessage && <span className={`text-sm font-bold ${saveMessage === 'Error!' ? 'text-red-500' : 'text-emerald-600'} animate-pulse`}>{saveMessage}</span>}
+              <button 
+                onClick={handleSaveToCloud}
+                disabled={isSaving}
+                className="bg-indigo-600 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (saveMessage === '✅ Saved!' ? <Check className="w-5 h-5" /> : <CloudUpload className="w-5 h-5" />)}
+                {isSaving ? 'Saving...' : (saveMessage === '✅ Saved!' ? 'Saved!' : 'Save to Cloud')}
+              </button>
+              <button 
+                onClick={handleOpenWeightModal}
+                className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
+              >
+                <Percent className="w-5 h-5 text-indigo-500" /> Weights
+              </button>
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5 text-indigo-500" /> Add Assignment
+              </button>
+            </div>
+          )}
+        </div>
 
-      {/* MAIN CONTENT CARD */}
-      <div className="max-w-7xl mx-auto bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-[70vh]">
-        
-        {/* GRADEBOOK GRID */}
-        {activeTab === 'grades' && (
-          <div className="overflow-auto flex-1">
-            <table className="w-full border-collapse min-w-[800px]">
-              <thead className="bg-slate-100/80 backdrop-blur-sm text-slate-600 text-xs uppercase font-bold tracking-wider sticky top-0 z-10 shadow-sm shadow-slate-200/50">
-                <tr>
-                  <th className="p-4 text-left border-b border-r border-slate-200/80 sticky left-0 bg-slate-100/80 w-48 min-w-[12rem]">Student</th>
-                  {assignments.map(assignment => (
-                    <th key={assignment.id} className="p-3 text-center border-b border-slate-200/80 min-w-[9rem]">
-                      <div className="flex flex-col items-center gap-1.5">
-                        <span className="truncate max-w-[140px]" title={assignment.name}>{assignment.name}</span>
-                        <div className="flex items-center gap-2">
-                           <span className="text-xs px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 font-semibold">
-                            {categories.find(c => c.id === assignment.categoryId)?.name}
-                          </span>
-                          <span className="text-xs text-slate-400 font-medium">/ {assignment.maxScore}</span>
+        {/* TAB NAVIGATION */}
+        <div className="max-w-7xl mx-auto mb-0 flex gap-2 border-b border-slate-200/80">
+          <button onClick={() => setActiveTab('grades')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'grades' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            <BookOpen className="w-5 h-5" /> Gradebook
+          </button>
+          <button onClick={() => setActiveTab('attendance')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'attendance' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            <Calendar className="w-5 h-5" /> Attendance
+          </button>
+        </div>
+
+        {/* MAIN CONTENT CARD */}
+        <div className="max-w-7xl mx-auto bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-[70vh]">
+          
+          {/* GRADEBOOK GRID */}
+          {activeTab === 'grades' && (
+            <div className="overflow-auto flex-1">
+              <table className="w-full border-collapse min-w-[800px]">
+                <thead className="bg-slate-100/80 backdrop-blur-sm text-slate-600 text-xs uppercase font-bold tracking-wider sticky top-0 z-10 shadow-sm shadow-slate-200/50">
+                  <tr>
+                    <th className="p-4 text-left border-b border-r border-slate-200/80 sticky left-0 bg-slate-100/80 w-48 min-w-[12rem]">Student</th>
+                    {assignments.map(assignment => (
+                      <th key={assignment.id} className="p-3 text-center border-b border-slate-200/80 min-w-[9rem]">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="truncate max-w-[140px]" title={assignment.name}>{assignment.name}</span>
+                          <div className="flex items-center gap-2">
+                             <span className="text-xs px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 font-semibold">
+                              {categories.find(c => c.id === assignment.categoryId)?.name}
+                            </span>
+                            <span className="text-xs text-slate-400 font-medium">/ {assignment.maxScore}</span>
+                          </div>
+                          <button onClick={() => handleOpenBulkFill(assignment.id)} className="mt-1 text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100 transition-colors">
+                            <ArrowDown className="w-3 h-3" /> Fill All
+                          </button>
                         </div>
-                        <button onClick={() => handleOpenBulkFill(assignment.id)} className="mt-1 text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100 transition-colors">
-                          <ArrowDown className="w-3 h-3" /> Fill All
-                        </button>
+                      </th>
+                    ))}
+                    <th className="p-4 text-center border-b border-l border-slate-200/80 sticky right-0 bg-slate-100/80 w-32 shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
+                      <div className="flex items-center justify-center gap-2 text-indigo-600">
+                        <TrendingUp className="w-5 h-5" /> Overall
                       </div>
                     </th>
-                  ))}
-                  <th className="p-4 text-center border-b border-l border-slate-200/80 sticky right-0 bg-slate-100/80 w-32 shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
-                    <div className="flex items-center justify-center gap-2 text-indigo-600">
-                      <TrendingUp className="w-5 h-5" /> Overall
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-sm text-slate-800 divide-y divide-slate-100/50">
-                {students.map((student) => {
-                  const finalGrade = finalGrades[student.id];
-                  const isPassing = finalGrade === null || finalGrade >= 60;
-                  return (
-                    <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200 group">
-                      <td className="p-4 font-bold border-r border-slate-200/80 sticky left-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm">
-                        <div className="flex justify-between items-center">
-                          <div>{student.name}<div className="text-xs text-slate-400 font-normal">ID: {student.id}</div></div>
-                          <button onClick={() => handleOpenExport(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 transition-all p-1" title="Export Report Card"><FileDown className="w-5 h-5" /></button>
-                        </div>
-                      </td>
-                      {assignments.map(assignment => {
-                        const grade = grades[student.id]?.[assignment.id];
-                        const isFailing = grade !== undefined && grade !== '' && parseFloat(grade) < 60;
+                  </tr>
+                </thead>
+                <tbody className="text-sm text-slate-800 divide-y divide-slate-100/50">
+                  {students.map((student) => {
+                    const finalGrade = finalGrades[student.id];
+                    const isPassing = finalGrade === null || finalGrade >= 60;
+                    return (
+                      <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200 group">
+                        <td className="p-4 font-bold border-r border-slate-200/80 sticky left-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm">
+                          <div className="flex justify-between items-center">
+                            <div>{student.name}<div className="text-xs text-slate-400 font-normal">ID: {student.id}</div></div>
+                            <button onClick={() => handleOpenExport(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 transition-all p-1" title="Export Report Card"><FileDown className="w-5 h-5" /></button>
+                          </div>
+                        </td>
+                        {assignments.map(assignment => {
+                          const grade = grades[student.id]?.[assignment.id];
+                          const isFailing = grade !== undefined && grade !== '' && parseFloat(grade) < 60;
+                          return (
+                            <td key={assignment.id} className="p-2 text-center border-r border-slate-200/50">
+                              <input type="number" min="0" max={assignment.maxScore} value={grade ?? ''} onChange={(e) => handleGradeChange(student.id, assignment.id, e.target.value)} className={`w-24 p-2 text-center border rounded-lg outline-none transition-all duration-300 font-mono ${isFailing ? 'border-rose-300 bg-rose-50 text-rose-600 font-bold focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'}`} placeholder="—" />
+                            </td>
+                          );
+                        })}
+                        <td className="p-4 text-center font-bold border-l border-slate-200/80 sticky right-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
+                          {finalGrade !== null ? <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${isPassing ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{finalGrade.toFixed(1)}%</span> : <span className="text-slate-400 text-xs italic">N/A</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* ATTENDANCE UI */}
+          {activeTab === 'attendance' && (
+            <div className="flex flex-col h-full">
+              <div className="p-4 bg-slate-50/70 border-b border-slate-200/80 flex items-center gap-4">
+                <label className="text-sm font-bold text-slate-600">Date:</label>
+                <input type="date" value={currentDate} onChange={(e) => setCurrentDate(e.target.value)} className="p-2.5 rounded-xl border-slate-300/70 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/20 outline-none" />
+              </div>
+
+              <div className="overflow-auto flex-1 p-6">
+                <div className="max-w-4xl mx-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-slate-500 font-bold text-xs">
+                      <tr>
+                        <th className="p-3">Student</th>
+                        <th className="p-3 text-center">Status</th>
+                        <th className="p-3 text-right">Total Absences</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/50">
+                      {students.map(student => {
+                        const status = attendance[currentDate]?.[student.id] || 'Present';
                         return (
-                          <td key={assignment.id} className="p-2 text-center border-r border-slate-200/50">
-                            <input type="number" min="0" max={assignment.maxScore} value={grade ?? ''} onChange={(e) => handleGradeChange(student.id, assignment.id, e.target.value)} className={`w-24 p-2 text-center border rounded-lg outline-none transition-all duration-300 font-mono ${isFailing ? 'border-rose-300 bg-rose-50 text-rose-600 font-bold focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'}`} placeholder="—" />
-                          </td>
+                          <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200">
+                            <td className="p-4 font-bold text-slate-800 rounded-l-2xl">{student.name}</td>
+                            <td className="p-3">
+                              <div className="flex justify-center bg-slate-100/80 rounded-xl p-1 gap-1">
+                                {['Present', 'Absent', 'Tardy'].map(s => (
+                                  <button key={s} onClick={() => handleAttendanceUpdate(student.id, s)} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold border transition-all duration-200 ${status === s ? 'bg-white border-slate-200/90 text-indigo-600 shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:bg-white/50 hover:text-slate-700'}`}>
+                                    {s === 'Present' && <Check size={16} />}
+                                    {s === 'Absent' && <XCircle size={16} />}
+                                    {s === 'Tardy' && <Clock size={16} />}
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-4 text-right font-mono font-bold text-slate-600 rounded-r-2xl">{getTotalAbsences(student.id)}</td>
+                          </tr>
                         );
                       })}
-                      <td className="p-4 text-center font-bold border-l border-slate-200/80 sticky right-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
-                        {finalGrade !== null ? <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${isPassing ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{finalGrade.toFixed(1)}%</span> : <span className="text-slate-400 text-xs italic">N/A</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* ATTENDANCE UI */}
-        {activeTab === 'attendance' && (
-          <div className="flex flex-col h-full">
-            <div className="p-4 bg-slate-50/70 border-b border-slate-200/80 flex items-center gap-4">
-              <label className="text-sm font-bold text-slate-600">Date:</label>
-              <input type="date" value={currentDate} onChange={(e) => setCurrentDate(e.target.value)} className="p-2.5 rounded-xl border-slate-300/70 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/20 outline-none" />
-            </div>
-
-            <div className="overflow-auto flex-1 p-6">
-              <div className="max-w-4xl mx-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-slate-500 font-bold text-xs">
-                    <tr>
-                      <th className="p-3">Student</th>
-                      <th className="p-3 text-center">Status</th>
-                      <th className="p-3 text-right">Total Absences</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200/50">
-                    {students.map(student => {
-                      const status = attendance[currentDate]?.[student.id] || 'Present';
-                      return (
-                        <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200">
-                          <td className="p-4 font-bold text-slate-800 rounded-l-2xl">{student.name}</td>
-                          <td className="p-3">
-                            <div className="flex justify-center bg-slate-100/80 rounded-xl p-1 gap-1">
-                              {['Present', 'Absent', 'Tardy'].map(s => (
-                                <button key={s} onClick={() => handleAttendanceUpdate(student.id, s)} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold border transition-all duration-200 ${status === s ? 'bg-white border-slate-200/90 text-indigo-600 shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:bg-white/50 hover:text-slate-700'}`}>
-                                  {s === 'Present' && <Check size={16} />}
-                                  {s === 'Absent' && <XCircle size={16} />}
-                                  {s === 'Tardy' && <Clock size={16} />}
-                                  {s}
-                                </button>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="p-4 text-right font-mono font-bold text-slate-600 rounded-r-2xl">{getTotalAbsences(student.id)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* ADD ASSIGNMENT MODAL */}
+          )}
+        </div>
+      </>
+      )}
+      {/* MODALS */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-md overflow-hidden">
