@@ -6,7 +6,7 @@ import KTEAReporter from '../ktea/KTEAReporter';
 import DischargeGenerator from '../discharge/DischargeGenerator';
 import CurriculumMaps from '../curriculum/CurriculumMaps'; 
 import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
-import GradeReporter from '../grading/GradeReporter'; 
+import GradeGenerator from '../grading/GradeGenerator'; 
 import AuditLog from './AuditLog';
 
 const HubShell = () => {
@@ -122,7 +122,7 @@ const HubShell = () => {
         {currentView !== 'home' && (
             <div className="p-0">
                 {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
-                {currentView === 'grades' && <GradeReporter activeStudent={activeStudent} />}
+                {currentView === 'grades' && <GradeGenerator user={user} activeStudent={activeStudent} />}
                 {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
                 {currentView === 'discharge' && <DischargeGenerator user={user} activeStudent={activeStudent} />}
                 {currentView === 'curriculum' && <CurriculumMaps />}
