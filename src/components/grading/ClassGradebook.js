@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft } from 'lucide-react';
+import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, Trash2, ArrowDown } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
@@ -42,7 +42,7 @@ const INITIAL_ATTENDANCE = {
 const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
   // --- STATE MANAGEMENT ---
   const [students] = useState(INITIAL_STUDENTS);
-  const [categories] = useState(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [assignments, setAssignments] = useState(INITIAL_ASSIGNMENTS);
   const [grades, setGrades] = useState(INITIAL_GRADES);
   const [activeTab, setActiveTab] = useState('grades');
@@ -55,6 +55,10 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
   const [newAssignment, setNewAssignment] = useState({ name: '', categoryId: 'hw', maxScore: 100 });
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [studentToExport, setStudentToExport] = useState(null);
+  const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
+  const [editingCategories, setEditingCategories] = useState([]);
+  const [isBulkFillModalOpen, setIsBulkFillModalOpen] = useState(false);
+  const [bulkFillData, setBulkFillData] = useState({ assignmentId: null, value: '' });
 
   // --- DERIVED STATE & CALCULATIONS ---
   const finalGrades = useMemo(() => {
@@ -102,6 +106,47 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
     setAssignments([...assignments, { ...newAssignment, id: `a${Date.now()}` }]);
     setIsModalOpen(false);
     setNewAssignment({ name: '', categoryId: 'hw', maxScore: 100 });
+  };
+
+  const handleOpenWeightModal = () => {
+    setEditingCategories(JSON.parse(JSON.stringify(categories)));
+    setIsWeightModalOpen(true);
+  };
+
+  const handleSaveWeights = (e) => {
+    e.preventDefault();
+    setCategories(editingCategories);
+    setIsWeightModalOpen(false);
+  };
+
+  const handleAddCategory = () => {
+    setEditingCategories([...editingCategories, { id: `cat-${Date.now()}`, name: 'New Category', weight: 0 }]);
+  };
+
+  const handleDeleteCategory = (catId) => {
+    if (editingCategories.length <= 1) return alert("You must have at least one category.");
+    setEditingCategories(editingCategories.filter(c => c.id !== catId));
+  };
+
+  const handleOpenBulkFill = (assignmentId) => {
+    setBulkFillData({ assignmentId, value: '' });
+    setIsBulkFillModalOpen(true);
+  };
+
+  const handleBulkFill = (e) => {
+    e.preventDefault();
+    const { assignmentId, value } = bulkFillData;
+    if (!assignmentId) return;
+
+    setGrades(prev => {
+      const newGrades = { ...prev };
+      students.forEach(student => {
+        if (!newGrades[student.id]) newGrades[student.id] = {};
+        newGrades[student.id] = { ...newGrades[student.id], [assignmentId]: value };
+      });
+      return newGrades;
+    });
+    setIsBulkFillModalOpen(false);
   };
 
   const handleOpenExport = (student) => {
@@ -228,6 +273,12 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
               {isSaving ? 'Saving...' : 'Save to Cloud'}
             </button>
             <button 
+              onClick={handleOpenWeightModal}
+              className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
+            >
+              <Percent className="w-5 h-5 text-indigo-500" /> Weights
+            </button>
+            <button 
               onClick={() => setIsModalOpen(true)}
               className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
             >
@@ -267,6 +318,9 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
                           </span>
                           <span className="text-xs text-slate-400 font-medium">/ {assignment.maxScore}</span>
                         </div>
+                        <button onClick={() => handleOpenBulkFill(assignment.id)} className="mt-1 text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100 transition-colors">
+                          <ArrowDown className="w-3 h-3" /> Fill All
+                        </button>
                       </div>
                     </th>
                   ))}
@@ -289,11 +343,15 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
                           <button onClick={() => handleOpenExport(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 transition-all p-1" title="Export Report Card"><FileDown className="w-5 h-5" /></button>
                         </div>
                       </td>
-                      {assignments.map(assignment => (
-                        <td key={assignment.id} className="p-2 text-center border-r border-slate-200/50">
-                          <input type="number" min="0" max={assignment.maxScore} value={grades[student.id]?.[assignment.id] ?? ''} onChange={(e) => handleGradeChange(student.id, assignment.id, e.target.value)} className="w-24 p-2 text-center border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-300 font-mono bg-slate-50/50 hover:bg-slate-50" placeholder="—" />
-                        </td>
-                      ))}
+                      {assignments.map(assignment => {
+                        const grade = grades[student.id]?.[assignment.id];
+                        const isFailing = grade !== undefined && grade !== '' && parseFloat(grade) < 60;
+                        return (
+                          <td key={assignment.id} className="p-2 text-center border-r border-slate-200/50">
+                            <input type="number" min="0" max={assignment.maxScore} value={grade ?? ''} onChange={(e) => handleGradeChange(student.id, assignment.id, e.target.value)} className={`w-24 p-2 text-center border rounded-lg outline-none transition-all duration-300 font-mono ${isFailing ? 'border-rose-300 bg-rose-50 text-rose-600 font-bold focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'}`} placeholder="—" />
+                          </td>
+                        );
+                      })}
                       <td className="p-4 text-center font-bold border-l border-slate-200/80 sticky right-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
                         {finalGrade !== null ? <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${isPassing ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{finalGrade.toFixed(1)}%</span> : <span className="text-slate-400 text-xs italic">N/A</span>}
                       </td>
@@ -387,6 +445,85 @@ const ClassGradebook = ({ user, onExit, backLabel = "Back to Generator" }) => {
                 <button type="submit" className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center justify-center gap-2">
                   <Save className="w-5 h-5" /> Save Assignment
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* WEIGHT SETTINGS MODAL */}
+      {isWeightModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                <span className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600"><Percent className="w-6 h-6" /></span> Category Weights
+              </h3>
+              <button onClick={() => setIsWeightModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200/50">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSaveWeights} className="p-6 space-y-4">
+              <div className="space-y-3">
+                {editingCategories.map((cat, index) => (
+                  <div key={cat.id} className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Category Name</label>
+                      <input type="text" value={cat.name} onChange={(e) => {
+                        const newCats = [...editingCategories];
+                        newCats[index].name = e.target.value;
+                        setEditingCategories(newCats);
+                      }} className="w-full p-2.5 rounded-lg border border-slate-300/80 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm font-bold text-slate-700" />
+                    </div>
+                    <div className="w-24">
+                      <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Weight (%)</label>
+                      <input type="number" min="0" max="100" value={cat.weight} onChange={(e) => {
+                        const newCats = [...editingCategories];
+                        newCats[index].weight = parseFloat(e.target.value) || 0;
+                        setEditingCategories(newCats);
+                      }} className="w-full p-2.5 rounded-lg border border-slate-300/80 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm font-bold text-slate-700 text-center" />
+                    </div>
+                    <button type="button" onClick={() => handleDeleteCategory(cat.id)} className="mt-6 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="Remove Category">
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+                <button type="button" onClick={handleAddCategory} className="w-full py-2 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-bold text-sm hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
+                  <Plus className="w-4 h-4" /> Add Category
+                </button>
+              </div>
+              <div className="pt-4 border-t border-slate-200/80 flex justify-between items-center">
+                <div className="text-sm font-bold text-slate-600">Total: <span className={`${editingCategories.reduce((sum, c) => sum + c.weight, 0) === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>{editingCategories.reduce((sum, c) => sum + c.weight, 0)}%</span></div>
+                <button type="submit" className="bg-indigo-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all">Save Weights</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* BULK FILL MODAL */}
+      {isBulkFillModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                <span className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600"><ArrowDown className="w-6 h-6" /></span> Bulk Fill Grades
+              </h3>
+              <button onClick={() => setIsBulkFillModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200/50">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleBulkFill} className="p-6 space-y-5">
+              <div>
+                <p className="text-sm text-slate-500 mb-4">
+                  This will overwrite grades for all students for <strong>{assignments.find(a => a.id === bulkFillData.assignmentId)?.name}</strong>.
+                </p>
+                <label className="block text-sm font-bold text-slate-600 mb-1.5">Grade to Apply</label>
+                <input type="number" autoFocus value={bulkFillData.value} onChange={(e) => setBulkFillData({...bulkFillData, value: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300/80 focus:ring-4 focus:ring-indigo-500/20 outline-none text-base transition-all" placeholder="e.g. 100" />
+              </div>
+              <div className="pt-2 flex gap-3">
+                <button type="button" onClick={() => setIsBulkFillModalOpen(false)} className="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200/80 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-colors">Cancel</button>
+                <button type="submit" className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all">Apply</button>
               </div>
             </form>
           </div>
