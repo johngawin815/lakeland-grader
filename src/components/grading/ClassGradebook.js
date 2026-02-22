@@ -36,7 +36,7 @@ const INITIAL_ATTENDANCE = {
 };
 
 
-const ClassGradebook = ({ onExit }) => {
+const ClassGradebook = ({ onExit, backLabel = "Back to Generator" }) => {
   // --- STATE MANAGEMENT ---
   const [students] = useState(INITIAL_STUDENTS);
   const [categories] = useState(INITIAL_CATEGORIES);
@@ -144,7 +144,7 @@ const ClassGradebook = ({ onExit }) => {
         <div>
           {onExit && (
             <button onClick={onExit} className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors duration-300">
-              <ArrowLeft className="w-4 h-4" /> Back to Generator
+              <ArrowLeft className="w-4 h-4" /> {backLabel}
             </button>
           )}
           <h1 className="text-4xl font-extrabold text-slate-900 flex items-center gap-3">
