@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen } from 'lucide-react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
 
 // --- MODULE IMPORTS ---
 import KTEAReporter from '../ktea/KTEAReporter';
@@ -8,11 +8,13 @@ import CurriculumMaps from '../curriculum/CurriculumMaps';
 import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
 import ClassGradebook from '../grading/ClassGradebook';
 import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
 
 const HubShell = () => {
   const [user, setUser] = useState(null); 
   const [currentView, setCurrentView] = useState("home"); 
   const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -58,6 +60,13 @@ const HubShell = () => {
                 onClick={() => setCurrentView(m.id)} 
               />
             ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
           </nav>
         </div>
 
@@ -130,6 +139,19 @@ const HubShell = () => {
             </div>
         )}
       </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
