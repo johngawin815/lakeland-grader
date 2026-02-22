@@ -4,12 +4,12 @@ import IntakeForm from './IntakeForm';
 import { FileText, ClipboardList, Target, Telescope, Bird, Leaf, Flame, Droplets, X, Users, ChevronRight, Plus, StickyNote } from 'lucide-react';
 
 const UNIT_CONFIG = [
-  { key: "Determination", label: "Determination", icon: Target, color: "text-red-500" },
-  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500" },
-  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500" },
-  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500" },
-  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500" },
-  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500" }
+  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800" }
 ];
 
 // --- DATA GENERATOR (Creates 108 Fictional Students) ---
@@ -207,7 +207,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
                             {roster.map(s => (
                                 <tr key={s.id} onClick={() => setEditingStudent(s)} className={`cursor-pointer transition-colors group border-l-4 border-transparent hover:bg-slate-100/50 hover:border-indigo-500`}>
                                     <td className="p-4 font-bold text-slate-700 group-hover:text-indigo-600">{s.studentName}</td>
-                                    <td className="p-4 text-sm text-slate-500"><span className={`px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-600`}>{s.unitName}</span></td>
+                                    <td className="p-4 text-sm text-slate-500"><span className={`px-2.5 py-1 rounded-md text-xs font-bold ${UNIT_CONFIG.find(u => u.key === s.unitName)?.badge || 'bg-slate-100 text-slate-600'}`}>{s.unitName}</span></td>
                                     <td className="p-4 text-sm text-slate-500">{s.gradeLevel}th</td>
                                     <td className="p-4 text-sm text-slate-500">{s.district || "-"}</td>
                                     <td className="p-4 text-right">
@@ -261,7 +261,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView }
             <div className="flex-1">
                 <h1 className="m-0 text-slate-800 text-4xl font-extrabold">{profileData.studentName}</h1>
                 <div className="flex gap-2.5 mt-4 flex-wrap">
-                    <div className="bg-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700">Unit: <strong>{profileData.unitName}</strong></div>
+                    <div className={`px-3 py-1.5 rounded-lg text-xs font-bold ${UNIT_CONFIG.find(u => u.key === profileData.unitName)?.badge || 'bg-slate-200 text-slate-700'}`}>Unit: <strong>{profileData.unitName}</strong></div>
                     <div className="bg-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700">Grade: <strong>{profileData.gradeLevel}</strong></div>
                     <div className="bg-amber-100 px-3 py-1.5 rounded-lg text-xs font-bold text-amber-800">IEP: <strong>{profileData.iep || "No"}</strong></div>
                     <div className="bg-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700">District: <strong>{profileData.district || "N/A"}</strong></div>

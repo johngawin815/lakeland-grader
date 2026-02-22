@@ -126,6 +126,29 @@ function SocialStudiesContent() {
         </div>
     );
 
+    const EmptyBlock = ({ m1, m2 }) => (
+        <div className={blockClass}>
+            <table className={tableClass}>
+                <thead className="sticky top-0 z-30">
+                    <tr>
+                        <th className={thSubjectClass} rowSpan="2">Subject</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-slate-800`}>{m1}</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-slate-800`}>{m2}</th>
+                    </tr>
+                    <tr>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td className={`${tdSubjectClass} text-green-700`}>World History</td>{[...Array(8)].map((_, i) => <td key={i} className={tdClass}></td>)}</tr>
+                    <tr><td className={`${tdSubjectClass} text-blue-700`}>US History</td>{[...Array(8)].map((_, i) => <td key={i} className={tdClass}></td>)}</tr>
+                    <tr><td className={`${tdSubjectClass} text-red-700`}>Government</td>{[...Array(8)].map((_, i) => <td key={i} className={tdClass}></td>)}</tr>
+                </tbody>
+            </table>
+        </div>
+    );
+
     return (
         <>
         {/* ==================== AUG & SEPT ==================== */}
@@ -179,6 +202,11 @@ function SocialStudiesContent() {
                 </tbody>
             </table>
         </div>
+
+        <EmptyBlock m1="October" m2="November" />
+        <EmptyBlock m1="December" m2="January" />
+        <EmptyBlock m1="February" m2="March" />
+        <EmptyBlock m1="April" m2="May" />
         </>
     );
 }
@@ -210,6 +238,29 @@ function EnglishContent() {
                     {desc}
                 </span>
             </span>}
+        </div>
+    );
+
+    const EmptyBlock = ({ m1, m2 }) => (
+        <div className={blockClass}>
+            <table className={tableClass}>
+                <thead className="sticky top-0 z-30">
+                    <tr>
+                        <th className={thSubjectClass} rowSpan="2">Strand</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-slate-800`}>{m1}</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-slate-800`}>{m2}</th>
+                    </tr>
+                    <tr>
+                        <th className={thWeekClass}>Wk 1</th><th className={thWeekClass}>Wk 2</th><th className={thWeekClass}>Wk 3</th><th className={thWeekClass}>Wk 4</th>
+                        <th className={thWeekClass}>Wk 1</th><th className={thWeekClass}>Wk 2</th><th className={thWeekClass}>Wk 3</th><th className={thWeekClass}>Wk 4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td className={`${tdSubjectClass} text-purple-700`}>Literature</td>{[...Array(8)].map((_, i) => <td key={i} className={tdClass}></td>)}</tr>
+                    <tr><td className={`${tdSubjectClass} text-orange-700`}>Writing</td>{[...Array(8)].map((_, i) => <td key={i} className={tdClass}></td>)}</tr>
+                    <tr><td className={`${tdSubjectClass} text-emerald-700`}>Vocab & Lang</td>{[...Array(8)].map((_, i) => <td key={i} className={tdClass}></td>)}</tr>
+                </tbody>
+            </table>
         </div>
     );
 
@@ -265,6 +316,11 @@ function EnglishContent() {
                 </tbody>
             </table>
         </div>
+
+        <EmptyBlock m1="October" m2="November" />
+        <EmptyBlock m1="December" m2="January" />
+        <EmptyBlock m1="February" m2="March" />
+        <EmptyBlock m1="April" m2="May" />
         </>
     );
 }
