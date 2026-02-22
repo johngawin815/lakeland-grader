@@ -1,45 +1,3 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, Trash2, ArrowDown } from 'lucide-react';
-import PizZip from 'pizzip';
-import Docxtemplater from 'docxtemplater';
-import { saveAs } from 'file-saver';
-import { cosmosService } from '../../services/cosmosService';
-import ReportCardExportModal from './ReportCardExportModal';
-
-// --- DATA SETUP ---
-// Standardized data without presentational properties (like color).
-const INITIAL_STUDENTS = [
-  { id: 1, name: "David Everitt" },
-  { id: 2, name: "Jane Doe" },
-  { id: 3, name: "John Smith" },
-  { id: 4, name: "Emily Johnson" },
-  { id: 5, name: "Michael Brown" },
-];
-
-const INITIAL_CATEGORIES = [
-  { id: 'hw', name: 'Homework', weight: 20 },
-  { id: 'quiz', name: 'Quizzes', weight: 30 },
-  { id: 'test', name: 'Tests', weight: 50 },
-];
-
-const INITIAL_ASSIGNMENTS = [
-  { id: 'a1', name: 'Chapter 1 Quiz', categoryId: 'quiz', maxScore: 50 },
-  { id: 'a2', name: 'Homework 1.1', categoryId: 'hw', maxScore: 10 },
-  { id: 'a3', name: 'Unit 1 Test', categoryId: 'test', maxScore: 100 },
-];
-
-const INITIAL_GRADES = {
-  1: { 'a1': 45, 'a2': 10, 'a3': 92 },
-  2: { 'a1': 38, 'a2': 8, 'a3': 85 },
-  3: { 'a1': 50, 'a2': 10, 'a3': 98 },
-};
-
-const INITIAL_ATTENDANCE = {
-  '2026-02-20': { 1: 'Present', 2: 'Absent', 3: 'Present', 4: 'Tardy', 5: 'Present' },
-};
-
-
-import { calculateLetterGrade } from '../../utils/gradeCalculator';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, Trash2, ArrowDown } from 'lucide-react';
 import PizZip from 'pizzip';
@@ -47,6 +5,8 @@ import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import { cosmosService } from '../../services/cosmosService';
 import ReportCardExportModal from './ReportCardExportModal';
+import { calculateLetterGrade } from '../../utils/gradeCalculator';
+
 
 // --- DATA SETUP ---
 // Standardized data without presentational properties (like color).
@@ -236,12 +196,6 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
     setIsExportModalOpen(true);
   };
 
-  import { calculateLetterGrade } from '../../utils/gradeCalculator';
-
-// ... (other imports)
-
-// ... (inside ClassGradebook component)
-
   const handleSaveToCloud = async () => {
     setIsSaving(true);
     setSaveMessage('');
@@ -316,7 +270,7 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
 
       // Calculate data
       const grade = studentToExport.finalPercentage;
-      const letterGrade = grade >= 90 ? 'A' : grade >= 80 ? 'B' : grade >= 70 ? 'C' : grade >= 60 ? 'D' : 'F';
+      const letterGrade = calculateLetterGrade(grade);
       
       // Map data to template
       // Note: In a real app, we would pull other classes from a central DB. 
@@ -391,14 +345,14 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
         {/* CONTROLS SECTION */}
         {activeTab === 'grades' && (
           <div className="flex gap-3 items-center">
-            {saveMessage && <span className="text-sm font-bold text-emerald-600 animate-pulse">{saveMessage}</span>}
+            {saveMessage && <span className={`text-sm font-bold ${saveMessage === 'Error!' ? 'text-red-500' : 'text-emerald-600'} animate-pulse`}>{saveMessage}</span>}
             <button 
               onClick={handleSaveToCloud}
               disabled={isSaving}
               className="bg-indigo-600 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CloudUpload className="w-5 h-5" />}
-              {isSaving ? 'Saving...' : 'Save to Cloud'}
+              {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (saveMessage === '✅ Saved!' ? <Check className="w-5 h-5" /> : <CloudUpload className="w-5 h-5" />)}
+              {isSaving ? 'Saving...' : (saveMessage === '✅ Saved!' ? 'Saved!' : 'Save to Cloud')}
             </button>
             <button 
               onClick={handleOpenWeightModal}
