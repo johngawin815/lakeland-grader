@@ -31,22 +31,22 @@ const HubShell = () => {
 
   // Define the module data in an array to simplify rendering
   const modules = [
-    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-sky-600" /> },
-    { id: 'grades', title: 'Grade Reporter', desc: 'Enter Grades', icon: <GraduationCap size={28} className="text-sky-600" /> },
-    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-sky-600" /> },
-    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-sky-600" /> },
-    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-sky-600" /> },
-    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-sky-600" /> },
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-teal-600" /> },
+    { id: 'grades', title: 'Grade Reporter', desc: 'Enter Grades', icon: <GraduationCap size={28} className="text-teal-600" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-teal-600" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-teal-600" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-teal-600" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-teal-600" /> },
   ];
 
   return (
     <div className="flex flex-col h-screen bg-slate-100 font-sans">
       
       {/* 1. TOP NAVIGATION BAR */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200/80 h-20 flex items-center justify-between px-6 z-20 shrink-0">
+      <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-6 z-20 shrink-0">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentView('home')}>
-            <School size={32} className="text-sky-600" />
+            <School size={32} className="text-teal-600" />
             <span className="text-xl font-extrabold text-slate-800 tracking-tight">LRS Hub</span>
           </div>
           <nav className="flex gap-2">
@@ -67,7 +67,7 @@ const HubShell = () => {
               <input 
                 type="text" 
                 placeholder="Set Student Context..." 
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none transition bg-slate-100 focus:bg-white text-sm"
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition bg-slate-100 focus:bg-white text-sm"
                 value={activeStudent || ""}
                 onChange={(e) => setActiveStudent(e.target.value)} 
               />
@@ -79,12 +79,12 @@ const HubShell = () => {
             </div>
 
             <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-                <div className="w-10 h-10 rounded-full bg-sky-600 flex items-center justify-center font-bold text-white text-sm">
+                <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center font-bold text-white text-sm">
                     {user.name.charAt(0)}
                 </div>
                 <div className="text-sm">
                     <div className="font-bold text-slate-800">{user.name}</div>
-                    <button onClick={handleLogout} className="text-slate-500 hover:text-sky-600 font-semibold transition-colors">Sign Out</button>
+                    <button onClick={handleLogout} className="text-slate-500 hover:text-teal-600 font-semibold transition-colors">Sign Out</button>
                 </div>
             </div>
         </div>
@@ -141,7 +141,7 @@ const NavButton = ({ label, active, onClick }) => (
         onClick={onClick}
         className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-150 ${
           active 
-          ? 'bg-sky-100 text-sky-700' 
+          ? 'bg-teal-100 text-teal-700' 
           : 'bg-transparent text-slate-600 hover:bg-slate-100'
         }`}
     >
@@ -152,11 +152,11 @@ const NavButton = ({ label, active, onClick }) => (
 const LaunchCard = ({ icon, title, desc, onClick }) => (
     <div 
         onClick={onClick}
-        className="bg-white/60 backdrop-blur-sm shadow-sm border border-slate-200 rounded-lg p-6 group cursor-pointer transition-all duration-200 hover:shadow-lg hover:border-sky-300 hover:-translate-y-1"
+        className="bg-white shadow-sm border border-slate-200 rounded-xl p-6 group cursor-pointer transition-all duration-200 hover:shadow-md hover:border-teal-300 hover:-translate-y-1"
     >
         <div className="flex items-start justify-between">
             {icon}
-            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-sky-600 transition-colors" />
+            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-teal-600 transition-colors" />
         </div>
         <div className="mt-4">
             <h3 className="text-lg font-bold text-slate-800">{title}</h3>
@@ -167,13 +167,13 @@ const LaunchCard = ({ icon, title, desc, onClick }) => (
 
 const LoginScreen = ({ onLogin }) => (
   <div className="w-full h-screen flex items-center justify-center bg-slate-100">
-    <div className="bg-white/60 backdrop-blur-sm shadow-sm border border-slate-200 rounded-lg p-8 w-full max-w-sm text-center">
-      <School size={48} className="text-sky-600 mx-auto mb-4" />
+    <div className="bg-white shadow-md border border-slate-200 rounded-xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-teal-600 mx-auto mb-4" />
       <h1 className="text-2xl font-extrabold text-slate-800">Lakeland Secure Hub</h1>
       <p className="text-slate-500 mt-2 mb-8">Authorized staff access only.</p>
       <button 
         onClick={onLogin} 
-        className="w-full bg-sky-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-colors duration-200 ease-in-out"
+        className="w-full bg-teal-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors duration-200 ease-in-out"
       >
         Sign in with Microsoft
       </button>

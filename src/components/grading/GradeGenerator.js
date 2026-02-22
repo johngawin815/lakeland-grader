@@ -4,6 +4,7 @@ import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import { cosmosService } from '../../services/cosmosService';
 import { FileDown, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2 } from 'lucide-react';
+import ClassGradebook from './ClassGradebook';
 
 // --- CONFIGURATION ---
 const TEMPLATES = {
@@ -41,6 +42,7 @@ const TEMPLATES = {
 
 const GradeGenerator = ({ user }) => {
   // --- STATE ---
+  const [showGradebook, setShowGradebook] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('quarter');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -154,6 +156,10 @@ const GradeGenerator = ({ user }) => {
     window.print();
   };
 
+  if (showGradebook) {
+    return <ClassGradebook onExit={() => setShowGradebook(false)} />;
+  }
+
   const currentConfig = TEMPLATES[selectedTemplate];
 
   return (
@@ -171,6 +177,10 @@ const GradeGenerator = ({ user }) => {
         
         <div className="flex gap-3 items-center">
           {successMsg && <span className="text-green-600 font-bold text-sm flex items-center gap-1 animate-in fade-in"><CheckCircle className="w-4 h-4" /> {successMsg}</span>}
+          
+          <button onClick={() => setShowGradebook(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition-colors shadow-md">
+            <BookOpen className="w-4 h-4" /> Gradebook
+          </button>
           
           <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
             <Printer className="w-4 h-4" /> Print
