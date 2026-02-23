@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X } from 'lucide-react';
-import ClassGradebook from '../grading/ClassGradebook'; // Import for later use
+import ClassGradebook from '../grading/ClassGradebook';
 
 // Mock user, as requested. In a real app, this would come from an auth context.
 const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };
@@ -52,6 +52,15 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, 
         {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
         {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
       </div>
+
+      {/* RENDER EDITABLE MODAL */}
+      {selectedCourse && (
+        <EditableStudentProfileModal
+          studentData={selectedCourse}
+          onClose={() => setSelectedCourse(null)}
+          user={user}
+        />
+      )}
     </div>
   );
 };
