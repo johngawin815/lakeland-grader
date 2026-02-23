@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, X, CheckCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { findStudentByName } from '../pages/studentService'; 
+import { databaseService } from '../../services/databaseService';
 import { useStudent } from '../../context/StudentContext';
 
 const GlobalSearchBar = () => {
@@ -21,10 +21,10 @@ const GlobalSearchBar = () => {
     setResults([]); 
 
     try {
-      const data = await findStudentByName(query); 
+      const data = await databaseService.findStudentByName(query);
       const list = Array.isArray(data) ? data : (data ? [data] : []);
       setResults(list);
-    } catch (err) => {
+    } catch (err) {
       console.error(err);
     } finally {
       setIsSearching(false);

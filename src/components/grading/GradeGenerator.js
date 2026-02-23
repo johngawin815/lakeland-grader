@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
-import { cosmosService } from '../../services/cosmosService';
+import { databaseService } from '../../services/databaseService';
 import { FileDown, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2 } from 'lucide-react';
 import ClassGradebook from './ClassGradebook';
 
@@ -146,7 +146,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
         // We let Cosmos generate the 'id' automatically
       };
 
-      await cosmosService.addItem(record);
+      await databaseService.addKteaReport(record);
       
       setSuccessMsg('Saved to Database!');
       setTimeout(() => setSuccessMsg(''), 3000);

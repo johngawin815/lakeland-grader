@@ -3,7 +3,7 @@ import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar,
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
-import { cosmosService } from '../../services/cosmosService';
+import { databaseService } from '../../services/databaseService';
 import ReportCardExportModal from './ReportCardExportModal';
 import { calculateLetterGrade } from '../../utils/gradeCalculator';
 
@@ -73,12 +73,12 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
       setLoading(true);
       try {
         // In a real app, you would fetch the gradebook state from Cosmos DB
-        // const savedState = await cosmosService.getGradebook(course.id);
+        // const savedState = await databaseService.getGradebook(course.id);
         
         // For now, we'll fetch enrollments and create a student list.
-        // const enrollments = await cosmosService.getEnrollmentsByCourse(course.id);
+        // const enrollments = await databaseService.getEnrollmentsByCourse(course.id);
         // const studentIds = enrollments.map(e => e.studentId);
-        // const studentDetails = await cosmosService.getStudentsByIds(studentIds);
+        // const studentDetails = await databaseService.getStudentsByIds(studentIds);
         
         // MOCKING the fetch for now:
         console.log(`Fetching data for course: ${course.courseName} (${course.id})`);
@@ -223,18 +223,18 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
           term: term
         };
         
-        return cosmosService.saveCourseGrade(enrollmentData);
+        return databaseService.saveCourseGrade(enrollmentData);
       });
 
       await Promise.all(savePromises);
       
       // Also save the gradebook's own state (assignments, categories, etc.)
       const gradebookPayload = { id: course.id, assignments, categories, attendance, lastUpdated: new Date().toISOString() };
-      await cosmosService.saveGradebook(gradebookPayload);
+      await databaseService.saveGradebook(gradebookPayload);
 
 
       setSaveMessage('✅ Saved!');
-      cosmosService.logAudit(user, 'SaveGrades', `Saved ${students.length} student grades for course ${course.courseName}.`);
+      databaseService.logAudit(user, 'SaveGrades', `Saved ${students.length} student grades for course ${course.courseName}.`);
 
     } catch (error) {
       console.error("Error saving grades to cloud:", error);

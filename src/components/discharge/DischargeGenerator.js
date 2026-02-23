@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
-import { cosmosService } from '../../services/cosmosService';
+import { databaseService } from '../../services/databaseService';
 import { Printer, FileText, Loader2, CheckCircle, Save, Download } from 'lucide-react';
 
 // Boilerplate text from your template
@@ -25,7 +25,7 @@ const DischargeGenerator = ({ user, activeStudent }) => {
 
       try {
         // Search Azure for this student
-        const results = await cosmosService.searchStudents(activeStudent);
+        const results = await databaseService.searchKteaReports(activeStudent);
         
         if (results && results.length > 0) {
           // Use the most recent record found
@@ -75,11 +75,11 @@ const DischargeGenerator = ({ user, activeStudent }) => {
                 behaviorNarrative: data.behaviorNarrative,
                 analysisNarrative: data.analysisNarrative
             };
-            await cosmosService.updateItem(dbRecord.id, updatedData);
+            await databaseService.updateKteaReport(dbRecord.id, updatedData);
         }
 
         // 2. Log Audit
-        await cosmosService.logAudit(user, 'Generated Discharge', `Generated discharge summary for ${data.studentName}`);
+        await databaseService.logAudit(user, 'Generated Discharge', `Generated discharge summary for ${data.studentName}`);
 
     } catch (error) {
         console.error("Auto-save failed:", error);

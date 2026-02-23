@@ -85,7 +85,7 @@ const UnitRoster = ({ unitName, setActiveStudent }) => {
             setLoading(true);
             try {
                 // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented
-                // const students = await cosmosService.getStudentsByUnit(unitName);
+                // const students = await databaseService.getStudentsByUnit(unitName);
                 const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);
                 setRoster(mockStudents);
             } catch (error) {
@@ -157,7 +157,7 @@ const MyClasses = ({ teacherName, onCourseSelect }) => {
         const fetchCourses = async () => {
             setLoading(true);
             try {
-                // const teacherCourses = await cosmosService.getCoursesByTeacher(teacherName);
+                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);
                 const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
                 setCourses(teacherCourses);
             } catch (error) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { cosmosService } from '../../services/cosmosService';
+import { databaseService } from '../../services/databaseService';
 import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer } from 'lucide-react';
 
 const UNIT_CONFIG = [
@@ -37,7 +37,7 @@ function KTEAReporter({ user, activeStudent }) {
   useEffect(() => {
     if (activeStudent) {
       if (activeStudent.trim()) {
-        cosmosService.searchStudents(activeStudent)
+        databaseService.searchKteaReports(activeStudent)
           .then(setSearchResults)
           .catch(error => console.error("Azure Search error:", error));
       }
@@ -50,7 +50,7 @@ function KTEAReporter({ user, activeStudent }) {
     e.stopPropagation(); 
     if (!window.confirm(`⚠️ Delete record for ${name}?`)) return;
     try {
-      await cosmosService.deleteItem(id);
+      await databaseService.deleteKteaReport(id);
       setSearchResults(prev => prev.filter(item => item.id !== id));
     } catch (error) { alert("Could not delete."); }
   };
@@ -76,7 +76,7 @@ function KTEAReporter({ user, activeStudent }) {
       setSaving(true);
       try {
         const updatedDoc = { ...currentDoc, ...data, lastUpdatedBy: user.email };
-        await cosmosService.updateItem(editingId, updatedDoc);
+        await databaseService.updateKteaReport(editingId, updatedDoc);
         setMsg(`✅ Updated: ${data.studentName}`);
         setTimeout(() => setMsg(''), 3000);
         setEditingId(null);
@@ -93,7 +93,7 @@ function KTEAReporter({ user, activeStudent }) {
     if (submitMode === 'direct') {
         setSaving(true);
         try {
-            await cosmosService.addItem({ ...newRecord, submittedBy: user.email, schoolYear: "2024-2025" });
+            await databaseService.addKteaReport({ ...newRecord, submittedBy: user.email, schoolYear: "2024-2025" });
             setMsg(`✅ Saved & Submitted: ${fixedName}`);
             setTimeout(() => setMsg(''), 3000);
             reset({ teacherName: data.teacherName, unitName: data.unitName, gradeLevel: data.gradeLevel });
@@ -111,7 +111,7 @@ function KTEAReporter({ user, activeStudent }) {
     try {
       for (const student of queue) {
         const { tempId, ...cleanData } = student;
-        await cosmosService.addItem({ ...cleanData, submittedBy: user.email, schoolYear: "2024-2025" });
+        await databaseService.addKteaReport({ ...cleanData, submittedBy: user.email, schoolYear: "2024-2025" });
       }
       setMsg(`✅ Saved ${queue.length} records to Azure.`);
       setQueue([]);
@@ -139,7 +139,7 @@ function KTEAReporter({ user, activeStudent }) {
   const generatePreviewData = async () => {
     setLoadingPreview(true);
     try {
-        const allStudents = await cosmosService.getAllItems();
+        const allStudents = await databaseService.getAllKteaReports();
         if (!allStudents || allStudents.length === 0) {
             alert("⚠️ No records found in database.");
             setLoadingPreview(false);
@@ -162,7 +162,7 @@ function KTEAReporter({ user, activeStudent }) {
 
   const downloadReport = async () => {
     try {
-      const allStudents = await cosmosService.getAllItems();
+      const allStudents = await databaseService.getAllKteaReports();
       if (!allStudents || allStudents.length === 0) return alert(`⚠️ No records found.`);
 
       const units = {};

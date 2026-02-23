@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import cosmosService from '../../services/cosmosService';
+import { databaseService } from '../../services/databaseService';
 
 const GradeSpreadsheet = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,7 +13,7 @@ const GradeSpreadsheet = () => {
     setError(null);
     try {
       // Fetch all students
-      const allStudents = await cosmosService.getStudents();
+      const allStudents = await databaseService.getAllStudents();
       
       // Filter for active students
       const activeStudents = allStudents.filter(student => student.active);

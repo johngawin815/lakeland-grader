@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Clock, User, AlertTriangle, Search, Download, ChevronLeft, ChevronRight } from 'lucide-react';
-// import { cosmosService } from '../../services/cosmosService'; // Uncomment when connecting to real backend
+// import { databaseService } from '../../services/databaseService'; // Uncomment when connecting to real backend
 
 const MOCK_LOGS = [
   { id: 1, user: "Teacher Account", action: "VIEW_STUDENT", target: "John Doe", timestamp: "2024-02-20T08:30:00", details: "Accessed Student Profile" },
@@ -26,7 +26,7 @@ const AuditLog = () => {
     const fetchLogs = async () => {
       setLoading(true);
       try {
-        // const data = await cosmosService.getAuditLogs(); 
+        // const data = await databaseService.getAuditLogs();
         // setLogs(data);
         setTimeout(() => {
             setLogs(MOCK_LOGS);
