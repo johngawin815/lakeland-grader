@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, Trash2, ArrowDown } from 'lucide-react';
+import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, Trash2, ArrowDown, Users } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
@@ -13,49 +13,25 @@ import StudentSummaryPanel from './StudentSummaryPanel';
 import ClassAnalytics from './ClassAnalytics';
 
 
-// --- DATA SETUP ---
-const INITIAL_STUDENTS = [
-  { id: 1, name: "David Everitt" },
-  { id: 2, name: "Jane Doe" },
-  { id: 3, name: "John Smith" },
-  { id: 4, name: "Emily Johnson" },
-  { id: 5, name: "Michael Brown" },
-];
-
-const INITIAL_CATEGORIES = [
+// --- DEFAULT EMPTY DATA ---
+const DEFAULT_CATEGORIES = [
   { id: 'hw', name: 'Homework', weight: 20 },
   { id: 'quiz', name: 'Quizzes', weight: 30 },
   { id: 'test', name: 'Tests', weight: 50 },
 ];
 
-const INITIAL_ASSIGNMENTS = [
-  { id: 'a1', name: 'Chapter 1 Quiz', categoryId: 'quiz', maxScore: 50 },
-  { id: 'a2', name: 'Homework 1.1', categoryId: 'hw', maxScore: 10 },
-  { id: 'a3', name: 'Unit 1 Test', categoryId: 'test', maxScore: 100 },
-];
-
-const INITIAL_GRADES = {
-  1: { 'a1': 45, 'a2': 10, 'a3': 92 },
-  2: { 'a1': 38, 'a2': 8, 'a3': 85 },
-  3: { 'a1': 50, 'a2': 10, 'a3': 98 },
-};
-
-const INITIAL_ATTENDANCE = {
-  '2026-02-20': { 1: 'Present', 2: 'Absent', 3: 'Present', 4: 'Tardy', 5: 'Present' },
-};
-
 
 const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabel = "Back to Dashboard" }) => {
   // --- STATE MANAGEMENT ---
   const { setGradeCardPayload } = useGrading();
-  const [students] = useState(INITIAL_STUDENTS);
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
-  const [assignments, setAssignments] = useState(INITIAL_ASSIGNMENTS);
-  const [grades, setGrades] = useState(INITIAL_GRADES);
+  const [students, setStudents] = useState([]);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [assignments, setAssignments] = useState([]);
+  const [grades, setGrades] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('grades');
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
-  const [attendance, setAttendance] = useState(INITIAL_ATTENDANCE);
+  const [attendance, setAttendance] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,7 +54,38 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
       setLoading(true);
       try {
-        console.log(`Fetching data for course: ${course.courseName} (${course.id})`);
+        // 1. Fetch enrolled students for this course
+        const enrollments = await databaseService.getEnrollmentsByCourse(course.id);
+
+        if (enrollments.length > 0) {
+          // Fetch full student records to get names
+          const allStudents = await databaseService.getAllStudents();
+          const studentMap = {};
+          allStudents.forEach(s => { studentMap[s.id] = s; });
+
+          const enrolledStudents = enrollments.map(e => {
+            const studentRecord = studentMap[e.studentId];
+            return {
+              id: e.studentId,
+              name: studentRecord?.studentName || studentRecord ? `${studentRecord.firstName || ''} ${studentRecord.lastName || ''}`.trim() : e.studentId,
+              gradeLevel: studentRecord?.gradeLevel || '',
+              enrollmentId: e.id,
+            };
+          });
+          setStudents(enrolledStudents);
+        } else {
+          setStudents([]);
+        }
+
+        // 2. Load saved gradebook data (assignments, categories, attendance, grades)
+        const savedGradebook = await databaseService.getGradebook(course.id);
+        if (savedGradebook) {
+          if (savedGradebook.assignments?.length > 0) setAssignments(savedGradebook.assignments);
+          if (savedGradebook.categories?.length > 0) setCategories(savedGradebook.categories);
+          if (savedGradebook.attendance) setAttendance(savedGradebook.attendance);
+          if (savedGradebook.grades) setGrades(savedGradebook.grades);
+        }
+
       } catch (error) {
         console.error("Failed to load gradebook data:", error);
       }
@@ -86,7 +93,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     };
 
     loadGradebookData();
-  }, [course]);
+  }, [course?.id]);
 
   // --- DERIVED STATE & CALCULATIONS ---
   const finalGrades = useMemo(() => {
@@ -221,10 +228,11 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     setGradeCardPayload({
       studentName: student.name,
       studentId: student.id,
-      gradeLevel: '',
+      gradeLevel: student.gradeLevel || '',
       courseName: course?.courseName || 'Class',
       coursePercentage: percentage,
       courseLetterGrade: calculateLetterGrade(percentage),
+      subjectArea: course?.subjectArea || '',
       categoryBreakdown,
       totalAbsences: getTotalAbsences(student.id),
       quarter: getAcademicQuarter(),
@@ -240,9 +248,10 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     setIsSaving(true);
     setSaveMessage('');
 
-    const term = "Q1";
+    const term = getAcademicQuarter();
 
     try {
+      // Save per-student enrollment grades
       const savePromises = students.map(student => {
         const percentage = finalGrades[student.id];
 
@@ -253,12 +262,16 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         const letterGrade = calculateLetterGrade(percentage);
 
         const enrollmentData = {
-          id: `${student.id}-${course.id}-${term}`,
+          id: `${student.id}-${course.id}`,
           studentId: student.id,
           courseId: course.id,
+          courseName: course.courseName,
+          subjectArea: course.subjectArea || '',
+          teacherName: course.teacherName || user?.name || '',
           percentage: parseFloat(percentage.toFixed(2)),
           letterGrade: letterGrade,
-          term: term
+          term: course.term || getCurrentSchoolYear(),
+          status: 'Active',
         };
 
         return databaseService.saveCourseGrade(enrollmentData);
@@ -266,7 +279,15 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
       await Promise.all(savePromises);
 
-      const gradebookPayload = { id: course.id, assignments, categories, attendance, lastUpdated: new Date().toISOString() };
+      // Save full gradebook data (assignments, categories, attendance, grades)
+      const gradebookPayload = {
+        id: course.id,
+        assignments,
+        categories,
+        attendance,
+        grades,
+        lastUpdated: new Date().toISOString(),
+      };
       await databaseService.saveGradebook(gradebookPayload);
 
       setSaveMessage('Saved!');
@@ -377,6 +398,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
             </h1>
             <p className="text-slate-500 mt-2 text-base">
                {course.teacherName || user.name} | {students.length} Students
+               {course.subjectArea && <span className="ml-2 text-xs font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">{course.subjectArea}</span>}
             </p>
           </div>
 
@@ -427,6 +449,15 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           {/* GRADEBOOK GRID */}
           {activeTab === 'grades' && (
             <div className="overflow-auto flex-1">
+              {students.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <Users className="w-12 h-12 text-slate-300 mb-3" />
+                  <h3 className="text-lg font-bold text-slate-600 mb-1">No Students Enrolled</h3>
+                  <p className="text-sm text-slate-400 max-w-md">
+                    Go back to the Dashboard and use the <strong>Manage Students</strong> button on this course to enroll students first.
+                  </p>
+                </div>
+              ) : (
               <table className="w-full border-collapse min-w-[800px]">
                 <thead className="bg-slate-100/80 backdrop-blur-sm text-slate-600 text-xs uppercase font-bold tracking-wider sticky top-0 z-10 shadow-sm shadow-slate-200/50">
                   <tr>
@@ -464,7 +495,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                           <div className="flex justify-between items-center">
                             <button onClick={() => setSelectedStudentForPanel(student)} className="text-left hover:text-indigo-600 transition-colors">
                               {student.name}
-                              <div className="text-xs text-slate-400 font-normal">ID: {student.id}</div>
+                              {student.gradeLevel && <div className="text-xs text-slate-400 font-normal">Grade {student.gradeLevel}</div>}
                             </button>
                             <div className="flex gap-1">
                               <button onClick={() => handleGenerateGradeCard(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-emerald-600 transition-all p-1" title="Generate Grade Card"><GraduationCap className="w-5 h-5" /></button>
@@ -489,6 +520,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                   })}
                 </tbody>
               </table>
+              )}
             </div>
           )}
 
@@ -502,6 +534,9 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
               <div className="overflow-auto flex-1 p-6">
                 <div className="max-w-4xl mx-auto">
+                  {students.length === 0 ? (
+                    <div className="text-center py-16 text-sm text-slate-400 italic">No students enrolled to track attendance.</div>
+                  ) : (
                   <table className="w-full text-sm text-left">
                     <thead className="text-slate-500 font-bold text-xs">
                       <tr>
@@ -534,6 +569,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                       })}
                     </tbody>
                   </table>
+                  )}
                 </div>
               </div>
             </div>
@@ -692,7 +728,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         student={studentToExport}
-        currentSubject="Advanced React"
+        currentSubject={course?.courseName || 'Course'}
         onDownload={generateReportCard}
       />
     </div>

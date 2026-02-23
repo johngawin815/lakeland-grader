@@ -3,10 +3,18 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { FileDown, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2, Eye, EyeOff, Zap, Users, Info } from 'lucide-react';
+import { FileDown, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2, Eye, EyeOff, Zap, Users, Info, RefreshCw } from 'lucide-react';
 import { useGrading } from '../../context/GradingContext';
 import GradeCardPreview from './GradeCardPreview';
 import BatchExportModal from './BatchExportModal';
+
+// --- SUBJECT AREA → FORM FIELD MAPPING ---
+const SUBJECT_FIELD_MAP = {
+  'English': { classField: 'engClass', gradeField: 'engGrade', pctField: 'engPct' },
+  'Math': { classField: 'mathClass', gradeField: 'mathGrade', pctField: 'mathPct' },
+  'Science': { classField: 'sciClass', gradeField: 'sciGrade', pctField: 'sciPct' },
+  'Social Studies': { classField: 'socClass', gradeField: 'socGrade', pctField: 'socPct' },
+};
 
 // --- CONFIGURATION ---
 const TEMPLATES = {
@@ -53,6 +61,8 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [autoFillBanner, setAutoFillBanner] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [aggregationBanner, setAggregationBanner] = useState('');
+  const [isFetchingGrades, setIsFetchingGrades] = useState(false);
 
   const [formData, setFormData] = useState({
     studentName: activeStudent || '',
@@ -83,27 +93,115 @@ const GradeGenerator = ({ user, activeStudent }) => {
     comments: '',
   });
 
-  // Auto-populate from gradebook context
+  // Auto-populate from gradebook context (uses subjectArea for proper slot mapping)
   useEffect(() => {
     if (gradeCardPayload) {
-      setFormData(prev => ({
-        ...prev,
-        studentName: gradeCardPayload.studentName || prev.studentName,
-        gradeLevel: gradeCardPayload.gradeLevel || prev.gradeLevel,
-        schoolYear: gradeCardPayload.schoolYear || prev.schoolYear,
-        quarterName: gradeCardPayload.quarter || prev.quarterName,
-        teacherName: gradeCardPayload.teacherName || prev.teacherName,
-        comments: gradeCardPayload.generatedComment || prev.comments,
-        elec1Class: gradeCardPayload.courseName || prev.elec1Class,
-        elec1Grade: gradeCardPayload.courseLetterGrade || prev.elec1Grade,
-        elec1Pct: gradeCardPayload.coursePercentage ? gradeCardPayload.coursePercentage.toFixed(1) : prev.elec1Pct,
-      }));
+      const updates = {
+        studentName: gradeCardPayload.studentName || '',
+        gradeLevel: gradeCardPayload.gradeLevel || '',
+        schoolYear: gradeCardPayload.schoolYear || formData.schoolYear,
+        quarterName: gradeCardPayload.quarter || formData.quarterName,
+        teacherName: gradeCardPayload.teacherName || formData.teacherName,
+        comments: gradeCardPayload.generatedComment || formData.comments,
+      };
+
+      // Map grade data to the correct slot based on subjectArea
+      const subjectArea = gradeCardPayload.subjectArea || '';
+      const mapping = SUBJECT_FIELD_MAP[subjectArea];
+
+      if (mapping) {
+        updates[mapping.classField] = gradeCardPayload.courseName || '';
+        updates[mapping.gradeField] = gradeCardPayload.courseLetterGrade || '';
+        updates[mapping.pctField] = gradeCardPayload.coursePercentage ? gradeCardPayload.coursePercentage.toFixed(1) : '';
+      } else {
+        // Elective or unknown — put in first available elective slot
+        updates.elec1Class = gradeCardPayload.courseName || formData.elec1Class;
+        updates.elec1Grade = gradeCardPayload.courseLetterGrade || formData.elec1Grade;
+        updates.elec1Pct = gradeCardPayload.coursePercentage ? gradeCardPayload.coursePercentage.toFixed(1) : formData.elec1Pct;
+      }
+
+      setFormData(prev => ({ ...prev, ...updates }));
       setMode('full');
       setAutoFillBanner(true);
       clearGradeCardPayload();
       setTimeout(() => setAutoFillBanner(false), 5000);
     }
   }, [gradeCardPayload, clearGradeCardPayload]);
+
+  // Fetch all cross-course grades for a student
+  const fetchAllGrades = async (studentName) => {
+    if (!studentName?.trim()) return;
+
+    setIsFetchingGrades(true);
+    setAggregationBanner('');
+
+    try {
+      // Find student by name
+      const students = await databaseService.findStudentByName(studentName.trim());
+      if (!students || students.length === 0) {
+        setAggregationBanner('No student found with that name.');
+        setIsFetchingGrades(false);
+        return;
+      }
+
+      const student = students[0];
+      const enrollments = await databaseService.getStudentEnrollments(student.id);
+
+      if (enrollments.length === 0) {
+        setAggregationBanner('No active enrollments found for this student.');
+        setIsFetchingGrades(false);
+        return;
+      }
+
+      // Map enrollments to grade card fields
+      const updates = {
+        gradeLevel: student.gradeLevel ? String(student.gradeLevel) : formData.gradeLevel,
+      };
+
+      let electiveCount = 0;
+      let totalCredits = 0;
+
+      enrollments.forEach(enrollment => {
+        const subjectArea = enrollment.subjectArea || '';
+        const mapping = SUBJECT_FIELD_MAP[subjectArea];
+
+        const courseName = enrollment.courseName || '';
+        const letterGrade = enrollment.letterGrade || '';
+        const pct = enrollment.percentage != null ? String(enrollment.percentage) : '';
+
+        if (mapping) {
+          updates[mapping.classField] = courseName;
+          updates[mapping.gradeField] = letterGrade;
+          updates[mapping.pctField] = pct;
+        } else if (subjectArea === 'Elective' || !mapping) {
+          electiveCount++;
+          if (electiveCount === 1) {
+            updates.elec1Class = courseName;
+            updates.elec1Grade = letterGrade;
+            updates.elec1Pct = pct;
+          } else if (electiveCount === 2) {
+            updates.elec2Class = courseName;
+            updates.elec2Grade = letterGrade;
+            updates.elec2Pct = pct;
+          }
+        }
+
+        if (enrollment.credits) totalCredits += enrollment.credits;
+      });
+
+      if (totalCredits > 0) updates.totalCredits = String(totalCredits);
+
+      setFormData(prev => ({ ...prev, ...updates }));
+      setAggregationBanner(`Aggregated grades from ${enrollments.length} course${enrollments.length !== 1 ? 's' : ''}.`);
+      setTimeout(() => setAggregationBanner(''), 8000);
+
+    } catch (error) {
+      console.error('Error fetching cross-course grades:', error);
+      setAggregationBanner('Failed to fetch grades. Please try again.');
+    } finally {
+      setIsFetchingGrades(false);
+    }
+  };
 
   useEffect(() => {
     if (activeStudent) {
@@ -252,6 +350,16 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
           {mode === 'full' && (
             <>
+              <button
+                onClick={() => fetchAllGrades(formData.studentName)}
+                disabled={isFetchingGrades || !formData.studentName.trim()}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
+                title="Fetch grades from all enrolled courses"
+              >
+                {isFetchingGrades ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                Fetch All Grades
+              </button>
+
               <button onClick={() => setShowPreview(!showPreview)} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all border ${showPreview ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 {showPreview ? 'Hide Preview' : 'Preview'}
@@ -286,6 +394,20 @@ const GradeGenerator = ({ user, activeStudent }) => {
           <div className="bg-indigo-50 border border-indigo-200/80 rounded-xl px-5 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
             <Info className="w-5 h-5 text-indigo-500 shrink-0" />
             <p className="text-sm font-medium text-indigo-800">Auto-filled from gradebook data. Review and edit before exporting.</p>
+          </div>
+        </div>
+      )}
+
+      {/* AGGREGATION BANNER */}
+      {aggregationBanner && (
+        <div className="max-w-6xl mx-auto mb-4 print:hidden">
+          <div className={`rounded-xl px-5 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
+            aggregationBanner.startsWith('Aggregated')
+              ? 'bg-emerald-50 border border-emerald-200/80'
+              : 'bg-amber-50 border border-amber-200/80'
+          }`}>
+            <Info className={`w-5 h-5 shrink-0 ${aggregationBanner.startsWith('Aggregated') ? 'text-emerald-500' : 'text-amber-500'}`} />
+            <p className={`text-sm font-medium ${aggregationBanner.startsWith('Aggregated') ? 'text-emerald-800' : 'text-amber-800'}`}>{aggregationBanner}</p>
           </div>
         </div>
       )}

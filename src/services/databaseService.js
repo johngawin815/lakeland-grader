@@ -143,6 +143,79 @@ export const databaseService = {
   },
 
   // =========================================================================
+  // COURSES — CRUD
+  // =========================================================================
+
+  getAllCourses: async () => {
+    const { resources } = await coursesContainer.items
+      .query("SELECT * FROM c")
+      .fetchAll();
+    return resources;
+  },
+
+  addCourse: async (courseData) => {
+    const { resource } = await coursesContainer.items.create({
+      ...courseData,
+      id: courseData.id || `course-${Date.now()}`,
+    });
+    return resource;
+  },
+
+  updateCourse: async (id, courseData) => {
+    const { resource } = await coursesContainer.items.upsert({ ...courseData, id });
+    return resource;
+  },
+
+  deleteCourse: async (id) => {
+    await coursesContainer.item(id, id).delete();
+  },
+
+  // =========================================================================
+  // ENROLLMENTS — Management
+  // =========================================================================
+
+  enrollStudent: async (enrollmentData) => {
+    const { resource } = await enrollmentsContainer.items.upsert(enrollmentData);
+    return resource;
+  },
+
+  unenrollStudent: async (enrollmentId) => {
+    await enrollmentsContainer.item(enrollmentId, enrollmentId).delete();
+  },
+
+  getEnrollmentsByCourse: async (courseId) => {
+    const querySpec = {
+      query: "SELECT * FROM c WHERE c.courseId = @courseId AND c.status = 'Active'",
+      parameters: [{ name: "@courseId", value: courseId }],
+    };
+    const { resources } = await enrollmentsContainer.items
+      .query(querySpec)
+      .fetchAll();
+    return resources;
+  },
+
+  getStudentEnrollments: async (studentId) => {
+    const querySpec = {
+      query: "SELECT * FROM c WHERE c.studentId = @studentId AND c.status = 'Active'",
+      parameters: [{ name: "@studentId", value: studentId }],
+    };
+    const { resources } = await enrollmentsContainer.items
+      .query(querySpec)
+      .fetchAll();
+    return resources;
+  },
+
+  getGradebook: async (courseId) => {
+    try {
+      const { resource } = await gradebookContainer.item(courseId, courseId).read();
+      return resource;
+    } catch (e) {
+      if (e.code === 404) return null;
+      throw e;
+    }
+  },
+
+  // =========================================================================
   // AUDIT LOGGING (HIPAA)
   // =========================================================================
 

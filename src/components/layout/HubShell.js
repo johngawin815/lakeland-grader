@@ -6,16 +6,16 @@ import KTEAReporter from '../ktea/KTEAReporter';
 import DischargeGenerator from '../discharge/DischargeGenerator';
 import CurriculumMaps from '../curriculum/CurriculumMaps';
 import StudentMasterDashboard from '../dashboard/StudentMasterDashboard';
-import ClassGradebook from '../grading/ClassGradebook';
 import GradeGenerator from '../grading/GradeGenerator';
 import GradeSpreadsheetModal from '../grading/GradeSpreadsheetModal';
 import AuditLog from './AuditLog';
 
 const HubShell = () => {
-  const [user, setUser] = useState(null); 
-  const [currentView, setCurrentView] = useState("home"); 
-  const [activeStudent, setActiveStudent] = useState(null); 
+  const [user, setUser] = useState(null);
+  const [currentView, setCurrentView] = useState("home");
+  const [activeStudent, setActiveStudent] = useState(null);
   const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+  const [dashboardInitialTab, setDashboardInitialTab] = useState(null);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -55,11 +55,20 @@ const HubShell = () => {
           </div>
           <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
             {modules.map(m => (
-              <NavButton 
+              <NavButton
                 key={m.id}
-                label={m.title} 
-                active={currentView === m.id} 
-                onClick={() => setCurrentView(m.id)} 
+                label={m.title}
+                active={currentView === m.id}
+                onClick={() => {
+                  if (m.id === 'gradebook') {
+                    // Redirect to Dashboard → My Classes tab (course must be selected first)
+                    setDashboardInitialTab('classes');
+                    setCurrentView('dashboard');
+                  } else {
+                    setDashboardInitialTab(null);
+                    setCurrentView(m.id);
+                  }
+                }}
               />
             ))}
             <button 
@@ -118,12 +127,20 @@ const HubShell = () => {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
               {modules.map(m => (
-                 <LaunchCard 
+                 <LaunchCard
                     key={m.id}
-                    icon={m.icon} 
-                    title={m.title} 
+                    icon={m.icon}
+                    title={m.title}
                     desc={m.desc}
-                    onClick={() => setCurrentView(m.id)}
+                    onClick={() => {
+                      if (m.id === 'gradebook') {
+                        setDashboardInitialTab('classes');
+                        setCurrentView('dashboard');
+                      } else {
+                        setDashboardInitialTab(null);
+                        setCurrentView(m.id);
+                      }
+                    }}
                  />
               ))}
             </div>
@@ -132,8 +149,7 @@ const HubShell = () => {
 
         {currentView !== 'home' && (
             <div className="p-0">
-                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
-                {currentView === 'gradebook' && <ClassGradebook user={user} onExit={() => setCurrentView('home')} onNavigateToGradeCards={() => setCurrentView('gradecards')} backLabel="Back to Hub" />}
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} initialTab={dashboardInitialTab} />}
                 {currentView === 'gradecards' && <GradeGenerator user={user} activeStudent={activeStudent} />}
                 {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
                 {currentView === 'discharge' && <DischargeGenerator user={user} activeStudent={activeStudent} />}
