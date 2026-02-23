@@ -163,14 +163,13 @@ const MyClasses = ({ teacherName, onCourseSelect }) => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Mock courses data structure
-    const MOCK_COURSES = [
-        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
-        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
-        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },
-    ];
-
     useEffect(() => {
+        const MOCK_COURSES = [
+            { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+            { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+            { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },
+        ];
+
         const fetchCourses = async () => {
             setLoading(true);
             try {
@@ -186,7 +185,7 @@ const MyClasses = ({ teacherName, onCourseSelect }) => {
         if (teacherName) {
             fetchCourses();
         }
-    }, [teacherName, MOCK_COURSES]);
+    }, [teacherName]);
 
     if (loading) {
         return <div className="text-center py-20 text-slate-400">Loading classes...</div>;

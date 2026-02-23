@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen } from 'lucide-react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
 
 // --- MODULE IMPORTS ---
 import KTEAReporter from '../ktea/KTEAReporter';
@@ -186,6 +186,13 @@ const LaunchCard = ({ icon, title, desc, onClick }) => (
             <p className="text-sm text-slate-500 mt-1">{desc}</p>
         </div>
     </div>
+);
+
+const GradeSpreadsheet = () => (
+  <div className="p-4 text-center text-slate-500">
+    <p className="text-lg font-semibold text-slate-700">Mid-Quarter Grade Spreadsheet</p>
+    <p className="mt-2">Spreadsheet generation coming soon.</p>
+  </div>
 );
 
 const LoginScreen = ({ onLogin }) => (
