@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap } from 'lucide-react';
 
 // --- MODULE IMPORTS ---
 import KTEAReporter from '../ktea/KTEAReporter';
 import DischargeGenerator from '../discharge/DischargeGenerator';
-import CurriculumMaps from '../curriculum/CurriculumMaps'; 
-import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import CurriculumMaps from '../curriculum/CurriculumMaps';
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard';
 import ClassGradebook from '../grading/ClassGradebook';
+import GradeGenerator from '../grading/GradeGenerator';
+import GradeSpreadsheetModal from '../grading/GradeSpreadsheetModal';
 import AuditLog from './AuditLog';
 
 const HubShell = () => {
@@ -34,6 +36,7 @@ const HubShell = () => {
   const modules = [
     { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
     { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'gradecards', title: 'Grade Cards', desc: 'Generate & Export', icon: <GraduationCap size={28} className="text-indigo-500" /> },
     { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
     { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
     { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
@@ -130,7 +133,8 @@ const HubShell = () => {
         {currentView !== 'home' && (
             <div className="p-0">
                 {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
-                {currentView === 'gradebook' && <ClassGradebook user={user} onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'gradebook' && <ClassGradebook user={user} onExit={() => setCurrentView('home')} onNavigateToGradeCards={() => setCurrentView('gradecards')} backLabel="Back to Hub" />}
+                {currentView === 'gradecards' && <GradeGenerator user={user} activeStudent={activeStudent} />}
                 {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
                 {currentView === 'discharge' && <DischargeGenerator user={user} activeStudent={activeStudent} />}
                 {currentView === 'curriculum' && <CurriculumMaps />}
@@ -138,19 +142,10 @@ const HubShell = () => {
             </div>
         )}
       </main>
-      {isSpreadsheetModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
-              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
-                <X size={24} />
-              </button>
-            </div>
-            <GradeSpreadsheet />
-          </div>
-        </div>
-      )}
+      <GradeSpreadsheetModal
+        isOpen={isSpreadsheetModalOpen}
+        onClose={() => setIsSpreadsheetModalOpen(false)}
+      />
     </div>
   );
 };
@@ -186,13 +181,6 @@ const LaunchCard = ({ icon, title, desc, onClick }) => (
             <p className="text-sm text-slate-500 mt-1">{desc}</p>
         </div>
     </div>
-);
-
-const GradeSpreadsheet = () => (
-  <div className="p-4 text-center text-slate-500">
-    <p className="text-lg font-semibold text-slate-700">Mid-Quarter Grade Spreadsheet</p>
-    <p className="mt-2">Spreadsheet generation coming soon.</p>
-  </div>
 );
 
 const LoginScreen = ({ onLogin }) => (

@@ -6,10 +6,14 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import ReportCardExportModal from './ReportCardExportModal';
 import { calculateLetterGrade } from '../../utils/gradeCalculator';
+import { useGrading } from '../../context/GradingContext';
+import { generateSmartComment } from '../../utils/commentGenerator';
+import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
+import StudentSummaryPanel from './StudentSummaryPanel';
+import ClassAnalytics from './ClassAnalytics';
 
 
 // --- DATA SETUP ---
-// Standardized data without presentational properties (like color).
 const INITIAL_STUDENTS = [
   { id: 1, name: "David Everitt" },
   { id: 2, name: "Jane Doe" },
@@ -41,8 +45,9 @@ const INITIAL_ATTENDANCE = {
 };
 
 
-const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" }) => {
+const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabel = "Back to Dashboard" }) => {
   // --- STATE MANAGEMENT ---
+  const { setGradeCardPayload } = useGrading();
   const [students] = useState(INITIAL_STUDENTS);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [assignments, setAssignments] = useState(INITIAL_ASSIGNMENTS);
@@ -61,6 +66,7 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
   const [editingCategories, setEditingCategories] = useState([]);
   const [isBulkFillModalOpen, setIsBulkFillModalOpen] = useState(false);
   const [bulkFillData, setBulkFillData] = useState({ assignmentId: null, value: '' });
+  const [selectedStudentForPanel, setSelectedStudentForPanel] = useState(null);
 
   // --- DATA FETCHING ---
   useEffect(() => {
@@ -68,30 +74,13 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
       if (!course?.id) {
         setLoading(false);
         return;
-      };
+      }
 
       setLoading(true);
       try {
-        // In a real app, you would fetch the gradebook state from Cosmos DB
-        // const savedState = await databaseService.getGradebook(course.id);
-        
-        // For now, we'll fetch enrollments and create a student list.
-        // const enrollments = await databaseService.getEnrollmentsByCourse(course.id);
-        // const studentIds = enrollments.map(e => e.studentId);
-        // const studentDetails = await databaseService.getStudentsByIds(studentIds);
-        
-        // MOCKING the fetch for now:
         console.log(`Fetching data for course: ${course.courseName} (${course.id})`);
-        
-        // This is where you would populate your state from the database
-        // setStudents(studentDetails);
-        // setGrades(savedState.grades || {});
-        // setAssignments(savedState.assignments || []);
-        // setCategories(savedState.categories || INITIAL_CATEGORIES);
-        
       } catch (error) {
         console.error("Failed to load gradebook data:", error);
-        // Handle error, maybe show a toast notification
       }
       setLoading(false);
     };
@@ -134,6 +123,20 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
     });
     return results;
   }, [students, categories, assignments, grades]);
+
+  // --- HELPER: per-category percentage for a student ---
+  const getCategoryPercentage = (studentId, category) => {
+    const catAssignments = assignments.filter(a => a.categoryId === category.id);
+    let earned = 0, max = 0;
+    catAssignments.forEach(a => {
+      const score = grades[studentId]?.[a.id];
+      if (score !== undefined && score !== null && score !== '') {
+        earned += parseFloat(score);
+        max += parseFloat(a.maxScore);
+      }
+    });
+    return max > 0 ? (earned / max) * 100 : null;
+  };
 
   // --- HANDLERS ---
   const handleGradeChange = (studentId, assignmentId, value) => {
@@ -196,44 +199,77 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
     setIsExportModalOpen(true);
   };
 
+  const handleGenerateGradeCard = (student) => {
+    const percentage = finalGrades[student.id];
+    if (percentage === null) return;
+
+    const categoryBreakdown = categories
+      .map(cat => {
+        const pct = getCategoryPercentage(student.id, cat);
+        return pct !== null ? { name: cat.name, percentage: pct } : null;
+      })
+      .filter(Boolean);
+
+    const comment = generateSmartComment({
+      studentName: student.name,
+      overallPercentage: percentage,
+      categoryBreakdown,
+      totalAbsences: getTotalAbsences(student.id),
+      previousPercentage: null,
+    });
+
+    setGradeCardPayload({
+      studentName: student.name,
+      studentId: student.id,
+      gradeLevel: '',
+      courseName: course?.courseName || 'Class',
+      coursePercentage: percentage,
+      courseLetterGrade: calculateLetterGrade(percentage),
+      categoryBreakdown,
+      totalAbsences: getTotalAbsences(student.id),
+      quarter: getAcademicQuarter(),
+      schoolYear: getCurrentSchoolYear(),
+      teacherName: course?.teacherName || user?.name || '',
+      generatedComment: comment,
+    });
+
+    if (onNavigateToGradeCards) onNavigateToGradeCards();
+  };
+
   const handleSaveToCloud = async () => {
     setIsSaving(true);
     setSaveMessage('');
-    
-    const term = "Q1"; // Hardcoded as requested
+
+    const term = "Q1";
 
     try {
       const savePromises = students.map(student => {
         const percentage = finalGrades[student.id];
-        
+
         if (percentage === null || percentage === undefined) {
-          // Skip students with no grade
           return Promise.resolve(null);
         }
-        
+
         const letterGrade = calculateLetterGrade(percentage);
-        
+
         const enrollmentData = {
-          // The id for an enrollment should be unique, combining student and course is a good practice.
-          id: `${student.id}-${course.id}-${term}`, 
+          id: `${student.id}-${course.id}-${term}`,
           studentId: student.id,
           courseId: course.id,
           percentage: parseFloat(percentage.toFixed(2)),
           letterGrade: letterGrade,
           term: term
         };
-        
+
         return databaseService.saveCourseGrade(enrollmentData);
       });
 
       await Promise.all(savePromises);
-      
-      // Also save the gradebook's own state (assignments, categories, etc.)
+
       const gradebookPayload = { id: course.id, assignments, categories, attendance, lastUpdated: new Date().toISOString() };
       await databaseService.saveGradebook(gradebookPayload);
 
-
-      setSaveMessage('✅ Saved!');
+      setSaveMessage('Saved!');
       databaseService.logAudit(user, 'SaveGrades', `Saved ${students.length} student grades for course ${course.courseName}.`);
 
     } catch (error) {
@@ -260,38 +296,31 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
     if (!studentToExport) return;
 
     try {
-      // Load the template
-      const response = await fetch('/templates/quarter_card.docx');
+      const response = await fetch('/templates/quarter_card_template.docx');
       if (!response.ok) throw new Error("Could not find template");
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const zip = new PizZip(arrayBuffer);
       const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
-      // Calculate data
       const grade = studentToExport.finalPercentage;
       const letterGrade = calculateLetterGrade(grade);
-      
-      // Map data to template
-      // Note: In a real app, we would pull other classes from a central DB. 
-      // Here we fill the current class as Elective 1 and mock the others for the demo.
+
       const data = {
         student_name: studentToExport.name,
         grade_level: '11',
-        school_year: '2025-2026',
-        quarter_name: 'Q3',
+        school_year: getCurrentSchoolYear(),
+        quarter_name: getAcademicQuarter(),
         report_date: new Date().toLocaleDateString(),
         teacher_name: user?.name || 'Teacher',
         total_credits: '3.5',
         comments: `Current grade in ${course.courseName}: ${grade.toFixed(1)}%. ${grade >= 70 ? 'Keep up the good work!' : 'Please see me for extra help.'}`,
-        
-        // Mock Core Classes
+
         eng_class: 'English 11', eng_grade: 'B+', eng_pct: '88',
         math_class: 'Algebra II', math_grade: 'A-', math_pct: '92',
         sci_class: 'Chemistry', sci_grade: 'B', sci_pct: '85',
         soc_class: 'US History', soc_grade: 'A', soc_pct: '95',
-        
-        // Current Class
+
         elec1_class: course.courseName, elec1_grade: letterGrade, elec1_pct: grade.toFixed(1),
         elec2_class: 'Study Hall', elec2_grade: 'P', elec2_pct: '100',
       };
@@ -310,14 +339,14 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
     }
   };
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-                <span className="ml-4 text-lg font-bold text-slate-600">Loading Gradebook...</span>
-            </div>
-        );
-    }
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <span className="ml-4 text-lg font-bold text-slate-600">Loading Gradebook...</span>
+      </div>
+    );
+  }
 
   // --- RENDER ---
   return (
@@ -342,12 +371,12 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
             )}
             <h1 className="text-4xl font-extrabold text-slate-900 flex items-center gap-3">
               <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
-                <GraduationCap className="w-8 h-8" /> 
+                <GraduationCap className="w-8 h-8" />
               </span>
               {course.courseName || 'Class Gradebook'}
             </h1>
             <p className="text-slate-500 mt-2 text-base">
-               {course.teacherName || user.name} • {students.length} Students
+               {course.teacherName || user.name} | {students.length} Students
             </p>
           </div>
 
@@ -355,21 +384,21 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
           {activeTab === 'grades' && (
             <div className="flex gap-3 items-center">
               {saveMessage && <span className={`text-sm font-bold ${saveMessage === 'Error!' ? 'text-red-500' : 'text-emerald-600'} animate-pulse`}>{saveMessage}</span>}
-              <button 
+              <button
                 onClick={handleSaveToCloud}
                 disabled={isSaving}
                 className="bg-indigo-600 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (saveMessage === '✅ Saved!' ? <Check className="w-5 h-5" /> : <CloudUpload className="w-5 h-5" />)}
-                {isSaving ? 'Saving...' : (saveMessage === '✅ Saved!' ? 'Saved!' : 'Save to Cloud')}
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (saveMessage === 'Saved!' ? <Check className="w-5 h-5" /> : <CloudUpload className="w-5 h-5" />)}
+                {isSaving ? 'Saving...' : (saveMessage === 'Saved!' ? 'Saved!' : 'Save to Cloud')}
               </button>
-              <button 
+              <button
                 onClick={handleOpenWeightModal}
                 className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
               >
                 <Percent className="w-5 h-5 text-indigo-500" /> Weights
               </button>
-              <button 
+              <button
                 onClick={() => setIsModalOpen(true)}
                 className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
               >
@@ -387,11 +416,14 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
           <button onClick={() => setActiveTab('attendance')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'attendance' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
             <Calendar className="w-5 h-5" /> Attendance
           </button>
+          <button onClick={() => setActiveTab('analytics')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'analytics' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            <TrendingUp className="w-5 h-5" /> Analytics
+          </button>
         </div>
 
         {/* MAIN CONTENT CARD */}
         <div className="max-w-7xl mx-auto bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-[70vh]">
-          
+
           {/* GRADEBOOK GRID */}
           {activeTab === 'grades' && (
             <div className="overflow-auto flex-1">
@@ -430,8 +462,14 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
                       <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200 group">
                         <td className="p-4 font-bold border-r border-slate-200/80 sticky left-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm">
                           <div className="flex justify-between items-center">
-                            <div>{student.name}<div className="text-xs text-slate-400 font-normal">ID: {student.id}</div></div>
-                            <button onClick={() => handleOpenExport(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 transition-all p-1" title="Export Report Card"><FileDown className="w-5 h-5" /></button>
+                            <button onClick={() => setSelectedStudentForPanel(student)} className="text-left hover:text-indigo-600 transition-colors">
+                              {student.name}
+                              <div className="text-xs text-slate-400 font-normal">ID: {student.id}</div>
+                            </button>
+                            <div className="flex gap-1">
+                              <button onClick={() => handleGenerateGradeCard(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-emerald-600 transition-all p-1" title="Generate Grade Card"><GraduationCap className="w-5 h-5" /></button>
+                              <button onClick={() => handleOpenExport(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 transition-all p-1" title="Export Report Card"><FileDown className="w-5 h-5" /></button>
+                            </div>
                           </div>
                         </td>
                         {assignments.map(assignment => {
@@ -500,9 +538,36 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
               </div>
             </div>
           )}
+
+          {/* ANALYTICS TAB */}
+          {activeTab === 'analytics' && (
+            <ClassAnalytics
+              students={students}
+              finalGrades={finalGrades}
+              assignments={assignments}
+              categories={categories}
+              grades={grades}
+              attendance={attendance}
+            />
+          )}
         </div>
       </>
       )}
+
+      {/* STUDENT SUMMARY PANEL */}
+      {selectedStudentForPanel && (
+        <StudentSummaryPanel
+          student={selectedStudentForPanel}
+          grades={grades}
+          assignments={assignments}
+          categories={categories}
+          attendance={attendance}
+          finalGrade={finalGrades[selectedStudentForPanel.id]}
+          onClose={() => setSelectedStudentForPanel(null)}
+          onGenerateGradeCard={handleGenerateGradeCard}
+        />
+      )}
+
       {/* MODALS */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -623,10 +688,10 @@ const ClassGradebook = ({ course, user, onExit, backLabel = "Back to Dashboard" 
       )}
 
       {/* EXPORT MODAL */}
-      <ReportCardExportModal 
-        isOpen={isExportModalOpen} 
-        onClose={() => setIsExportModalOpen(false)} 
-        student={studentToExport} 
+      <ReportCardExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        student={studentToExport}
         currentSubject="Advanced React"
         onDownload={generateReportCard}
       />
