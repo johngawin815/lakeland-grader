@@ -27,6 +27,7 @@ const EnrollmentManager = ({ course, user, onExit }) => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course.id]);
 
   const enrolledStudentIds = useMemo(() => {

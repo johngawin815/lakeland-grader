@@ -126,6 +126,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
       clearGradeCardPayload();
       setTimeout(() => setAutoFillBanner(false), 5000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gradeCardPayload, clearGradeCardPayload]);
 
   // Fetch all cross-course grades for a student

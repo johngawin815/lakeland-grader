@@ -206,6 +206,7 @@ const MyClasses = ({ teacherName, user, onCourseSelect, onManageEnrollment }) =>
         if (teacherName) {
             fetchCourses();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [teacherName]);
 
     const handleCreateCourse = () => {

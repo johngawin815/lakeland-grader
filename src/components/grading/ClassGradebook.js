@@ -248,8 +248,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     setIsSaving(true);
     setSaveMessage('');
 
-    const term = getAcademicQuarter();
-
     try {
       // Save per-student enrollment grades
       const savePromises = students.map(student => {
