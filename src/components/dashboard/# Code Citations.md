@@ -1,145 +1,7451 @@
 # Code Citations
 
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
-
-```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez
-```
-
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
+## License: unknown
+https://github.com/VISHALUNNI/Insurance_Management_System/blob/9bddac7cce0790a4e5f1fc3329e04cd53a232ea8/src/contexts/authContext.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+##
 ```
 
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
-
-```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez
-```
 
 ## License: unknown
-
-[https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js](https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js)
-
-```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
-```
-
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
+https://github.com/VISHALUNNI/Insurance_Management_System/blob/9bddac7cce0790a4e5f1fc3329e04cd53a232ea8/src/contexts/authContext.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+##
 ```
+
 
 ## License: unknown
-
-[https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js](https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js)
-
-```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
-```
-
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
+https://github.com/VISHALUNNI/Insurance_Management_System/blob/9bddac7cce0790a4e5f1fc3329e04cd53a232ea8/src/contexts/authContext.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+##
 ```
+
 
 ## License: unknown
-
-[https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js](https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js)
-
-```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
-```
-
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
+https://github.com/VISHALUNNI/Insurance_Management_System/blob/9bddac7cce0790a4e5f1fc3329e04cd53a232ea8/src/contexts/authContext.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+##
 ```
+
 
 ## License: unknown
-
-[https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js](https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js)
-
-```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
-```
-
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
+https://github.com/VISHALUNNI/Insurance_Management_System/blob/9bddac7cce0790a4e5f1fc3329e04cd53a232ea8/src/contexts/authContext.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+##
 ```
+
 
 ## License: unknown
-
-[https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js](https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js)
-
-```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
-```
-
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
+https://github.com/VISHALUNNI/Insurance_Management_System/blob/9bddac7cce0790a4e5f1fc3329e04cd53a232ea8/src/contexts/authContext.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+##
 ```
+
 
 ## License: unknown
-
-[https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js](https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js)
-
-```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
-```
-
-## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
+https://github.com/VISHALUNNI/Insurance_Management_System/blob/9bddac7cce0790a4e5f1fc3329e04cd53a232ea8/src/contexts/authContext.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+##
 ```
+
 
 ## License: unknown
-
-[https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js](https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js)
+https://github.com/VISHALUNNI/Insurance_Management_System/blob/9bddac7cce0790a4e5f1fc3329e04cd53a232ea8/src/contexts/authContext.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+##
 ```
+
 
 ## License: AGPL-3.0
-
-[https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb](https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb)
+https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "
 ```
+
+
+## License: AGPL-3.0
+https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "
+```
+
+
+## License: AGPL-3.0
+https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "
+```
+
 
 ## License: unknown
-
-[https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js](https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js)
+https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js
 
 ```
-I'll implement a premium glassmorphism Student Profile Modal in [src/components/dashboard/StudentMasterDashboard.js](src/components/dashboard/StudentMasterDashboard.js).````javascript// filepath: src/components/dashboard/StudentMasterDashboard.jsimport React, { useEffect, useState } from 'react';import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, User, Calendar, GraduationCap, Shield } from 'lucide-react';import ClassGradebook from '../grading/ClassGradebook'; // Import for later use// Mock user, as requested. In a real app, this would come from an auth context.const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };// --- Main Dashboard Component ---const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse }) => {  const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'classes'    // This state will hold the specific course the user clicks on  const [selectedCourse, setSelectedCourse] = useState(null);  // If a course is selected, we render the gradebook for it directly  if (selectedCourse) {    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} />;  }  return (    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">      <div className="flex justify-between items-center mb-5 shrink-0">        <div>          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">            Teacher Dashboard          </h2>          <p className="m-1 text-slate-500 text-base">            Welcome, {user.name}. Toggle between your unit and class responsibilities.          </p>        </div>      </div>      {/* Tab Navigation */}      <div className="flex gap-2 mb-0 border-b border-slate-200/80">        <TabButton          label="My Unit Roster"          icon={<UserCheck />}          isActive={activeTab === 'roster'}          onClick={() => setActiveTab('roster')}        />        <TabButton          label="My Classes"          icon={<BookOpen />}          isActive={activeTab === 'classes'}          onClick={() => setActiveTab('classes')}        />      </div>      {/* Tab Content */}      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}      </div>    </div>  );};// --- Helper Components ---const TabButton = ({ label, icon, isActive, onClick }) => (  <button    onClick={onClick}    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${      isActive        ? 'border-indigo-600 text-indigo-600'        : 'border-transparent text-slate-500 hover:text-slate-800'    }`}  >    {React.cloneElement(icon, { className: 'w-5 h-5' })}    {label}  </button>);// --- "My Unit Roster" Tab Content ---const UnitRoster = ({ unitName, setActiveStudent }) => {    const [roster, setRoster] = useState([]);    const [loading, setLoading] = useState(true);    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);    useEffect(() => {        const fetchRoster = async () => {            setLoading(true);            try {                // NOTE: Using mock data for now as getStudentsByUnit might not be fully implemented                // const students = await databaseService.getStudentsByUnit(unitName);                const mockStudents = generateMockRoster().filter(s => s.unitName === unitName);                setRoster(mockStudents);            } catch (error) {                console.error("Failed to fetch unit roster:", error);                // Fallback to mock data on error                setRoster(generateMockRoster().filter(s => s.unitName === unitName));            }            setLoading(false);        };        if (unitName) {            fetchRoster();        }    }, [unitName]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;    }        if (roster.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;    }    return (        <>            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">                {roster.map(student => (                    <StudentCard                         key={student.id}                         student={student}                         onSelect={() => {                            setActiveStudent(student.studentName);                            setSelectedStudentProfile(student);                        }}                     />                ))}            </div>            {selectedStudentProfile && (                <StudentProfileModal                     student={selectedStudentProfile}                     onClose={() => setSelectedStudentProfile(null)}                 />            )}        </>    );};const StudentCard = ({ student, onSelect }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    return (        <div            onClick={onSelect}            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}        >            <div className="flex justify-between items-start">                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>                    {student.studentName}                </div>                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}            </div>            <div className="flex justify-between items-center">                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>                    {student.unitName}                </span>            </div>            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">                <span>Grade {student.gradeLevel}</span>                <span className="text-slate-400">Admit: {student.admitDate}</span>                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />            </div>        </div>    );};// --- "My Classes" Tab Content ---const MyClasses = ({ teacherName, onCourseSelect }) => {    const [courses, setCourses] = useState([]);    const [loading, setLoading] = useState(true);    // Mock courses data structure    const MOCK_COURSES = [        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },        { id: 'C201', courseName: 'Algebra 1', teacherName: 'Jane Doe', credits: 5 },    ];    useEffect(() => {        const fetchCourses = async () => {            setLoading(true);            try {                // const teacherCourses = await databaseService.getCoursesByTeacher(teacherName);                const teacherCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);                setCourses(teacherCourses);            } catch (error) {                console.error("Failed to fetch courses:", error);                 setCourses(MOCK_COURSES.filter(c => c.teacherName === teacherName));            }            setLoading(false);        };        if (teacherName) {            fetchCourses();        }    }, [teacherName, MOCK_COURSES]);    if (loading) {        return <div className="text-center py-20 text-slate-400">Loading classes...</div>;    }        if (courses.length === 0) {        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;    }    return (        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">            {courses.map(course => (                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />            ))}        </div>    );};const CourseCard = ({ course, onClick }) => (    <div        onClick={onClick}        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"    >        <div className="flex justify-between items-start">            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">                <BookOpen className="w-7 h-7" />            </div>            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>        </div>        <div>            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>        </div>        <div className="mt-auto pt-4 flex justify-end">            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">                Open Gradebook <ChevronRight className="w-4 h-4" />            </button>        </div>    </div>);// --- Student Profile Modal ---const StudentProfileModal = ({ student, onClose }) => {    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);    const UnitIcon = unitStyle?.icon || User;    return (        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">            <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-2xl overflow-hidden">                                {/* Modal Header */}                <div className="p-6 border-b border-slate-200/80 flex justify-between items-center bg-gradient-to-r from-indigo-50/80 to-white/80">                    <div className="flex items-center gap-4">                        <div className={`p-3 rounded-xl ${unitStyle?.badge || 'bg-slate-100'} border border-white`}>                            <UnitIcon className={`w-7 h-7 ${unitStyle?.color || 'text-slate-600'}`} />                        </div>                        <div>                            <h3 className="text-2xl font-bold text-slate-800">{student.studentName}</h3>                            <p className="text-sm text-slate-500 font-medium">Student Profile</p>                        </div>                    </div>                    <button                         onClick={onClose}                        className="text-slate-400 hover:text-slate-600 transition-colors p-2 rounded-full hover:bg-slate-200/50"                    >                        <X className="w-6 h-6" />                    </button>                </div>                {/* Modal Content */}                <div className="p-6 space-y-6">                                        {/* Student Information Grid */}                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                                                {/* Grade Level */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-blue-100 rounded-lg">                                <GraduationCap className="w-6 h-6 text-blue-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grade Level</p>                                <p className="text-xl font-bold text-slate-800">{student.gradeLevel}th Grade</p>                            </div>                        </div>                        {/* Unit Assignment */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${unitStyle?.badge || 'bg-slate-100'}`}>                                <UnitIcon className={`w-6 h-6 ${unitStyle?.color || 'text-slate-600'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</p>                                <p className="text-xl font-bold text-slate-800">{student.unitName}</p>                            </div>                        </div>                        {/* Admit Date */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className="p-3 bg-emerald-100 rounded-lg">                                <Calendar className="w-6 h-6 text-emerald-600" />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Admit Date</p>                                <p className="text-xl font-bold text-slate-800">{student.admitDate}</p>                            </div>                        </div>                        {/* IEP Status */}                        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl p-4 flex items-center gap-4">                            <div className={`p-3 rounded-lg ${student.iep === "Yes" ? 'bg-amber-100' : 'bg-slate-100'}`}>                                <Shield className={`w-6 h-6 ${student.iep === "Yes" ? 'text-amber-600' : 'text-slate-400'}`} />                            </div>                            <div>                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">IEP Status</p>                                <p className={`text-xl font-bold ${student.iep === "Yes" ? 'text-amber-800' : 'text-slate-600'}`}>                                    {student.iep === "Yes" ? "Active IEP" : "No IEP"}                                </p>                            </div>                        </div>                    </div>                    {/* Additional Information Section */}                    <div className="bg-indigo-50/50 border border-indigo-200/50 rounded-xl p-5">                        <h4 className="font-bold text-sm text-indigo-900 uppercase tracking-wider mb-3 flex items-center gap-2">                            <User className="w-4 h-4" />                            Student ID                        </h4>                        <p className="text-slate-600 font-mono font-semibold">{student.id}</p>                    </div>                </div>                {/* Modal Footer */}                <div className="p-6 border-t border-slate-200/80 bg-slate-50/50 flex justify-end">                    <button                         onClick={onClose}                        className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out"                    >                        Close Profile                    </button>                </div>            </div>        </div>    );};// --- MOCK DATA AND CONFIGS ---// These are kept at the bottom for clarityconst UNIT_CONFIG = [  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }];const generateMockRoster = () => {  const students = [];  const units = UNIT_CONFIG.map(u => u.key);  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];  let idCounter = 1;  units
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
+  let idCounter = 1;
+  units
 ```
+
+
+## License: AGPL-3.0
+https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "
+```
+
+
+## License: unknown
+https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
+  let idCounter = 1;
+  units
+```
+
+
+## License: AGPL-3.0
+https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "
+```
+
+
+## License: unknown
+https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
+  let idCounter = 1;
+  units
+```
+
+
+## License: AGPL-3.0
+https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "
+```
+
+
+## License: unknown
+https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
+  let idCounter = 1;
+  units
+```
+
+
+## License: AGPL-3.0
+https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "
+```
+
+
+## License: unknown
+https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
+  let idCounter = 1;
+  units
+```
+
+
+## License: AGPL-3.0
+https://github.com/asahopkins/ocmanager/blob/97b159fb86dcc8c9d1146faef0bf3b08d8101ed2/script/populate_database.rb
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
+  let idCounter = 1;
+  units
+```
+
+
+## License: unknown
+https://github.com/marksteve/datamock.js/blob/19574567cc59a648aa722859963d11ee2eff6f99/datamock.js
+
+```
+I'll help you refactor the authentication logic into a centralized context. Let me execute this plan step by step.
+
+## Step 1: Create AuthContext.js
+
+````javascript
+// filepath: src/context/AuthContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    // Mock login - will be replaced with real MSAL login later
+    setUser({ 
+      name: "Teacher Account", 
+      email: "teacher@lakeland.edu",
+      unit: "Harmony" // Added for consistency with existing mock data
+    });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+````
+
+## Step 2: Update App.js to wrap with AuthProvider
+
+````javascript
+// filepath: src/App.js
+import React from 'react';
+import HubShell from './components/layout/HubShell';
+import { AuthProvider } from './context/AuthContext';
+import { StudentProvider } from './context/StudentContext';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <StudentProvider>
+          <HubShell />
+        </StudentProvider>
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
+````
+
+## Step 3: Refactor HubShell.js
+
+````javascript
+// filepath: src/components/layout/HubShell.js
+import React, { useState } from 'react';
+import { Search, LayoutDashboard, FileText, Map, X, ChevronRight, School, ClipboardList, Shield, BookOpen, FileSpreadsheet } from 'lucide-react';
+
+// --- MODULE IMPORTS ---
+import KTEAReporter from '../ktea/KTEAReporter';
+import DischargeGenerator from '../discharge/DischargeGenerator';
+import CurriculumMaps from '../curriculum/CurriculumMaps'; 
+import StudentMasterDashboard from '../dashboard/StudentMasterDashboard'; 
+import ClassGradebook from '../grading/ClassGradebook';
+import AuditLog from './AuditLog';
+import GradeSpreadsheet from '../grading/GradeSpreadsheet';
+import { useAuth } from '../../context/AuthContext';
+
+const HubShell = () => {
+  const { user, handleLogin, handleLogout } = useAuth();
+  const [currentView, setCurrentView] = useState("home"); 
+  const [activeStudent, setActiveStudent] = useState(null); 
+  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  // Define the module data in an array to simplify rendering
+  const modules = [
+    { id: 'dashboard', title: 'Dashboard', desc: 'Rosters & Profiles', icon: <LayoutDashboard size={28} className="text-indigo-500" /> },
+    { id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance', icon: <BookOpen size={28} className="text-indigo-500" /> },
+    { id: 'ktea', title: 'KTEA Reporter', desc: 'Assessments', icon: <ClipboardList size={28} className="text-indigo-500" /> },
+    { id: 'discharge', title: 'Discharge Writer', desc: 'Exit Summaries', icon: <FileText size={28} className="text-indigo-500" /> },
+    { id: 'curriculum', title: 'Curriculum', desc: 'Maps & Standards', icon: <Map size={28} className="text-indigo-500" /> },
+    { id: 'audit', title: 'Audit Log', desc: 'Security & Compliance', icon: <Shield size={28} className="text-indigo-500" /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+      
+      {/* 1. TOP NAVIGATION BAR */}
+      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
+            <School size={32} className="text-indigo-500" />
+            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+          </div>
+          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            {modules.map(m => (
+              <NavButton 
+                key={m.id}
+                label={m.title} 
+                active={currentView === m.id} 
+                onClick={() => setCurrentView(m.id)} 
+              />
+            ))}
+            <button 
+              onClick={() => setIsSpreadsheetModalOpen(true)}
+              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+            >
+              <FileSpreadsheet size={16} />
+              Mid-Quarter Spreadsheet
+            </button>
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Set Student Context..." 
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
+                value={activeStudent || ""}
+                onChange={(e) => setActiveStudent(e.target.value)} 
+              />
+              {activeStudent && (
+                 <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                   <X size={16} />
+                 </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+                <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
+                    {user.name.charAt(0)}
+                </div>
+                <div className="text-sm">
+                    <div className="font-bold text-slate-200">{user.name}</div>
+                    <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        {currentView === 'home' && (
+          <div className="flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-extrabold text-slate-900">Welcome, {user.name.split(" ")[0]}</h1>
+              <p className="text-lg text-slate-500 mt-2">Select a tool to begin your work.</p>
+              {activeStudent && (
+                 <div className="inline-flex items-center gap-3 mt-4 bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full text-sm border border-indigo-200/80">
+                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Active Context: <strong>{activeStudent}</strong>
+                 </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+              {modules.map(m => (
+                 <LaunchCard 
+                    key={m.id}
+                    icon={m.icon} 
+                    title={m.title} 
+                    desc={m.desc}
+                    onClick={() => setCurrentView(m.id)}
+                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentView !== 'home' && (
+            <div className="p-0">
+                {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} />}
+                {currentView === 'gradebook' && <ClassGradebook onExit={() => setCurrentView('home')} backLabel="Back to Hub" />}
+                {currentView === 'ktea' && <KTEAReporter activeStudent={activeStudent} />}
+                {currentView === 'discharge' && <DischargeGenerator activeStudent={activeStudent} />}
+                {currentView === 'curriculum' && <CurriculumMaps />}
+                {currentView === 'audit' && <AuditLog />}
+            </div>
+        )}
+      </main>
+      {isSpreadsheetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Generate Grade Spreadsheet</h2>
+              <button onClick={() => setIsSpreadsheetModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={24} />
+              </button>
+            </div>
+            <GradeSpreadsheet />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- HELPER COMPONENTS (Refactored with Tailwind CSS) ---
+
+const NavButton = ({ label, active, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+          active 
+          ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20' 
+          : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+const LaunchCard = ({ icon, title, desc, onClick }) => (
+    <div 
+        onClick={onClick}
+        className="bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border border-slate-200/50 rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:border-indigo-300/50 hover:-translate-y-1.5"
+    >
+        <div className="flex items-start justify-between">
+            <div className="p-3 bg-indigo-100/80 rounded-xl border border-white">
+                {icon}
+            </div>
+            <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
+        <div className="mt-4">
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+            <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        </div>
+    </div>
+);
+
+const LoginScreen = ({ onLogin }) => (
+  <div className="w-full h-screen flex items-center justify-center bg-slate-900">
+    <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
+      <School size={48} className="text-indigo-400 mx-auto mb-4" />
+      <h1 className="text-2xl font-extrabold text-white">Lakeland Secure Hub</h1>
+      <p className="text-slate-400 mt-2 mb-8">Authorized staff access only.</p>
+      <button 
+        onClick={onLogin} 
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-all duration-300 ease-in-out"
+      >
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+);
+
+export default HubShell;
+````
+
+## Step 4: Update StudentMasterDashboard.js
+
+````javascript
+// filepath: src/components/dashboard/StudentMasterDashboard.js
+import React, { useEffect, useState } from 'react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import ClassGradebook from '../grading/ClassGradebook';
+import { useAuth } from '../../context/AuthContext';
+
+// --- Main Dashboard Component ---
+const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, onSelectCourse }) => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('roster');
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  if (selectedCourse) {
+    return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} />;
+  }
+
+  return (
+    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center mb-5 shrink-0">
+        <div>
+          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+            Teacher Dashboard
+          </h2>
+          <p className="m-1 text-slate-500 text-base">
+            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+        <TabButton
+          label="My Unit Roster"
+          icon={<UserCheck />}
+          isActive={activeTab === 'roster'}
+          onClick={() => setActiveTab('roster')}
+        />
+        <TabButton
+          label="My Classes"
+          icon={<BookOpen />}
+          isActive={activeTab === 'classes'}
+          onClick={() => setActiveTab('classes')}
+        />
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'classes' && <MyClasses teacherName={user.name} onCourseSelect={setSelectedCourse} />}
+      </div>
+    </div>
+  );
+};
+
+// --- Helper Components ---
+
+const TabButton = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+      isActive
+        ? 'border-indigo-600 text-indigo-600'
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {label}
+  </button>
+);
+
+
+// --- "My Unit Roster" Tab Content ---
+const UnitRoster = ({ unitName, setActiveStudent }) => {
+    const [roster, setRoster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRoster = async () => {
+            setLoading(true);
+            try {
+                const mockRoster = generateMockRoster().filter(s => s.unitName === unitName);
+                setRoster(mockRoster);
+            } catch (error) {
+                console.error("Failed to fetch roster:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRoster();
+    }, [unitName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading roster...</div>;
+    }
+
+    if (roster.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No students found in {unitName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {roster.map(student => (
+                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
+            ))}
+        </div>
+    );
+};
+
+const StudentCard = ({ student, onSelect }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    return (
+        <div
+            onClick={onSelect}
+            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+        >
+            <div className="flex justify-between items-start">
+                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
+                    {student.studentName}
+                </div>
+                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+            </div>
+            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
+                <span>Grade {student.gradeLevel}</span>
+                <span className="text-slate-400">Admit: {student.admitDate}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+            </div>
+        </div>
+    );
+};
+
+
+// --- "My Classes" Tab Content ---
+const MyClasses = ({ teacherName, onCourseSelect }) => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Mock courses data structure
+    const MOCK_COURSES = [
+        { id: 'C101', courseName: 'English 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C102', courseName: 'Social Studies 9', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C103', courseName: 'Algebra I', teacherName: 'John Gawin', credits: 5 },
+        { id: 'C104', courseName: 'Physical Science', teacherName: 'John Gawin', credits: 5 },
+    ];
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            try {
+                // Filter mock courses by teacher name
+                const myCourses = MOCK_COURSES.filter(c => c.teacherName === teacherName);
+                setCourses(myCourses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, [teacherName]);
+
+    if (loading) {
+        return <div className="text-center py-20 text-slate-400 italic">Loading classes...</div>;
+    }
+
+    if (courses.length === 0) {
+        return <div className="text-center py-20 text-slate-400 italic">No classes assigned to {teacherName}.</div>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => onCourseSelect(course)} />
+            ))}
+        </div>
+    );
+};
+
+
+const CourseCard = ({ course, onClick }) => (
+    <div
+        onClick={onClick}
+        className="p-6 border border-slate-200/80 hover:border-indigo-400/50 rounded-2xl shadow-lg bg-white/80 cursor-pointer transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-2"
+    >
+        <div className="flex justify-between items-start">
+            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
+                <BookOpen className="w-7 h-7" />
+            </div>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">{course.credits} Credits</span>
+        </div>
+        <div>
+            <h3 className="font-bold text-xl text-slate-800 group-hover:text-indigo-600">{course.courseName}</h3>
+            <p className="text-sm text-slate-500">Teacher: {course.teacherName}</p>
+        </div>
+        <div className="mt-auto pt-4 flex justify-end">
+            <button className="flex items-center gap-2 text-sm font-bold text-indigo-600 group-hover:underline">
+                Open Gradebook <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    </div>
+);
+
+
+// --- MOCK DATA AND CONFIGS ---
+// These are kept at the bottom for clarity
+
+const UNIT_CONFIG = [
+  { key: "Determination", label: "Determination", icon: Target, color: "text-red-600", badge: "bg-red-100 text-red-800", border: "border-red-200 hover:border-red-400" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-600", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-green-600", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-emerald-600", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200 hover:border-emerald-400" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+];
+
+const generateMockRoster = () => {
+  const students = [];
+  const units = UNIT_CONFIG.map(u => u.key);
+  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
+  let idCounter = 1;
+  units
+```
+
