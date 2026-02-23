@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck } from 'lucide-react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook'; // Import for later use
 
 
@@ -79,6 +79,7 @@ const TabButton = ({ label, icon, isActive, onClick }) => (
 const UnitRoster = ({ unitName, setActiveStudent }) => {
     const [roster, setRoster] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
 
     useEffect(() => {
         const fetchRoster = async () => {
@@ -110,11 +111,27 @@ const UnitRoster = ({ unitName, setActiveStudent }) => {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {roster.map(student => (
-                <StudentCard key={student.id} student={student} onSelect={() => setActiveStudent(student.studentName)} />
-            ))}
-        </div>
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {roster.map(student => (
+                    <StudentCard
+                        key={student.id}
+                        student={student}
+                        onSelect={() => {
+                            setActiveStudent(student.studentName);
+                            setSelectedStudentProfile(student);
+                        }}
+                    />
+                ))}
+            </div>
+
+            {selectedStudentProfile && (
+                <StudentProfileModal 
+                    student={selectedStudentProfile} 
+                    onClose={() => setSelectedStudentProfile(null)} 
+                />
+            )}
+        </>
     );
 };
 
@@ -249,5 +266,48 @@ const generateMockRoster = () => {
   });
   return students;
 };
+
+const StudentProfileModal = ({ student, onClose }) => (
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b border-slate-200/60 flex items-center justify-between">
+                <div>
+                    <h3 className="text-xl font-extrabold text-slate-900">Student Profile</h3>
+                    <p className="text-sm text-slate-500">{student.studentName}</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition"
+                    aria-label="Close"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
+            <div className="p-6 space-y-3 text-sm">
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Student ID</span>
+                    <span className="text-slate-900 font-bold">{student.id}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Grade Level</span>
+                    <span className="text-slate-900 font-bold">{student.gradeLevel}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Unit</span>
+                    <span className="text-slate-900 font-bold">{student.unitName}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Admit Date</span>
+                    <span className="text-slate-900 font-bold">{student.admitDate}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">IEP</span>
+                    <span className="text-slate-900 font-bold">{student.iep}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+);
 
 export default StudentMasterDashboard;
