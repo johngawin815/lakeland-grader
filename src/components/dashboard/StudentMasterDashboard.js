@@ -3,8 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook'; // Import for later use
 
-
-
 // Mock user, as requested. In a real app, this would come from an auth context.
 const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };
 
@@ -303,6 +301,49 @@ const StudentProfileModal = ({ student, onClose }) => (
                 <div className="flex justify-between">
                     <span className="text-slate-500 font-semibold">IEP</span>
                     <span className="text-slate-900 font-bold">{student.iep}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const EditableStudentProfileModal = ({ studentData, onClose, user }) => (
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b border-slate-200/60 flex items-center justify-between">
+                <div>
+                    <h3 className="text-xl font-extrabold text-slate-900">Student Profile</h3>
+                    <p className="text-sm text-slate-500">{studentData.studentName}</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition"
+                    aria-label="Close"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
+            <div className="p-6 space-y-3 text-sm">
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Student ID</span>
+                    <span className="text-slate-900 font-bold">{studentData.id}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Grade Level</span>
+                    <span className="text-slate-900 font-bold">{studentData.gradeLevel}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Unit</span>
+                    <span className="text-slate-900 font-bold">{studentData.unitName}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">Admit Date</span>
+                    <span className="text-slate-900 font-bold">{studentData.admitDate}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-slate-500 font-semibold">IEP</span>
+                    <span className="text-slate-900 font-bold">{studentData.iep}</span>
                 </div>
             </div>
         </div>
