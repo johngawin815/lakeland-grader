@@ -69,7 +69,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, 
 
       {/* Tab Content */}
       <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
-        {activeTab === 'roster' && <UnitRoster unitName={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'roster' && <UnitRoster defaultUnit={user.unit} setActiveStudent={setActiveStudent} />}
         {activeTab === 'classes' && (
           <MyClasses
             teacherName={user.name}
@@ -101,7 +101,8 @@ const TabButton = ({ label, icon, isActive, onClick }) => (
 
 
 // --- "My Unit Roster" Tab Content ---
-const UnitRoster = ({ unitName, setActiveStudent }) => {
+const UnitRoster = ({ defaultUnit, setActiveStudent }) => {
+    const [selectedUnit, setSelectedUnit] = useState(defaultUnit || 'Determination');
     const [roster, setRoster] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
@@ -110,46 +111,67 @@ const UnitRoster = ({ unitName, setActiveStudent }) => {
         const fetchRoster = async () => {
             setLoading(true);
             try {
-                const students = await databaseService.getStudentsByUnit(unitName);
+                const students = await databaseService.getStudentsByUnit(selectedUnit);
                 if (students && students.length > 0) {
                     setRoster(students);
                 } else {
-                    setRoster(generateMockRoster().filter(s => s.unitName === unitName));
+                    setRoster(generateMockRoster().filter(s => s.unitName === selectedUnit));
                 }
             } catch (error) {
                 console.error("Failed to fetch unit roster:", error);
-                setRoster(generateMockRoster().filter(s => s.unitName === unitName));
+                setRoster(generateMockRoster().filter(s => s.unitName === selectedUnit));
             }
             setLoading(false);
         };
 
-        if (unitName) {
-            fetchRoster();
-        }
-    }, [unitName]);
-
-    if (loading) {
-        return <div className="text-center py-20 text-slate-400">Loading roster...</div>;
-    }
-
-    if (roster.length === 0) {
-        return <div className="text-center py-20 text-slate-400 italic">No students assigned to the {unitName} unit.</div>;
-    }
+        fetchRoster();
+    }, [selectedUnit]);
 
     return (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {roster.map(student => (
-                    <StudentCard
-                        key={student.id}
-                        student={student}
-                        onSelect={() => {
-                            setActiveStudent(student.studentName);
-                            setSelectedStudentProfile(student);
-                        }}
-                    />
-                ))}
+            {/* Unit Selector */}
+            <div className="flex flex-wrap gap-2 mb-5">
+                {UNIT_CONFIG.map(unit => {
+                    const Icon = unit.icon;
+                    const isActive = selectedUnit === unit.key;
+                    return (
+                        <button
+                            key={unit.key}
+                            onClick={() => setSelectedUnit(unit.key)}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+                                isActive
+                                    ? `${unit.badge} border-current shadow-sm`
+                                    : 'bg-white text-slate-500 border-slate-200/80 hover:bg-slate-50'
+                            }`}
+                        >
+                            <Icon className="w-4 h-4" />
+                            {unit.label}
+                        </button>
+                    );
+                })}
             </div>
+
+            {loading ? (
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-5 h-5 animate-spin text-indigo-500 mr-3" />
+                    <span className="text-sm font-medium text-slate-400">Loading roster...</span>
+                </div>
+            ) : roster.length === 0 ? (
+                <div className="text-center py-20 text-slate-400 italic">No students assigned to the {selectedUnit} unit.</div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {roster.map(student => (
+                        <StudentCard
+                            key={student.id}
+                            student={student}
+                            onSelect={() => {
+                                setActiveStudent(student.studentName);
+                                setSelectedStudentProfile(student);
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
 
             {selectedStudentProfile && (
                 <StudentProfileModal
