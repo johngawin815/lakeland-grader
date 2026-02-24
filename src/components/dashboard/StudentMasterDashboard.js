@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, Plus, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, X, Plus, Pencil, Trash2, Users, Loader2, GraduationCap, Clock, MapPin } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook';
 import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
@@ -159,7 +159,7 @@ const UnitRoster = ({ defaultUnit, setActiveStudent }) => {
             ) : roster.length === 0 ? (
                 <div className="text-center py-20 text-slate-400 italic">No students assigned to the {selectedUnit} unit.</div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {roster.map(student => (
                         <StudentCard
                             key={student.id}
@@ -185,21 +185,91 @@ const UnitRoster = ({ defaultUnit, setActiveStudent }) => {
 
 const StudentCard = ({ student, onSelect }) => {
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
+    const Icon = unitStyle?.icon || UserCheck;
+
+    // Days in program
+    const admitDate = new Date(student.admitDate);
+    const today = new Date();
+    const daysIn = Math.max(0, Math.floor((today - admitDate) / (1000 * 60 * 60 * 24)));
+
+    // Program progress (admit → expected discharge)
+    let progressPct = 0;
+    if (student.expectedDischargeDate) {
+        const dischargeDate = new Date(student.expectedDischargeDate);
+        const total = dischargeDate - admitDate;
+        if (total > 0) progressPct = Math.min(100, Math.round(((today - admitDate) / total) * 100));
+    }
+
     return (
         <div
             onClick={onSelect}
-            className={`p-4 border ${unitStyle?.border || 'border-slate-200/80 hover:border-indigo-400/50'} rounded-xl shadow-sm bg-white/80 cursor-pointer transition-all group flex flex-col gap-2 hover:shadow-xl hover:bg-white`}
+            className={`relative border-l-4 ${unitStyle?.accentBorder || 'border-l-slate-300'} border border-slate-200/60 rounded-2xl bg-white cursor-pointer transition-all duration-200 group hover:shadow-xl hover:-translate-y-0.5 hover:border-slate-300/80 overflow-hidden`}
         >
-            <div className="flex justify-between items-start">
-                <div className={`font-bold text-lg group-hover:text-indigo-600 ${unitStyle?.color || 'text-slate-800'}`}>
-                    {student.studentName}
+            {/* Card Body */}
+            <div className="p-5">
+                {/* Header Row: Avatar + Name + Badges */}
+                <div className="flex items-start gap-3.5 mb-4">
+                    <div className={`w-11 h-11 rounded-xl ${unitStyle?.avatarBg || 'bg-slate-400'} ring-2 ${unitStyle?.avatarRing || 'ring-slate-200'} ring-offset-1 flex items-center justify-center text-white font-extrabold text-sm tracking-wide shrink-0 shadow-sm`}>
+                        {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-[15px] text-slate-900 leading-tight truncate group-hover:text-indigo-600 transition-colors">
+                            {student.studentName}
+                        </h3>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md ${unitStyle?.tagBg || 'bg-slate-100 text-slate-600'}`}>
+                                <Icon className="w-3 h-3" />
+                                {student.unitName}
+                            </span>
+                            {student.iep === "Yes" && (
+                                <span className="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold border border-amber-200/60">
+                                    IEP
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 </div>
-                {student.iep === "Yes" && <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">IEP</span>}
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-4">
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                        <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="font-semibold">Grade {student.gradeLevel}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="font-semibold">{daysIn} days</span>
+                    </div>
+                    <div className="col-span-2 flex items-center gap-1.5 text-slate-400 truncate">
+                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate font-medium">{student.district || 'No district'}</span>
+                    </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Program Progress</span>
+                        <span className="text-[10px] font-bold text-slate-500">{progressPct}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                            className={`h-full rounded-full transition-all duration-500 ${progressPct >= 80 ? 'bg-emerald-500' : progressPct >= 50 ? 'bg-indigo-500' : 'bg-amber-500'}`}
+                            style={{ width: `${progressPct}%` }}
+                        />
+                    </div>
+                </div>
             </div>
-            <div className="text-xs text-slate-500 font-medium flex justify-between items-center mt-auto">
-                <span>Grade {student.gradeLevel}</span>
-                <span className="text-slate-400">Admit: {student.admitDate}</span>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-5 py-2.5 bg-slate-50/80 border-t border-slate-100 group-hover:bg-indigo-50/50 transition-colors">
+                <span className="text-[11px] text-slate-400 font-medium">
+                    Admitted {admitDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+                <div className="flex items-center gap-1 text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    View <ChevronRight className="w-3.5 h-3.5" />
+                </div>
             </div>
         </div>
     );
@@ -380,13 +450,13 @@ const CourseCard = ({ course, onOpen, onManage, onEdit, onDelete }) => (
 // --- MOCK DATA AND CONFIGS ---
 
 const UNIT_CONFIG = [
-  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400" },
-  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400" },
-  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400" },
-  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400" },
-  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400" },
-  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400" },
-  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
+  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-500", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400", avatarBg: "bg-purple-500", avatarRing: "ring-purple-200", accentBorder: "border-l-purple-500", tagBg: "bg-purple-50 text-purple-700" },
+  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-yellow-500", badge: "bg-yellow-100 text-yellow-800", border: "border-yellow-200 hover:border-yellow-400", avatarBg: "bg-amber-500", avatarRing: "ring-amber-200", accentBorder: "border-l-amber-500", tagBg: "bg-amber-50 text-amber-700" },
+  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400", avatarBg: "bg-sky-500", avatarRing: "ring-sky-200", accentBorder: "border-l-sky-500", tagBg: "bg-sky-50 text-sky-700" },
+  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400", avatarBg: "bg-emerald-500", avatarRing: "ring-emerald-200", accentBorder: "border-l-emerald-500", tagBg: "bg-emerald-50 text-emerald-700" },
+  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-500", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400", avatarBg: "bg-orange-500", avatarRing: "ring-orange-200", accentBorder: "border-l-orange-500", tagBg: "bg-orange-50 text-orange-700" },
+  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400", avatarBg: "bg-blue-500", avatarRing: "ring-blue-200", accentBorder: "border-l-blue-500", tagBg: "bg-blue-50 text-blue-700" },
+  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400", avatarBg: "bg-slate-400", avatarRing: "ring-slate-200", accentBorder: "border-l-slate-400", tagBg: "bg-slate-100 text-slate-600" }
 ];
 
 const generateMockRoster = () => MOCK_STUDENTS.filter(s => s.active);
