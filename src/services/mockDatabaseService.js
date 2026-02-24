@@ -75,6 +75,7 @@ const courses = new Map(MOCK_COURSES.map(c => [c.id, { ...c }]));
 const kteaReports = new Map(MOCK_KTEA_REPORTS.map(r => [r.id, { ...r }]));
 const enrollments = new Map();
 const gradebooks = new Map();
+const iepDrafts = new Map();
 const auditLogs = [];
 
 // ─── AUTO-POPULATE GRADEBOOKS & ENROLLMENTS ────────────────────────────────────
@@ -244,6 +245,21 @@ export const mockDatabaseService = {
     const gb = gradebooks.get(courseId);
     return gb ? { ...gb } : null;
   },
+
+  // === IEP DRAFTS ===
+  saveIepDraft: async (data) => {
+    const id = data.id || `iep-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const record = { ...data, id, lastModified: new Date().toISOString() };
+    iepDrafts.set(id, record);
+    return record;
+  },
+
+  getIepByStudent: async (studentId) =>
+    [...iepDrafts.values()].filter(d => d.studentId === studentId),
+
+  getAllIepDrafts: async () => [...iepDrafts.values()],
+
+  deleteIepDraft: async (id) => { iepDrafts.delete(id); },
 
   // === AUDIT LOGGING ===
   logAudit: async (user, action, details) => {

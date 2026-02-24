@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
   Users, Calendar, FileBarChart, Sparkles, ArrowRight, TrendingUp, UserPlus,
-  Database, Loader2, CheckCircle2
+  Database, Loader2, CheckCircle2, FileCheck
 } from 'lucide-react';
 import { seedDemoData } from '../../data/seedDatabase';
 
@@ -15,6 +15,7 @@ import StudentMasterDashboard from '../dashboard/StudentMasterDashboard';
 import GradeGenerator from '../grading/GradeGenerator';
 import GradeSpreadsheetModal from '../grading/GradeSpreadsheetModal';
 import AuditLog from './AuditLog';
+import IEPGenerator from '../iep/IEPGenerator';
 import { databaseService } from '../../services/databaseService';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 
@@ -120,6 +121,15 @@ const modules = [
       icon: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-100',
       hoverShadow: 'hover:shadow-teal-200/50', hoverBorder: 'hover:border-teal-300/60',
       accent: 'from-teal-500 to-teal-600', chevronHover: 'group-hover:text-teal-600',
+    }
+  },
+  {
+    id: 'iep', title: 'IEP Generator', desc: 'Smart IEP Builder',
+    icon: FileCheck,
+    color: {
+      icon: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100',
+      hoverShadow: 'hover:shadow-cyan-200/50', hoverBorder: 'hover:border-cyan-300/60',
+      accent: 'from-cyan-500 to-cyan-600', chevronHover: 'group-hover:text-cyan-600',
     }
   },
   {
@@ -347,6 +357,8 @@ const HubShell = () => {
                     onClick={() => navigateTo('gradecards')} />
                   <QuickAction icon={ClipboardList} label="Run KTEA Assessment" delay={1050}
                     onClick={() => navigateTo('ktea')} />
+                  <QuickAction icon={FileCheck} label="Build IEP" delay={1100}
+                    onClick={() => navigateTo('iep')} />
                   <SeedButton status={seedStatus} message={seedMessage} onClick={handleSeedDemoData} />
                 </div>
               </div>
@@ -362,6 +374,7 @@ const HubShell = () => {
             {currentView === 'ktea' && <KTEAReporter user={user} />}
             {currentView === 'discharge' && <DischargeGenerator user={user} />}
             {currentView === 'curriculum' && <CurriculumMaps />}
+            {currentView === 'iep' && <IEPGenerator user={user} />}
             {currentView === 'audit' && <AuditLog />}
           </div>
         )}

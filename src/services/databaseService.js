@@ -26,6 +26,7 @@ function buildRealService() {
   const gradebookContainer = database.container("Gradebooks");
   const coursesContainer = database.container("Courses");
   const enrollmentsContainer = database.container("Enrollments");
+  const iepContainer = database.container("IEP_Drafts");
 
   return {
     getAllStudents: async () => {
@@ -127,6 +128,23 @@ function buildRealService() {
         throw e;
       }
     },
+    // === IEP DRAFTS ===
+    saveIepDraft: async (data) => {
+      const { resource } = await iepContainer.items.upsert({ ...data, id: data.id || `iep-${Date.now()}`, lastModified: new Date().toISOString() });
+      return resource;
+    },
+    getIepByStudent: async (studentId) => {
+      const { resources } = await iepContainer.items
+        .query({ query: "SELECT * FROM c WHERE c.studentId = @studentId", parameters: [{ name: "@studentId", value: studentId }] })
+        .fetchAll();
+      return resources;
+    },
+    getAllIepDrafts: async () => {
+      const { resources } = await iepContainer.items.query("SELECT * FROM c").fetchAll();
+      return resources;
+    },
+    deleteIepDraft: async (id) => { await iepContainer.item(id, id).delete(); },
+
     logAudit: async (user, action, details) => {
       if (!user) return;
       try {
