@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, GraduationCap, Clock, MapPin } from 'lucide-react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, GraduationCap, Clock, MapPin, Phone, StickyNote, FileCheck, CalendarClock } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook';
 import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
+import IntakeForm from './IntakeForm';
 import { databaseService } from '../../services/databaseService';
 import { MOCK_STUDENTS } from '../../data/mockData';
 import EditableStudentProfileModal from '../EditableStudentProfileModal';
@@ -107,6 +108,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
     const [roster, setRoster] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
+    const [showIntakeForm, setShowIntakeForm] = useState(false);
 
     const fetchRoster = async () => {
         setLoading(true);
@@ -129,10 +131,44 @@ const UnitRoster = ({ defaultUnit, user }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedUnit]);
 
+    const handleIntakeSave = async (formData) => {
+        try {
+            const nameParts = (formData.studentName || '').trim().split(/\s+/);
+            const newStudent = {
+                id: `student-${Date.now()}`,
+                studentName: formData.studentName,
+                firstName: nameParts[0] || '',
+                lastName: nameParts.slice(1).join(' ') || '',
+                gradeLevel: parseInt(formData.gradeLevel, 10) || 9,
+                unitName: formData.unitName,
+                admitDate: formData.admitDate || new Date().toISOString().split('T')[0],
+                expectedDischargeDate: formData.expectedDischargeDate || null,
+                district: formData.district || '',
+                iep: formData.iepStatus === 'Yes' ? 'Yes' : 'No',
+                active: true,
+                lastModified: new Date().toISOString(),
+                homeSchoolContact: '',
+                guardianName: '',
+                guardianPhone: '',
+                iepDueDate: '',
+                mtpNotes: [],
+            };
+            await databaseService.upsertStudent(newStudent);
+            if (user) {
+                await databaseService.logAudit(user, 'CreateStudent', `Created new student: ${newStudent.studentName} (ID: ${newStudent.id})`);
+            }
+            setShowIntakeForm(false);
+            fetchRoster();
+        } catch (err) {
+            console.error('Failed to save new student:', err);
+            alert('Failed to save new student: ' + (err.message || 'Unknown error'));
+        }
+    };
+
     return (
         <>
-            {/* Unit Selector */}
-            <div className="flex flex-wrap gap-2 mb-5">
+            {/* Unit Selector + Add Student */}
+            <div className="flex flex-wrap items-center gap-2 mb-5">
                 {UNIT_CONFIG.map(unit => {
                     const Icon = unit.icon;
                     const isActive = selectedUnit === unit.key;
@@ -151,7 +187,27 @@ const UnitRoster = ({ defaultUnit, user }) => {
                         </button>
                     );
                 })}
+                <div className="ml-auto">
+                    <button
+                        onClick={() => setShowIntakeForm(prev => !prev)}
+                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg ${
+                            showIntakeForm
+                                ? 'bg-slate-200 text-slate-600 shadow-none'
+                                : 'bg-indigo-600 text-white shadow-indigo-500/10 hover:bg-indigo-700'
+                        }`}
+                    >
+                        <Plus className="w-4 h-4" />
+                        {showIntakeForm ? 'Cancel' : 'Add Student'}
+                    </button>
+                </div>
             </div>
+
+            {/* Intake Form (collapsible) */}
+            {showIntakeForm && (
+                <div className="mb-6">
+                    <IntakeForm onSave={handleIntakeSave} units={UNIT_CONFIG} />
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex items-center justify-center py-20">
@@ -196,12 +252,15 @@ const StudentCard = ({ student, onSelect }) => {
     const today = new Date();
     const daysIn = Math.max(0, Math.floor((today - admitDate) / (1000 * 60 * 60 * 24)));
 
-    // Program progress (admit → expected discharge)
-    let progressPct = 0;
-    if (student.expectedDischargeDate) {
-        const dischargeDate = new Date(student.expectedDischargeDate);
-        const total = dischargeDate - admitDate;
-        if (total > 0) progressPct = Math.min(100, Math.round(((today - admitDate) / total) * 100));
+    // Latest MTP note
+    const latestMtp = student.mtpNotes?.length > 0 ? student.mtpNotes[student.mtpNotes.length - 1] : null;
+
+    // IEP due date urgency
+    let iepDueUrgent = false;
+    if (student.iepDueDate) {
+        const dueDate = new Date(student.iepDueDate);
+        const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+        iepDueUrgent = daysUntilDue <= 30;
     }
 
     return (
@@ -235,7 +294,7 @@ const StudentCard = ({ student, onSelect }) => {
                 </div>
 
                 {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-4">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-3">
                     <div className="flex items-center gap-1.5 text-slate-500">
                         <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
                         <span className="font-semibold">Grade {student.gradeLevel}</span>
@@ -250,18 +309,38 @@ const StudentCard = ({ student, onSelect }) => {
                     </div>
                 </div>
 
-                {/* Progress Bar */}
-                <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Program Progress</span>
-                        <span className="text-[10px] font-bold text-slate-500">{progressPct}%</span>
+                {/* Contact & IEP Info */}
+                <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
+                        <UserCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="font-medium truncate">{student.homeSchoolContact || <span className="italic text-slate-300">No lead contact</span>}</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                        <div
-                            className={`h-full rounded-full transition-all duration-500 ${progressPct >= 80 ? 'bg-emerald-500' : progressPct >= 50 ? 'bg-indigo-500' : 'bg-amber-500'}`}
-                            style={{ width: `${progressPct}%` }}
-                        />
+                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="font-medium truncate">{student.guardianName ? `${student.guardianName}${student.guardianPhone ? ` \u00B7 ${student.guardianPhone}` : ''}` : <span className="italic text-slate-300">No guardian info</span>}</span>
                     </div>
+                    {student.iep === "Yes" && (
+                        <div className={`flex items-center gap-1.5 truncate ${iepDueUrgent ? 'text-rose-600' : 'text-slate-500'}`}>
+                            <CalendarClock className={`w-3.5 h-3.5 shrink-0 ${iepDueUrgent ? 'text-rose-500' : 'text-slate-400'}`} />
+                            <span className="font-medium">IEP Due: {student.iepDueDate ? new Date(student.iepDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : <span className="italic text-slate-300">Not set</span>}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* MTP Notes Sticky Note */}
+                <div className="mt-3 bg-amber-50 border border-amber-200/60 rounded-xl p-3 shadow-sm relative">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                        <StickyNote className="w-3.5 h-3.5 text-amber-500" />
+                        <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">MTP Notes</span>
+                        {latestMtp && (
+                            <span className="ml-auto text-[10px] text-amber-400 font-medium">
+                                {new Date(latestMtp.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-[11px] text-amber-900/70 leading-relaxed line-clamp-3 font-medium">
+                        {latestMtp ? latestMtp.note : <span className="italic text-amber-400">No progress notes yet. Click to add monthly treatment notes.</span>}
+                    </p>
                 </div>
             </div>
 

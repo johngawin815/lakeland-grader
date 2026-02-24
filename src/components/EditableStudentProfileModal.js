@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock } from 'lucide-react';
+import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2 } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
 
 const UNIT_OPTIONS = [
@@ -23,14 +23,22 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user }) =>
       expectedDischargeDate: studentData?.expectedDischargeDate || '',
       district: studentData?.district || '',
       iepStatus: studentData?.iep === 'Yes' ? 'yes' : 'no',
+      homeSchoolContact: studentData?.homeSchoolContact || '',
+      guardianName: studentData?.guardianName || '',
+      guardianPhone: studentData?.guardianPhone || '',
+      iepDueDate: studentData?.iepDueDate || '',
     },
   });
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [mtpNotes, setMtpNotes] = useState(studentData?.mtpNotes || []);
+  const [newMtpNote, setNewMtpNote] = useState('');
+  const [showMtpInput, setShowMtpInput] = useState(false);
 
   const watchedUnit = watch('unitName');
+  const watchedIep = watch('iepStatus');
   const unitStyle = UNIT_OPTIONS.find(u => u.key === (watchedUnit || studentData?.unitName))
     || { bg: 'bg-slate-400', badge: 'bg-slate-100 text-slate-600' };
 
@@ -41,14 +49,28 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user }) =>
   const today = new Date();
   const daysIn = admitDate ? Math.max(0, Math.floor((today - admitDate) / (1000 * 60 * 60 * 24))) : 0;
 
-  let progressPct = 0;
   let daysRemaining = null;
   if (admitDate && studentData?.expectedDischargeDate) {
     const dischargeDate = new Date(studentData.expectedDischargeDate);
-    const total = dischargeDate - admitDate;
-    if (total > 0) progressPct = Math.min(100, Math.round(((today - admitDate) / total) * 100));
     daysRemaining = Math.max(0, Math.ceil((dischargeDate - today) / (1000 * 60 * 60 * 24)));
   }
+
+  const addMtpNote = () => {
+    if (!newMtpNote.trim()) return;
+    const note = {
+      id: `mtp-${Date.now()}`,
+      date: new Date().toISOString(),
+      note: newMtpNote.trim(),
+      author: user?.name || 'Unknown',
+    };
+    setMtpNotes(prev => [...prev, note]);
+    setNewMtpNote('');
+    setShowMtpInput(false);
+  };
+
+  const removeMtpNote = (noteId) => {
+    setMtpNotes(prev => prev.filter(n => n.id !== noteId));
+  };
 
   const onSubmit = async (formData) => {
     setIsSaving(true);
@@ -63,6 +85,11 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user }) =>
         expectedDischargeDate: formData.expectedDischargeDate || null,
         district: formData.district,
         iep: formData.iepStatus === 'yes' ? 'Yes' : 'No',
+        homeSchoolContact: formData.homeSchoolContact || '',
+        guardianName: formData.guardianName || '',
+        guardianPhone: formData.guardianPhone || '',
+        iepDueDate: formData.iepStatus === 'yes' ? (formData.iepDueDate || '') : '',
+        mtpNotes: mtpNotes,
         lastModified: new Date().toISOString(),
       };
       await databaseService.upsertStudent(updatePayload);
@@ -83,10 +110,10 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user }) =>
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
 
         {/* Compact Header */}
-        <div className="relative px-5 pt-5 pb-4 bg-gradient-to-br from-slate-800 to-slate-900 text-white">
+        <div className="relative px-5 pt-5 pb-4 bg-gradient-to-br from-slate-800 to-slate-900 text-white shrink-0">
           <button type="button" onClick={onClose} disabled={isSaving}
             className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition disabled:opacity-50" aria-label="Close">
             <X className="w-4 h-4" />
@@ -109,19 +136,10 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user }) =>
               </div>
             </div>
           </div>
-
-          {/* Thin progress bar */}
-          <div className="mt-3 flex items-center gap-2">
-            <div className="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
-              <div className={`h-full rounded-full ${progressPct >= 80 ? 'bg-emerald-400' : progressPct >= 50 ? 'bg-indigo-400' : 'bg-amber-400'}`}
-                style={{ width: `${progressPct}%` }} />
-            </div>
-            <span className="text-[10px] font-bold text-white/50 tabular-nums">{progressPct}%</span>
-          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-3">
+        {/* Scrollable Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-3 overflow-y-auto flex-1">
 
           {/* Status Messages */}
           {saveError && <div className="p-2.5 bg-red-50 border border-red-200/80 rounded-lg text-red-700 text-xs font-semibold">{saveError}</div>}
@@ -165,6 +183,30 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user }) =>
             <input type="text" {...register('district')} disabled={isSaving} placeholder="School district" className={INPUT_CLASS} />
           </div>
 
+          {/* Row 3: Home School Contact */}
+          <div>
+            <label className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+              <UserCheck className="w-3 h-3" />Lead Contact (Home School)
+            </label>
+            <input type="text" {...register('homeSchoolContact')} disabled={isSaving} placeholder="e.g., Jane Smith, Guidance Counselor" className={INPUT_CLASS} />
+          </div>
+
+          {/* Row 4: Guardian Info */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                <Phone className="w-3 h-3" />Guardian Name
+              </label>
+              <input type="text" {...register('guardianName')} disabled={isSaving} placeholder="Parent/Guardian" className={INPUT_CLASS} />
+            </div>
+            <div>
+              <label className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                <Phone className="w-3 h-3" />Guardian Phone
+              </label>
+              <input type="tel" {...register('guardianPhone')} disabled={isSaving} placeholder="(555) 123-4567" className={INPUT_CLASS} />
+            </div>
+          </div>
+
           {/* Unit Assignment */}
           <div>
             <label className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
@@ -187,7 +229,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user }) =>
             {errors.unitName && <p className="text-[10px] text-red-500 mt-0.5">{errors.unitName.message}</p>}
           </div>
 
-          {/* IEP Status + ID row */}
+          {/* IEP Status + IEP Due Date */}
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <label className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
@@ -195,25 +237,98 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user }) =>
               </label>
               <div className="grid grid-cols-2 gap-1.5">
                 <label className={`flex items-center justify-center px-2 py-1.5 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all ${
-                  watch('iepStatus') === 'no' ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-slate-50/50 text-slate-400 border-transparent hover:bg-slate-100'
+                  watchedIep === 'no' ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-slate-50/50 text-slate-400 border-transparent hover:bg-slate-100'
                 } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
                   <input type="radio" value="no" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
                   No IEP
                 </label>
                 <label className={`flex items-center justify-center px-2 py-1.5 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all ${
-                  watch('iepStatus') === 'yes' ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-slate-50/50 text-slate-400 border-transparent hover:bg-slate-100'
+                  watchedIep === 'yes' ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-slate-50/50 text-slate-400 border-transparent hover:bg-slate-100'
                 } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
                   <input type="radio" value="yes" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
                   Has IEP
                 </label>
               </div>
             </div>
-            <div className="text-right pb-1">
+            {watchedIep === 'yes' && (
+              <div className="flex-1">
+                <label className="flex items-center gap-1 text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                  <CalendarClock className="w-3 h-3" />IEP Due Date
+                </label>
+                <input type="date" {...register('iepDueDate')} disabled={isSaving} className={INPUT_CLASS} />
+              </div>
+            )}
+            <div className="text-right pb-1 shrink-0">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${studentData.active !== false ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                 {studentData.active !== false ? 'Active' : 'Discharged'}
               </span>
               <div className="text-[10px] text-slate-400 mt-0.5">{studentData.id}</div>
             </div>
+          </div>
+
+          {/* MTP Notes Section - Sticky Note Style */}
+          <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <StickyNote className="w-4 h-4 text-amber-500" />
+                <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">MTP Notes</span>
+                <span className="text-[10px] text-amber-400 font-medium ml-1">Monthly Treatment Progress</span>
+              </div>
+              <button type="button" onClick={() => setShowMtpInput(prev => !prev)} disabled={isSaving}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 hover:text-amber-800 transition disabled:opacity-50">
+                <Plus className="w-3.5 h-3.5" />
+                Add Note
+              </button>
+            </div>
+
+            {/* Add new note input */}
+            {showMtpInput && (
+              <div className="mb-3 space-y-2">
+                <textarea
+                  value={newMtpNote}
+                  onChange={e => setNewMtpNote(e.target.value)}
+                  disabled={isSaving}
+                  placeholder="Describe the student's academic, behavioral, and social progress this month..."
+                  className="w-full px-3 py-2.5 rounded-lg border border-amber-300 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-amber-300/40 focus:border-amber-400 bg-white outline-none transition-all disabled:opacity-50 resize-none"
+                  rows={3}
+                />
+                <div className="flex gap-2">
+                  <button type="button" onClick={addMtpNote} disabled={isSaving || !newMtpNote.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 transition disabled:opacity-50">
+                    Save Note
+                  </button>
+                  <button type="button" onClick={() => { setShowMtpInput(false); setNewMtpNote(''); }} disabled={isSaving}
+                    className="px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700 text-xs font-bold hover:bg-amber-200 transition disabled:opacity-50">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Existing notes */}
+            {mtpNotes.length === 0 ? (
+              <p className="text-[11px] text-amber-400 italic font-medium">No monthly progress notes yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {[...mtpNotes].reverse().map((note) => (
+                  <div key={note.id} className="bg-white/70 rounded-lg p-2.5 border border-amber-100 group/note">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold text-amber-600">
+                        {new Date(note.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-400">{note.author}</span>
+                        <button type="button" onClick={() => removeMtpNote(note.id)} disabled={isSaving}
+                          className="opacity-0 group-hover/note:opacity-100 p-0.5 rounded text-slate-300 hover:text-rose-500 transition-all disabled:opacity-50">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-700 leading-relaxed font-medium">{note.note}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
