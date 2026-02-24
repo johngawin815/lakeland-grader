@@ -461,45 +461,126 @@ const UNIT_CONFIG = [
 
 const generateMockRoster = () => MOCK_STUDENTS.filter(s => s.active);
 
-const StudentProfileModal = ({ student, onClose }) => (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b border-slate-200/60 flex items-center justify-between">
-                <div>
-                    <h3 className="text-xl font-extrabold text-slate-900">Student Profile</h3>
-                    <p className="text-sm text-slate-500">{student.studentName}</p>
+const StudentProfileModal = ({ student, onClose }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
+    const Icon = unitStyle?.icon || UserCheck;
+
+    const admitDate = new Date(student.admitDate);
+    const today = new Date();
+    const daysIn = Math.max(0, Math.floor((today - admitDate) / (1000 * 60 * 60 * 24)));
+
+    let progressPct = 0;
+    let daysRemaining = null;
+    if (student.expectedDischargeDate) {
+        const dischargeDate = new Date(student.expectedDischargeDate);
+        const total = dischargeDate - admitDate;
+        if (total > 0) progressPct = Math.min(100, Math.round(((today - admitDate) / total) * 100));
+        const remaining = Math.max(0, Math.ceil((dischargeDate - today) / (1000 * 60 * 60 * 24)));
+        daysRemaining = remaining;
+    }
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '---';
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+
+                {/* Hero Header */}
+                <div className={`relative px-6 pt-7 pb-5 bg-gradient-to-br from-slate-800 to-slate-900 text-white`}>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition"
+                        aria-label="Close"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+
+                    <div className="flex items-center gap-4">
+                        <div className={`w-16 h-16 rounded-2xl ${unitStyle?.avatarBg || 'bg-slate-500'} ring-4 ring-white/20 flex items-center justify-center text-white font-extrabold text-xl tracking-wide shadow-lg`}>
+                            {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-xl font-extrabold leading-tight truncate">{student.studentName}</h3>
+                            <div className="flex items-center gap-2 mt-1.5">
+                                <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${unitStyle?.badge || 'bg-slate-100 text-slate-600'}`}>
+                                    <Icon className="w-3.5 h-3.5" />
+                                    {student.unitName}
+                                </span>
+                                {student.iep === "Yes" && (
+                                    <span className="text-xs bg-amber-400/20 text-amber-300 px-2.5 py-1 rounded-lg font-bold border border-amber-400/30">
+                                        IEP
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Progress Bar in Header */}
+                    <div className="mt-5">
+                        <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">Program Progress</span>
+                            <span className="text-[11px] font-bold text-white/70">{progressPct}%</span>
+                        </div>
+                        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                            <div
+                                className={`h-full rounded-full transition-all duration-700 ${progressPct >= 80 ? 'bg-emerald-400' : progressPct >= 50 ? 'bg-indigo-400' : 'bg-amber-400'}`}
+                                style={{ width: `${progressPct}%` }}
+                            />
+                        </div>
+                    </div>
                 </div>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition"
-                    aria-label="Close"
-                >
-                    <X className="w-5 h-5" />
-                </button>
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
+                    <div className="px-4 py-4 text-center">
+                        <div className="text-2xl font-extrabold text-slate-900">{student.gradeLevel}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Grade</div>
+                    </div>
+                    <div className="px-4 py-4 text-center">
+                        <div className="text-2xl font-extrabold text-slate-900">{daysIn}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Days In</div>
+                    </div>
+                    <div className="px-4 py-4 text-center">
+                        <div className={`text-2xl font-extrabold ${daysRemaining !== null && daysRemaining <= 30 ? 'text-rose-600' : 'text-slate-900'}`}>
+                            {daysRemaining !== null ? daysRemaining : '---'}
+                        </div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Days Left</div>
+                    </div>
+                </div>
+
+                {/* Detail Fields */}
+                <div className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <ProfileField icon={<MapPin className="w-4 h-4" />} label="District" value={student.district || '---'} />
+                        <ProfileField icon={<GraduationCap className="w-4 h-4" />} label="Grade Level" value={`${student.gradeLevel}th Grade`} />
+                        <ProfileField icon={<Clock className="w-4 h-4" />} label="Admit Date" value={formatDate(student.admitDate)} />
+                        <ProfileField icon={<Clock className="w-4 h-4" />} label="Expected Discharge" value={formatDate(student.expectedDischargeDate)} />
+                    </div>
+
+                    {/* ID Footer */}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400 font-medium">ID: {student.id}</span>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${student.active !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                            {student.active !== false ? 'Active' : 'Discharged'}
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div className="p-6 space-y-3 text-sm">
-                <div className="flex justify-between">
-                    <span className="text-slate-500 font-semibold">Student ID</span>
-                    <span className="text-slate-900 font-bold">{student.id}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-slate-500 font-semibold">Grade Level</span>
-                    <span className="text-slate-900 font-bold">{student.gradeLevel}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-slate-500 font-semibold">Unit</span>
-                    <span className="text-slate-900 font-bold">{student.unitName}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-slate-500 font-semibold">Admit Date</span>
-                    <span className="text-slate-900 font-bold">{student.admitDate}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-slate-500 font-semibold">IEP</span>
-                    <span className="text-slate-900 font-bold">{student.iep}</span>
-                </div>
-            </div>
+        </div>
+    );
+};
+
+const ProfileField = ({ icon, label, value }) => (
+    <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 text-slate-400">{icon}</div>
+        <div className="min-w-0">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</div>
+            <div className="text-sm font-semibold text-slate-800 truncate mt-0.5">{value}</div>
         </div>
     </div>
 );
