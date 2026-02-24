@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Search, LayoutDashboard, FileText, Map, X, ChevronRight, School,
+  LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
   Users, Calendar, FileBarChart, Sparkles, ArrowRight, TrendingUp, UserPlus,
   Database, Loader2, CheckCircle2
@@ -138,7 +138,6 @@ const modules = [
 const HubShell = () => {
   const [user, setUser] = useState(null);
   const [currentView, setCurrentView] = useState("home");
-  const [activeStudent, setActiveStudent] = useState(null);
   const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
   const [dashboardInitialTab, setDashboardInitialTab] = useState(null);
 
@@ -223,7 +222,6 @@ const HubShell = () => {
   const handleLogout = () => {
     setUser(null);
     setCurrentView("home");
-    setActiveStudent(null);
     setStatsLoaded(false);
   };
 
@@ -270,24 +268,7 @@ const HubShell = () => {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-            <input
-              type="text"
-              placeholder="Set Student Context..."
-              className="w-full pl-11 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-4 focus:ring-indigo-500/40 outline-none transition duration-300 bg-slate-800/80 focus:bg-slate-800 text-sm text-slate-100 placeholder:text-slate-500"
-              value={activeStudent || ""}
-              onChange={(e) => setActiveStudent(e.target.value)}
-            />
-            {activeStudent && (
-              <button onClick={() => setActiveStudent("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-                <X size={16} />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+        <div className="flex items-center gap-3 pl-4">
             <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
               {user.name.charAt(0)}
             </div>
@@ -295,7 +276,6 @@ const HubShell = () => {
               <div className="font-bold text-slate-200">{user.name}</div>
               <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
             </div>
-          </div>
         </div>
       </header>
 
@@ -323,16 +303,6 @@ const HubShell = () => {
                 <p className="text-lg text-slate-500 mt-3 max-w-lg mx-auto">
                   Your command center for student management, grading, and assessments.
                 </p>
-
-                {activeStudent && (
-                  <div
-                    className="inline-flex items-center gap-3 mt-5 bg-indigo-100/80 text-indigo-800 font-bold px-5 py-2.5 rounded-full text-sm border border-indigo-200/80 shadow-sm animate-slide-up"
-                    style={{ animationDelay: '100ms' }}
-                  >
-                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse" />
-                    Active Context: <strong>{activeStudent}</strong>
-                  </div>
-                )}
               </div>
 
               {/* === STATS BAR === */}
@@ -387,10 +357,10 @@ const HubShell = () => {
 
         {currentView !== 'home' && (
           <div className="p-0">
-            {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
-            {currentView === 'gradecards' && <GradeGenerator user={user} activeStudent={activeStudent} />}
-            {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
-            {currentView === 'discharge' && <DischargeGenerator user={user} activeStudent={activeStudent} />}
+            {currentView === 'dashboard' && <StudentMasterDashboard setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
+            {currentView === 'gradecards' && <GradeGenerator user={user} />}
+            {currentView === 'ktea' && <KTEAReporter user={user} />}
+            {currentView === 'discharge' && <DischargeGenerator user={user} />}
             {currentView === 'curriculum' && <CurriculumMaps />}
             {currentView === 'audit' && <AuditLog />}
           </div>

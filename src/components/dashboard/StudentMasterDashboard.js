@@ -10,7 +10,7 @@ import { MOCK_STUDENTS } from '../../data/mockData';
 const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };
 
 // --- Main Dashboard Component ---
-const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, user = MOCK_USER, onSelectCourse, initialTab }) => {
+const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'roster');
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [managingCourse, setManagingCourse] = useState(null);
@@ -69,7 +69,7 @@ const StudentMasterDashboard = ({ activeStudentName, setActiveStudent, setView, 
 
       {/* Tab Content */}
       <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
-        {activeTab === 'roster' && <UnitRoster defaultUnit={user.unit} setActiveStudent={setActiveStudent} />}
+        {activeTab === 'roster' && <UnitRoster defaultUnit={user.unit} />}
         {activeTab === 'classes' && (
           <MyClasses
             teacherName={user.name}
@@ -101,7 +101,7 @@ const TabButton = ({ label, icon, isActive, onClick }) => (
 
 
 // --- "My Unit Roster" Tab Content ---
-const UnitRoster = ({ defaultUnit, setActiveStudent }) => {
+const UnitRoster = ({ defaultUnit }) => {
     const [selectedUnit, setSelectedUnit] = useState(defaultUnit || 'Determination');
     const [roster, setRoster] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -165,7 +165,6 @@ const UnitRoster = ({ defaultUnit, setActiveStudent }) => {
                             key={student.id}
                             student={student}
                             onSelect={() => {
-                                setActiveStudent(student.studentName);
                                 setSelectedStudentProfile(student);
                             }}
                         />
