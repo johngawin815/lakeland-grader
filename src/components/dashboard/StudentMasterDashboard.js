@@ -4,6 +4,7 @@ import ClassGradebook from '../grading/ClassGradebook';
 import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
 import { databaseService } from '../../services/databaseService';
+import { MOCK_STUDENTS } from '../../data/mockData';
 
 // Mock user, as requested. In a real app, this would come from an auth context.
 const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };
@@ -366,29 +367,7 @@ const UNIT_CONFIG = [
   { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400" }
 ];
 
-const generateMockRoster = () => {
-  const students = [];
-  const units = UNIT_CONFIG.map(u => u.key);
-  const firstNames = ["Aiden", "Bella", "Caleb", "Daisy", "Ethan", "Fiona", "Gavin", "Hazel", "Isaac", "Jenna", "Kyle", "Luna", "Mason", "Nora", "Owen", "Piper", "Quinn", "Ryan", "Stella", "Tyler", "Violet", "Wyatt", "Xander", "Yara", "Zoe"];
-  const lastNames = ["Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson"];
-  let idCounter = 1;
-  units.forEach(unit => {
-    for (let i = 0; i < 6; i++) {
-      const randomFirst = firstNames[Math.floor(Math.random() * firstNames.length)];
-      const randomLast = lastNames[Math.floor(Math.random() * lastNames.length)];
-      students.push({
-        id: idCounter.toString(),
-        studentName: `${randomFirst} ${randomLast}`,
-        gradeLevel: Math.floor(Math.random() * 4) + 9,
-        unitName: unit,
-        admitDate: `2023-0${Math.floor(Math.random() * 9) + 1}-01`,
-        iep: i % 3 === 0 ? "Yes" : "No",
-      });
-      idCounter++;
-    }
-  });
-  return students;
-};
+const generateMockRoster = () => MOCK_STUDENTS.filter(s => s.active);
 
 const StudentProfileModal = ({ student, onClose }) => (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">

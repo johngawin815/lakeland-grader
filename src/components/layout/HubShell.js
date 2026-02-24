@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Search, LayoutDashboard, FileText, Map, X, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
-  Users, Calendar, FileBarChart, Sparkles, ArrowRight, TrendingUp, UserPlus
+  Users, Calendar, FileBarChart, Sparkles, ArrowRight, TrendingUp, UserPlus,
+  Database, Loader2, CheckCircle2
 } from 'lucide-react';
+import { seedDemoData } from '../../data/seedDatabase';
 
 // --- MODULE IMPORTS ---
 import KTEAReporter from '../ktea/KTEAReporter';
@@ -140,6 +142,31 @@ const HubShell = () => {
   const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
   const [dashboardInitialTab, setDashboardInitialTab] = useState(null);
 
+  // --- SEED DEMO DATA ---
+  const [seedStatus, setSeedStatus] = useState('idle'); // idle | seeding | done | error
+  const [seedMessage, setSeedMessage] = useState('');
+
+  const handleSeedDemoData = async () => {
+    if (seedStatus === 'seeding') return;
+    if (!window.confirm('Seed the database with 39 fictional character residents, 5 courses, gradebook data, and KTEA reports?\n\nExisting mock data will be updated (not duplicated).')) return;
+
+    setSeedStatus('seeding');
+    setSeedMessage('Starting...');
+
+    const result = await seedDemoData((msg) => setSeedMessage(msg));
+
+    if (result.success) {
+      setSeedStatus('done');
+      setSeedMessage(`Seeded ${result.stats.students} students, ${result.stats.courses} courses, ${result.stats.enrollments} enrollments, ${result.stats.gradebooks} gradebooks, ${result.stats.ktea} KTEA reports`);
+      setStatsLoaded(false); // refresh home stats
+      setTimeout(() => setSeedStatus('idle'), 5000);
+    } else {
+      setSeedStatus('error');
+      setSeedMessage(`Failed: ${result.error}`);
+      setTimeout(() => setSeedStatus('idle'), 5000);
+    }
+  };
+
   // --- LIVE STATS ---
   const [hubStats, setHubStats] = useState({
     students: null, courses: null, enrollments: null, reports: null,
@@ -190,7 +217,7 @@ const HubShell = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    setUser({ name: "Teacher Account", email: "teacher@lakeland.edu" });
+    setUser({ name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" });
   };
 
   const handleLogout = () => {
@@ -350,6 +377,7 @@ const HubShell = () => {
                     onClick={() => navigateTo('gradecards')} />
                   <QuickAction icon={ClipboardList} label="Run KTEA Assessment" delay={1050}
                     onClick={() => navigateTo('ktea')} />
+                  <SeedButton status={seedStatus} message={seedMessage} onClick={handleSeedDemoData} />
                 </div>
               </div>
 
@@ -359,7 +387,7 @@ const HubShell = () => {
 
         {currentView !== 'home' && (
           <div className="p-0">
-            {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} initialTab={dashboardInitialTab} />}
+            {currentView === 'dashboard' && <StudentMasterDashboard activeStudentName={activeStudent} setActiveStudent={setActiveStudent} setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
             {currentView === 'gradecards' && <GradeGenerator user={user} activeStudent={activeStudent} />}
             {currentView === 'ktea' && <KTEAReporter user={user} activeStudent={activeStudent} />}
             {currentView === 'discharge' && <DischargeGenerator user={user} activeStudent={activeStudent} />}
@@ -450,6 +478,43 @@ const QuickAction = ({ icon: Icon, label, onClick, delay }) => (
     <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all duration-300" />
   </button>
 );
+
+const SeedButton = ({ status, message, onClick }) => {
+  if (status === 'seeding') {
+    return (
+      <div className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-amber-50/80 border border-amber-200/60 rounded-full text-sm font-semibold text-amber-700 shadow-sm" style={{ animationDelay: '1100ms' }}>
+        <Loader2 size={16} className="animate-spin" />
+        {message}
+      </div>
+    );
+  }
+  if (status === 'done') {
+    return (
+      <div className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-emerald-50/80 border border-emerald-200/60 rounded-full text-sm font-semibold text-emerald-700 shadow-sm" style={{ animationDelay: '1100ms' }}>
+        <CheckCircle2 size={16} />
+        {message}
+      </div>
+    );
+  }
+  if (status === 'error') {
+    return (
+      <div className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-red-50/80 border border-red-200/60 rounded-full text-sm font-semibold text-red-700 shadow-sm" style={{ animationDelay: '1100ms' }}>
+        {message}
+      </div>
+    );
+  }
+  return (
+    <button
+      onClick={onClick}
+      className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-full text-sm font-semibold text-slate-600 hover:text-violet-700 hover:border-violet-200 hover:bg-violet-50/80 hover:shadow-md shadow-sm transition-all duration-300 group"
+      style={{ animationDelay: '1100ms' }}
+    >
+      <Database size={16} className="text-slate-400 group-hover:text-violet-500 transition-colors" />
+      Seed Demo Data
+      <ArrowRight size={14} className="text-slate-300 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all duration-300" />
+    </button>
+  );
+};
 
 const LoginScreen = ({ onLogin }) => (
   <div className="w-full h-screen flex items-center justify-center bg-slate-900">
