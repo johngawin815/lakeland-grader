@@ -131,6 +131,19 @@ const UnitRoster = ({ defaultUnit, user }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedUnit]);
 
+    // Sync selectedStudentProfile with roster after refresh
+    useEffect(() => {
+        if (selectedStudentProfile) {
+            const updated = roster.find(s => s.id === selectedStudentProfile.id);
+            if (updated) {
+                setSelectedStudentProfile(updated);
+            } else {
+                setSelectedStudentProfile(null);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [roster]);
+
     const handleIntakeSave = async (formData) => {
         try {
             const nameParts = (formData.studentName || '').trim().split(/\s+/);
@@ -165,6 +178,8 @@ const UnitRoster = ({ defaultUnit, user }) => {
         }
     };
 
+    const isDetailOpen = !!selectedStudentProfile;
+
     return (
         <>
             {/* Unit Selector + Add Student */}
@@ -175,7 +190,10 @@ const UnitRoster = ({ defaultUnit, user }) => {
                     return (
                         <button
                             key={unit.key}
-                            onClick={() => setSelectedUnit(unit.key)}
+                            onClick={() => {
+                                setSelectedUnit(unit.key);
+                                setSelectedStudentProfile(null);
+                            }}
                             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
                                 isActive
                                     ? `${unit.badge} border-current shadow-sm`
@@ -217,32 +235,61 @@ const UnitRoster = ({ defaultUnit, user }) => {
             ) : roster.length === 0 ? (
                 <div className="text-center py-20 text-slate-400 italic">No students assigned to the {selectedUnit} unit.</div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {roster.map(student => (
-                        <StudentCard
-                            key={student.id}
-                            student={student}
-                            onSelect={() => {
-                                setSelectedStudentProfile(student);
-                            }}
-                        />
-                    ))}
-                </div>
-            )}
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
+                    {/* Card Grid */}
+                    <div className={`w-full transition-all duration-300 ease-in-out ${
+                        isDetailOpen ? 'lg:w-[58%]' : ''
+                    }`}>
+                        <div className={`grid gap-5 ${
+                            isDetailOpen
+                                ? 'grid-cols-1 md:grid-cols-2'
+                                : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                        }`}>
+                            {roster.map(student => (
+                                <StudentCard
+                                    key={student.id}
+                                    student={student}
+                                    isSelected={selectedStudentProfile?.id === student.id}
+                                    onSelect={() => setSelectedStudentProfile(student)}
+                                />
+                            ))}
+                        </div>
+                    </div>
 
-            {selectedStudentProfile && (
-                <EditableStudentProfileModal
-                    studentData={selectedStudentProfile}
-                    onClose={() => setSelectedStudentProfile(null)}
-                    onSaved={fetchRoster}
-                    user={user}
-                />
+                    {/* Detail Panel — Desktop: inline, Mobile: fullscreen overlay */}
+                    {isDetailOpen && (
+                        <>
+                            {/* Desktop inline panel */}
+                            <div className="hidden lg:block w-[42%] min-w-[380px] shrink-0 sticky top-6 animate-slide-in-right">
+                                <EditableStudentProfileModal
+                                    key={selectedStudentProfile.id}
+                                    studentData={selectedStudentProfile}
+                                    onClose={() => setSelectedStudentProfile(null)}
+                                    onSaved={fetchRoster}
+                                    user={user}
+                                    mode="panel"
+                                />
+                            </div>
+                            {/* Mobile fullscreen overlay */}
+                            <div className="lg:hidden fixed inset-0 bg-white z-50 overflow-y-auto p-4">
+                                <EditableStudentProfileModal
+                                    key={`mobile-${selectedStudentProfile.id}`}
+                                    studentData={selectedStudentProfile}
+                                    onClose={() => setSelectedStudentProfile(null)}
+                                    onSaved={fetchRoster}
+                                    user={user}
+                                    mode="panel"
+                                />
+                            </div>
+                        </>
+                    )}
+                </div>
             )}
         </>
     );
 };
 
-const StudentCard = ({ student, onSelect }) => {
+const StudentCard = ({ student, onSelect, isSelected }) => {
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
     const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
     const Icon = unitStyle?.icon || UserCheck;
@@ -252,9 +299,6 @@ const StudentCard = ({ student, onSelect }) => {
     const today = new Date();
     const daysIn = Math.max(0, Math.floor((today - admitDate) / (1000 * 60 * 60 * 24)));
 
-    // Latest MTP note
-    const latestMtp = student.mtpNotes?.length > 0 ? student.mtpNotes[student.mtpNotes.length - 1] : null;
-
     // IEP due date urgency
     let iepDueUrgent = false;
     if (student.iepDueDate) {
@@ -263,11 +307,29 @@ const StudentCard = ({ student, onSelect }) => {
         iepDueUrgent = daysUntilDue <= 30;
     }
 
+    const noteCount = student.mtpNotes?.length || 0;
+
     return (
         <div
             onClick={onSelect}
-            className={`relative border-l-4 ${unitStyle?.accentBorder || 'border-l-slate-300'} border border-slate-200/60 rounded-2xl bg-white cursor-pointer transition-all duration-200 group hover:shadow-xl hover:-translate-y-0.5 hover:border-slate-300/80 overflow-hidden`}
+            className={`relative border-l-4 ${unitStyle?.accentBorder || 'border-l-slate-300'} border rounded-2xl bg-white cursor-pointer transition-all duration-200 group hover:shadow-xl hover:-translate-y-0.5 mr-1 ${
+                isSelected
+                    ? 'ring-2 ring-indigo-500/40 border-indigo-300 shadow-lg shadow-indigo-100'
+                    : 'border-slate-200/60 hover:border-slate-300/80'
+            }`}
         >
+            {/* Sticky Note Sidebar Tab */}
+            <div className={`absolute -right-1.5 top-4 flex flex-col items-center bg-amber-100 border rounded-r-lg rounded-bl-lg shadow-sm px-1.5 py-2 gap-1 z-10 ${
+                noteCount > 0 ? 'border-amber-400/60' : 'border-amber-300/50 opacity-70'
+            }`}>
+                <StickyNote className="w-3.5 h-3.5 text-amber-600" />
+                {noteCount > 0 && (
+                    <span className="text-[9px] font-extrabold text-amber-700 leading-none">
+                        {noteCount}
+                    </span>
+                )}
+            </div>
+
             {/* Card Body */}
             <div className="p-5">
                 {/* Header Row: Avatar + Name + Badges */}
@@ -275,7 +337,7 @@ const StudentCard = ({ student, onSelect }) => {
                     <div className={`w-11 h-11 rounded-xl ${unitStyle?.avatarBg || 'bg-slate-400'} ring-2 ${unitStyle?.avatarRing || 'ring-slate-200'} ring-offset-1 flex items-center justify-center text-white font-extrabold text-sm tracking-wide shrink-0 shadow-sm`}>
                         {initials}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pr-6">
                         <h3 className="font-bold text-[15px] text-slate-900 leading-tight truncate group-hover:text-indigo-600 transition-colors">
                             {student.studentName}
                         </h3>
@@ -326,31 +388,19 @@ const StudentCard = ({ student, onSelect }) => {
                         </div>
                     )}
                 </div>
-
-                {/* MTP Notes Sticky Note */}
-                <div className="mt-3 bg-amber-50 border border-amber-200/60 rounded-xl p-3 shadow-sm relative">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                        <StickyNote className="w-3.5 h-3.5 text-amber-500" />
-                        <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">MTP Notes</span>
-                        {latestMtp && (
-                            <span className="ml-auto text-[10px] text-amber-400 font-medium">
-                                {new Date(latestMtp.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-[11px] text-amber-900/70 leading-relaxed line-clamp-3 font-medium">
-                        {latestMtp ? latestMtp.note : <span className="italic text-amber-400">No progress notes yet. Click to add monthly treatment notes.</span>}
-                    </p>
-                </div>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-5 py-2.5 bg-slate-50/80 border-t border-slate-100 group-hover:bg-indigo-50/50 transition-colors">
+            <div className={`flex items-center justify-between px-5 py-2.5 border-t border-slate-100 transition-colors ${
+                isSelected ? 'bg-indigo-50/50' : 'bg-slate-50/80 group-hover:bg-indigo-50/50'
+            }`}>
                 <span className="text-[11px] text-slate-400 font-medium">
                     Admitted {admitDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
-                <div className="flex items-center gap-1 text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                    View <ChevronRight className="w-3.5 h-3.5" />
+                <div className={`flex items-center gap-1 text-xs font-bold text-indigo-600 transition-opacity ${
+                    isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}>
+                    {isSelected ? 'Selected' : 'View'} <ChevronRight className="w-3.5 h-3.5" />
                 </div>
             </div>
         </div>
