@@ -3,11 +3,14 @@ import { mockDatabaseService } from "./mockDatabaseService";
 
 const ENDPOINT = process.env.REACT_APP_COSMOS_ENDPOINT;
 const KEY = process.env.REACT_APP_COSMOS_KEY;
-const USE_MOCK = !ENDPOINT || !KEY;
+const USE_MOCK =
+  !ENDPOINT || !KEY ||
+  process.env.REACT_APP_USE_MOCK === 'true' ||
+  ENDPOINT.includes('your_actual');
 
 if (USE_MOCK) {
   console.warn(
-    "[databaseService] No Cosmos DB credentials found. Running with in-memory mock data."
+    "[databaseService] Running with in-memory mock data (fictional characters)."
   );
 }
 

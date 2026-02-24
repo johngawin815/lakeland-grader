@@ -308,7 +308,7 @@ const CourseCard = ({ course, onOpen, onManage, onEdit, onDelete }) => (
                     </span>
                 )}
                 <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">
-                    {course.credits} Credits
+                    {parseFloat(course.credits)} Credits
                 </span>
             </div>
         </div>

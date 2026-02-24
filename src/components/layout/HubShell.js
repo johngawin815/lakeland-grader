@@ -265,7 +265,7 @@ const HubShell = () => {
               className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
             >
               <FileSpreadsheet size={16} />
-              Mid-Quarter Spreadsheet
+              Exports
             </button>
           </nav>
         </div>

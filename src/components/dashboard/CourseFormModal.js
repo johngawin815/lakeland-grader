@@ -39,7 +39,7 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'credits' ? parseInt(value) || 0 : value }));
+    setFormData(prev => ({ ...prev, [name]: name === 'credits' ? parseFloat(value) || 0 : value }));
   };
 
   const handleSubmit = async (e) => {
@@ -137,6 +137,7 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
                 name="credits"
                 min="0"
                 max="10"
+                step="0.5"
                 value={formData.credits}
                 onChange={handleChange}
                 className="w-full p-3 rounded-xl border border-slate-300/80 text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
