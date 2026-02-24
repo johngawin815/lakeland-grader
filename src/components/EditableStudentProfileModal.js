@@ -4,11 +4,11 @@ import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin
 import { databaseService } from '../services/databaseService';
 
 const UNIT_OPTIONS = [
-  { key: 'Determination', label: 'Determination', bg: 'bg-purple-500', text: 'text-purple-700', light: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' },
-  { key: 'Discovery', label: 'Discovery', bg: 'bg-amber-500', text: 'text-amber-700', light: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' },
+  { key: 'Determination', label: 'Determination', bg: 'bg-purple-600', text: 'text-purple-700', light: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' },
+  { key: 'Discovery', label: 'Discovery', bg: 'bg-amber-600', text: 'text-amber-700', light: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' },
   { key: 'Freedom', label: 'Freedom', bg: 'bg-sky-500', text: 'text-sky-700', light: 'bg-sky-50', badge: 'bg-sky-100 text-sky-800' },
   { key: 'Harmony', label: 'Harmony', bg: 'bg-emerald-500', text: 'text-emerald-700', light: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800' },
-  { key: 'Integrity', label: 'Integrity', bg: 'bg-orange-500', text: 'text-orange-700', light: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800' },
+  { key: 'Integrity', label: 'Integrity', bg: 'bg-orange-600', text: 'text-orange-700', light: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800' },
   { key: 'Serenity', label: 'Serenity', bg: 'bg-blue-500', text: 'text-blue-700', light: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' },
 ];
 
