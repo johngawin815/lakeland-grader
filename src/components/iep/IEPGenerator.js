@@ -247,6 +247,12 @@ const IEPGenerator = ({ user }) => {
       if (existingDrafts && existingDrafts.length > 0) {
         setDraft(existingDrafts[0]);
       } else {
+        // Calculate age from birthDate if available
+        const age = student.birthDate ? String(Math.floor((Date.now() - new Date(student.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))) : '';
+        // Determine if transition plan needed (age 14+)
+        const gradeNum = parseInt(student.gradeLevel, 10);
+        const needsTransition = gradeNum >= 9 || (age && parseInt(age, 10) >= 14);
+
         setDraft({
           ...createEmptyDraft(),
           studentId: student.id,
@@ -255,13 +261,21 @@ const IEPGenerator = ({ user }) => {
           unitName: student.unitName,
           district: student.district,
           iepDueDate: student.iepDueDate || '',
+          birthDate: student.birthDate || '',
+          studentAge: age,
+          caseManager: user?.name || '',
+          meetingType: 'Annual Review',
+          // Lakeland defaults
+          behaviorImpedes: true,
+          regularEdExplanation: 'Student is placed in a private residential facility (Lakeland Behavioral Health System).',
+          hasTransitionPlan: needsTransition,
         });
       }
     } catch (err) {
       console.error('Error loading student data:', err);
     }
     setLoading(false);
-  }, []);
+  }, [user]);
 
   const handleSmartPopulate = useCallback(() => {
     if (!selectedStudent) return;
@@ -387,9 +401,20 @@ const IEPGenerator = ({ user }) => {
       const arrayBuffer = await response.arrayBuffer();
 
       const zip = new PizZip(arrayBuffer);
-      const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        nullGetter: () => '',
+      });
+
+      // Pad goals array to 3 entries so template rows always render
+      const paddedGoals = [...dd.goals];
+      while (paddedGoals.length < 3) {
+        paddedGoals.push({ goalText: '', benchmarks: [], measureMethods: [], domains: [] });
+      }
 
       const data = {
+        // Page 1 - Demographics
         residentName: dd.studentName || '',
         dob: dd.birthDate || '',
         grade: String(dd.gradeLevel || ''),
@@ -415,6 +440,7 @@ const IEPGenerator = ({ user }) => {
         initiationDate: dd.iepInitiationDate || '',
         projectedReviewDate: dd.iepDueDate || '',
         parentCopyDate: dd.copyProvidedDate || '',
+        // Participants
         parent1Method: dd.parent1Method || '',
         parent2Method: dd.parent2Method || '',
         studentMethod: dd.studentMethod || '',
@@ -425,13 +451,15 @@ const IEPGenerator = ({ user }) => {
         PartcRepresentativeMethod: dd.partCRepMethod || '',
         transistionRepresentativeMethod: dd.transitionRepMethod || '',
         otherMethod: dd.otherParticipantMethod || '',
+        // Page 2 - Present Levels (PLAAFP)
         disabilityImpact: [dd.academicLevels, dd.functionalLevels, dd.impactStatement].filter(Boolean).join('\n\n') || '',
         studentStrengths: dd.strengthsText || '',
         parentConcerns: dd.parentInput || '',
         changesInFunctioning: dd.changesFunctioning || '',
         evalSummary: buildEvalSummary(dd, kteaData),
         transitionSummary: dd.transitionAssessments || '',
-        goals: dd.goals.map((goal, i) => ({
+        // Pages 4-5 - Goals (loop)
+        goals: paddedGoals.map((goal, i) => ({
           id: i + 1,
           goalText: goal.goalText || '',
           objective1Text: goal.benchmarks?.[0]?.text || '',
@@ -455,14 +483,17 @@ const IEPGenerator = ({ user }) => {
           Goalmet: '\u2610',
           descriptionOfProgress: '',
         })),
+        // Transition Assessment Summaries
         assesSummary_1: dd.careerInterestAreas || '',
         assessSummary_2: buildKteaSummary(kteaData),
         assessSummary_3: dd.assessSummary3 || '',
+        // Graduation
         gradeDate: dd.anticipatedGraduationDate || '',
         gradeOpt_Credits: dd.graduationOptCredits ? '\u2612' : '\u2610',
         GradeOpt_Goals: dd.graduationOptGoals ? '\u2612' : '\u2610',
         preEtsDate: dd.preEtsDate || '',
         vrIntroDate: dd.vrIntroDate || '',
+        // Employment Transition
         postSecGoal_Emp: dd.transition.postSecondaryEmployment || '',
         empSkills_Obtained: dd.employmentSkillsObtained || '',
         empSkills_Needed: dd.employmentSkillsNeeded || '',
@@ -473,6 +504,7 @@ const IEPGenerator = ({ user }) => {
         emp_Parent_Skill: dd.empParentSkill || '',
         emp_Parent_Svc: dd.parentEmploymentServices || 'assist the student with locating services from outside agencies.',
         emp_Agency_Name: dd.empAgencyName || '',
+        // Education Transition
         postSecGoal_Edu: dd.transition.postSecondaryEducation || '',
         eduSkills_Obtained: dd.educationSkillsObtained || '',
         eduSkills_Needed: dd.educationSkillsNeeded || '',
@@ -483,6 +515,7 @@ const IEPGenerator = ({ user }) => {
         edu_Parent_Skill: dd.eduParentSkill || '',
         edu_Parent_Svc: dd.parentEducationServices || 'assist the student in locating post-secondary educational facilities.',
         edu_Agency_Name: dd.eduAgencyName || '',
+        // Independent Living Transition
         postSecGoal_Liv: dd.transition.independentLiving || '',
         livSkills_Obtained: dd.independentLivingSkillsObtained || '',
         livSkills_Needed: dd.independentLivingSkillsNeeded || '',
@@ -841,17 +874,49 @@ const IEPGenerator = ({ user }) => {
             <div className="border border-black border-t-0 p-2 mb-2 text-[8pt] space-y-1">
               <div>
                 <span className="font-bold">Does the student exhibit behaviors that impede his/her learning or that of others?</span>{' '}
-                <FCheck checked={true} onChange={() => {}} label="Yes" /> Positive behavior interventions and supports are addressed in this IEP.
+                <FCheck checked={d.behaviorImpedes} onChange={() => setDraft(prev => ({ ...prev, behaviorImpedes: !prev.behaviorImpedes }))} label="Yes" />
+                <FCheck checked={!d.behaviorImpedes} onChange={() => setDraft(prev => ({ ...prev, behaviorImpedes: !prev.behaviorImpedes }))} label="No" />
+                {d.behaviorImpedes && <span className="ml-1 italic text-gray-600">Positive behavior interventions and supports are addressed in this IEP.</span>}
+              </div>
+              <div>
+                <span className="font-bold">Is the child blind or visually impaired?</span>{' '}
+                <FCheck checked={d.isBlind} onChange={() => setDraft(prev => ({ ...prev, isBlind: !prev.isBlind }))} label="Yes" />
+                <FCheck checked={!d.isBlind} onChange={() => setDraft(prev => ({ ...prev, isBlind: !prev.isBlind }))} label="No" />
+              </div>
+              <div>
+                <span className="font-bold">Is the child deaf or hard of hearing?</span>{' '}
+                <FCheck checked={d.isDeaf} onChange={() => setDraft(prev => ({ ...prev, isDeaf: !prev.isDeaf }))} label="Yes" />
+                <FCheck checked={!d.isDeaf} onChange={() => setDraft(prev => ({ ...prev, isDeaf: !prev.isDeaf }))} label="No" />
+              </div>
+              <div>
+                <span className="font-bold">Does the child have limited English proficiency?</span>{' '}
+                <FCheck checked={d.isLEP} onChange={() => setDraft(prev => ({ ...prev, isLEP: !prev.isLEP }))} label="Yes" />
+                <FCheck checked={!d.isLEP} onChange={() => setDraft(prev => ({ ...prev, isLEP: !prev.isLEP }))} label="No" />
+              </div>
+              <div>
+                <span className="font-bold">Does the child have communication needs?</span>{' '}
+                <FCheck checked={d.communicationNeeds} onChange={() => setDraft(prev => ({ ...prev, communicationNeeds: !prev.communicationNeeds }))} label="Yes" />
+                <FCheck checked={!d.communicationNeeds} onChange={() => setDraft(prev => ({ ...prev, communicationNeeds: !prev.communicationNeeds }))} label="No" />
+              </div>
+              <div>
+                <span className="font-bold">Does the child require assistive technology devices and/or services?</span>{' '}
+                <FCheck checked={d.assistiveTechnology} onChange={() => setDraft(prev => ({ ...prev, assistiveTechnology: !prev.assistiveTechnology }))} label="Yes" />
+                <FCheck checked={!d.assistiveTechnology} onChange={() => setDraft(prev => ({ ...prev, assistiveTechnology: !prev.assistiveTechnology }))} label="No" />
               </div>
               <div>
                 <span className="font-bold">Extended School Year:</span>{' '}
-                <FCheck checked={false} onChange={() => {}} label="Yes" />
-                <FCheck checked={true} onChange={() => {}} label="No" />
+                <FCheck checked={d.extendedSchoolYear} onChange={() => setDraft(prev => ({ ...prev, extendedSchoolYear: !prev.extendedSchoolYear }))} label="Yes" />
+                <FCheck checked={!d.extendedSchoolYear} onChange={() => setDraft(prev => ({ ...prev, extendedSchoolYear: !prev.extendedSchoolYear }))} label="No" />
               </div>
               <div>
                 <span className="font-bold">Post-secondary Transition Services:</span>{' '}
                 <FCheck checked={d.hasTransitionPlan} onChange={() => setDraft(prev => ({ ...prev, hasTransitionPlan: !prev.hasTransitionPlan }))} label="Yes (Form C)" />
                 <FCheck checked={!d.hasTransitionPlan} onChange={() => setDraft(prev => ({ ...prev, hasTransitionPlan: !prev.hasTransitionPlan }))} label="No" />
+              </div>
+              <div>
+                <span className="font-bold">Transfer of Rights at Age of Majority (at least one year prior to age 18):</span>{' '}
+                <FCheck checked={d.transferOfRights} onChange={() => setDraft(prev => ({ ...prev, transferOfRights: !prev.transferOfRights }))} label="Yes" />
+                <FCheck checked={!d.transferOfRights} onChange={() => setDraft(prev => ({ ...prev, transferOfRights: !prev.transferOfRights }))} label="No" />
               </div>
             </div>
           </div>
@@ -1083,8 +1148,17 @@ const IEPGenerator = ({ user }) => {
             <div className="font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0">7. Regular Education Participation</div>
             <div className="border border-black border-t-0 p-2 mb-2 text-[8pt] space-y-1">
               <div className="font-bold">For K-12: Will this child receive all special education and related services in the regular education environment?</div>
-              <div><FCheck checked={false} onChange={() => {}} label="Yes" /> <FCheck checked={true} onChange={() => {}} label="No" /></div>
-              <div className="italic text-gray-600">Student is placed in a private residential facility (Lakeland Behavioral Health System).</div>
+              <div>
+                <FCheck checked={d.regularEdInRegular} onChange={() => setDraft(prev => ({ ...prev, regularEdInRegular: !prev.regularEdInRegular }))} label="Yes" />
+                {' '}
+                <FCheck checked={!d.regularEdInRegular} onChange={() => setDraft(prev => ({ ...prev, regularEdInRegular: !prev.regularEdInRegular }))} label="No" />
+              </div>
+              {!d.regularEdInRegular && (
+                <div>
+                  <span className="font-bold">If no, explain why services cannot be provided in the regular education environment:</span>
+                  <FArea value={d.regularEdExplanation} onChange={v => setDraft(prev => ({ ...prev, regularEdExplanation: v }))} rows={2} placeholder="Student is placed in a private residential facility (Lakeland Behavioral Health System)." />
+                </div>
+              )}
             </div>
           </div>
 
@@ -1101,20 +1175,26 @@ const IEPGenerator = ({ user }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { label: 'Inside regular class at least 80% of time', considered: true, selected: false },
-                    { label: 'Inside regular class 40% to 79% of time', considered: true, selected: false },
-                    { label: 'Inside regular class less than 40% of time', considered: true, selected: false },
-                    { label: 'Public separate school (day) facility', considered: true, selected: false },
-                    { label: 'Private separate school (day) facility', considered: true, selected: false },
-                    { label: 'Public residential facility', considered: true, selected: false },
-                    { label: 'Private residential facility', considered: true, selected: true },
-                    { label: 'Home/hospital', considered: false, selected: false },
-                  ].map((pl, i) => (
+                  {(d.placementOptions || []).map((pl, i) => (
                     <tr key={i}>
                       <td className="border border-black p-1">{pl.label}</td>
-                      <td className="border border-black p-0.5 text-center"><FCheck checked={pl.considered} onChange={() => {}} label="" /></td>
-                      <td className="border border-black p-0.5 text-center"><FCheck checked={pl.selected} onChange={() => {}} label="" /></td>
+                      <td className="border border-black p-0.5 text-center">
+                        <FCheck checked={pl.considered} onChange={() => {
+                          setDraft(prev => {
+                            const opts = [...prev.placementOptions];
+                            opts[i] = { ...opts[i], considered: !opts[i].considered };
+                            return { ...prev, placementOptions: opts };
+                          });
+                        }} label="" />
+                      </td>
+                      <td className="border border-black p-0.5 text-center">
+                        <FCheck checked={pl.selected} onChange={() => {
+                          setDraft(prev => {
+                            const opts = prev.placementOptions.map((o, j) => ({ ...o, selected: j === i ? !o.selected : false }));
+                            return { ...prev, placementOptions: opts };
+                          });
+                        }} label="" />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1388,13 +1468,37 @@ function createEmptyDraft() {
     leaRepMethod: '', spedTeacherMethod: '', regTeacherMethod: '',
     interpreterMethod: '', partCRepMethod: '', transitionRepMethod: '',
     otherParticipantMethod: '',
+    // Section 1 - Present Levels (PLAAFP)
     academicLevels: '', functionalLevels: '', parentInput: '', strengthsText: '', impactStatement: '',
     changesFunctioning: '', evalSummary: '', transitionAssessments: '',
     kteaSnapshot: {},
+    // Section 2 - Special Considerations
+    behaviorImpedes: true,
+    extendedSchoolYear: false,
+    isBlind: false, isDeaf: false, isLEP: false,
+    communicationNeeds: false, assistiveTechnology: false,
+    transferOfRights: false,
+    // Section 3 - Goals
     goals: [],
+    // Section 5 - Services
     services: [],
     accommodations: [],
     modifications: [],
+    // Section 7 - Regular Ed
+    regularEdInRegular: false,
+    regularEdExplanation: '',
+    // Section 8 - Placement
+    placementOptions: [
+      { label: 'Inside regular class at least 80% of time', considered: true, selected: false },
+      { label: 'Inside regular class 40% to 79% of time', considered: true, selected: false },
+      { label: 'Inside regular class less than 40% of time', considered: true, selected: false },
+      { label: 'Public separate school (day) facility', considered: true, selected: false },
+      { label: 'Private separate school (day) facility', considered: true, selected: false },
+      { label: 'Public residential facility', considered: true, selected: false },
+      { label: 'Private residential facility', considered: true, selected: true },
+      { label: 'Home/hospital', considered: false, selected: false },
+    ],
+    // Transition Plan (Form C)
     hasTransitionPlan: false,
     transition: { postSecondaryEducation: '', postSecondaryEmployment: '', independentLiving: '', transitionServices: [], targetSkills: [] },
     empSchoolSkills: '', empStudentSkill: '', empParentSkill: '', empAgencyName: '',
