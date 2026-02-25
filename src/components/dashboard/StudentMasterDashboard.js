@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, GraduationCap, Clock, StickyNote, CalendarClock, Search } from 'lucide-react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, ChevronLeft, Archive, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, StickyNote, Search } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook';
 import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
@@ -41,8 +41,8 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
   }
 
   return (
-    <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
-      <div className="flex justify-between items-center mb-5 shrink-0">
+    <div className="w-full h-full box-border flex flex-col font-sans max-w-7xl mx-auto relative">
+      <div className="flex justify-between items-center px-6 pt-6 pb-4 shrink-0">
         <div>
           <h2 className="text-slate-900 text-2xl font-extrabold tracking-tight">
             Teacher Dashboard
@@ -54,7 +54,7 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 mb-0 border-b border-slate-200">
+      <div className="flex gap-2 mb-0 border-b border-slate-200 px-6 shrink-0">
         <TabButton
           label="My Unit Roster"
           icon={<UserCheck />}
@@ -70,15 +70,17 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 min-h-[500px] p-6 relative z-0">
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 flex-1 flex flex-col overflow-hidden relative z-0">
         {activeTab === 'roster' && <UnitRoster defaultUnit={user.unit} user={user} />}
         {activeTab === 'classes' && (
-          <MyClasses
-            teacherName={user.name}
-            user={user}
-            onCourseSelect={setSelectedCourse}
-            onManageEnrollment={setManagingCourse}
-          />
+          <div className="flex-1 overflow-y-auto p-6">
+            <MyClasses
+              teacherName={user.name}
+              user={user}
+              onCourseSelect={setSelectedCourse}
+              onManageEnrollment={setManagingCourse}
+            />
+          </div>
         )}
       </div>
     </div>
@@ -208,9 +210,9 @@ const UnitRoster = ({ defaultUnit, user }) => {
     });
 
     return (
-        <>
+        <div className="flex-1 flex flex-col overflow-hidden h-full">
             {/* Unit Selector + Search + Add Student */}
-            <div className="flex flex-wrap items-center gap-2 mb-5">
+            <div className="flex flex-wrap items-center gap-2 px-6 py-4 shrink-0 border-b border-slate-100">
                 {UNIT_CONFIG.map(unit => {
                     const Icon = unit.icon;
                     const isActive = selectedUnit === unit.key;
@@ -268,18 +270,19 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
             {/* Intake Form (collapsible) */}
             {showIntakeForm && (
-                <div className="mb-6 animate-slide-up">
+                <div className="px-6 py-4 border-b border-slate-200 shrink-0 animate-slide-up">
                     <IntakeForm onSave={handleIntakeSave} units={UNIT_CONFIG} defaultUnit={selectedUnit} />
                 </div>
             )}
 
+            {/* Main content area */}
             {loading ? (
-                <div className="flex items-center justify-center py-20">
+                <div className="flex items-center justify-center flex-1">
                     <Loader2 className="w-5 h-5 animate-spin text-indigo-500 mr-3" />
                     <span className="text-sm font-medium text-slate-400">Loading roster...</span>
                 </div>
             ) : filteredRoster.length === 0 ? (
-                <div className="text-center py-20 text-slate-400">
+                <div className="text-center flex-1 flex items-center justify-center text-slate-400">
                     {searchQuery.trim() ? (
                         <p className="text-sm font-medium">No students matching "{searchQuery}"</p>
                     ) : (
@@ -287,40 +290,124 @@ const UnitRoster = ({ defaultUnit, user }) => {
                     )}
                 </div>
             ) : (
-                <div>
-                    {/* Card Grid -- always full width */}
-                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {filteredRoster.map(student => (
-                            <StudentCard
-                                key={student.id}
-                                student={student}
-                                isSelected={selectedStudentProfile?.id === student.id}
-                                onSelect={() => setSelectedStudentProfile(student)}
-                            />
-                        ))}
+                <div className="flex-1 flex overflow-hidden">
+                    {/* ====== LEFT PANEL: Student List ====== */}
+                    <div className={`
+                        overflow-y-auto transition-all duration-300 ease-in-out
+                        ${isDetailOpen
+                            ? 'hidden lg:block w-72 xl:w-80 shrink-0 border-r border-slate-200/80 bg-white'
+                            : 'flex-1 p-6'
+                        }
+                    `}>
+                        {isDetailOpen ? (
+                            /* Compact list rows for master-detail mode */
+                            <div className="divide-y divide-slate-100">
+                                {filteredRoster.map(student => (
+                                    <StudentListItem
+                                        key={student.id}
+                                        student={student}
+                                        isSelected={selectedStudentProfile?.id === student.id}
+                                        onSelect={() => setSelectedStudentProfile(student)}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            /* Full-width card grid (original layout, no student selected) */
+                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {filteredRoster.map(student => (
+                                    <StudentCard
+                                        key={student.id}
+                                        student={student}
+                                        isSelected={selectedStudentProfile?.id === student.id}
+                                        onSelect={() => setSelectedStudentProfile(student)}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Floating Card Overlay */}
+                    {/* ====== RIGHT PANEL: Detail ====== */}
                     {isDetailOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8"
-                             onClick={() => setSelectedStudentProfile(null)}>
-                            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-                            <div className="relative w-full max-w-lg max-h-[90vh] animate-float-card"
-                                 onClick={e => e.stopPropagation()}>
+                        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/30 animate-detail-enter">
+                            {/* Mobile back button -- visible below lg */}
+                            <div className="lg:hidden shrink-0 bg-white border-b border-slate-200 px-4 py-2.5">
+                                <button
+                                    onClick={() => setSelectedStudentProfile(null)}
+                                    className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                    Back to roster
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto">
                                 <EditableStudentProfileModal
                                     key={selectedStudentProfile.id}
                                     studentData={selectedStudentProfile}
                                     onClose={() => setSelectedStudentProfile(null)}
                                     onSaved={fetchRoster}
                                     user={user}
-                                    mode="panel"
+                                    mode="detail"
                                 />
                             </div>
                         </div>
                     )}
                 </div>
             )}
-        </>
+        </div>
+    );
+};
+
+const StudentListItem = ({ student, onSelect, isSelected }) => {
+    const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
+
+    let iepDueUrgent = false;
+    if (student.iepDueDate) {
+        const dueDate = new Date(student.iepDueDate);
+        iepDueUrgent = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24)) <= 30;
+    }
+
+    return (
+        <button
+            onClick={onSelect}
+            className={`
+                w-full text-left px-4 py-3 flex items-center gap-3
+                transition-colors duration-150 outline-none
+                focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500
+                ${isSelected
+                    ? `${unitStyle?.tagBg || 'bg-indigo-50'} border-l-[3px] ${unitStyle?.accentBorder || 'border-l-indigo-500'}`
+                    : 'hover:bg-slate-50 border-l-[3px] border-l-transparent'
+                }
+            `}
+        >
+            <div className={`
+                w-8 h-8 rounded-lg ${unitStyle?.avatarBg || 'bg-slate-400'}
+                flex items-center justify-center text-white text-xs font-bold shrink-0
+            `}>
+                {initials}
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className={`text-sm font-semibold truncate ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
+                    {student.studentName}
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs text-slate-400">Gr {student.gradeLevel}</span>
+                    {student.iep === 'Yes' && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                            iepDueUrgent ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
+                        }`}>
+                            IEP{iepDueUrgent ? ' !' : ''}
+                        </span>
+                    )}
+                    {student.district && (
+                        <span className="text-[10px] text-slate-400 truncate max-w-[80px]">{student.district}</span>
+                    )}
+                </div>
+            </div>
+            <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                isSelected ? 'text-indigo-500' : 'text-slate-300'
+            }`} />
+        </button>
     );
 };
 

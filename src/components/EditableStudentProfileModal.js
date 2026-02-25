@@ -244,6 +244,133 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     </>
   );
 
+  // --- Wide Profile Content (detail mode -- multi-column layout) ---
+  const wideProfileContent = (
+    <>
+      {/* Row 1: Grade + Admit + Discharge + District */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label className={LABEL_CLASS}>
+            <GraduationCap className="w-3.5 h-3.5" />Grade
+          </label>
+          <select {...register('gradeLevel', { required: 'Required' })} disabled={isSaving} className={INPUT_CLASS}>
+            <option value="">--</option>
+            <option value="9">9th</option>
+            <option value="10">10th</option>
+            <option value="11">11th</option>
+            <option value="12">12th</option>
+          </select>
+          {errors.gradeLevel && <p className="text-xs text-red-500 mt-0.5">{errors.gradeLevel.message}</p>}
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Calendar className="w-3.5 h-3.5" />Admit
+          </label>
+          <input type="date" {...register('admitDate', { required: 'Required' })} disabled={isSaving} className={INPUT_CLASS} />
+          {errors.admitDate && <p className="text-xs text-red-500 mt-0.5">{errors.admitDate.message}</p>}
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Clock className="w-3.5 h-3.5" />Discharge
+          </label>
+          <input type="date" {...register('expectedDischargeDate')} disabled={isSaving} className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <MapPin className="w-3.5 h-3.5" />District
+          </label>
+          <input type="text" {...register('district')} disabled={isSaving} placeholder="School district" className={INPUT_CLASS} />
+        </div>
+      </div>
+
+      {/* Row 2: Contact + Guardian Name + Guardian Phone */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label className={LABEL_CLASS}>
+            <UserCheck className="w-3.5 h-3.5" />Lead Contact (Home School)
+          </label>
+          <input type="text" {...register('homeSchoolContact')} disabled={isSaving} placeholder="e.g., Jane Smith, Guidance Counselor" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Phone className="w-3.5 h-3.5" />Guardian Name
+          </label>
+          <input type="text" {...register('guardianName')} disabled={isSaving} placeholder="Parent/Guardian" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Phone className="w-3.5 h-3.5" />Guardian Phone
+          </label>
+          <input type="tel" {...register('guardianPhone')} disabled={isSaving} placeholder="(555) 123-4567" className={INPUT_CLASS} />
+        </div>
+      </div>
+
+      {/* Row 3: Unit + IEP side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Unit Assignment */}
+        <div>
+          <label className={LABEL_CLASS}>
+            <Building2 className="w-3.5 h-3.5" />Unit
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {UNIT_OPTIONS.map((unit) => {
+              const isUnitSelected = watchedUnit === unit.key;
+              return (
+                <label key={unit.key}
+                  className={`flex items-center justify-center px-3 py-2.5 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all ${
+                    isUnitSelected ? `${unit.light} ${unit.text} border-current` : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100 hover:text-slate-600'
+                  } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <input type="radio" value={unit.key} {...register('unitName', { required: 'Required' })} disabled={isSaving} className="sr-only" />
+                  {unit.label}
+                </label>
+              );
+            })}
+          </div>
+          {errors.unitName && <p className="text-xs text-red-500 mt-0.5">{errors.unitName.message}</p>}
+        </div>
+
+        {/* IEP block */}
+        <div className="space-y-4">
+          <div>
+            <label className={LABEL_CLASS}>
+              <FileCheck className="w-3.5 h-3.5" />IEP Status
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className={`flex items-center justify-center px-3 py-2.5 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all ${
+                watchedIep === 'no' ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'
+              } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+                <input type="radio" value="no" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
+                No IEP
+              </label>
+              <label className={`flex items-center justify-center px-3 py-2.5 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all ${
+                watchedIep === 'yes' ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'
+              } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+                <input type="radio" value="yes" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
+                Has IEP
+              </label>
+            </div>
+          </div>
+          {watchedIep === 'yes' && (
+            <div>
+              <label className={LABEL_CLASS}>
+                <CalendarClock className="w-3.5 h-3.5" />IEP Due Date
+              </label>
+              <input type="date" {...register('iepDueDate')} disabled={isSaving} className={INPUT_CLASS} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Status Footer */}
+      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${studentData.active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' : 'bg-slate-100 text-slate-500 border border-slate-200/60'}`}>
+          {studentData.active !== false ? 'Active' : 'Discharged'}
+        </span>
+        <span className="text-xs text-slate-400 font-mono">{studentData.id}</span>
+      </div>
+    </>
+  );
+
   // --- MTP Notes Tab Content ---
   const notesContent = (
     <div className="space-y-4">
@@ -292,7 +419,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           <p className="text-sm text-slate-400 font-medium">No monthly progress notes yet.</p>
         </div>
       ) : (
-        <div className={`space-y-3 overflow-y-auto ${mode === 'panel' ? 'max-h-[50vh]' : 'max-h-60'}`}>
+        <div className={`space-y-3 overflow-y-auto ${mode === 'detail' ? '' : mode === 'panel' ? 'max-h-[50vh]' : 'max-h-60'}`}>
           {[...mtpNotes].reverse().map((note) => (
             <div key={note.id} className="bg-white rounded-xl p-4 border border-slate-200/60 shadow-sm group/note">
               <div className="flex items-center justify-between mb-2">
@@ -396,7 +523,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 shrink-0 flex gap-2.5">
       <button type="button" onClick={onClose} disabled={isSaving}
         className="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 px-4 rounded-xl hover:bg-slate-200/80 transition-all disabled:opacity-50 text-sm">
-        {mode === 'panel' ? 'Close' : 'Cancel'}
+        {mode === 'panel' || mode === 'detail' ? 'Close' : 'Cancel'}
       </button>
       <button type="submit" disabled={isSaving}
         className="flex-[1.5] bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
@@ -404,6 +531,67 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       </button>
     </div>
   );
+
+  // ==========================================
+  // DETAIL MODE: inline master-detail panel (wide)
+  // ==========================================
+  if (mode === 'detail') {
+    return (
+      <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col bg-white">
+        {/* Header -- wider layout */}
+        <div className={`relative px-6 pt-5 pb-4 ${unitStyle.light} border-b border-slate-200/80 shrink-0`}>
+          <button type="button" onClick={onClose} disabled={isSaving}
+            className="absolute top-4 right-4 p-2 rounded-lg bg-white/80 hover:bg-white text-slate-400 hover:text-slate-600 transition border border-slate-200/60"
+            aria-label="Close">
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-xl ${unitStyle.bg} ring-2 ring-white flex items-center justify-center text-white font-extrabold text-lg tracking-wide shadow-sm shrink-0`}>
+              {initials.toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-extrabold text-slate-900 leading-tight truncate">
+                {studentData.studentName}
+              </h3>
+              <div className="flex items-center gap-3 mt-1 text-sm font-semibold text-slate-500">
+                <span>Grade {studentData.gradeLevel}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                <span>{daysIn}d in program</span>
+                {daysRemaining !== null && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-slate-300" />
+                    <span className={daysRemaining <= 30 ? 'text-rose-600 font-bold' : ''}>
+                      {daysRemaining}d remaining
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {tabNav}
+
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          {statusMessages}
+          {detailTab === 'profile' && wideProfileContent}
+          {detailTab === 'notes' && notesContent}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50 shrink-0 flex gap-3">
+          <button type="button" onClick={onClose} disabled={isSaving}
+            className="px-6 bg-slate-100 text-slate-600 font-bold py-2.5 rounded-xl hover:bg-slate-200/80 transition-all disabled:opacity-50 text-sm">
+            Close
+          </button>
+          <button type="submit" disabled={isSaving}
+            className="flex-1 max-w-xs bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
+            {isSaving ? (<><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>) : (<><Save className="w-4 h-4" /> Save Changes</>)}
+          </button>
+        </div>
+      </form>
+    );
+  }
 
   // ==========================================
   // PANEL MODE: inline detail panel with tabs

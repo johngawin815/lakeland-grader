@@ -369,7 +369,7 @@ const HubShell = () => {
         )}
 
         {currentView !== 'home' && (
-          <div className="p-0">
+          <div className="h-full">
             {currentView === 'dashboard' && <StudentMasterDashboard setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
             {currentView === 'gradecards' && <GradeGenerator user={user} />}
             {currentView === 'ktea' && <KTEAReporter user={user} />}
