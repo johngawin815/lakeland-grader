@@ -410,7 +410,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   // ==========================================
   if (mode === 'panel') {
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl shadow-2xl shadow-slate-200/60 border border-slate-200/50 overflow-hidden flex flex-col max-h-[calc(100vh-8rem)]">
+      <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl shadow-2xl shadow-slate-200/60 border border-slate-200/50 overflow-hidden flex flex-col max-h-[85vh]">
         {header}
         {tabNav}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">

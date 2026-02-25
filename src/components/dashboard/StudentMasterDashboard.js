@@ -287,32 +287,26 @@ const UnitRoster = ({ defaultUnit, user }) => {
                     )}
                 </div>
             ) : (
-                <div className="flex flex-col lg:flex-row gap-6 items-start">
-                    {/* Card Grid */}
-                    <div className={`w-full transition-all duration-300 ease-in-out ${
-                        isDetailOpen ? 'lg:w-[55%]' : ''
-                    }`}>
-                        <div className={`grid gap-4 ${
-                            isDetailOpen
-                                ? 'grid-cols-1 sm:grid-cols-2'
-                                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                        }`}>
-                            {filteredRoster.map(student => (
-                                <StudentCard
-                                    key={student.id}
-                                    student={student}
-                                    isSelected={selectedStudentProfile?.id === student.id}
-                                    onSelect={() => setSelectedStudentProfile(student)}
-                                />
-                            ))}
-                        </div>
+                <div>
+                    {/* Card Grid -- always full width */}
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {filteredRoster.map(student => (
+                            <StudentCard
+                                key={student.id}
+                                student={student}
+                                isSelected={selectedStudentProfile?.id === student.id}
+                                onSelect={() => setSelectedStudentProfile(student)}
+                            />
+                        ))}
                     </div>
 
-                    {/* Detail Panel -- Desktop: inline, Mobile: fullscreen overlay */}
+                    {/* Floating Card Overlay */}
                     {isDetailOpen && (
-                        <>
-                            {/* Desktop inline panel */}
-                            <div className="hidden lg:block w-[45%] max-w-[480px] shrink-0 sticky top-6 animate-slide-in-right">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8"
+                             onClick={() => setSelectedStudentProfile(null)}>
+                            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+                            <div className="relative w-full max-w-lg max-h-[90vh] animate-float-card"
+                                 onClick={e => e.stopPropagation()}>
                                 <EditableStudentProfileModal
                                     key={selectedStudentProfile.id}
                                     studentData={selectedStudentProfile}
@@ -322,18 +316,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                     mode="panel"
                                 />
                             </div>
-                            {/* Mobile fullscreen overlay */}
-                            <div className="lg:hidden fixed inset-0 bg-white z-50 overflow-y-auto p-4">
-                                <EditableStudentProfileModal
-                                    key={`mobile-${selectedStudentProfile.id}`}
-                                    studentData={selectedStudentProfile}
-                                    onClose={() => setSelectedStudentProfile(null)}
-                                    onSaved={fetchRoster}
-                                    user={user}
-                                    mode="panel"
-                                />
-                            </div>
-                        </>
+                        </div>
                     )}
                 </div>
             )}
