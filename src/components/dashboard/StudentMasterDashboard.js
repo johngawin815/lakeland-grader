@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, GraduationCap, Clock, MapPin, Phone, StickyNote, FileCheck, CalendarClock } from 'lucide-react';
+import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, Archive, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, GraduationCap, Clock, StickyNote, CalendarClock, Search } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook';
 import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
@@ -44,17 +44,17 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
     <div className="w-full min-h-full p-8 box-border flex flex-col font-sans max-w-7xl mx-auto relative">
       <div className="flex justify-between items-center mb-5 shrink-0">
         <div>
-          <h2 className="m-0 text-slate-900 text-3xl font-extrabold tracking-tight">
+          <h2 className="text-slate-900 text-2xl font-extrabold tracking-tight">
             Teacher Dashboard
           </h2>
-          <p className="m-1 text-slate-500 text-base">
-            Welcome, {user.name}. Toggle between your unit and class responsibilities.
+          <p className="mt-1 text-slate-500 text-sm">
+            {user.unit} Unit &middot; {user.name}
           </p>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 mb-0 border-b border-slate-200/80">
+      <div className="flex gap-2 mb-0 border-b border-slate-200">
         <TabButton
           label="My Unit Roster"
           icon={<UserCheck />}
@@ -109,6 +109,24 @@ const UnitRoster = ({ defaultUnit, user }) => {
     const [loading, setLoading] = useState(true);
     const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
     const [showIntakeForm, setShowIntakeForm] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [unitCounts, setUnitCounts] = useState({});
+
+    // Load unit counts on mount
+    useEffect(() => {
+        const loadCounts = async () => {
+            try {
+                const all = await databaseService.getAllStudents();
+                const counts = {};
+                UNIT_CONFIG.forEach(u => { counts[u.key] = 0; });
+                all.forEach(s => {
+                    if (s.active !== false && counts[s.unitName] !== undefined) counts[s.unitName]++;
+                });
+                setUnitCounts(counts);
+            } catch { /* fail silently */ }
+        };
+        loadCounts();
+    }, []);
 
     const fetchRoster = async () => {
         setLoading(true);
@@ -180,32 +198,60 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
     const isDetailOpen = !!selectedStudentProfile;
 
+    // Filter roster by search query
+    const filteredRoster = roster.filter(s => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase();
+        return s.studentName?.toLowerCase().includes(q) ||
+               s.district?.toLowerCase().includes(q) ||
+               s.guardianName?.toLowerCase().includes(q);
+    });
+
     return (
         <>
-            {/* Unit Selector + Add Student */}
+            {/* Unit Selector + Search + Add Student */}
             <div className="flex flex-wrap items-center gap-2 mb-5">
                 {UNIT_CONFIG.map(unit => {
                     const Icon = unit.icon;
                     const isActive = selectedUnit === unit.key;
+                    const count = unitCounts[unit.key];
                     return (
                         <button
                             key={unit.key}
                             onClick={() => {
                                 setSelectedUnit(unit.key);
                                 setSelectedStudentProfile(null);
+                                setSearchQuery('');
                             }}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+                            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
                                 isActive
-                                    ? `${unit.badge} border-current shadow-sm`
-                                    : 'bg-white text-slate-500 border-slate-200/80 hover:bg-slate-50'
+                                    ? `${unit.badge} border-current shadow-md ring-1 ring-current/20`
+                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                             }`}
                         >
                             <Icon className="w-4 h-4" />
-                            {unit.label}
+                            <span>{unit.label}</span>
+                            {count !== undefined && (
+                                <span className={`text-[10px] font-extrabold min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-full ${
+                                    isActive ? 'bg-white/30' : 'bg-slate-100 text-slate-400'
+                                }`}>
+                                    {count}
+                                </span>
+                            )}
                         </button>
                     );
                 })}
-                <div className="ml-auto">
+                <div className="ml-auto flex items-center gap-3">
+                    <div className="relative">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search students..."
+                            className="pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 outline-none transition-all w-48 focus:w-64"
+                        />
+                    </div>
                     <button
                         onClick={() => setShowIntakeForm(prev => !prev)}
                         className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg ${
@@ -222,8 +268,8 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
             {/* Intake Form (collapsible) */}
             {showIntakeForm && (
-                <div className="mb-6">
-                    <IntakeForm onSave={handleIntakeSave} units={UNIT_CONFIG} />
+                <div className="mb-6 animate-slide-up">
+                    <IntakeForm onSave={handleIntakeSave} units={UNIT_CONFIG} defaultUnit={selectedUnit} />
                 </div>
             )}
 
@@ -232,20 +278,26 @@ const UnitRoster = ({ defaultUnit, user }) => {
                     <Loader2 className="w-5 h-5 animate-spin text-indigo-500 mr-3" />
                     <span className="text-sm font-medium text-slate-400">Loading roster...</span>
                 </div>
-            ) : roster.length === 0 ? (
-                <div className="text-center py-20 text-slate-400 italic">No students assigned to the {selectedUnit} unit.</div>
+            ) : filteredRoster.length === 0 ? (
+                <div className="text-center py-20 text-slate-400">
+                    {searchQuery.trim() ? (
+                        <p className="text-sm font-medium">No students matching "{searchQuery}"</p>
+                    ) : (
+                        <p className="text-sm font-medium italic">No students assigned to the {selectedUnit} unit.</p>
+                    )}
+                </div>
             ) : (
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
                     {/* Card Grid */}
                     <div className={`w-full transition-all duration-300 ease-in-out ${
-                        isDetailOpen ? 'lg:w-[58%]' : ''
+                        isDetailOpen ? 'lg:w-[55%]' : ''
                     }`}>
-                        <div className={`grid gap-5 ${
+                        <div className={`grid gap-4 ${
                             isDetailOpen
-                                ? 'grid-cols-1 md:grid-cols-2'
-                                : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                                ? 'grid-cols-1 sm:grid-cols-2'
+                                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
                         }`}>
-                            {roster.map(student => (
+                            {filteredRoster.map(student => (
                                 <StudentCard
                                     key={student.id}
                                     student={student}
@@ -256,11 +308,11 @@ const UnitRoster = ({ defaultUnit, user }) => {
                         </div>
                     </div>
 
-                    {/* Detail Panel — Desktop: inline, Mobile: fullscreen overlay */}
+                    {/* Detail Panel -- Desktop: inline, Mobile: fullscreen overlay */}
                     {isDetailOpen && (
                         <>
                             {/* Desktop inline panel */}
-                            <div className="hidden lg:block w-[42%] min-w-[380px] shrink-0 sticky top-6 animate-slide-in-right">
+                            <div className="hidden lg:block w-[45%] max-w-[480px] shrink-0 sticky top-6 animate-slide-in-right">
                                 <EditableStudentProfileModal
                                     key={selectedStudentProfile.id}
                                     studentData={selectedStudentProfile}
@@ -294,17 +346,14 @@ const StudentCard = ({ student, onSelect, isSelected }) => {
     const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
     const Icon = unitStyle?.icon || UserCheck;
 
-    // Days in program
     const admitDate = new Date(student.admitDate);
     const today = new Date();
     const daysIn = Math.max(0, Math.floor((today - admitDate) / (1000 * 60 * 60 * 24)));
 
-    // IEP due date urgency
     let iepDueUrgent = false;
     if (student.iepDueDate) {
         const dueDate = new Date(student.iepDueDate);
-        const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-        iepDueUrgent = daysUntilDue <= 30;
+        iepDueUrgent = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24)) <= 30;
     }
 
     const noteCount = student.mtpNotes?.length || 0;
@@ -312,95 +361,59 @@ const StudentCard = ({ student, onSelect, isSelected }) => {
     return (
         <div
             onClick={onSelect}
-            className={`relative border-l-4 ${unitStyle?.accentBorder || 'border-l-slate-300'} border rounded-2xl bg-white cursor-pointer transition-all duration-200 group hover:shadow-xl hover:-translate-y-0.5 mr-1 ${
+            className={`relative rounded-xl border-l-[3px] ${unitStyle?.accentBorder || 'border-l-slate-300'} border border-slate-200/60 bg-white cursor-pointer transition-all duration-200 group hover:shadow-lg hover:-translate-y-0.5 ${
                 isSelected
-                    ? 'ring-2 ring-indigo-500/40 border-indigo-300 shadow-lg shadow-indigo-100'
-                    : 'border-slate-200/60 hover:border-slate-300/80'
+                    ? 'ring-2 ring-indigo-500/30 border-indigo-200 shadow-md'
+                    : 'hover:border-slate-300'
             }`}
         >
-            {/* Sticky Note Sidebar Tab */}
-            <div className={`absolute -right-1.5 top-4 flex flex-col items-center bg-amber-100 border rounded-r-lg rounded-bl-lg shadow-sm px-1.5 py-2 gap-1 z-10 ${
-                noteCount > 0 ? 'border-amber-400/60' : 'border-amber-300/50 opacity-70'
-            }`}>
-                <StickyNote className="w-3.5 h-3.5 text-amber-600" />
-                {noteCount > 0 && (
-                    <span className="text-[9px] font-extrabold text-amber-700 leading-none">
-                        {noteCount}
-                    </span>
-                )}
-            </div>
-
-            {/* Card Body */}
-            <div className="p-5">
-                {/* Header Row: Avatar + Name + Badges */}
-                <div className="flex items-start gap-3.5 mb-4">
-                    <div className={`w-11 h-11 rounded-xl ${unitStyle?.avatarBg || 'bg-slate-400'} ring-2 ${unitStyle?.avatarRing || 'ring-slate-200'} ring-offset-1 flex items-center justify-center text-white font-extrabold text-sm tracking-wide shrink-0 shadow-sm`}>
+            <div className="px-4 py-3.5">
+                {/* Row 1: Avatar + Name + Grade + Days */}
+                <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-10 h-10 rounded-lg ${unitStyle?.avatarBg || 'bg-slate-400'} ring-2 ${unitStyle?.avatarRing || 'ring-slate-200'} ring-offset-1 flex items-center justify-center text-white font-bold text-xs tracking-wide shrink-0`}>
                         {initials}
                     </div>
-                    <div className="flex-1 min-w-0 pr-6">
-                        <h3 className="font-bold text-[15px] text-slate-900 leading-tight truncate group-hover:text-indigo-600 transition-colors">
+                    <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm text-slate-900 leading-tight truncate group-hover:text-indigo-600 transition-colors">
                             {student.studentName}
                         </h3>
-                        <div className="flex items-center gap-1.5 mt-1">
-                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md ${unitStyle?.tagBg || 'bg-slate-100 text-slate-600'}`}>
-                                <Icon className="w-3 h-3" />
-                                {student.unitName}
-                            </span>
-                            {student.iep === "Yes" && (
-                                <span className="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold border border-amber-200/60">
-                                    IEP
-                                </span>
-                            )}
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-xs text-slate-500 font-semibold">Grade {student.gradeLevel}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-300" />
+                            <span className="text-xs text-slate-400 font-medium">{daysIn}d</span>
                         </div>
                     </div>
+                    <ChevronRight className={`w-4 h-4 text-slate-300 shrink-0 transition-all ${
+                        isSelected ? 'text-indigo-500' : 'opacity-0 group-hover:opacity-100 group-hover:text-indigo-400'
+                    }`} />
                 </div>
 
-                {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-3">
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                        <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="font-semibold">Grade {student.gradeLevel}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="font-semibold">{daysIn} days</span>
-                    </div>
-                    <div className="col-span-2 flex items-center gap-1.5 text-slate-400 truncate">
-                        <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate font-medium">{student.district || 'No district'}</span>
-                    </div>
-                </div>
-
-                {/* Contact & IEP Info */}
-                <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs">
-                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
-                        <UserCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="font-medium truncate">{student.homeSchoolContact || <span className="italic text-slate-300">No lead contact</span>}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
-                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="font-medium truncate">{student.guardianName ? `${student.guardianName}${student.guardianPhone ? ` \u00B7 ${student.guardianPhone}` : ''}` : <span className="italic text-slate-300">No guardian info</span>}</span>
-                    </div>
+                {/* Row 2: Badges */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${unitStyle?.tagBg || 'bg-slate-100 text-slate-600'}`}>
+                        <Icon className="w-3 h-3" />
+                        {student.unitName}
+                    </span>
                     {student.iep === "Yes" && (
-                        <div className={`flex items-center gap-1.5 truncate ${iepDueUrgent ? 'text-rose-600' : 'text-slate-500'}`}>
-                            <CalendarClock className={`w-3.5 h-3.5 shrink-0 ${iepDueUrgent ? 'text-rose-500' : 'text-slate-400'}`} />
-                            <span className="font-medium">IEP Due: {student.iepDueDate ? new Date(student.iepDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : <span className="italic text-slate-300">Not set</span>}</span>
-                        </div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold border ${
+                            iepDueUrgent
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200/60'
+                        }`}>
+                            IEP{iepDueUrgent ? ' \u2013 Due Soon' : ''}
+                        </span>
                     )}
-                </div>
-            </div>
-
-            {/* Footer */}
-            <div className={`flex items-center justify-between px-5 py-2.5 border-t border-slate-100 transition-colors ${
-                isSelected ? 'bg-indigo-50/50' : 'bg-slate-50/80 group-hover:bg-indigo-50/50'
-            }`}>
-                <span className="text-[11px] text-slate-400 font-medium">
-                    Admitted {admitDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </span>
-                <div className={`flex items-center gap-1 text-xs font-bold text-indigo-600 transition-opacity ${
-                    isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                }`}>
-                    {isSelected ? 'Selected' : 'View'} <ChevronRight className="w-3.5 h-3.5" />
+                    {student.district && (
+                        <span className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">
+                            {student.district}
+                        </span>
+                    )}
+                    {noteCount > 0 && (
+                        <span className="ml-auto inline-flex items-center gap-0.5 text-[10px] text-amber-600 font-bold">
+                            <StickyNote className="w-3 h-3" />
+                            {noteCount}
+                        </span>
+                    )}
                 </div>
             </div>
         </div>
@@ -492,7 +505,7 @@ const MyClasses = ({ teacherName, user, onCourseSelect, onManageEnrollment }) =>
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {courses.map(course => (
                         <CourseCard
                             key={course.id}
@@ -520,7 +533,7 @@ const MyClasses = ({ teacherName, user, onCourseSelect, onManageEnrollment }) =>
 
 
 const CourseCard = ({ course, onOpen, onManage, onEdit, onDelete }) => (
-    <div className="p-6 border border-slate-200/80 rounded-2xl shadow-lg bg-white/80 transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-3">
+    <div className="p-6 border border-slate-200/80 rounded-xl shadow-lg bg-white/80 transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-3">
         <div className="flex justify-between items-start">
             <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
                 <BookOpen className="w-7 h-7" />
@@ -579,7 +592,7 @@ const CourseCard = ({ course, onOpen, onManage, onEdit, onDelete }) => (
 );
 
 
-// --- MOCK DATA AND CONFIGS ---
+// --- CONFIGS ---
 
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", icon: Target, color: "text-purple-600", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400", avatarBg: "bg-purple-600", avatarRing: "ring-purple-200", accentBorder: "border-l-purple-600", tagBg: "bg-purple-50 text-purple-700" },

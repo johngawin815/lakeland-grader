@@ -264,13 +264,14 @@ const HubShell = () => {
               <NavButton
                 key={m.id}
                 label={m.title}
+                icon={m.icon}
                 active={currentView === m.id}
                 onClick={() => navigateTo(m.id)}
               />
             ))}
             <button
               onClick={() => setIsSpreadsheetModalOpen(true)}
-              className="px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-2"
+              className="px-3 xl:px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-1.5"
             >
               <FileSpreadsheet size={16} />
               Exports
@@ -311,12 +312,12 @@ const HubShell = () => {
                   </span>
                 </h1>
                 <p className="text-lg text-slate-500 mt-3 max-w-lg mx-auto">
-                  Your command center for student management, grading, and assessments.
+                  Manage your {user.unit} unit roster, gradebooks, and student assessments.
                 </p>
               </div>
 
               {/* === STATS BAR === */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <StatCard icon={Users} value={hubStats.students} label="Total Students"
                   accentColor="bg-gradient-to-br from-blue-500 to-blue-600" delay={200} />
                 <StatCard icon={BookOpen} value={hubStats.courses} label="My Courses"
@@ -389,16 +390,18 @@ const HubShell = () => {
 
 // --- HELPER COMPONENTS ---
 
-const NavButton = ({ label, active, onClick }) => (
+const NavButton = ({ label, icon: Icon, active, onClick }) => (
   <button
     onClick={onClick}
-    className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors duration-200 ${
+    className={`px-3 xl:px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 flex items-center gap-1.5 ${
       active
         ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20'
         : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
     }`}
+    title={label}
   >
-    {label}
+    {Icon && <Icon size={14} className="shrink-0" />}
+    <span className="hidden xl:inline">{label}</span>
   </button>
 );
 
