@@ -179,7 +179,7 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
                   <div>
                     <span className="text-sm font-bold text-slate-800">{s.name}</span>
                     {s.absences > 0 && (
-                      <span className="ml-2 text-[10px] font-bold text-rose-500 bg-rose-100 px-2 py-0.5 rounded-full">
+                      <span className="ml-2 text-xs font-bold text-rose-500 bg-rose-100 px-2 py-0.5 rounded-full">
                         {s.absences} absences
                       </span>
                     )}
@@ -196,7 +196,7 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-indigo-500" /> Assignment Analysis
-          <span className="text-[10px] font-medium text-slate-400 normal-case tracking-normal ml-1">sorted by difficulty (hardest first)</span>
+          <span className="text-xs font-medium text-slate-400 normal-case tracking-normal ml-1">sorted by difficulty (hardest first)</span>
         </h3>
         {assignmentStats.length === 0 ? (
           <p className="text-sm text-slate-400 italic text-center py-4">No graded assignments yet</p>
@@ -268,15 +268,25 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
   );
 };
 
-const StatCard = ({ icon, label, value, sub, color }) => (
-  <div className={`bg-${color}-50/50 rounded-2xl p-5 border border-${color}-100/50`}>
-    <div className="flex items-center gap-2 mb-3">
-      {icon}
-      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</span>
+const STAT_COLORS = {
+  indigo:  { bg: 'bg-indigo-50/50',  border: 'border-indigo-100/50',  text: 'text-indigo-700' },
+  blue:    { bg: 'bg-blue-50/50',    border: 'border-blue-100/50',    text: 'text-blue-700' },
+  emerald: { bg: 'bg-emerald-50/50', border: 'border-emerald-100/50', text: 'text-emerald-700' },
+  rose:    { bg: 'bg-rose-50/50',    border: 'border-rose-100/50',    text: 'text-rose-700' },
+};
+
+const StatCard = ({ icon, label, value, sub, color }) => {
+  const colors = STAT_COLORS[color] || STAT_COLORS.indigo;
+  return (
+    <div className={`${colors.bg} rounded-2xl p-5 border ${colors.border}`}>
+      <div className="flex items-center gap-2 mb-3">
+        {icon}
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</span>
+      </div>
+      <div className={`text-2xl font-black ${colors.text}`}>{value}</div>
+      {sub && <div className="text-xs text-slate-400 font-medium mt-1">{sub}</div>}
     </div>
-    <div className={`text-2xl font-black text-${color}-700`}>{value}</div>
-    {sub && <div className="text-xs text-slate-400 font-medium mt-1">{sub}</div>}
-  </div>
-);
+  );
+};
 
 export default ClassAnalytics;

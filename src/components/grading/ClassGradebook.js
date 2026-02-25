@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Save, X, TrendingUp, BookOpen, GraduationCap, FileDown, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, Trash2, ArrowDown, Users } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Plus, BookOpen, GraduationCap, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, TrendingUp, Undo2, Redo2 } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
@@ -11,202 +11,144 @@ import { generateSmartComment } from '../../utils/commentGenerator';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 import StudentSummaryPanel from './StudentSummaryPanel';
 import ClassAnalytics from './ClassAnalytics';
-
-
-// --- DEFAULT EMPTY DATA ---
-const DEFAULT_CATEGORIES = [
-  { id: 'hw', name: 'Homework', weight: 20 },
-  { id: 'quiz', name: 'Quizzes', weight: 30 },
-  { id: 'test', name: 'Tests', weight: 50 },
-];
+import GradebookTable from './GradebookTable';
+import NewAssignmentModal from './modals/NewAssignmentModal';
+import WeightSettingsModal from './modals/WeightSettingsModal';
+import BulkFillModal from './modals/BulkFillModal';
+import { useGradebook } from '../../hooks/useGradebook';
+import { useAutoSave } from '../../hooks/useAutoSave';
+import { useUndoStack } from '../../hooks/useUndoStack';
 
 
 const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabel = "Back to Dashboard" }) => {
-  // --- STATE MANAGEMENT ---
-  const { setGradeCardPayload } = useGrading();
-  const [students, setStudents] = useState([]);
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
-  const [assignments, setAssignments] = useState([]);
-  const [grades, setGrades] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { setGradeCardPayload, commentTone } = useGrading();
+
+  // --- CENTRAL STATE via custom hook ---
+  const {
+    students, assignments, categories, grades, attendance,
+    finalGrades, loading, dirty, previousGrades,
+    getCategoryPercentage, getTotalAbsences,
+    handleGradeChange: rawGradeChange,
+    handleAddAssignment, handleBulkFill,
+    handleAttendanceUpdate, handleUpdateCategories,
+    markClean,
+  } = useGradebook(course?.id);
+
+  // --- LOCAL UI STATE ---
   const [activeTab, setActiveTab] = useState('grades');
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
-  const [attendance, setAttendance] = useState({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newAssignment, setNewAssignment] = useState({ name: '', categoryId: 'hw', maxScore: 100 });
+  const [selectedStudentForPanel, setSelectedStudentForPanel] = useState(null);
+  const [activeModal, setActiveModal] = useState(null); // 'assignment' | 'weights' | 'bulkFill' | 'export' | null
+  const [bulkFillAssignmentId, setBulkFillAssignmentId] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [studentToExport, setStudentToExport] = useState(null);
-  const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
-  const [editingCategories, setEditingCategories] = useState([]);
-  const [isBulkFillModalOpen, setIsBulkFillModalOpen] = useState(false);
-  const [bulkFillData, setBulkFillData] = useState({ assignmentId: null, value: '' });
-  const [selectedStudentForPanel, setSelectedStudentForPanel] = useState(null);
 
-  // --- DATA FETCHING ---
+  // --- UNDO/REDO ---
+  const undoStack = useUndoStack(50);
+
+  const handleGradeChange = useCallback((studentId, assignmentId, value) => {
+    const oldValue = grades[studentId]?.[assignmentId] ?? '';
+    undoStack.push({ studentId, assignmentId, oldValue, newValue: value });
+    rawGradeChange(studentId, assignmentId, value);
+  }, [grades, rawGradeChange, undoStack]);
+
+  const handleUndo = useCallback(() => {
+    const action = undoStack.undo();
+    if (action) {
+      rawGradeChange(action.studentId, action.assignmentId, action.oldValue);
+    }
+  }, [undoStack, rawGradeChange]);
+
+  const handleRedo = useCallback(() => {
+    const action = undoStack.redo();
+    if (action) {
+      rawGradeChange(action.studentId, action.assignmentId, action.newValue);
+    }
+  }, [undoStack, rawGradeChange]);
+
+  // Global keyboard shortcuts for undo/redo
   useEffect(() => {
-    const loadGradebookData = async () => {
-      if (!course?.id) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        // 1. Fetch enrolled students for this course
-        const enrollments = await databaseService.getEnrollmentsByCourse(course.id);
-
-        if (enrollments.length > 0) {
-          // Fetch full student records to get names
-          const allStudents = await databaseService.getAllStudents();
-          const studentMap = {};
-          allStudents.forEach(s => { studentMap[s.id] = s; });
-
-          const enrolledStudents = enrollments.map(e => {
-            const studentRecord = studentMap[e.studentId];
-            return {
-              id: e.studentId,
-              name: studentRecord?.studentName || studentRecord ? `${studentRecord.firstName || ''} ${studentRecord.lastName || ''}`.trim() : e.studentId,
-              gradeLevel: studentRecord?.gradeLevel || '',
-              enrollmentId: e.id,
-            };
-          });
-          setStudents(enrolledStudents);
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          handleRedo();
         } else {
-          setStudents([]);
+          e.preventDefault();
+          handleUndo();
         }
-
-        // 2. Load saved gradebook data (assignments, categories, attendance, grades)
-        const savedGradebook = await databaseService.getGradebook(course.id);
-        if (savedGradebook) {
-          if (savedGradebook.assignments?.length > 0) setAssignments(savedGradebook.assignments);
-          if (savedGradebook.categories?.length > 0) setCategories(savedGradebook.categories);
-          if (savedGradebook.attendance) setAttendance(savedGradebook.attendance);
-          if (savedGradebook.grades) setGrades(savedGradebook.grades);
-        }
-
-      } catch (error) {
-        console.error("Failed to load gradebook data:", error);
       }
-      setLoading(false);
     };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleUndo, handleRedo]);
 
-    loadGradebookData();
-  }, [course?.id]);
+  // --- AUTO-SAVE ---
+  const saveFn = useCallback(async () => {
+    if (!course?.id) return;
 
-  // --- DERIVED STATE & CALCULATIONS ---
-  const finalGrades = useMemo(() => {
-    const results = {};
-    students.forEach(student => {
-      let totalWeightedScore = 0;
-      let totalWeightUsed = 0;
+    // Save per-student enrollment grades
+    const savePromises = students.map(student => {
+      const percentage = finalGrades[student.id];
+      if (percentage === null || percentage === undefined) return Promise.resolve(null);
 
-      categories.forEach(category => {
-        const catAssignments = assignments.filter(a => a.categoryId === category.id);
-        if (catAssignments.length === 0) return;
-
-        let catPointsEarned = 0;
-        let catMaxPoints = 0;
-        let hasGradedAssignment = false;
-
-        catAssignments.forEach(assignment => {
-          const score = grades[student.id]?.[assignment.id];
-          if (score !== undefined && score !== null && score !== '') {
-            catPointsEarned += parseFloat(score);
-            catMaxPoints += parseFloat(assignment.maxScore);
-            hasGradedAssignment = true;
-          }
-        });
-
-        if (hasGradedAssignment && catMaxPoints > 0) {
-          const catPercentage = catPointsEarned / catMaxPoints;
-          totalWeightedScore += catPercentage * category.weight;
-          totalWeightUsed += category.weight;
-        }
+      return databaseService.saveCourseGrade({
+        id: `${student.id}-${course.id}`,
+        studentId: student.id,
+        courseId: course.id,
+        courseName: course.courseName,
+        subjectArea: course.subjectArea || '',
+        teacherName: course.teacherName || user?.name || '',
+        percentage: parseFloat(percentage.toFixed(2)),
+        letterGrade: calculateLetterGrade(percentage),
+        term: course.term || getCurrentSchoolYear(),
+        status: 'Active',
       });
-
-      results[student.id] = totalWeightUsed > 0 ? (totalWeightedScore / totalWeightUsed) * 100 : null;
     });
-    return results;
-  }, [students, categories, assignments, grades]);
 
-  // --- HELPER: per-category percentage for a student ---
-  const getCategoryPercentage = (studentId, category) => {
-    const catAssignments = assignments.filter(a => a.categoryId === category.id);
-    let earned = 0, max = 0;
-    catAssignments.forEach(a => {
-      const score = grades[studentId]?.[a.id];
-      if (score !== undefined && score !== null && score !== '') {
-        earned += parseFloat(score);
-        max += parseFloat(a.maxScore);
+    await Promise.all(savePromises);
+
+    // Save full gradebook data
+    await databaseService.saveGradebook({
+      id: course.id,
+      assignments,
+      categories,
+      attendance,
+      grades,
+      lastUpdated: new Date().toISOString(),
+    });
+
+    markClean();
+    databaseService.logAudit(user, 'SaveGrades', `Auto-saved ${students.length} student grades for ${course.courseName}.`);
+  }, [course, user, students, finalGrades, assignments, categories, attendance, grades, markClean]);
+
+  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(dirty, saveFn, {
+    delay: 2500,
+    enabled: !loading && !!course?.id,
+  });
+
+  // --- BEFOREUNLOAD WARNING ---
+  useEffect(() => {
+    const handler = (e) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
       }
-    });
-    return max > 0 ? (earned / max) * 100 : null;
-  };
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
 
   // --- HANDLERS ---
-  const handleGradeChange = (studentId, assignmentId, value) => {
-    setGrades(prev => ({ ...prev, [studentId]: { ...prev[studentId], [assignmentId]: value } }));
-  };
-
-  const handleAddAssignment = (e) => {
-    e.preventDefault();
-    setAssignments([...assignments, { ...newAssignment, id: `a${Date.now()}` }]);
-    setIsModalOpen(false);
-    setNewAssignment({ name: '', categoryId: 'hw', maxScore: 100 });
-  };
-
-  const handleOpenWeightModal = () => {
-    setEditingCategories(JSON.parse(JSON.stringify(categories)));
-    setIsWeightModalOpen(true);
-  };
-
-  const handleSaveWeights = (e) => {
-    e.preventDefault();
-    setCategories(editingCategories);
-    setIsWeightModalOpen(false);
-  };
-
-  const handleAddCategory = () => {
-    setEditingCategories([...editingCategories, { id: `cat-${Date.now()}`, name: 'New Category', weight: 0 }]);
-  };
-
-  const handleDeleteCategory = (catId) => {
-    if (editingCategories.length <= 1) return alert("You must have at least one category.");
-    setEditingCategories(editingCategories.filter(c => c.id !== catId));
-  };
-
-  const handleOpenBulkFill = (assignmentId) => {
-    setBulkFillData({ assignmentId, value: '' });
-    setIsBulkFillModalOpen(true);
-  };
-
-  const handleBulkFill = (e) => {
-    e.preventDefault();
-    const { assignmentId, value } = bulkFillData;
-    if (!assignmentId) return;
-
-    setGrades(prev => {
-      const newGrades = { ...prev };
-      students.forEach(student => {
-        if (!newGrades[student.id]) newGrades[student.id] = {};
-        newGrades[student.id] = { ...newGrades[student.id], [assignmentId]: value };
-      });
-      return newGrades;
-    });
-    setIsBulkFillModalOpen(false);
-  };
-
   const handleOpenExport = (student) => {
     setStudentToExport({
       name: student.name,
-      finalPercentage: finalGrades[student.id] || 0
+      finalPercentage: finalGrades[student.id] || 0,
     });
     setIsExportModalOpen(true);
   };
 
-  const handleGenerateGradeCard = (student) => {
+  const handleGenerateGradeCard = useCallback((student) => {
     const percentage = finalGrades[student.id];
     if (percentage === null) return;
 
@@ -222,7 +164,10 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
       overallPercentage: percentage,
       categoryBreakdown,
       totalAbsences: getTotalAbsences(student.id),
-      previousPercentage: null,
+      previousPercentage: previousGrades[student.id] ?? null,
+      tone: commentTone,
+      hasIep: student.iep === 'Yes',
+      iepGoalAreas: student.iepGoalAreas || [],
     });
 
     setGradeCardPayload({
@@ -242,78 +187,15 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     });
 
     if (onNavigateToGradeCards) onNavigateToGradeCards();
-  };
+  }, [finalGrades, categories, getCategoryPercentage, getTotalAbsences, previousGrades, setGradeCardPayload, course, user, onNavigateToGradeCards, commentTone]);
 
-  const handleSaveToCloud = async () => {
-    setIsSaving(true);
-    setSaveMessage('');
-
-    try {
-      // Save per-student enrollment grades
-      const savePromises = students.map(student => {
-        const percentage = finalGrades[student.id];
-
-        if (percentage === null || percentage === undefined) {
-          return Promise.resolve(null);
-        }
-
-        const letterGrade = calculateLetterGrade(percentage);
-
-        const enrollmentData = {
-          id: `${student.id}-${course.id}`,
-          studentId: student.id,
-          courseId: course.id,
-          courseName: course.courseName,
-          subjectArea: course.subjectArea || '',
-          teacherName: course.teacherName || user?.name || '',
-          percentage: parseFloat(percentage.toFixed(2)),
-          letterGrade: letterGrade,
-          term: course.term || getCurrentSchoolYear(),
-          status: 'Active',
-        };
-
-        return databaseService.saveCourseGrade(enrollmentData);
-      });
-
-      await Promise.all(savePromises);
-
-      // Save full gradebook data (assignments, categories, attendance, grades)
-      const gradebookPayload = {
-        id: course.id,
-        assignments,
-        categories,
-        attendance,
-        grades,
-        lastUpdated: new Date().toISOString(),
-      };
-      await databaseService.saveGradebook(gradebookPayload);
-
-      setSaveMessage('Saved!');
-      databaseService.logAudit(user, 'SaveGrades', `Saved ${students.length} student grades for course ${course.courseName}.`);
-
-    } catch (error) {
-      console.error("Error saving grades to cloud:", error);
-      setSaveMessage('Error!');
-      alert('There was an error saving grades to the database. Please check the console for details.');
-    } finally {
-      setIsSaving(false);
-      setTimeout(() => setSaveMessage(''), 3000);
-    }
-  };
-
-  const getTotalAbsences = (studentId) => {
-    return Object.values(attendance).reduce((count, dayRecord) => {
-      return dayRecord[studentId] === 'Absent' ? count + 1 : count;
-    }, 0);
-  };
-
-  const handleAttendanceUpdate = (studentId, status) => {
-    setAttendance(prev => ({ ...prev, [currentDate]: { ...(prev[currentDate] || {}), [studentId]: status } }));
-  };
+  const handleOpenBulkFill = useCallback((assignmentId) => {
+    setBulkFillAssignmentId(assignmentId);
+    setActiveModal('bulkFill');
+  }, []);
 
   const generateReportCard = async () => {
     if (!studentToExport) return;
-
     try {
       const response = await fetch('/templates/quarter_card_template.docx');
       if (!response.ok) throw new Error("Could not find template");
@@ -325,7 +207,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
       const grade = studentToExport.finalPercentage;
       const letterGrade = calculateLetterGrade(grade);
 
-      const data = {
+      doc.render({
         student_name: studentToExport.name,
         grade_level: '11',
         school_year: getCurrentSchoolYear(),
@@ -334,27 +216,41 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         teacher_name: user?.name || 'Teacher',
         total_credits: '3.5',
         comments: `Current grade in ${course.courseName}: ${grade.toFixed(1)}%. ${grade >= 70 ? 'Keep up the good work!' : 'Please see me for extra help.'}`,
-
         eng_class: 'English 11', eng_grade: 'B+', eng_pct: '88',
         math_class: 'Algebra II', math_grade: 'A-', math_pct: '92',
         sci_class: 'Chemistry', sci_grade: 'B', sci_pct: '85',
         soc_class: 'US History', soc_grade: 'A', soc_pct: '95',
-
         elec1_class: course.courseName, elec1_grade: letterGrade, elec1_pct: grade.toFixed(1),
         elec2_class: 'Study Hall', elec2_grade: 'P', elec2_pct: '100',
-      };
-
-      doc.render(data);
+      });
 
       const out = doc.getZip().generate({
         type: 'blob',
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       });
-
       saveAs(out, `${studentToExport.name}_ReportCard.docx`);
     } catch (error) {
       console.error("Error generating report:", error);
       alert("Failed to generate report card. Please ensure templates are available.");
+    }
+  };
+
+  // --- SAVE STATUS DISPLAY ---
+  const getSaveStatusDisplay = () => {
+    switch (saveStatus) {
+      case 'saving':
+        return { icon: <Loader2 className="w-4 h-4 animate-spin" />, text: 'Saving...', cls: 'text-indigo-600' };
+      case 'saved': {
+        const ago = lastSavedAt ? Math.round((Date.now() - lastSavedAt.getTime()) / 1000) : 0;
+        const label = ago < 5 ? 'Saved' : ago < 60 ? `Saved ${ago}s ago` : `Saved ${Math.round(ago / 60)}m ago`;
+        return { icon: <Check className="w-4 h-4" />, text: label, cls: 'text-emerald-600' };
+      }
+      case 'error':
+        return { icon: <XCircle className="w-4 h-4" />, text: 'Save failed', cls: 'text-red-500' };
+      default:
+        return dirty
+          ? { icon: <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />, text: 'Unsaved', cls: 'text-amber-600' }
+          : null;
     }
   };
 
@@ -367,7 +263,8 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     );
   }
 
-  // --- RENDER ---
+  const statusDisplay = getSaveStatusDisplay();
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 font-sans text-slate-800">
       {!course ? (
@@ -380,7 +277,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         </div>
       ) : (
       <>
-        {/* HEADER SECTION */}
+        {/* HEADER */}
         <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             {onExit && (
@@ -400,29 +297,47 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
             </p>
           </div>
 
-          {/* CONTROLS SECTION */}
+          {/* CONTROLS */}
           {activeTab === 'grades' && (
-            <div className="flex gap-3 items-center">
-              {saveMessage && <span className={`text-sm font-bold ${saveMessage === 'Error!' ? 'text-red-500' : 'text-emerald-600'} animate-pulse`}>{saveMessage}</span>}
+            <div className="flex gap-2 items-center flex-wrap">
+              {/* Save status indicator */}
+              {statusDisplay && (
+                <div className={`flex items-center gap-1.5 text-sm font-bold ${statusDisplay.cls}`} aria-live="polite">
+                  {statusDisplay.icon}
+                  <span>{statusDisplay.text}</span>
+                </div>
+              )}
+              {saveStatus === 'error' && (
+                <button onClick={forceSave} className="text-xs font-bold text-red-600 hover:text-red-800 underline">Retry</button>
+              )}
+              {/* Manual save fallback */}
               <button
-                onClick={handleSaveToCloud}
-                disabled={isSaving}
-                className="bg-indigo-600 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                onClick={forceSave}
+                className="bg-white text-slate-600 font-bold py-2 px-4 rounded-xl border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all flex items-center gap-2 text-sm"
+                title="Save now (auto-saves every few seconds)"
               >
-                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (saveMessage === 'Saved!' ? <Check className="w-5 h-5" /> : <CloudUpload className="w-5 h-5" />)}
-                {isSaving ? 'Saving...' : (saveMessage === 'Saved!' ? 'Saved!' : 'Save to Cloud')}
+                <CloudUpload className="w-4 h-4 text-indigo-500" /> Save
+              </button>
+              {/* Undo / Redo */}
+              <div className="flex gap-1">
+                <button onClick={handleUndo} disabled={!undoStack.canUndo} className="p-2 rounded-lg border border-slate-200/80 bg-white text-slate-500 hover:text-indigo-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Undo (Ctrl+Z)">
+                  <Undo2 className="w-4 h-4" />
+                </button>
+                <button onClick={handleRedo} disabled={!undoStack.canRedo} className="p-2 rounded-lg border border-slate-200/80 bg-white text-slate-500 hover:text-indigo-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Redo (Ctrl+Shift+Z)">
+                  <Redo2 className="w-4 h-4" />
+                </button>
+              </div>
+              <button
+                onClick={() => setActiveModal('weights')}
+                className="bg-white text-slate-700 font-bold py-2 px-4 rounded-xl border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all flex items-center gap-2 text-sm"
+              >
+                <Percent className="w-4 h-4 text-indigo-500" /> Weights
               </button>
               <button
-                onClick={handleOpenWeightModal}
-                className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
+                onClick={() => setActiveModal('assignment')}
+                className="bg-white text-slate-700 font-bold py-2 px-4 rounded-xl border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all flex items-center gap-2 text-sm"
               >
-                <Percent className="w-5 h-5 text-indigo-500" /> Weights
-              </button>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-white text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-slate-300/20 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5 text-indigo-500" /> Add Assignment
+                <Plus className="w-4 h-4 text-indigo-500" /> Add Assignment
               </button>
             </div>
           )}
@@ -444,92 +359,29 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         {/* MAIN CONTENT CARD */}
         <div className="max-w-7xl mx-auto bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-[70vh]">
 
-          {/* GRADEBOOK GRID */}
+          {/* GRADEBOOK TABLE */}
           {activeTab === 'grades' && (
-            <div className="overflow-auto flex-1">
-              {students.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <Users className="w-12 h-12 text-slate-300 mb-3" />
-                  <h3 className="text-lg font-bold text-slate-600 mb-1">No Students Enrolled</h3>
-                  <p className="text-sm text-slate-400 max-w-md">
-                    Go back to the Dashboard and use the <strong>Manage Students</strong> button on this course to enroll students first.
-                  </p>
-                </div>
-              ) : (
-              <table className="w-full border-collapse min-w-[800px]">
-                <thead className="bg-slate-100/80 backdrop-blur-sm text-slate-600 text-xs uppercase font-bold tracking-wider sticky top-0 z-10 shadow-sm shadow-slate-200/50">
-                  <tr>
-                    <th className="p-4 text-left border-b border-r border-slate-200/80 sticky left-0 bg-slate-100/80 w-48 min-w-[12rem]">Student</th>
-                    {assignments.map(assignment => (
-                      <th key={assignment.id} className="p-3 text-center border-b border-slate-200/80 min-w-[9rem]">
-                        <div className="flex flex-col items-center gap-1.5">
-                          <span className="truncate max-w-[140px]" title={assignment.name}>{assignment.name}</span>
-                          <div className="flex items-center gap-2">
-                             <span className="text-xs px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 font-semibold">
-                              {categories.find(c => c.id === assignment.categoryId)?.name}
-                            </span>
-                            <span className="text-xs text-slate-400 font-medium">/ {assignment.maxScore}</span>
-                          </div>
-                          <button onClick={() => handleOpenBulkFill(assignment.id)} className="mt-1 text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100 transition-colors">
-                            <ArrowDown className="w-3 h-3" /> Fill All
-                          </button>
-                        </div>
-                      </th>
-                    ))}
-                    <th className="p-4 text-center border-b border-l border-slate-200/80 sticky right-0 bg-slate-100/80 w-32 shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
-                      <div className="flex items-center justify-center gap-2 text-indigo-600">
-                        <TrendingUp className="w-5 h-5" /> Overall
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm text-slate-800 divide-y divide-slate-100/50">
-                  {students.map((student) => {
-                    const finalGrade = finalGrades[student.id];
-                    const isPassing = finalGrade === null || finalGrade >= 60;
-                    return (
-                      <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200 group">
-                        <td className="p-4 font-bold border-r border-slate-200/80 sticky left-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm">
-                          <div className="flex justify-between items-center">
-                            <button onClick={() => setSelectedStudentForPanel(student)} className="text-left hover:text-indigo-600 transition-colors">
-                              {student.name}
-                              {student.gradeLevel && <div className="text-xs text-slate-400 font-normal">Grade {student.gradeLevel}</div>}
-                            </button>
-                            <div className="flex gap-1">
-                              <button onClick={() => handleGenerateGradeCard(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-emerald-600 transition-all p-1" title="Generate Grade Card"><GraduationCap className="w-5 h-5" /></button>
-                              <button onClick={() => handleOpenExport(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 transition-all p-1" title="Export Report Card"><FileDown className="w-5 h-5" /></button>
-                            </div>
-                          </div>
-                        </td>
-                        {assignments.map(assignment => {
-                          const grade = grades[student.id]?.[assignment.id];
-                          const isFailing = grade !== undefined && grade !== '' && parseFloat(grade) < 60;
-                          return (
-                            <td key={assignment.id} className="p-2 text-center border-r border-slate-200/50">
-                              <input type="number" min="0" max={assignment.maxScore} value={grade ?? ''} onChange={(e) => handleGradeChange(student.id, assignment.id, e.target.value)} className={`w-24 p-2 text-center border rounded-lg outline-none transition-all duration-300 font-mono ${isFailing ? 'border-rose-300 bg-rose-50 text-rose-600 font-bold focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'}`} placeholder="—" />
-                            </td>
-                          );
-                        })}
-                        <td className="p-4 text-center font-bold border-l border-slate-200/80 sticky right-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
-                          {finalGrade !== null ? <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${isPassing ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{finalGrade.toFixed(1)}%</span> : <span className="text-slate-400 text-xs italic">N/A</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              )}
-            </div>
+            <GradebookTable
+              students={students}
+              assignments={assignments}
+              categories={categories}
+              grades={grades}
+              finalGrades={finalGrades}
+              onGradeChange={handleGradeChange}
+              onStudentClick={setSelectedStudentForPanel}
+              onExportClick={handleOpenExport}
+              onGradeCardClick={handleGenerateGradeCard}
+              onBulkFill={handleOpenBulkFill}
+            />
           )}
 
-          {/* ATTENDANCE UI */}
+          {/* ATTENDANCE TAB */}
           {activeTab === 'attendance' && (
             <div className="flex flex-col h-full">
               <div className="p-4 bg-slate-50/70 border-b border-slate-200/80 flex items-center gap-4">
                 <label className="text-sm font-bold text-slate-600">Date:</label>
                 <input type="date" value={currentDate} onChange={(e) => setCurrentDate(e.target.value)} className="p-2.5 rounded-xl border-slate-300/70 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-indigo-500/20 outline-none" />
               </div>
-
               <div className="overflow-auto flex-1 p-6">
                 <div className="max-w-4xl mx-auto">
                   {students.length === 0 ? (
@@ -552,7 +404,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                             <td className="p-3">
                               <div className="flex justify-center bg-slate-100/80 rounded-xl p-1 gap-1">
                                 {['Present', 'Absent', 'Tardy'].map(s => (
-                                  <button key={s} onClick={() => handleAttendanceUpdate(student.id, s)} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold border transition-all duration-200 ${status === s ? 'bg-white border-slate-200/90 text-indigo-600 shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:bg-white/50 hover:text-slate-700'}`}>
+                                  <button key={s} onClick={() => handleAttendanceUpdate(currentDate, student.id, s)} className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold border transition-all duration-200 ${status === s ? 'bg-white border-slate-200/90 text-indigo-600 shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:bg-white/50 hover:text-slate-700'}`}>
                                     {s === 'Present' && <Check size={16} />}
                                     {s === 'Absent' && <XCircle size={16} />}
                                     {s === 'Tardy' && <Clock size={16} />}
@@ -597,131 +449,36 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           categories={categories}
           attendance={attendance}
           finalGrade={finalGrades[selectedStudentForPanel.id]}
+          previousPercentage={previousGrades[selectedStudentForPanel.id] ?? null}
           onClose={() => setSelectedStudentForPanel(null)}
           onGenerateGradeCard={handleGenerateGradeCard}
+          onGradeChange={handleGradeChange}
         />
       )}
 
-      {/* MODALS */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-                <span className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600"><BookOpen className="w-6 h-6" /></span> New Assignment
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200/50">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <form onSubmit={handleAddAssignment} className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-slate-600 mb-1.5">Name</label>
-                <input type="text" required value={newAssignment.name} onChange={(e) => setNewAssignment({...newAssignment, name: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300/80 focus:ring-4 focus:ring-indigo-500/20 outline-none text-base transition-all" placeholder="e.g. Chapter 5 Quiz" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1.5">Category</label>
-                  <select value={newAssignment.categoryId} onChange={(e) => setNewAssignment({...newAssignment, categoryId: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300/80 focus:ring-4 focus:ring-indigo-500/20 outline-none bg-white text-base transition-all">
-                    {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-600 mb-1.5">Max Score</label>
-                  <input type="number" required min="1" value={newAssignment.maxScore} onChange={(e) => setNewAssignment({...newAssignment, maxScore: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300/80 focus:ring-4 focus:ring-indigo-500/20 outline-none text-base transition-all" />
-                </div>
-              </div>
-              <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200/80 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-colors duration-200 ease-in-out">Cancel</button>
-                <button type="submit" className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-300 ease-in-out flex items-center justify-center gap-2">
-                  <Save className="w-5 h-5" /> Save Assignment
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* EXTRACTED MODALS */}
+      <NewAssignmentModal
+        isOpen={activeModal === 'assignment'}
+        onClose={() => setActiveModal(null)}
+        categories={categories}
+        onSave={handleAddAssignment}
+      />
 
-      {/* WEIGHT SETTINGS MODAL */}
-      {isWeightModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-                <span className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600"><Percent className="w-6 h-6" /></span> Category Weights
-              </h3>
-              <button onClick={() => setIsWeightModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200/50">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveWeights} className="p-6 space-y-4">
-              <div className="space-y-3">
-                {editingCategories.map((cat, index) => (
-                  <div key={cat.id} className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Category Name</label>
-                      <input type="text" value={cat.name} onChange={(e) => {
-                        const newCats = [...editingCategories];
-                        newCats[index].name = e.target.value;
-                        setEditingCategories(newCats);
-                      }} className="w-full p-2.5 rounded-lg border border-slate-300/80 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm font-bold text-slate-700" />
-                    </div>
-                    <div className="w-24">
-                      <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Weight (%)</label>
-                      <input type="number" min="0" max="100" value={cat.weight} onChange={(e) => {
-                        const newCats = [...editingCategories];
-                        newCats[index].weight = parseFloat(e.target.value) || 0;
-                        setEditingCategories(newCats);
-                      }} className="w-full p-2.5 rounded-lg border border-slate-300/80 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm font-bold text-slate-700 text-center" />
-                    </div>
-                    <button type="button" onClick={() => handleDeleteCategory(cat.id)} className="mt-6 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="Remove Category">
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                ))}
-                <button type="button" onClick={handleAddCategory} className="w-full py-2 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-bold text-sm hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
-                  <Plus className="w-4 h-4" /> Add Category
-                </button>
-              </div>
-              <div className="pt-4 border-t border-slate-200/80 flex justify-between items-center">
-                <div className="text-sm font-bold text-slate-600">Total: <span className={`${editingCategories.reduce((sum, c) => sum + c.weight, 0) === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>{editingCategories.reduce((sum, c) => sum + c.weight, 0)}%</span></div>
-                <button type="submit" className="bg-indigo-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all">Save Weights</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <WeightSettingsModal
+        isOpen={activeModal === 'weights'}
+        onClose={() => setActiveModal(null)}
+        categories={categories}
+        onSave={handleUpdateCategories}
+      />
 
-      {/* BULK FILL MODAL */}
-      {isBulkFillModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl shadow-slate-900/10 w-full max-w-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-200/80 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-                <span className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600"><ArrowDown className="w-6 h-6" /></span> Bulk Fill Grades
-              </h3>
-              <button onClick={() => setIsBulkFillModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-200/50">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <form onSubmit={handleBulkFill} className="p-6 space-y-5">
-              <div>
-                <p className="text-sm text-slate-500 mb-4">
-                  This will overwrite grades for all students for <strong>{assignments.find(a => a.id === bulkFillData.assignmentId)?.name}</strong>.
-                </p>
-                <label className="block text-sm font-bold text-slate-600 mb-1.5">Grade to Apply</label>
-                <input type="number" autoFocus value={bulkFillData.value} onChange={(e) => setBulkFillData({...bulkFillData, value: e.target.value})} className="w-full p-3 rounded-xl border border-slate-300/80 focus:ring-4 focus:ring-indigo-500/20 outline-none text-base transition-all" placeholder="e.g. 100" />
-              </div>
-              <div className="pt-2 flex gap-3">
-                <button type="button" onClick={() => setIsBulkFillModalOpen(false)} className="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200/80 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-colors">Cancel</button>
-                <button type="submit" className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all">Apply</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <BulkFillModal
+        isOpen={activeModal === 'bulkFill'}
+        onClose={() => setActiveModal(null)}
+        assignmentName={assignments.find(a => a.id === bulkFillAssignmentId)?.name || ''}
+        studentCount={students.length}
+        onApply={(value) => handleBulkFill(bulkFillAssignmentId, value)}
+      />
 
-      {/* EXPORT MODAL */}
       <ReportCardExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}

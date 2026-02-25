@@ -63,6 +63,9 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [aggregationBanner, setAggregationBanner] = useState('');
   const [isFetchingGrades, setIsFetchingGrades] = useState(false);
+  const [batchStudents, setBatchStudents] = useState([]);
+  const [batchGrades, setBatchGrades] = useState({});
+  const [isBatchLoading, setIsBatchLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     studentName: activeStudent || '',
@@ -366,8 +369,38 @@ const GradeGenerator = ({ user, activeStudent }) => {
                 {showPreview ? 'Hide Preview' : 'Preview'}
               </button>
 
-              <button onClick={() => setIsBatchModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-                <Users className="w-4 h-4" /> Batch
+              <button onClick={async () => {
+                setIsBatchLoading(true);
+                try {
+                  const allStudents = await databaseService.getAllStudents();
+                  const active = allStudents.filter(s => s.active !== false);
+                  const studentsForBatch = active.map(s => ({
+                    id: s.id,
+                    name: s.studentName || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+                  }));
+                  const gradesMap = {};
+                  for (const student of studentsForBatch) {
+                    try {
+                      const enrollments = await databaseService.getStudentEnrollments(student.id);
+                      if (enrollments.length > 0) {
+                        const grades = enrollments.filter(e => e.percentage != null);
+                        if (grades.length > 0) {
+                          const avg = grades.reduce((sum, e) => sum + e.percentage, 0) / grades.length;
+                          gradesMap[student.id] = avg;
+                        }
+                      }
+                    } catch { /* skip */ }
+                  }
+                  setBatchStudents(studentsForBatch);
+                  setBatchGrades(gradesMap);
+                } catch (err) {
+                  console.error('Failed to load batch data:', err);
+                } finally {
+                  setIsBatchLoading(false);
+                }
+                setIsBatchModalOpen(true);
+              }} disabled={isBatchLoading} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">
+                {isBatchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />} Batch
               </button>
 
               <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
@@ -564,8 +597,8 @@ const GradeGenerator = ({ user, activeStudent }) => {
       <BatchExportModal
         isOpen={isBatchModalOpen}
         onClose={() => setIsBatchModalOpen(false)}
-        students={[]}
-        finalGrades={{}}
+        students={batchStudents}
+        finalGrades={batchGrades}
         formData={formData}
         templateConfig={currentConfig}
       />
@@ -573,7 +606,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
   );
 };
 
-const Input = ({ label, name, value, onChange, type = "text", placeholder }) => (<div className="flex flex-col gap-1"><label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</label><input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="p-2.5 rounded border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" /></div>);
+const Input = ({ label, name, value, onChange, type = "text", placeholder }) => (<div className="flex flex-col gap-1"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label><input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="p-2.5 rounded border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" /></div>);
 const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false }) => (<div className="flex flex-col md:flex-row gap-3 items-end md:items-center bg-slate-50 p-3 rounded-lg border border-slate-100"><div className="flex items-center gap-2 w-full md:w-48"><div className="text-slate-400">{icon}</div>{isElective ? <input name={`${prefix}Class`} value={data[`${prefix}Class`]} onChange={onChange} placeholder="Elective Name" className="w-full bg-transparent border-b border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold text-slate-700 pb-1" /> : <span className="text-sm font-bold text-slate-700">{label}</span>}</div><div className="flex gap-2 flex-1 w-full"><div className="flex-1"><input name={`${prefix}Grade`} value={data[`${prefix}Grade`]} onChange={onChange} placeholder="Letter Grade" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" /></div><div className="flex-1"><input name={`${prefix}Pct`} value={data[`${prefix}Pct`]} onChange={onChange} placeholder="Percentage" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" /></div></div></div>);
 const PrintRow = ({ label, grade, pct }) => { if (!label && !grade) return null; return (<tr><td className="border border-black p-2">{label}</td><td className="border border-black p-2 text-center font-bold">{grade}</td><td className="border border-black p-2 text-center text-gray-600">{pct}</td></tr>); };
 

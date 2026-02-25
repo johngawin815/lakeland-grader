@@ -41,7 +41,7 @@ const GradeCardPreview = ({ formData, templateConfig }) => {
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-lg overflow-hidden text-sm">
       {/* Header Band */}
       <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-6">
-        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-200 mb-1">
+        <div className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-200 mb-1">
           {templateConfig?.label || 'Grade Report'}
         </div>
         <h2 className="text-2xl font-black tracking-tight">
@@ -69,7 +69,7 @@ const GradeCardPreview = ({ formData, templateConfig }) => {
       <div className="p-6">
         <table className="w-full">
           <thead>
-            <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <tr className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               <th className="text-left pb-3 pl-3">Class</th>
               <th className="text-center pb-3 w-20">Grade</th>
               <th className="text-center pb-3 w-20">%</th>
@@ -101,14 +101,14 @@ const GradeCardPreview = ({ formData, templateConfig }) => {
       {formData.comments && (
         <div className="px-6 pb-6">
           <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/60">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Comments</div>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Comments</div>
             <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{formData.comments}</p>
           </div>
         </div>
       )}
 
       {/* Footer */}
-      <div className="px-6 py-3 bg-slate-50/70 border-t border-slate-200/60 text-center text-[10px] text-slate-400 font-medium">
+      <div className="px-6 py-3 bg-slate-50/70 border-t border-slate-200/60 text-center text-xs text-slate-400 font-medium">
         Lakeland Regional School &middot; Generated {new Date().toLocaleDateString()}
       </div>
     </div>
