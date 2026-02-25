@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { ClipboardList, Eye, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, ChevronDown, Filter, Loader2 } from 'lucide-react';
+import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2 } from 'lucide-react';
 
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", icon: Target },
@@ -240,53 +240,117 @@ function KTEAReporter({ user, activeStudent }) {
         units[u].push(s);
       });
 
+      // Load the master template
+      const response = await fetch('/templates/ktea_master.xlsx');
+      if (!response.ok) throw new Error('Could not find template: ktea_master.xlsx');
+      const templateBuffer = await response.arrayBuffer();
+
       const workbook = new ExcelJS.Workbook();
-      Object.keys(units).sort().forEach(unitName => {
-        const sheet = workbook.addWorksheet(unitName);
+      await workbook.xlsx.load(templateBuffer);
 
-        const preStyle = { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3F2FD' } } };
-        const postStyle = { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E9' } } };
-        const infoStyle = { alignment: { horizontal: 'left' } };
+      // The template has a single sheet ("Harmony ") we use as the base
+      const templateSheet = workbook.worksheets[0];
 
-        sheet.columns = [
-            { header: 'Student Name', key: 'studentName', width: 25, style: infoStyle },
-            { header: 'Grade', key: 'gradeLevel', width: 8, style: { alignment: { horizontal: 'center' } } },
-            { header: 'Admit Date', key: 'admitDate', width: 12, style: { alignment: { horizontal: 'center' } } },
-            { header: 'Discharge Date', key: 'dischargeDate', width: 12, style: { alignment: { horizontal: 'center' } } },
-            { header: 'Teacher', key: 'teacherName', width: 20, style: infoStyle },
-            { header: 'Pre Read Raw', key: 'preReadingRaw', width: 12, style: preStyle },
-            { header: 'Pre Read Std', key: 'preReadingStd', width: 12, style: preStyle },
-            { header: 'Pre Read GE', key: 'preReadingGE', width: 12, style: preStyle },
-            { header: 'Pre Math Raw', key: 'preMathRaw', width: 12, style: preStyle },
-            { header: 'Pre Math Std', key: 'preMathStd', width: 12, style: preStyle },
-            { header: 'Pre Math GE', key: 'preMathGE', width: 12, style: preStyle },
-            { header: 'Pre Writ Raw', key: 'preWritingRaw', width: 12, style: preStyle },
-            { header: 'Pre Writ Std', key: 'preWritingStd', width: 12, style: preStyle },
-            { header: 'Pre Writ GE', key: 'preWritingGE', width: 12, style: preStyle },
-            { header: 'Post Read Raw', key: 'postReadingRaw', width: 12, style: postStyle },
-            { header: 'Post Read Std', key: 'postReadingStd', width: 12, style: postStyle },
-            { header: 'Post Read GE', key: 'postReadingGE', width: 12, style: postStyle },
-            { header: 'Post Math Raw', key: 'postMathRaw', width: 12, style: postStyle },
-            { header: 'Post Math Std', key: 'postMathStd', width: 12, style: postStyle },
-            { header: 'Post Math GE', key: 'postMathGE', width: 12, style: postStyle },
-            { header: 'Post Writ Raw', key: 'postWritingRaw', width: 12, style: postStyle },
-            { header: 'Post Writ Std', key: 'postWritingStd', width: 12, style: postStyle },
-            { header: 'Post Writ GE', key: 'postWritingGE', width: 12, style: postStyle },
-        ];
+      // Column mapping matching the template layout (row 5 headers):
+      // A=Name, B=Grade Level, C=Age, D=Sped/504, E=Title 1
+      // F/G/H=Pre Reading (Raw/Standard/GE), I/J/K=Pre Math, L/M/N=Pre Writing
+      // O/P/Q=Post Reading, R/S/T=Post Math, U/V/W=Post Writing
+      // X=Admit, Y=Discharge, Z=Name (teacher)
+      const DATA_START_ROW = 6;
 
-        const headerRow = sheet.getRow(1);
-        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
-        headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
-        headerRow.height = 24;
+      const fillSheet = (sheet, unitName, students) => {
+        // Fill header fields
+        sheet.getCell('A1').value = unitName;
 
-        units[unitName].forEach(s => {
-            sheet.addRow({
-                ...s,
-                preReadingRaw: parseFloat(s.preReadingRaw) || s.preReadingRaw,
-                preReadingStd: parseFloat(s.preReadingStd) || s.preReadingStd,
-            });
+        // Fill student data starting at row 6
+        students.forEach((s, idx) => {
+          const row = DATA_START_ROW + idx;
+          const r = sheet.getRow(row);
+
+          r.getCell(1).value = s.studentName || '';          // A - Name
+          r.getCell(2).value = s.gradeLevel || '';           // B - Grade Level
+          r.getCell(3).value = s.age || '';                  // C - Age
+          r.getCell(4).value = s.sped504 || '';              // D - Sped/504
+          r.getCell(5).value = s.title1 || '';               // E - Title 1
+
+          // Pre-Test scores
+          r.getCell(6).value = parseFloat(s.preReadingRaw) || s.preReadingRaw || '';    // F
+          r.getCell(7).value = parseFloat(s.preReadingStd) || s.preReadingStd || '';    // G
+          r.getCell(8).value = s.preReadingGE || '';         // H
+          r.getCell(9).value = parseFloat(s.preMathRaw) || s.preMathRaw || '';          // I
+          r.getCell(10).value = parseFloat(s.preMathStd) || s.preMathStd || '';         // J
+          r.getCell(11).value = s.preMathGE || '';           // K
+          r.getCell(12).value = parseFloat(s.preWritingRaw) || s.preWritingRaw || '';   // L
+          r.getCell(13).value = parseFloat(s.preWritingStd) || s.preWritingStd || '';   // M
+          r.getCell(14).value = s.preWritingGE || '';        // N
+
+          // Post-Test scores
+          r.getCell(15).value = parseFloat(s.postReadingRaw) || s.postReadingRaw || ''; // O
+          r.getCell(16).value = parseFloat(s.postReadingStd) || s.postReadingStd || ''; // P
+          r.getCell(17).value = s.postReadingGE || '';       // Q
+          r.getCell(18).value = parseFloat(s.postMathRaw) || s.postMathRaw || '';       // R
+          r.getCell(19).value = parseFloat(s.postMathStd) || s.postMathStd || '';       // S
+          r.getCell(20).value = s.postMathGE || '';          // T
+          r.getCell(21).value = parseFloat(s.postWritingRaw) || s.postWritingRaw || ''; // U
+          r.getCell(22).value = parseFloat(s.postWritingStd) || s.postWritingStd || ''; // V
+          r.getCell(23).value = s.postWritingGE || '';       // W
+
+          r.getCell(24).value = s.admitDate || '';           // X - Admit
+          r.getCell(25).value = s.dischargeDate || '';       // Y - Discharge
+          r.getCell(26).value = s.teacherName || '';         // Z - Teacher Name
+
+          r.commit();
         });
+      };
+
+      // Use the template sheet for the first unit, duplicate for the rest
+      const unitNames = Object.keys(units).sort();
+
+      if (unitNames.length > 0) {
+        // Rename the template sheet to the first unit
+        templateSheet.name = unitNames[0];
+        fillSheet(templateSheet, unitNames[0], units[unitNames[0]]);
+
+        // For additional units, duplicate the template approach:
+        // ExcelJS doesn't have native sheet cloning, so we create new sheets
+        // with the same header structure
+        for (let i = 1; i < unitNames.length; i++) {
+          const unitName = unitNames[i];
+          const newSheet = workbook.addWorksheet(unitName);
+
+          // Copy header rows (1-5) from template
+          for (let rowNum = 1; rowNum <= 5; rowNum++) {
+            const srcRow = templateSheet.getRow(rowNum);
+            const dstRow = newSheet.getRow(rowNum);
+            srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+              const dstCell = dstRow.getCell(colNumber);
+              dstCell.value = cell.value;
+              dstCell.style = JSON.parse(JSON.stringify(cell.style));
+            });
+            dstRow.height = srcRow.height;
+          }
+
+          // Copy column widths
+          for (let col = 1; col <= 26; col++) {
+            const srcCol = templateSheet.getColumn(col);
+            const dstCol = newSheet.getColumn(col);
+            if (srcCol.width) dstCol.width = srcCol.width;
+          }
+
+          // Copy merged cells for header area
+          templateSheet.model.merges.forEach(merge => {
+            try { newSheet.mergeCells(merge); } catch (e) { /* skip if already merged */ }
+          });
+
+          fillSheet(newSheet, unitName, units[unitName]);
+        }
+      }
+
+      // Remove extra empty sheets (Sheet2, Sheet3 from template)
+      workbook.worksheets.forEach(ws => {
+        if (ws.name === 'Sheet2' || ws.name === 'Sheet3') {
+          workbook.removeWorksheet(ws.id);
+        }
       });
 
       const buffer = await workbook.xlsx.writeBuffer();

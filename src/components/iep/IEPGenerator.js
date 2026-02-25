@@ -846,35 +846,83 @@ const TransitionStep = ({ draft, setDraft }) => (
         className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 w-5 h-5"
       />
       <div>
-        <div className="text-sm font-bold text-slate-700">Include Transition Plan</div>
+        <div className="text-sm font-bold text-slate-700">Include Transition Plan (Form C)</div>
         <div className="text-xs text-slate-500">Required for students age 14+ or grade 9+</div>
       </div>
     </label>
 
     {draft.hasTransitionPlan && (
       <>
-        <NarrativeField
-          label="Post-Secondary Education Goal"
-          value={draft.transition.postSecondaryEducation}
-          onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, postSecondaryEducation: v } }))}
-          placeholder="After completing high school, the student will..."
-          rows={3}
-        />
-        <NarrativeField
-          label="Employment Goal"
-          value={draft.transition.postSecondaryEmployment}
-          onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, postSecondaryEmployment: v } }))}
-          placeholder="After completing high school, the student will pursue employment in..."
-          rows={3}
-        />
-        <NarrativeField
-          label="Independent Living Goal"
-          value={draft.transition.independentLiving}
-          onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, independentLiving: v } }))}
-          placeholder="The student will demonstrate the ability to..."
-          rows={3}
-        />
+        {/* Graduation & Assessment Dates */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Graduation & Assessment Info</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <SmallField label="Anticipated Graduation Date" value={draft.anticipatedGraduationDate} onChange={v => setDraft(prev => ({ ...prev, anticipatedGraduationDate: v }))} placeholder="MM/DD/YYYY" />
+            <SmallField label="Career Interest Areas" value={draft.careerInterestAreas} onChange={v => setDraft(prev => ({ ...prev, careerInterestAreas: v }))} placeholder="e.g. Healthcare, Technology" />
+            <SmallField label="Assessment Date 1 (Career Survey)" value={draft.transitionAssessmentDate1} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate1: v }))} placeholder="MM/DD/YYYY" />
+            <SmallField label="Assessment Date 2 (KTEA)" value={draft.transitionAssessmentDate2} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate2: v }))} placeholder="MM/DD/YYYY" />
+            <SmallField label="Assessment Date 3 (Living Skills)" value={draft.transitionAssessmentDate3} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate3: v }))} placeholder="MM/DD/YYYY" />
+          </div>
+        </div>
 
+        {/* Employment Section */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+          <h4 className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+            <Wrench className="w-3.5 h-3.5" /> Employment
+          </h4>
+          <NarrativeField
+            label="Employment Goal"
+            value={draft.transition.postSecondaryEmployment}
+            onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, postSecondaryEmployment: v } }))}
+            placeholder="After high school, the student will pursue employment in..."
+            rows={2}
+          />
+          <NarrativeField label="Skills Already Obtained" value={draft.employmentSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, employmentSkillsObtained: v }))} placeholder="List employment-related skills the student already has..." rows={2} />
+          <NarrativeField label="Skills Needed Before Graduation" value={draft.employmentSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, employmentSkillsNeeded: v }))} placeholder="Resume writing, job applications, interview skills..." rows={2} />
+          <NarrativeField label="School Will Provide" value={draft.schoolEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, schoolEmploymentServices: v }))} placeholder="The school will provide career exploration and planning on a weekly basis." rows={2} />
+          <NarrativeField label="Student Will" value={draft.studentEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, studentEmploymentServices: v }))} placeholder="The student will participate in career exploration and planning..." rows={2} />
+          <NarrativeField label="Parent/Guardian Will" value={draft.parentEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, parentEmploymentServices: v }))} placeholder="The parent/guardian will assist the student with locating services..." rows={2} />
+        </div>
+
+        {/* Education/Training Section */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+          <h4 className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5" /> Education / Training
+          </h4>
+          <NarrativeField
+            label="Education/Training Goal"
+            value={draft.transition.postSecondaryEducation}
+            onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, postSecondaryEducation: v } }))}
+            placeholder="After completing high school, the student will..."
+            rows={2}
+          />
+          <NarrativeField label="Skills Already Obtained" value={draft.educationSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, educationSkillsObtained: v }))} placeholder="Use electronic media for career info, variety of resources..." rows={2} />
+          <NarrativeField label="Skills Needed Before Graduation" value={draft.educationSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, educationSkillsNeeded: v }))} placeholder="Identify vocational service providers, sources of financial aid..." rows={2} />
+          <NarrativeField label="School Will Provide" value={draft.schoolEducationServices} onChange={v => setDraft(prev => ({ ...prev, schoolEducationServices: v }))} placeholder="The school will provide educational opportunities for the student to gain skills to graduate..." rows={2} />
+          <NarrativeField label="Student Will" value={draft.studentEducationServices} onChange={v => setDraft(prev => ({ ...prev, studentEducationServices: v }))} placeholder="The student will take advantage of secondary educational opportunities..." rows={2} />
+          <NarrativeField label="Parent/Guardian Will" value={draft.parentEducationServices} onChange={v => setDraft(prev => ({ ...prev, parentEducationServices: v }))} placeholder="The parent/guardian will assist the student in locating post-secondary educational facilities..." rows={2} />
+        </div>
+
+        {/* Independent Living Section */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+          <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5" /> Independent Living
+          </h4>
+          <NarrativeField
+            label="Independent Living Goal"
+            value={draft.transition.independentLiving}
+            onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, independentLiving: v } }))}
+            placeholder="The student will demonstrate the ability to..."
+            rows={2}
+          />
+          <NarrativeField label="Skills Already Obtained" value={draft.independentLivingSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, independentLivingSkillsObtained: v }))} placeholder="Skills the student already has for independent living..." rows={2} />
+          <NarrativeField label="Skills Needed Before Graduation" value={draft.independentLivingSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, independentLivingSkillsNeeded: v }))} placeholder="Banking, checking account, ATM, budgeting, cooking..." rows={2} />
+          <NarrativeField label="School Will Provide" value={draft.schoolIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, schoolIndependentLivingServices: v }))} placeholder="The school will provide life skills educational materials..." rows={2} />
+          <NarrativeField label="Student Will" value={draft.studentIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, studentIndependentLivingServices: v }))} placeholder="The student will study and complete the life skills materials..." rows={2} />
+          <NarrativeField label="Parent/Guardian Will" value={draft.parentIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, parentIndependentLivingServices: v }))} placeholder="The parent/guardian will assist the student in determining independent living resources..." rows={2} />
+        </div>
+
+        {/* Skills Checklist */}
         <div>
           <span className="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-3">Transition Skills Checklist</span>
           {Object.entries(TRANSITION_SKILL_AREAS).map(([area, skills]) => (
