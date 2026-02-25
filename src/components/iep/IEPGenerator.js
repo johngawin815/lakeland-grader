@@ -28,6 +28,27 @@ const STEPS = [
 
 const MEETING_TYPES = ['Annual Review', 'Initial', 'Reevaluation', 'Amendment'];
 
+const DECISION_MAKER_ROLES = ['Parent', 'Legal Guardian', 'Educational Surrogate', 'Foster Parent', 'Child [age 18+]', 'Other'];
+
+const ATTENDANCE_METHODS = ['In Person', 'By Phone', 'By Video', 'Written Input', 'Excused'];
+
+const MEASUREMENT_METHODS = [
+  { id: 'Work', label: 'Work samples' },
+  { id: 'Tests', label: 'Curriculum based tests' },
+  { id: 'Portfolios', label: 'Portfolios' },
+  { id: 'Checklists', label: 'Checklists' },
+  { id: 'ScoringGuides', label: 'Scoring guides' },
+  { id: 'Obs', label: 'Observation chart' },
+  { id: 'Readingrecord', label: 'Reading record' },
+  { id: 'Other', label: 'Other' },
+];
+
+const GOAL_DOMAINS = [
+  { id: 'Ed', label: 'Post-secondary Education/Training' },
+  { id: 'Emp', label: 'Employment' },
+  { id: 'Liv', label: 'Independent Living' },
+];
+
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const IEPGenerator = ({ user }) => {
@@ -157,6 +178,8 @@ const IEPGenerator = ({ user }) => {
       goalText: goal.goalText.replace(/{name}/g, selectedStudent?.firstName || 'The student'),
       benchmarks: goal.benchmarks.map(b => ({ text: b, targetDate: '', status: 'Not Started' })),
       measureMethod: goal.measureMethod,
+      measureMethods: [],
+      domains: [],
       baselineData: '',
       targetDate: '',
       sourceId: goal.id,
@@ -218,113 +241,145 @@ const IEPGenerator = ({ user }) => {
   const handleExportDocx = async () => {
     const d = draft;
 
-    // Choose template based on whether transition plan is included
-    const templateFile = d.hasTransitionPlan
-      ? 'iep_template_with_transition.docx'
-      : 'iep_template.docx';
-
     try {
-      // Fetch the template
-      const response = await fetch(`/templates/${templateFile}`);
-      if (!response.ok) throw new Error(`Could not find template: ${templateFile}`);
+      // Fetch the template — single master form
+      const response = await fetch('/templates/IEP Master Form.docx');
+      if (!response.ok) throw new Error('Could not find template: IEP Master Form.docx');
       const arrayBuffer = await response.arrayBuffer();
 
       // Initialize docxtemplater
       const zip = new PizZip(arrayBuffer);
       const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
-      // Build the data mapping
+      // Build the data mapping to match exact template placeholders
       const data = {
-        // Demographics
-        student_name: d.studentName || '',
-        disability_category: d.disabilityCategory || '',
-        secondary_disability: d.secondaryDisability || '',
-        student_address: d.studentAddress || '',
-        student_phone: d.studentPhone || '',
-        birth_date: d.birthDate || '',
-        student_age: d.studentAge || '',
-        grade_level: String(d.gradeLevel || ''),
-        resident_district: d.district || '',
+        // Page 1: Demographics
+        residentName: d.studentName || '',
+        dob: d.birthDate || '',
+        grade: String(d.gradeLevel || ''),
+        address: d.studentAddress || '',
+        phone: d.studentPhone || '',
+        Age: d.studentAge || '',
+        StudentID: d.studentMosisId || '',
+        residentDistrict: d.district || '',
 
         // Decision Maker
-        decision_maker_name: d.decisionMakerName || '',
-        decision_maker_address: d.decisionMakerAddress || '',
-        decision_maker_phone: d.decisionMakerPhone || '',
-        decision_maker_email: d.decisionMakerEmail || '',
-        decision_maker_fax: d.decisionMakerFax || '',
+        decisionMakerRole: d.decisionMakerRole || '',
+        edName: d.decisionMakerName || '',
+        edAddress: d.decisionMakerAddress || '',
+        edPhone: d.decisionMakerPhone || '',
+        edEmail: d.decisionMakerEmail || '',
+        'edEmail ': d.decisionMakerEmail || '',
 
         // Case Manager
-        case_manager: d.caseManager || user?.name || '',
-        case_manager_phone: d.caseManagerPhone || '',
+        caseManager: d.caseManager || user?.name || '',
+        caseManagerPhone: d.caseManagerPhone || '',
+
+        // IEP Type checkmarks
+        initial: d.meetingType === 'Initial' ? '\u2612' : '\u2610',
+        annual: d.meetingType === 'Annual Review' ? '\u2612' : '\u2610',
 
         // Dates
-        eval_date: d.evalDate || '',
-        prev_iep_date: d.prevIepDate || '',
-        triennial_date: d.triennialDate || '',
-        iep_meeting_date: d.iepDate || '',
-        iep_initiation_date: d.iepInitiationDate || '',
-        annual_review_date: d.iepDueDate || '',
-        copy_provided_date: d.copyProvidedDate || '',
+        evalDate: d.evalDate || '',
+        prevIepDate: d.prevIepDate || '',
+        nextEvalDate: d.triennialDate || '',
+        meetingDate: d.iepDate || '',
+        initiationDate: d.iepInitiationDate || '',
+        projectedReviewDate: d.iepDueDate || '',
+        parentCopyDate: d.copyProvidedDate || '',
 
-        // Present Levels (PLAAFP)
-        disability_impact: [d.academicLevels, d.functionalLevels, d.impactStatement].filter(Boolean).join('\n\n') || '',
-        student_strengths: d.strengthsText || '',
-        parent_concerns: d.parentInput || '',
-        changes_functioning: d.changesFunctioning || '',
-        eval_summary: buildEvalSummary(d, kteaData),
-        transition_assessments: d.transitionAssessments || '',
+        // Participants
+        parent1Method: d.parent1Method || '',
+        parent2Method: d.parent2Method || '',
+        studentMethod: d.studentMethod || '',
+        leaRepMethod: d.leaRepMethod || '',
+        spedTeacherMethod: d.spedTeacherMethod || '',
+        regTeacherMethod: d.regTeacherMethod || '',
+        interpreterMethod: d.interpreterMethod || '',
+        PartcRepresentativeMethod: d.partCRepMethod || '',
+        transistionRepresentativeMethod: d.transitionRepMethod || '',
+        otherMethod: d.otherParticipantMethod || '',
 
-        // Goals (up to 4)
-        ...buildGoalData(d.goals, 1),
-        ...buildGoalData(d.goals, 2),
-        ...buildGoalData(d.goals, 3),
-        ...buildGoalData(d.goals, 4),
+        // Page 2: Present Levels (PLAAFP)
+        disabilityImpact: [d.academicLevels, d.functionalLevels, d.impactStatement].filter(Boolean).join('\n\n') || '',
+        studentStrengths: d.strengthsText || '',
+        parentConcerns: d.parentInput || '',
+        changesInFunctioning: d.changesFunctioning || '',
+        evalSummary: buildEvalSummary(d, kteaData),
+        transitionSummary: d.transitionAssessments || '',
 
-        // Related Services (up to 3)
-        ...buildServiceData(d.services, 1),
-        ...buildServiceData(d.services, 2),
-        ...buildServiceData(d.services, 3),
+        // Page 4-5: Goals (array for {#goals}...{/goals} loop)
+        goals: d.goals.map((goal, i) => ({
+          id: i + 1,
+          goalText: goal.goalText || '',
+          objective1Text: goal.benchmarks?.[0]?.text || '',
+          objective2Text: goal.benchmarks?.[1]?.text || '',
+          objective3Text: goal.benchmarks?.[2]?.text || '',
+          domain_Ed: (goal.domains || []).includes('Ed') ? '\u2612' : '\u2610',
+          domain_Emp: (goal.domains || []).includes('Emp') ? '\u2612' : '\u2610',
+          domain_Liv: (goal.domains || []).includes('Liv') ? '\u2612' : '\u2610',
+          meas_Work: (goal.measureMethods || []).includes('Work') ? '\u2612' : '\u2610',
+          meas_Tests: (goal.measureMethods || []).includes('Tests') ? '\u2612' : '\u2610',
+          meas_Portfolios: (goal.measureMethods || []).includes('Portfolios') ? '\u2612' : '\u2610',
+          meas_Checklists: (goal.measureMethods || []).includes('Checklists') ? '\u2612' : '\u2610',
+          meas_scoringGuides: (goal.measureMethods || []).includes('ScoringGuides') ? '\u2612' : '\u2610',
+          meas_Obs: (goal.measureMethods || []).includes('Obs') ? '\u2612' : '\u2610',
+          meas_Readingrecord: (goal.measureMethods || []).includes('Readingrecord') ? '\u2612' : '\u2610',
+          meas_Other: (goal.measureMethods || []).includes('Other') ? '\u2612' : '\u2610',
+          'date of report': '',
+          progress: '\u2610',
+          noProgress: '\u2610',
+          GoalnotAddressed: '\u2610',
+          Goalmet: '\u2610',
+          descriptionOfProgress: '',
+        })),
+
+        // Transition (Pages 11-14)
+        assesSummary_1: d.careerInterestAreas || '',
+        assessSummary_2: buildKteaSummary(kteaData),
+        assessSummary_3: d.assessSummary3 || '',
+        gradeDate: d.anticipatedGraduationDate || '',
+        gradeOpt_Credits: d.graduationOptCredits ? '\u2612' : '\u2610',
+        GradeOpt_Goals: d.graduationOptGoals ? '\u2612' : '\u2610',
+        preEtsDate: d.preEtsDate || '',
+        vrIntroDate: d.vrIntroDate || '',
+
+        // Employment
+        postSecGoal_Emp: d.transition.postSecondaryEmployment || '',
+        empSkills_Obtained: d.employmentSkillsObtained || '',
+        empSkills_Needed: d.employmentSkillsNeeded || '',
+        emp_School_Skills: d.empSchoolSkills || '',
+        emp_School_Svc: d.schoolEmploymentServices || 'provide career exploration and planning on a weekly basis.',
+        emp_Student_Skill: d.empStudentSkill || '',
+        emp_Student_Svc: d.studentEmploymentServices || 'participate in career exploration and planning.',
+        emp_Parent_Skill: d.empParentSkill || '',
+        emp_Parent_Svc: d.parentEmploymentServices || 'assist the student with locating services from outside agencies.',
+        emp_Agency_Name: d.empAgencyName || '',
+
+        // Education
+        postSecGoal_Edu: d.transition.postSecondaryEducation || '',
+        eduSkills_Obtained: d.educationSkillsObtained || '',
+        eduSkills_Needed: d.educationSkillsNeeded || '',
+        edu_School_Skill: d.eduSchoolSkill || '',
+        edu_School_Svc: d.schoolEducationServices || 'provide educational opportunities for the student to gain skills to graduate.',
+        edu_Student_Skill: d.eduStudentSkill || '',
+        edu_Student_Svc: d.studentEducationServices || 'take advantage of secondary educational opportunities.',
+        edu_Parent_Skill: d.eduParentSkill || '',
+        edu_Parent_Svc: d.parentEducationServices || 'assist the student in locating post-secondary educational facilities.',
+        edu_Agency_Name: d.eduAgencyName || '',
+
+        // Independent Living
+        postSecGoal_Liv: d.transition.independentLiving || '',
+        livSkills_Obtained: d.independentLivingSkillsObtained || '',
+        livSkills_Needed: d.independentLivingSkillsNeeded || '',
+        liv_School_Skill: d.livSchoolSkill || '',
+        liv_School_Svc: d.schoolIndependentLivingServices || 'provide life skills educational materials.',
+        liv_Student_Skill: d.livStudentSkill || '',
+        liv_Student_Svc: d.studentIndependentLivingServices || 'study and complete the life skills materials.',
+        liv_Parent_Skill: d.livParentSkill || '',
+        liv_Parent_Svc: d.parentIndependentLivingServices || 'assist the student in determining independent living resources.',
+        liv_Agency_Svc: d.livAgencySvc || '',
       };
-
-      // Add transition data if applicable
-      if (d.hasTransitionPlan) {
-        const ktea = kteaData || {};
-        Object.assign(data, {
-          transition_assessment_date_1: d.transitionAssessmentDate1 || '',
-          career_interest_areas: d.careerInterestAreas || '',
-          transition_assessment_date_2: d.transitionAssessmentDate2 || '',
-          ktea_reading_ge: ktea.postReadingGE || ktea.preReadingGE || '',
-          ktea_math_ge: ktea.postMathGE || ktea.preMathGE || '',
-          ktea_writing_ge: ktea.postWritingGE || ktea.preWritingGE || '',
-          transition_assessment_date_3: d.transitionAssessmentDate3 || '',
-          independent_living_worksheet: 'See Attached Worksheet',
-          anticipated_graduation_date: d.anticipatedGraduationDate || '',
-
-          // Employment
-          employment_goal: d.transition.postSecondaryEmployment || '',
-          employment_skills_obtained: d.employmentSkillsObtained || '',
-          employment_skills_needed: d.employmentSkillsNeeded || '',
-          school_employment_services: d.schoolEmploymentServices || 'The school will provide career exploration and planning on a weekly basis.',
-          student_employment_services: d.studentEmploymentServices || 'The student will participate in career exploration and planning, and participate in educational opportunities as required to graduate.',
-          parent_employment_services: d.parentEmploymentServices || 'The parent/guardian will assist the student with locating and accessing services from outside agencies.',
-
-          // Education/Training
-          education_goal: d.transition.postSecondaryEducation || '',
-          education_skills_obtained: d.educationSkillsObtained || '',
-          education_skills_needed: d.educationSkillsNeeded || '',
-          school_education_services: d.schoolEducationServices || 'The school will provide the secondary educational opportunities necessary for the student to gain the skills to graduate and attend post-secondary schools.',
-          student_education_services: d.studentEducationServices || 'The student will take advantage of secondary educational opportunities necessary for the student to gain the skills to graduate and attend post-secondary schools.',
-          parent_education_services: d.parentEducationServices || 'The parent/guardian will assist the student in locating post-secondary educational facilities in order to achieve their goals.',
-
-          // Independent Living
-          independent_living_goal: d.transition.independentLiving || '',
-          independent_living_skills_obtained: d.independentLivingSkillsObtained || '',
-          independent_living_skills_needed: d.independentLivingSkillsNeeded || '',
-          school_independent_living_services: d.schoolIndependentLivingServices || 'The school will provide life skills educational materials for practice in skills attainment.',
-          student_independent_living_services: d.studentIndependentLivingServices || 'The student will study and complete the life skills educational materials as provided.',
-          parent_independent_living_services: d.parentIndependentLivingServices || 'The parent/guardian will assist the student in determining independent living resources in their home state.',
-        });
-      }
 
       // Render the template
       doc.render(data);
@@ -395,7 +450,7 @@ const IEPGenerator = ({ user }) => {
         <div className="flex-1 overflow-y-auto p-5">
           {step === 0 && <StudentStep students={filteredStudents} searchTerm={searchTerm} setSearchTerm={setSearchTerm} onSelect={handleSelectStudent} loading={loading} selectedStudent={selectedStudent} draft={draft} setDraft={setDraft} />}
           {step === 1 && <PresentLevelsStep draft={draft} setDraft={setDraft} deficits={deficits} onSmartPopulate={handleSmartPopulate} kteaData={kteaData} enrollments={enrollments} student={selectedStudent} />}
-          {step === 2 && <GoalsStep draft={draft} goals={goalSuggestions} goalSearch={goalSearch} setGoalSearch={setGoalSearch} goalAreaFilter={goalAreaFilter} setGoalAreaFilter={setGoalAreaFilter} showGoalBank={showGoalBank} setShowGoalBank={setShowGoalBank} onAddGoal={handleAddGoal} onRemoveGoal={handleRemoveGoal} expandedGoal={expandedGoal} setExpandedGoal={setExpandedGoal} studentName={selectedStudent?.firstName} />}
+          {step === 2 && <GoalsStep draft={draft} setDraft={setDraft} goals={goalSuggestions} goalSearch={goalSearch} setGoalSearch={setGoalSearch} goalAreaFilter={goalAreaFilter} setGoalAreaFilter={setGoalAreaFilter} showGoalBank={showGoalBank} setShowGoalBank={setShowGoalBank} onAddGoal={handleAddGoal} onRemoveGoal={handleRemoveGoal} expandedGoal={expandedGoal} setExpandedGoal={setExpandedGoal} studentName={selectedStudent?.firstName} />}
           {step === 3 && <ServicesStep draft={draft} setDraft={setDraft} toggleAccommodation={toggleAccommodation} toggleModification={toggleModification} showServiceForm={showServiceForm} setShowServiceForm={setShowServiceForm} newService={newService} setNewService={setNewService} onAddService={handleAddService} onRemoveService={handleRemoveService} />}
           {step === 4 && <TransitionStep draft={draft} setDraft={setDraft} />}
         </div>
@@ -529,10 +584,18 @@ const StudentStep = ({ students, searchTerm, setSearchTerm, onSelect, loading, s
           <SmallField label="Phone" value={draft.studentPhone} onChange={v => setDraft(prev => ({ ...prev, studentPhone: v }))} placeholder="Phone number" />
           <SmallField label="Birth Date" value={draft.birthDate} onChange={v => setDraft(prev => ({ ...prev, birthDate: v }))} placeholder="MM/DD/YYYY" />
           <SmallField label="Age" value={draft.studentAge} onChange={v => setDraft(prev => ({ ...prev, studentAge: v }))} placeholder="Age" />
+          <SmallField label="Student ID / MOSIS#" value={draft.studentMosisId} onChange={v => setDraft(prev => ({ ...prev, studentMosisId: v }))} placeholder="Student ID number" />
         </div>
 
         <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider pt-2">Educational Decision Maker</h4>
         <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1">Role</label>
+            <select value={draft.decisionMakerRole || ''} onChange={e => setDraft(prev => ({ ...prev, decisionMakerRole: e.target.value }))} className="w-full p-2 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-cyan-500/20 outline-none bg-white">
+              <option value="">Select role...</option>
+              {DECISION_MAKER_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
           <SmallField label="Name" value={draft.decisionMakerName} onChange={v => setDraft(prev => ({ ...prev, decisionMakerName: v }))} placeholder="Parent/Guardian name" />
           <SmallField label="Phone" value={draft.decisionMakerPhone} onChange={v => setDraft(prev => ({ ...prev, decisionMakerPhone: v }))} placeholder="Phone" />
           <SmallField label="Address" value={draft.decisionMakerAddress} onChange={v => setDraft(prev => ({ ...prev, decisionMakerAddress: v }))} placeholder="Address" />
@@ -549,6 +612,31 @@ const StudentStep = ({ students, searchTerm, setSearchTerm, onSelect, loading, s
           <SmallField label="Triennial Date" value={draft.triennialDate} onChange={v => setDraft(prev => ({ ...prev, triennialDate: v }))} placeholder="MM/DD/YYYY" />
           <SmallField label="Initiation Date" value={draft.iepInitiationDate} onChange={v => setDraft(prev => ({ ...prev, iepInitiationDate: v }))} placeholder="MM/DD/YYYY" />
           <SmallField label="Copy Provided" value={draft.copyProvidedDate} onChange={v => setDraft(prev => ({ ...prev, copyProvidedDate: v }))} placeholder="MM/DD/YYYY" />
+        </div>
+
+        <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider pt-2">IEP Meeting Participants</h4>
+        <p className="text-xs text-slate-500 mb-2">Enter the method of attendance for each participant (e.g. In Person, By Phone, Excused).</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: 'Parent/Guardian 1', key: 'parent1Method' },
+            { label: 'Parent/Guardian 2', key: 'parent2Method' },
+            { label: 'Student', key: 'studentMethod' },
+            { label: 'LEA Representative', key: 'leaRepMethod' },
+            { label: 'Special Ed Teacher', key: 'spedTeacherMethod' },
+            { label: 'Regular Ed Teacher', key: 'regTeacherMethod' },
+            { label: 'Eval Interpreter', key: 'interpreterMethod' },
+            { label: 'Part C Representative', key: 'partCRepMethod' },
+            { label: 'Transition Agency Rep', key: 'transitionRepMethod' },
+            { label: 'Other', key: 'otherParticipantMethod' },
+          ].map(p => (
+            <div key={p.key}>
+              <label className="block text-xs font-bold text-slate-500 mb-1">{p.label}</label>
+              <select value={draft[p.key] || ''} onChange={e => setDraft(prev => ({ ...prev, [p.key]: e.target.value }))} className="w-full p-2 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-cyan-500/20 outline-none bg-white">
+                <option value="">Select...</option>
+                {ATTENDANCE_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+          ))}
         </div>
       </div>
     )}
@@ -613,8 +701,32 @@ const PresentLevelsStep = ({ draft, setDraft, deficits, onSmartPopulate, kteaDat
 
 // ─── STEP 3: GOALS & OBJECTIVES ────────────────────────────────────────────
 
-const GoalsStep = ({ draft, goals, goalSearch, setGoalSearch, goalAreaFilter, setGoalAreaFilter, showGoalBank, setShowGoalBank, onAddGoal, onRemoveGoal, expandedGoal, setExpandedGoal, studentName }) => {
+const GoalsStep = ({ draft, setDraft, goals, goalSearch, setGoalSearch, goalAreaFilter, setGoalAreaFilter, showGoalBank, setShowGoalBank, onAddGoal, onRemoveGoal, expandedGoal, setExpandedGoal, studentName }) => {
   const addedIds = new Set(draft.goals.map(g => g.sourceId));
+
+  const toggleGoalMeasure = (goalId, methodId) => {
+    setDraft(prev => ({
+      ...prev,
+      goals: prev.goals.map(g => {
+        if (g.id !== goalId) return g;
+        const current = g.measureMethods || [];
+        const updated = current.includes(methodId) ? current.filter(m => m !== methodId) : [...current, methodId];
+        return { ...g, measureMethods: updated };
+      }),
+    }));
+  };
+
+  const toggleGoalDomain = (goalId, domainId) => {
+    setDraft(prev => ({
+      ...prev,
+      goals: prev.goals.map(g => {
+        if (g.id !== goalId) return g;
+        const current = g.domains || [];
+        const updated = current.includes(domainId) ? current.filter(d => d !== domainId) : [...current, domainId];
+        return { ...g, domains: updated };
+      }),
+    }));
+  };
 
   const filteredGoals = useMemo(() => {
     const all = [...goals.suggested, ...goals.other];
@@ -629,10 +741,16 @@ const GoalsStep = ({ draft, goals, goalSearch, setGoalSearch, goalAreaFilter, se
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wider">Goals & Objectives</h3>
-        <button onClick={() => setShowGoalBank(!showGoalBank)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors">
+        <button onClick={() => setShowGoalBank(!showGoalBank)} disabled={draft.goals.length >= 3} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <BookOpen className="w-3.5 h-3.5" /> {showGoalBank ? 'Hide' : 'Browse'} Goal Bank
         </button>
       </div>
+
+      {draft.goals.length >= 3 && (
+        <div className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          3 goals selected (maximum reached).
+        </div>
+      )}
 
       {/* Selected Goals */}
       {draft.goals.length > 0 && (
@@ -654,12 +772,39 @@ const GoalsStep = ({ draft, goals, goalSearch, setGoalSearch, goalAreaFilter, se
                       </div>
                     ))}
                   </div>
-                  <div className="text-xs text-slate-400 mt-2 italic">Measurement: {goal.measureMethod}</div>
                 </div>
                 <button onClick={() => onRemoveGoal(goal.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Measurement Methods */}
+              <div className="mt-3 pt-2 border-t border-emerald-100">
+                <div className="text-xs font-bold text-slate-500 mb-1.5">Progress measured by:</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {MEASUREMENT_METHODS.map(m => (
+                    <label key={m.id} className="flex items-center gap-1 text-xs text-slate-600 cursor-pointer">
+                      <input type="checkbox" checked={(goal.measureMethods || []).includes(m.id)} onChange={() => toggleGoalMeasure(goal.id, m.id)} className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 w-3 h-3" />
+                      {m.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Transition Domain Selection */}
+              {draft.hasTransitionPlan && (
+                <div className="mt-2 pt-2 border-t border-emerald-100">
+                  <div className="text-xs font-bold text-slate-500 mb-1.5">Transition goal domain(s):</div>
+                  <div className="flex flex-wrap gap-2">
+                    {GOAL_DOMAINS.map(d => (
+                      <label key={d.id} className="flex items-center gap-1 text-xs text-slate-600 cursor-pointer">
+                        <input type="checkbox" checked={(goal.domains || []).includes(d.id)} onChange={() => toggleGoalDomain(goal.id, d.id)} className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 w-3 h-3" />
+                        {d.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -669,12 +814,12 @@ const GoalsStep = ({ draft, goals, goalSearch, setGoalSearch, goalAreaFilter, se
         <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
           <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="font-semibold text-sm">No goals added yet</p>
-          <p className="text-xs mt-1">Open the Goal Bank to browse and add suggested goals.</p>
+          <p className="text-xs mt-1">Open the Goal Bank to browse and add goals (3 required).</p>
         </div>
       )}
 
       {/* Goal Bank Browser */}
-      {showGoalBank && (
+      {showGoalBank && draft.goals.length < 3 && (
         <div className="border border-cyan-200 bg-cyan-50/30 rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -717,9 +862,9 @@ const GoalsStep = ({ draft, goals, goalSearch, setGoalSearch, goalAreaFilter, se
                       <p className="text-xs text-slate-700 leading-relaxed">{goal.goalText.replace(/{name}/g, studentName || 'Student').slice(0, 150)}...</p>
                     </div>
                     <button
-                      onClick={() => !isAdded && onAddGoal(goal)}
-                      disabled={isAdded}
-                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${isAdded ? 'text-emerald-500 bg-emerald-50' : 'text-cyan-600 hover:bg-cyan-100'}`}
+                      onClick={() => !isAdded && draft.goals.length < 3 && onAddGoal(goal)}
+                      disabled={isAdded || draft.goals.length >= 3}
+                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${isAdded ? 'text-emerald-500 bg-emerald-50' : 'text-cyan-600 hover:bg-cyan-100'} disabled:opacity-50`}
                     >
                       {isAdded ? <CheckCircle className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                     </button>
@@ -863,6 +1008,24 @@ const TransitionStep = ({ draft, setDraft }) => (
             <SmallField label="Assessment Date 2 (KTEA)" value={draft.transitionAssessmentDate2} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate2: v }))} placeholder="MM/DD/YYYY" />
             <SmallField label="Assessment Date 3 (Living Skills)" value={draft.transitionAssessmentDate3} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate3: v }))} placeholder="MM/DD/YYYY" />
           </div>
+          <NarrativeField label="Independent Living Assessment Summary" value={draft.assessSummary3} onChange={v => setDraft(prev => ({ ...prev, assessSummary3: v }))} placeholder="Summary of independent living postsecondary goal worksheet..." rows={2} />
+          <div className="grid grid-cols-2 gap-3">
+            <SmallField label="Pre-ETS Begin Date" value={draft.preEtsDate} onChange={v => setDraft(prev => ({ ...prev, preEtsDate: v }))} placeholder="MM/DD/YYYY" />
+            <SmallField label="VR Introduction Date" value={draft.vrIntroDate} onChange={v => setDraft(prev => ({ ...prev, vrIntroDate: v }))} placeholder="MM/DD/YYYY" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Graduation Options</div>
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                <input type="checkbox" checked={draft.graduationOptCredits || false} onChange={e => setDraft(prev => ({ ...prev, graduationOptCredits: e.target.checked }))} className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
+                Regular High School Diploma based on earning required credits
+              </label>
+              <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                <input type="checkbox" checked={draft.graduationOptGoals || false} onChange={e => setDraft(prev => ({ ...prev, graduationOptGoals: e.target.checked }))} className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
+                Regular High School Diploma based on meeting goals and objectives
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Employment Section */}
@@ -879,9 +1042,18 @@ const TransitionStep = ({ draft, setDraft }) => (
           />
           <NarrativeField label="Skills Already Obtained" value={draft.employmentSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, employmentSkillsObtained: v }))} placeholder="List employment-related skills the student already has..." rows={2} />
           <NarrativeField label="Skills Needed Before Graduation" value={draft.employmentSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, employmentSkillsNeeded: v }))} placeholder="Resume writing, job applications, interview skills..." rows={2} />
-          <NarrativeField label="School Will Provide" value={draft.schoolEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, schoolEmploymentServices: v }))} placeholder="The school will provide career exploration and planning on a weekly basis." rows={2} />
-          <NarrativeField label="Student Will" value={draft.studentEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, studentEmploymentServices: v }))} placeholder="The student will participate in career exploration and planning..." rows={2} />
-          <NarrativeField label="Parent/Guardian Will" value={draft.parentEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, parentEmploymentServices: v }))} placeholder="The parent/guardian will assist the student with locating services..." rows={2} />
+          <div className="border-t border-slate-100 pt-2">
+            <div className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Transition Services by Agency</div>
+            <div className="grid grid-cols-2 gap-2">
+              <SmallField label="School Target Skills" value={draft.empSchoolSkills} onChange={v => setDraft(prev => ({ ...prev, empSchoolSkills: v }))} placeholder="Target skills..." />
+              <NarrativeField label="School Will Provide" value={draft.schoolEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, schoolEmploymentServices: v }))} placeholder="provide career exploration and planning on a weekly basis." rows={2} />
+              <SmallField label="Student Target Skills" value={draft.empStudentSkill} onChange={v => setDraft(prev => ({ ...prev, empStudentSkill: v }))} placeholder="Target skills..." />
+              <NarrativeField label="Student Will" value={draft.studentEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, studentEmploymentServices: v }))} placeholder="participate in career exploration and planning." rows={2} />
+              <SmallField label="Parent Target Skills" value={draft.empParentSkill} onChange={v => setDraft(prev => ({ ...prev, empParentSkill: v }))} placeholder="Target skills..." />
+              <NarrativeField label="Parent/Guardian Will" value={draft.parentEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, parentEmploymentServices: v }))} placeholder="assist the student with locating services from outside agencies." rows={2} />
+              <SmallField label="Outside Agency Name" value={draft.empAgencyName} onChange={v => setDraft(prev => ({ ...prev, empAgencyName: v }))} placeholder="Agency name..." />
+            </div>
+          </div>
         </div>
 
         {/* Education/Training Section */}
@@ -898,9 +1070,18 @@ const TransitionStep = ({ draft, setDraft }) => (
           />
           <NarrativeField label="Skills Already Obtained" value={draft.educationSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, educationSkillsObtained: v }))} placeholder="Use electronic media for career info, variety of resources..." rows={2} />
           <NarrativeField label="Skills Needed Before Graduation" value={draft.educationSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, educationSkillsNeeded: v }))} placeholder="Identify vocational service providers, sources of financial aid..." rows={2} />
-          <NarrativeField label="School Will Provide" value={draft.schoolEducationServices} onChange={v => setDraft(prev => ({ ...prev, schoolEducationServices: v }))} placeholder="The school will provide educational opportunities for the student to gain skills to graduate..." rows={2} />
-          <NarrativeField label="Student Will" value={draft.studentEducationServices} onChange={v => setDraft(prev => ({ ...prev, studentEducationServices: v }))} placeholder="The student will take advantage of secondary educational opportunities..." rows={2} />
-          <NarrativeField label="Parent/Guardian Will" value={draft.parentEducationServices} onChange={v => setDraft(prev => ({ ...prev, parentEducationServices: v }))} placeholder="The parent/guardian will assist the student in locating post-secondary educational facilities..." rows={2} />
+          <div className="border-t border-slate-100 pt-2">
+            <div className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Transition Services by Agency</div>
+            <div className="grid grid-cols-2 gap-2">
+              <SmallField label="School Target Skills" value={draft.eduSchoolSkill} onChange={v => setDraft(prev => ({ ...prev, eduSchoolSkill: v }))} placeholder="Target skills..." />
+              <NarrativeField label="School Will Provide" value={draft.schoolEducationServices} onChange={v => setDraft(prev => ({ ...prev, schoolEducationServices: v }))} placeholder="provide educational opportunities for the student to gain skills to graduate." rows={2} />
+              <SmallField label="Student Target Skills" value={draft.eduStudentSkill} onChange={v => setDraft(prev => ({ ...prev, eduStudentSkill: v }))} placeholder="Target skills..." />
+              <NarrativeField label="Student Will" value={draft.studentEducationServices} onChange={v => setDraft(prev => ({ ...prev, studentEducationServices: v }))} placeholder="take advantage of secondary educational opportunities." rows={2} />
+              <SmallField label="Parent Target Skills" value={draft.eduParentSkill} onChange={v => setDraft(prev => ({ ...prev, eduParentSkill: v }))} placeholder="Target skills..." />
+              <NarrativeField label="Parent/Guardian Will" value={draft.parentEducationServices} onChange={v => setDraft(prev => ({ ...prev, parentEducationServices: v }))} placeholder="assist the student in locating post-secondary educational facilities." rows={2} />
+              <SmallField label="Outside Agency Name" value={draft.eduAgencyName} onChange={v => setDraft(prev => ({ ...prev, eduAgencyName: v }))} placeholder="Agency name..." />
+            </div>
+          </div>
         </div>
 
         {/* Independent Living Section */}
@@ -917,9 +1098,18 @@ const TransitionStep = ({ draft, setDraft }) => (
           />
           <NarrativeField label="Skills Already Obtained" value={draft.independentLivingSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, independentLivingSkillsObtained: v }))} placeholder="Skills the student already has for independent living..." rows={2} />
           <NarrativeField label="Skills Needed Before Graduation" value={draft.independentLivingSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, independentLivingSkillsNeeded: v }))} placeholder="Banking, checking account, ATM, budgeting, cooking..." rows={2} />
-          <NarrativeField label="School Will Provide" value={draft.schoolIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, schoolIndependentLivingServices: v }))} placeholder="The school will provide life skills educational materials..." rows={2} />
-          <NarrativeField label="Student Will" value={draft.studentIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, studentIndependentLivingServices: v }))} placeholder="The student will study and complete the life skills materials..." rows={2} />
-          <NarrativeField label="Parent/Guardian Will" value={draft.parentIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, parentIndependentLivingServices: v }))} placeholder="The parent/guardian will assist the student in determining independent living resources..." rows={2} />
+          <div className="border-t border-slate-100 pt-2">
+            <div className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Transition Services by Agency</div>
+            <div className="grid grid-cols-2 gap-2">
+              <SmallField label="School Target Skills" value={draft.livSchoolSkill} onChange={v => setDraft(prev => ({ ...prev, livSchoolSkill: v }))} placeholder="Target skills..." />
+              <NarrativeField label="School Will Provide" value={draft.schoolIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, schoolIndependentLivingServices: v }))} placeholder="provide life skills educational materials." rows={2} />
+              <SmallField label="Student Target Skills" value={draft.livStudentSkill} onChange={v => setDraft(prev => ({ ...prev, livStudentSkill: v }))} placeholder="Target skills..." />
+              <NarrativeField label="Student Will" value={draft.studentIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, studentIndependentLivingServices: v }))} placeholder="study and complete the life skills materials." rows={2} />
+              <SmallField label="Parent Target Skills" value={draft.livParentSkill} onChange={v => setDraft(prev => ({ ...prev, livParentSkill: v }))} placeholder="Target skills..." />
+              <NarrativeField label="Parent/Guardian Will" value={draft.parentIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, parentIndependentLivingServices: v }))} placeholder="assist the student in determining independent living resources." rows={2} />
+              <SmallField label="Outside Agency Name/Svc" value={draft.livAgencySvc} onChange={v => setDraft(prev => ({ ...prev, livAgencySvc: v }))} placeholder="Agency name..." />
+            </div>
+          </div>
         </div>
 
         {/* Skills Checklist */}
@@ -1007,7 +1197,7 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
               <span className="ml-4 font-bold">Age:</span> <FormField value={d.studentAge} className="min-w-[30px]" />
             </div>
             <div>
-              <span className="font-bold">Student ID #/MOSIS#:</span> <FormField value="" className="min-w-[100px]" />
+              <span className="font-bold">Student ID #/MOSIS#:</span> <FormField value={d.studentMosisId} className="min-w-[100px]" />
             </div>
             <div><span className="font-bold">Present Grade Level:</span> <FormField value={String(d.gradeLevel || '')} className="min-w-[40px]" /></div>
             <div><span className="font-bold">Resident District Home School:</span> <FormField value={d.district} className="min-w-[200px]" /></div>
@@ -1028,7 +1218,7 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
           <div className="mb-1"><span className="font-bold">Primary Language or Communication Mode(s):</span> <CheckBox checked label="English" /> <CheckBox label="Spanish" /> <CheckBox label="Sign language" /> <CheckBox label="Other" /></div>
           <div className="mb-1">
             <span className="font-bold">Educational Decision Maker is:</span>{' '}
-            <CheckBox label="Parent" /> <CheckBox label="Legal Guardian" /> <CheckBox label="Educational Surrogate" /> <CheckBox label="Foster Parent" /> <CheckBox label="Child [age 18+]" /> <CheckBox label="Other" />
+            <CheckBox checked={d.decisionMakerRole === 'Parent'} label="Parent" /> <CheckBox checked={d.decisionMakerRole === 'Legal Guardian'} label="Legal Guardian" /> <CheckBox checked={d.decisionMakerRole === 'Educational Surrogate'} label="Educational Surrogate" /> <CheckBox checked={d.decisionMakerRole === 'Foster Parent'} label="Foster Parent" /> <CheckBox checked={d.decisionMakerRole === 'Child [age 18+]'} label="Child [age 18+]" /> <CheckBox checked={d.decisionMakerRole === 'Other'} label="Other" />
           </div>
           <div><span className="font-bold">Name:</span> <FormField value={d.decisionMakerName} className="min-w-[200px]" /></div>
           <div><span className="font-bold">Address:</span> <FormField value={d.decisionMakerAddress} className="min-w-[300px]" /></div>
@@ -1047,7 +1237,7 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
             <div>
-              <span className="font-bold">IEP Type</span>{' '}<CheckBox label="Initial" />{' '}<CheckBox checked label="Annual" />
+              <span className="font-bold">IEP Type</span>{' '}<CheckBox checked={d.meetingType === 'Initial'} label="Initial" />{' '}<CheckBox checked={d.meetingType === 'Annual Review'} label="Annual" />
             </div>
             <div><span className="font-bold">Date of most recent evaluation/reevaluation:</span> <FormField value={d.evalDate} className="min-w-[80px]" /></div>
             <div><span className="font-bold">Date of Previous IEP Review:</span> <FormField value={d.prevIepDate} className="min-w-[80px]" /></div>
@@ -1078,11 +1268,22 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
               </tr>
             </thead>
             <tbody>
-              {['Parent/Guardian', 'Student', 'LEA Representative', 'Special Education Teacher', 'Regular Classroom Teacher'].map(role => (
-                <tr key={role}>
-                  <td className="border border-black p-1">{role}</td>
+              {[
+                { role: 'Parent/Guardian 1', method: d.parent1Method },
+                { role: 'Parent/Guardian 2', method: d.parent2Method },
+                { role: 'Student', method: d.studentMethod },
+                { role: 'LEA Representative', method: d.leaRepMethod },
+                { role: 'Special Education Teacher', method: d.spedTeacherMethod },
+                { role: 'Regular Classroom Teacher', method: d.regTeacherMethod },
+                { role: 'Eval Interpreter', method: d.interpreterMethod },
+                { role: 'Part C Representative', method: d.partCRepMethod },
+                { role: 'Transition Agency Rep', method: d.transitionRepMethod },
+                { role: 'Other', method: d.otherParticipantMethod },
+              ].map(p => (
+                <tr key={p.role}>
+                  <td className="border border-black p-1">{p.role}</td>
                   <td className="border border-black p-1">
-                    <CheckBox checked label="in person" /> <CheckBox label="excused" /> <CheckBox label="by phone" />
+                    <FormField value={p.method} className="min-w-[80px]" />
                   </td>
                 </tr>
               ))}
@@ -1148,9 +1349,9 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
               <div className="mt-2 pt-1 border-t border-gray-200">
                 <div className="font-bold text-[8pt]">For students with Post-secondary Transition Plans, this annual goal supports:</div>
                 <div className="text-[8pt]">
-                  <CheckBox label="Post-secondary Education/Training" />
-                  <CheckBox label="Employment" />
-                  <CheckBox label="Independent Living" />
+                  <CheckBox checked={(goal.domains || []).includes('Ed')} label="Post-secondary Education/Training" />
+                  <CheckBox checked={(goal.domains || []).includes('Emp')} label="Employment" />
+                  <CheckBox checked={(goal.domains || []).includes('Liv')} label="Independent Living" />
                 </div>
               </div>
             )}
@@ -1158,9 +1359,9 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
             <div className="mt-2 pt-1 border-t border-gray-200">
               <div className="font-bold text-[8pt]">Progress toward the goal will be measured by:</div>
               <div className="text-[8pt]">
-                <CheckBox label="Work samples" /> <CheckBox label="Curriculum based tests" /> <CheckBox label="Portfolios" />
-                <CheckBox label="Checklists" /> <CheckBox label="Scoring guides" /> <CheckBox label="Observation chart" />
-                <CheckBox label="Reading record" /> <CheckBox label="Other" />
+                <CheckBox checked={(goal.measureMethods || []).includes('Work')} label="Work samples" /> <CheckBox checked={(goal.measureMethods || []).includes('Tests')} label="Curriculum based tests" /> <CheckBox checked={(goal.measureMethods || []).includes('Portfolios')} label="Portfolios" />
+                <CheckBox checked={(goal.measureMethods || []).includes('Checklists')} label="Checklists" /> <CheckBox checked={(goal.measureMethods || []).includes('ScoringGuides')} label="Scoring guides" /> <CheckBox checked={(goal.measureMethods || []).includes('Obs')} label="Observation chart" />
+                <CheckBox checked={(goal.measureMethods || []).includes('Readingrecord')} label="Reading record" /> <CheckBox checked={(goal.measureMethods || []).includes('Other')} label="Other" />
               </div>
             </div>
 
@@ -1333,15 +1534,31 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
           <div className={sectionHeader}>Form C: Post-Secondary Transition Plan</div>
           <div className={`border border-black border-t-0 p-2 mb-2 ${fsSmall} space-y-3`}>
 
+            {/* Graduation & Assessment Info */}
+            <div>
+              <div className="font-bold text-[9pt] mb-1">Graduation & Assessment Information</div>
+              <div className="mb-0.5"><span className="font-bold">Anticipated Graduation Date:</span> <FormField value={d.anticipatedGraduationDate} className="min-w-[100px]" /></div>
+              <div className="mb-0.5">
+                <span className="font-bold">Graduation Option:</span>{' '}
+                <CheckBox checked={d.graduationOptCredits} label="Regular diploma based on credits" />{' '}
+                <CheckBox checked={d.graduationOptGoals} label="Regular diploma based on meeting goals" />
+              </div>
+              <div className="mb-0.5"><span className="font-bold">Pre-ETS Begin Date:</span> <FormField value={d.preEtsDate} className="min-w-[80px]" /> <span className="ml-4 font-bold">VR Introduction Date:</span> <FormField value={d.vrIntroDate} className="min-w-[80px]" /></div>
+            </div>
+
             {/* Employment */}
             <div>
               <div className="font-bold text-[9pt] bg-amber-50 p-1 border border-amber-200 mb-1">Employment</div>
               <div className="mb-1"><span className="font-bold">Post-secondary Goal:</span> After high school, <FormField value={d.transition.postSecondaryEmployment} className="min-w-[300px]" /></div>
               <div className="mb-1"><span className="font-bold">Skills Already Obtained:</span> {d.employmentSkillsObtained || ''}</div>
               <div className="mb-1"><span className="font-bold">Skills Needed Before Graduation:</span> {d.employmentSkillsNeeded || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">School Target Skills:</span> {d.empSchoolSkills || ''}</div>
               <div className="mb-0.5"><span className="font-bold">The school will</span> {d.schoolEmploymentServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">Student Target Skills:</span> {d.empStudentSkill || ''}</div>
               <div className="mb-0.5"><span className="font-bold">The student will</span> {d.studentEmploymentServices || ''}</div>
-              <div><span className="font-bold">The parent/guardian will</span> {d.parentEmploymentServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">Parent Target Skills:</span> {d.empParentSkill || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The parent/guardian will</span> {d.parentEmploymentServices || ''}</div>
+              <div><span className="font-bold">Outside Agency:</span> {d.empAgencyName || ''}</div>
             </div>
 
             {/* Education */}
@@ -1350,9 +1567,13 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
               <div className="mb-1"><span className="font-bold">Post-secondary Goal:</span> After high school, <FormField value={d.transition.postSecondaryEducation} className="min-w-[300px]" /></div>
               <div className="mb-1"><span className="font-bold">Skills Already Obtained:</span> {d.educationSkillsObtained || ''}</div>
               <div className="mb-1"><span className="font-bold">Skills Needed Before Graduation:</span> {d.educationSkillsNeeded || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">School Target Skills:</span> {d.eduSchoolSkill || ''}</div>
               <div className="mb-0.5"><span className="font-bold">The school will</span> {d.schoolEducationServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">Student Target Skills:</span> {d.eduStudentSkill || ''}</div>
               <div className="mb-0.5"><span className="font-bold">The student will</span> {d.studentEducationServices || ''}</div>
-              <div><span className="font-bold">The parent/guardian will</span> {d.parentEducationServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">Parent Target Skills:</span> {d.eduParentSkill || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The parent/guardian will</span> {d.parentEducationServices || ''}</div>
+              <div><span className="font-bold">Outside Agency:</span> {d.eduAgencyName || ''}</div>
             </div>
 
             {/* Independent Living */}
@@ -1361,14 +1582,15 @@ const IEPDocumentPreview = ({ draft, deficits }) => {
               <div className="mb-1"><span className="font-bold">Post-secondary Goal:</span> After high school, <FormField value={d.transition.independentLiving} className="min-w-[300px]" /></div>
               <div className="mb-1"><span className="font-bold">Skills Already Obtained:</span> {d.independentLivingSkillsObtained || ''}</div>
               <div className="mb-1"><span className="font-bold">Skills Needed Before Graduation:</span> {d.independentLivingSkillsNeeded || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">School Target Skills:</span> {d.livSchoolSkill || ''}</div>
               <div className="mb-0.5"><span className="font-bold">The school will</span> {d.schoolIndependentLivingServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">Student Target Skills:</span> {d.livStudentSkill || ''}</div>
               <div className="mb-0.5"><span className="font-bold">The student will</span> {d.studentIndependentLivingServices || ''}</div>
-              <div><span className="font-bold">The parent/guardian will</span> {d.parentIndependentLivingServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">Parent Target Skills:</span> {d.livParentSkill || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The parent/guardian will</span> {d.parentIndependentLivingServices || ''}</div>
+              <div><span className="font-bold">Outside Agency:</span> {d.livAgencySvc || ''}</div>
             </div>
 
-            <div className="pt-1 border-t border-gray-300">
-              <span className="font-bold">Anticipated Date of Graduation/Exit:</span> <FormField value={d.anticipatedGraduationDate} className="min-w-[100px]" />
-            </div>
           </div>
         </div>
       )}
@@ -1449,11 +1671,18 @@ function createEmptyDraft() {
     // Demographics for template
     disabilityCategory: '', secondaryDisability: '',
     studentAddress: '', studentPhone: '', birthDate: '', studentAge: '',
+    studentMosisId: '',
+    decisionMakerRole: '',
     decisionMakerName: '', decisionMakerAddress: '', decisionMakerPhone: '',
     decisionMakerEmail: '', decisionMakerFax: '',
     caseManager: '', caseManagerPhone: '',
     evalDate: '', prevIepDate: '', triennialDate: '',
     iepInitiationDate: '', copyProvidedDate: '',
+    // Participant attendance methods
+    parent1Method: '', parent2Method: '', studentMethod: '',
+    leaRepMethod: '', spedTeacherMethod: '', regTeacherMethod: '',
+    interpreterMethod: '', partCRepMethod: '', transitionRepMethod: '',
+    otherParticipantMethod: '',
     // Present Levels
     academicLevels: '', functionalLevels: '', parentInput: '', strengthsText: '', impactStatement: '',
     changesFunctioning: '', evalSummary: '', transitionAssessments: '',
@@ -1464,6 +1693,16 @@ function createEmptyDraft() {
     modifications: [],
     hasTransitionPlan: false,
     transition: { postSecondaryEducation: '', postSecondaryEmployment: '', independentLiving: '', transitionServices: [], targetSkills: [] },
+    // Transition - target skills per agency
+    empSchoolSkills: '', empStudentSkill: '', empParentSkill: '', empAgencyName: '',
+    eduSchoolSkill: '', eduStudentSkill: '', eduParentSkill: '', eduAgencyName: '',
+    livSchoolSkill: '', livStudentSkill: '', livParentSkill: '', livAgencySvc: '',
+    // Graduation options
+    graduationOptCredits: false, graduationOptGoals: false,
+    // Pre-ETS / VR
+    preEtsDate: '', vrIntroDate: '',
+    // Assessment summaries
+    assessSummary3: '',
     status: 'Draft',
   };
 }
@@ -1478,44 +1717,16 @@ function getAllAccommodationLabels(selectedIds) {
   return labels;
 }
 
-function buildGoalData(goals, goalNum) {
-  const idx = goalNum - 1;
-  const goal = goals[idx];
-  const prefix = `goal_${goalNum}`;
-  if (!goal) {
-    return {
-      [`${prefix}_number`]: '',
-      [`${prefix}_text`]: '',
-      [`${prefix}_benchmark_1`]: '',
-      [`${prefix}_benchmark_2`]: '',
-      [`${prefix}_benchmark_3`]: '',
-    };
-  }
-  return {
-    [`${prefix}_number`]: String(goalNum),
-    [`${prefix}_text`]: goal.goalText || '',
-    [`${prefix}_benchmark_1`]: goal.benchmarks?.[0]?.text || '',
-    [`${prefix}_benchmark_2`]: goal.benchmarks?.[1]?.text || '',
-    [`${prefix}_benchmark_3`]: goal.benchmarks?.[2]?.text || '',
-  };
-}
-
-function buildServiceData(services, serviceNum) {
-  const idx = serviceNum - 1;
-  const svc = services[idx];
-  const prefix = `related_service_${serviceNum}`;
-  if (!svc) {
-    return {
-      [`${prefix}_type`]: '',
-      [`${prefix}_amount`]: '',
-      [`${prefix}_frequency`]: '',
-    };
-  }
-  return {
-    [`${prefix}_type`]: svc.type || '',
-    [`${prefix}_amount`]: svc.duration || '',
-    [`${prefix}_frequency`]: svc.frequency || '',
-  };
+function buildKteaSummary(kteaData) {
+  if (!kteaData) return '';
+  const parts = [];
+  const readGE = kteaData.postReadingGE || kteaData.preReadingGE;
+  const mathGE = kteaData.postMathGE || kteaData.preMathGE;
+  const writeGE = kteaData.postWritingGE || kteaData.preWritingGE;
+  if (readGE) parts.push(readGE);
+  if (mathGE) parts.push(mathGE);
+  if (writeGE) parts.push(writeGE);
+  return parts.join('\n');
 }
 
 function buildEvalSummary(draft, kteaData) {
