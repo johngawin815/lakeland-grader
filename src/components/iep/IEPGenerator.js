@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   FileCheck, Search, Loader2, CheckCircle, AlertTriangle,
-  Sparkles, Target, BookOpen, Plus, Printer, Download, Save,
+  Sparkles, Target, BookOpen, Plus, Download, Save,
   Users, Trash2, Star, X,
+  ChevronDown, ChevronUp, User, Calendar, ClipboardList, Settings, Briefcase, GraduationCap,
 } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
@@ -51,45 +52,133 @@ const PARTICIPANT_ROWS = [
   { label: 'Other', key: 'otherParticipantMethod' },
 ];
 
+const SPECIAL_CONSIDERATION_ITEMS = [
+  { key: 'behaviorImpedes', question: 'Does the student exhibit behaviors that impede learning?' },
+  { key: 'isBlind', question: 'Is the child blind or visually impaired?' },
+  { key: 'isDeaf', question: 'Is the child deaf or hard of hearing?' },
+  { key: 'isLEP', question: 'Does the child have limited English proficiency?' },
+  { key: 'communicationNeeds', question: 'Does the child have communication needs?' },
+  { key: 'assistiveTechnology', question: 'Does the child require assistive technology?' },
+  { key: 'extendedSchoolYear', question: 'Extended School Year?' },
+  { key: 'hasTransitionPlan', question: 'Post-secondary Transition Services (Form C)?' },
+  { key: 'transferOfRights', question: 'Transfer of Rights at Age of Majority?' },
+];
+
+const TRANSITION_SUBSECTIONS = [
+  {
+    id: 'employment', title: 'Employment',
+    colorClass: 'bg-amber-50 text-amber-800 border-amber-200',
+    goalKey: 'postSecondaryEmployment',
+    skillsObtainedKey: 'employmentSkillsObtained', skillsNeededKey: 'employmentSkillsNeeded',
+    schoolSkillKey: 'empSchoolSkills', schoolSvcKey: 'schoolEmploymentServices',
+    studentSkillKey: 'empStudentSkill', studentSvcKey: 'studentEmploymentServices',
+    parentSkillKey: 'empParentSkill', parentSvcKey: 'parentEmploymentServices',
+    agencyKey: 'empAgencyName',
+  },
+  {
+    id: 'education', title: 'Education / Training',
+    colorClass: 'bg-blue-50 text-blue-800 border-blue-200',
+    goalKey: 'postSecondaryEducation',
+    skillsObtainedKey: 'educationSkillsObtained', skillsNeededKey: 'educationSkillsNeeded',
+    schoolSkillKey: 'eduSchoolSkill', schoolSvcKey: 'schoolEducationServices',
+    studentSkillKey: 'eduStudentSkill', studentSvcKey: 'studentEducationServices',
+    parentSkillKey: 'eduParentSkill', parentSvcKey: 'parentEducationServices',
+    agencyKey: 'eduAgencyName',
+  },
+  {
+    id: 'independentLiving', title: 'Independent Living',
+    colorClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    goalKey: 'independentLiving',
+    skillsObtainedKey: 'independentLivingSkillsObtained', skillsNeededKey: 'independentLivingSkillsNeeded',
+    schoolSkillKey: 'livSchoolSkill', schoolSvcKey: 'schoolIndependentLivingServices',
+    studentSkillKey: 'livStudentSkill', studentSvcKey: 'studentIndependentLivingServices',
+    parentSkillKey: 'livParentSkill', parentSvcKey: 'parentIndependentLivingServices',
+    agencyKey: 'livAgencySvc',
+  },
+];
+
 // ─── INLINE FORM COMPONENTS ─────────────────────────────────────────────────
 
-const FInput = ({ value, onChange, w = '', placeholder = '' }) => (
-  <input
-    value={value || ''}
-    onChange={e => onChange(e.target.value)}
-    className={`border-b border-gray-400 bg-transparent outline-none px-1 text-blue-800 focus:border-blue-600 focus:bg-blue-50/30 text-[9pt] ${w}`}
-    placeholder={placeholder}
-  />
+const FInput = ({ value, onChange, w = '', placeholder = '', label = '' }) => (
+  <div className={w || 'w-full'}>
+    {label && <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>}
+    <input
+      value={value || ''}
+      onChange={e => onChange(e.target.value)}
+      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-slate-50/50
+                 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400 hover:bg-white outline-none transition-all"
+      placeholder={placeholder}
+    />
+  </div>
 );
 
-const FArea = ({ value, onChange, rows = 3, placeholder = '' }) => (
-  <textarea
-    value={value || ''}
-    onChange={e => onChange(e.target.value)}
-    rows={rows}
-    className="w-full border border-gray-300 bg-gray-50 p-2 text-[9pt] outline-none focus:border-blue-500 focus:bg-blue-50/20 resize-y text-blue-800"
-    placeholder={placeholder}
-  />
+const FArea = ({ value, onChange, rows = 3, placeholder = '', label = '' }) => (
+  <div className="w-full">
+    {label && <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>}
+    <textarea
+      value={value || ''}
+      onChange={e => onChange(e.target.value)}
+      rows={rows}
+      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-slate-50/50
+                 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400 hover:bg-white outline-none transition-all resize-y"
+      placeholder={placeholder}
+    />
+  </div>
 );
 
 const FCheck = ({ checked, onChange, label }) => (
-  <label className="inline-flex items-center gap-1 mr-3 cursor-pointer text-[9pt]">
-    <span className={`inline-block w-3.5 h-3.5 border border-black text-[8px] leading-[14px] text-center flex-shrink-0 ${checked ? 'bg-black text-white' : ''}`}>
-      {checked ? '\u2713' : ''}
+  <label className="inline-flex items-center gap-2 cursor-pointer text-sm py-0.5 mr-4 select-none">
+    <span className={`inline-flex items-center justify-center w-4 h-4 rounded border transition-colors flex-shrink-0
+      ${checked ? 'bg-cyan-600 border-cyan-600 text-white' : 'border-slate-300 bg-white'}`}>
+      {checked && <span className="text-[10px] leading-none font-bold">&#10003;</span>}
     </span>
-    <span>{label}</span>
+    {label && <span className="text-slate-700">{label}</span>}
   </label>
 );
 
-const FSelect = ({ value, onChange, options, placeholder = 'Select...' }) => (
-  <select
-    value={value || ''}
-    onChange={e => onChange(e.target.value)}
-    className="border-b border-gray-400 bg-transparent outline-none px-1 text-blue-800 text-[9pt] focus:border-blue-600 cursor-pointer"
-  >
-    <option value="">{placeholder}</option>
-    {options.map(o => <option key={o} value={o}>{o}</option>)}
-  </select>
+const FSelect = ({ value, onChange, options, placeholder = 'Select...', label = '' }) => (
+  <div className="w-full">
+    {label && <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>}
+    <select
+      value={value || ''}
+      onChange={e => onChange(e.target.value)}
+      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white
+                 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400 outline-none transition-all cursor-pointer"
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  </div>
+);
+
+// ─── SECTION CARD ────────────────────────────────────────────────────────────
+
+const SectionCard = ({ id, title, icon: Icon, badge, isOpen, onToggle, children }) => (
+  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <button
+      type="button"
+      onClick={() => onToggle(id)}
+      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors text-left"
+    >
+      <div className="flex items-center gap-3">
+        {Icon && <Icon className="w-5 h-5 text-cyan-600" />}
+        <span className="font-bold text-slate-800">{title}</span>
+        {badge && (
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200">
+            {badge}
+          </span>
+        )}
+      </div>
+      {isOpen
+        ? <ChevronUp className="w-5 h-5 text-slate-400" />
+        : <ChevronDown className="w-5 h-5 text-slate-400" />}
+    </button>
+    {isOpen && (
+      <div className="px-5 pb-5 border-t border-slate-100">
+        {children}
+      </div>
+    )}
+  </div>
 );
 
 // ─── GOAL BANK MODAL ────────────────────────────────────────────────────────
@@ -99,87 +188,84 @@ const GoalBankModal = ({ show, onClose, goals, draft, onAddGoal, studentName }) 
   const [areaFilter, setAreaFilter] = useState('All');
   const [expanded, setExpanded] = useState(null);
 
-  const addedIds = new Set(draft.goals.map(g => g.sourceId));
-
-  const filtered = useMemo(() => {
-    const all = [...goals.suggested, ...goals.other];
-    return all.filter(g => {
-      if (areaFilter !== 'All' && g.area !== areaFilter) return false;
-      if (search && !g.goalText.toLowerCase().includes(search.toLowerCase()) && !g.domain.toLowerCase().includes(search.toLowerCase())) return false;
-      return true;
-    });
-  }, [goals, areaFilter, search]);
-
   if (!show) return null;
 
+  const filteredGoals = (items) =>
+    items.filter(g =>
+      (areaFilter === 'All' || g.area === areaFilter) &&
+      (!search || g.goalText.toLowerCase().includes(search.toLowerCase()) || g.area.toLowerCase().includes(search.toLowerCase()))
+    );
+
+  const goalCount = draft.goals?.length || 0;
+  const maxReached = goalCount >= 3;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 print:hidden">
-      <div className="bg-white rounded-xl shadow-2xl w-[700px] max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h3 className="font-bold text-lg flex items-center gap-2"><BookOpen className="w-5 h-5" /> Goal Bank</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
-        </div>
-        <div className="p-4 border-b border-gray-200 flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-200" placeholder="Search goals..." />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col">
+        <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h3 className="font-extrabold text-lg text-slate-800 flex items-center gap-2"><Target className="w-5 h-5 text-cyan-600" /> Goal Bank</h3>
+            <p className="text-sm text-slate-500 mt-0.5">{maxReached ? <span className="text-amber-600 font-bold">3 goals selected (maximum reached)</span> : `${goalCount}/3 goals selected`}</p>
           </div>
-          <select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg"><X className="w-5 h-5 text-slate-400" /></button>
+        </div>
+        <div className="p-4 border-b border-slate-100 flex gap-3">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-cyan-500/20" placeholder="Search goals..." />
+          </div>
+          <select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg text-sm cursor-pointer outline-none">
             <option value="All">All Areas</option>
             {GOAL_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {draft.goals.length >= 3 && (
-            <div className="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2">
-              3 goals selected (maximum reached).
-            </div>
+          {goals.suggested?.length > 0 && (
+            <>
+              <div className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1 flex items-center gap-1"><Star className="w-3.5 h-3.5" /> Suggested for this student</div>
+              {filteredGoals(goals.suggested).map(g => (
+                <GoalBankItem key={g.id} goal={g} expanded={expanded === g.id} onExpand={() => setExpanded(expanded === g.id ? null : g.id)}
+                  onAdd={() => onAddGoal(g)} disabled={maxReached || draft.goals?.some(dg => dg.sourceId === g.id)}
+                  isAdded={draft.goals?.some(dg => dg.sourceId === g.id)} studentName={studentName} isSuggested />
+              ))}
+              <hr className="my-3 border-slate-200" />
+            </>
           )}
-          {filtered.map(goal => {
-            const isAdded = addedIds.has(goal.id);
-            const isSuggested = goals.suggested.some(g => g.id === goal.id);
-            const isExpanded = expanded === goal.id;
-            return (
-              <div key={goal.id} className={`p-3 rounded-lg border ${isSuggested ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'}`}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : goal.id)}>
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{goal.area}</span>
-                      <span className="text-xs text-gray-400">{goal.domain}</span>
-                      {isSuggested && (
-                        <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Star className="w-3 h-3" /> Suggested
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-700 leading-relaxed">{goal.goalText.replace(/{name}/g, studentName || 'Student').slice(0, 180)}...</p>
-                  </div>
-                  <button
-                    onClick={() => !isAdded && draft.goals.length < 3 && onAddGoal(goal)}
-                    disabled={isAdded || draft.goals.length >= 3}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${isAdded ? 'text-emerald-500 bg-emerald-50' : 'text-blue-600 hover:bg-blue-100'} disabled:opacity-50`}
-                  >
-                    {isAdded ? <CheckCircle className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                  </button>
-                </div>
-                {isExpanded && (
-                  <div className="mt-2 pt-2 border-t border-gray-100 space-y-1">
-                    {goal.benchmarks.map((bm, j) => (
-                      <div key={j} className="text-xs text-gray-500 flex items-start gap-1.5">
-                        <span className="text-blue-400 mt-0.5">&#9679;</span> {bm}
-                      </div>
-                    ))}
-                    <div className="text-xs text-gray-400 italic mt-1">Measurement: {goal.measureMethod}</div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {filteredGoals(goals.other || []).map(g => (
+            <GoalBankItem key={g.id} goal={g} expanded={expanded === g.id} onExpand={() => setExpanded(expanded === g.id ? null : g.id)}
+              onAdd={() => onAddGoal(g)} disabled={maxReached || draft.goals?.some(dg => dg.sourceId === g.id)}
+              isAdded={draft.goals?.some(dg => dg.sourceId === g.id)} studentName={studentName} />
+          ))}
         </div>
       </div>
     </div>
   );
 };
+
+const GoalBankItem = ({ goal, expanded, onExpand, onAdd, disabled, isAdded, studentName, isSuggested }) => (
+  <div className={`border rounded-xl overflow-hidden transition-all ${isSuggested ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'}`}>
+    <div className="flex items-center gap-3 p-3 cursor-pointer" onClick={onExpand}>
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-xs font-bold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-full">{goal.area}</span>
+          <span className="text-xs text-slate-400">{goal.domain}</span>
+        </div>
+        <div className="text-sm text-slate-700">{goal.goalText.replace(/\{name\}/g, studentName || 'the student')}</div>
+      </div>
+      <button onClick={e => { e.stopPropagation(); onAdd(); }} disabled={disabled}
+        className={`shrink-0 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${isAdded ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : disabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border border-cyan-200'}`}>
+        {isAdded ? <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Added</span> : <span className="flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add</span>}
+      </button>
+    </div>
+    {expanded && (
+      <div className="px-3 pb-3 text-xs text-slate-500 border-t border-slate-100 pt-2 space-y-1">
+        <div className="font-bold text-slate-600">Benchmarks:</div>
+        {goal.benchmarks.map((b, i) => <div key={i} className="ml-2">{i + 1}. {b.text}</div>)}
+        <div className="mt-1"><span className="font-bold text-slate-600">Measurement:</span> {goal.measureMethod}</div>
+      </div>
+    )}
+  </div>
+);
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
@@ -205,6 +291,23 @@ const IEPGenerator = ({ user }) => {
   // Services inline form
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [newService, setNewService] = useState({ type: '', location: '', frequency: '', duration: '' });
+
+  // Accordion state
+  const [openSections, setOpenSections] = useState({
+    demographics: true,
+    decisionMaker: false,
+    meeting: false,
+    presentLevels: false,
+    specialConsiderations: false,
+    goals: false,
+    services: false,
+    regularEd: false,
+    transition: false,
+  });
+
+  const toggleSection = (key) => {
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   // Load students on mount
   useEffect(() => {
@@ -280,117 +383,101 @@ const IEPGenerator = ({ user }) => {
   const handleSmartPopulate = useCallback(() => {
     if (!selectedStudent) return;
     const narratives = generatePresentLevels(selectedStudent, kteaData, enrollments, selectedStudent.mtpNotes);
-
-    const snapshot = {};
-    if (kteaData) {
-      snapshot.preReadingGE = kteaData.preReadingGE;
-      snapshot.preMathGE = kteaData.preMathGE;
-      snapshot.preWritingGE = kteaData.preWritingGE;
-      snapshot.postReadingGE = kteaData.postReadingGE;
-      snapshot.postMathGE = kteaData.postMathGE;
-      snapshot.postWritingGE = kteaData.postWritingGE;
-    }
-
     setDraft(prev => ({
       ...prev,
-      academicLevels: narratives.academic,
-      functionalLevels: narratives.functional,
-      strengthsText: narratives.strengths,
-      impactStatement: narratives.impact,
-      kteaSnapshot: snapshot,
+      academicLevels: narratives.academic || prev.academicLevels,
+      functionalLevels: narratives.functional || prev.functionalLevels,
+      strengthsText: narratives.strengths || prev.strengthsText,
+      impactStatement: narratives.impact || prev.impactStatement,
+      evalSummary: buildEvalSummary(prev, kteaData),
+      kteaSnapshot: kteaData || prev.kteaSnapshot,
     }));
   }, [selectedStudent, kteaData, enrollments]);
 
-  const handleAddGoal = (goal) => {
-    const goalEntry = {
-      id: `goal-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-      area: goal.area,
-      goalText: goal.goalText.replace(/{name}/g, selectedStudent?.firstName || 'The student'),
-      benchmarks: goal.benchmarks.map(b => ({ text: b, targetDate: '', status: 'Not Started' })),
-      measureMethod: goal.measureMethod,
-      measureMethods: [],
+  const handleAddGoal = useCallback((bankGoal) => {
+    if (draft.goals.length >= 3) return;
+    const newGoal = {
+      id: Date.now(),
+      sourceId: bankGoal.id,
+      area: bankGoal.area,
+      goalText: bankGoal.goalText.replace(/\{name\}/g, draft.studentName || 'the student').replace(/\{target\}/g, '___'),
+      benchmarks: bankGoal.benchmarks.map(b => ({ text: b.text.replace(/\{name\}/g, draft.studentName || 'the student'), targetDate: '', status: '' })),
+      measureMethod: bankGoal.measureMethod,
+      measureMethods: [bankGoal.measureMethod.includes('Work') ? 'Work' : bankGoal.measureMethod.includes('test') ? 'Tests' : 'Obs'],
       domains: [],
       baselineData: '',
       targetDate: '',
-      sourceId: goal.id,
     };
-    setDraft(prev => ({ ...prev, goals: [...prev.goals, goalEntry] }));
-  };
+    setDraft(prev => ({ ...prev, goals: [...prev.goals, newGoal] }));
+  }, [draft.goals, draft.studentName]);
 
-  const handleRemoveGoal = (goalId) => {
+  const handleRemoveGoal = useCallback((goalId) => {
     setDraft(prev => ({ ...prev, goals: prev.goals.filter(g => g.id !== goalId) }));
-  };
+  }, []);
 
-  const toggleGoalMeasure = (goalId, methodId) => {
+  const toggleGoalMeasure = useCallback((goalId, methodId) => {
     setDraft(prev => ({
       ...prev,
       goals: prev.goals.map(g => {
         if (g.id !== goalId) return g;
-        const current = g.measureMethods || [];
-        const updated = current.includes(methodId) ? current.filter(m => m !== methodId) : [...current, methodId];
-        return { ...g, measureMethods: updated };
+        const methods = g.measureMethods || [];
+        return { ...g, measureMethods: methods.includes(methodId) ? methods.filter(m => m !== methodId) : [...methods, methodId] };
       }),
     }));
-  };
+  }, []);
 
-  const toggleGoalDomain = (goalId, domainId) => {
+  const toggleGoalDomain = useCallback((goalId, domainId) => {
     setDraft(prev => ({
       ...prev,
       goals: prev.goals.map(g => {
         if (g.id !== goalId) return g;
-        const current = g.domains || [];
-        const updated = current.includes(domainId) ? current.filter(d => d !== domainId) : [...current, domainId];
-        return { ...g, domains: updated };
+        const domains = g.domains || [];
+        return { ...g, domains: domains.includes(domainId) ? domains.filter(d => d !== domainId) : [...domains, domainId] };
       }),
     }));
-  };
+  }, []);
 
-  const handleAddService = () => {
+  const handleAddService = useCallback(() => {
     if (!newService.type) return;
-    const svc = { ...newService, id: `svc-${Date.now()}`, startDate: '', endDate: '' };
-    setDraft(prev => ({ ...prev, services: [...prev.services, svc] }));
+    setDraft(prev => ({
+      ...prev,
+      services: [...prev.services, { ...newService, id: Date.now() }],
+    }));
     setNewService({ type: '', location: '', frequency: '', duration: '' });
     setShowServiceForm(false);
-  };
+  }, [newService]);
 
-  const handleRemoveService = (svcId) => {
-    setDraft(prev => ({ ...prev, services: prev.services.filter(s => s.id !== svcId) }));
-  };
+  const handleRemoveService = useCallback((serviceId) => {
+    setDraft(prev => ({ ...prev, services: prev.services.filter(s => s.id !== serviceId) }));
+  }, []);
 
-  const toggleAccommodation = (accId) => {
-    setDraft(prev => {
-      const accs = prev.accommodations.includes(accId)
-        ? prev.accommodations.filter(a => a !== accId)
-        : [...prev.accommodations, accId];
-      return { ...prev, accommodations: accs };
-    });
-  };
+  const toggleAccommodation = useCallback((accId) => {
+    setDraft(prev => ({
+      ...prev,
+      accommodations: prev.accommodations.includes(accId) ? prev.accommodations.filter(a => a !== accId) : [...prev.accommodations, accId],
+    }));
+  }, []);
 
-  const toggleModification = (modId) => {
-    setDraft(prev => {
-      const mods = prev.modifications.includes(modId)
-        ? prev.modifications.filter(m => m !== modId)
-        : [...prev.modifications, modId];
-      return { ...prev, modifications: mods };
-    });
-  };
+  const toggleModification = useCallback((modId) => {
+    setDraft(prev => ({
+      ...prev,
+      modifications: prev.modifications.includes(modId) ? prev.modifications.filter(m => m !== modId) : [...prev.modifications, modId],
+    }));
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const saved = await databaseService.saveIepDraft({ ...draft, createdBy: user?.email || 'unknown', status: 'Draft' });
-      setDraft(saved);
+      await databaseService.saveIepDraft({ ...draft, lastModified: new Date().toISOString(), modifiedBy: user?.name || 'Unknown' });
       await databaseService.logAudit(user, 'Saved IEP Draft', `Saved IEP draft for ${draft.studentName}`);
-      setSaveMessage('Draft saved successfully');
-      setTimeout(() => setSaveMessage(''), 3000);
+      setSaveMessage('Saved successfully!');
     } catch (err) {
-      console.error('Save failed:', err);
-      setSaveMessage('Save failed');
+      console.error('Error saving IEP:', err);
+      setSaveMessage('Error saving.');
     }
     setSaving(false);
+    setTimeout(() => setSaveMessage(''), 3000);
   };
-
-  const handlePrint = () => window.print();
 
   const handleExportDocx = async () => {
     const dd = draft;
@@ -590,26 +677,22 @@ const IEPGenerator = ({ user }) => {
                       </div>
                       <div>
                         <div className="font-bold text-slate-800">{s.studentName}</div>
-                        <div className="text-xs text-slate-500">Grade {s.gradeLevel} &middot; {s.unitName} &middot; {s.district}</div>
+                        <div className="text-xs text-slate-400">Grade {s.gradeLevel} &middot; {s.unitName}</div>
                       </div>
                     </div>
                     {urgency && (
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                        urgency === 'overdue' ? 'bg-red-100 text-red-700' :
-                        urgency === 'soon' ? 'bg-amber-100 text-amber-700' :
-                        'bg-emerald-100 text-emerald-700'
-                      }`}>
-                        {urgency === 'overdue' ? <><AlertTriangle className="w-3 h-3 inline mr-1" />Overdue</> :
-                         <>{daysUntilDue}d</>}
-                      </span>
+                      <div className={`text-xs font-bold px-2 py-1 rounded-full ${urgency === 'overdue' ? 'bg-red-50 text-red-600' : urgency === 'soon' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                        {urgency === 'overdue' ? <span className="flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Overdue</span>
+                          : `${daysUntilDue}d`}
+                      </div>
                     )}
                   </div>
                 </button>
               );
             })}
-            {filteredStudents.length === 0 && !loading && (
-              <div className="text-center py-12 text-slate-400">
-                <Users className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            {!loading && filteredStudents.length === 0 && (
+              <div className="text-center py-8 text-slate-400">
+                <FileCheck className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="font-semibold">No IEP students found</p>
               </div>
             )}
@@ -619,9 +702,9 @@ const IEPGenerator = ({ user }) => {
     );
   }
 
-  // Student selected — show the IEP form
+  // Student selected — show the IEP data entry form
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-slate-200 font-sans">
+    <div className="min-h-[calc(100vh-5rem)] bg-slate-100 font-sans">
 
       {/* Goal Bank Modal */}
       <GoalBankModal
@@ -634,12 +717,12 @@ const IEPGenerator = ({ user }) => {
       />
 
       {/* ─── STICKY TOOLBAR ─── */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-300 shadow-sm print:hidden">
-        <div className="max-w-[8.5in] mx-auto px-4 py-2 flex items-center gap-3 flex-wrap">
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 mr-auto">
             <FileCheck className="w-5 h-5 text-cyan-600" />
             <span className="font-bold text-sm text-slate-800">IEP:</span>
-            <span className="font-bold text-sm text-blue-700">{d.studentName}</span>
+            <span className="font-bold text-sm text-cyan-700">{d.studentName}</span>
             <button onClick={() => { setSelectedStudent(null); setDraft(createEmptyDraft()); }} className="text-xs text-slate-400 hover:text-slate-600 ml-1">(change)</button>
           </div>
           {saveMessage && (
@@ -647,803 +730,455 @@ const IEPGenerator = ({ user }) => {
               {saveMessage}
             </span>
           )}
-          <button onClick={handleSmartPopulate} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg">
+          <button onClick={handleSmartPopulate} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors">
             <Sparkles className="w-3.5 h-3.5" /> Smart Populate
           </button>
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg disabled:opacity-50">
+          <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg disabled:opacity-50 transition-colors">
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
           </button>
-          <button onClick={handlePrint} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg">
-            <Printer className="w-3.5 h-3.5" /> Print
-          </button>
-          <button onClick={handleExportDocx} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg shadow">
+          <button onClick={handleExportDocx} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg shadow transition-colors">
             <Download className="w-3.5 h-3.5" /> Export Word
           </button>
         </div>
       </div>
 
-      {/* ─── SCROLLABLE FORM ─── */}
-      <div className="flex justify-center py-8 px-4 print:p-0 print:bg-white">
-        <div className="iep-form bg-white w-full max-w-[8.5in] shadow-2xl print:shadow-none print:max-w-full" style={{ fontSize: '9pt', lineHeight: '1.45' }}>
+      {/* ─── CARD-BASED FORM ─── */}
+      <div className="max-w-3xl mx-auto py-6 px-4 space-y-4">
 
-          {/* ═══════════════════════════════════════════════════════════════════
-              PAGE 1: DEMOGRAPHICS
-              ═══════════════════════════════════════════════════════════════════ */}
-          <div className="p-[0.5in]">
-
-            {/* Title */}
-            <div className="text-center mb-3">
-              <div className="font-bold text-[12pt] tracking-wide">THE INDIVIDUALIZED EDUCATION PROGRAM (IEP) FOR:</div>
-              <div className="mt-1">
-                <span className="font-bold">Name:</span>{' '}
-                <FInput value={d.studentName} onChange={v => setDraft(prev => ({ ...prev, studentName: v }))} w="min-w-[250px]" />
-              </div>
-              <div className="mt-0.5">
-                <span className="font-bold">Disability Category:</span>{' '}
-                <FInput value={d.disabilityCategory} onChange={v => setDraft(prev => ({ ...prev, disabilityCategory: v }))} w="min-w-[200px]" placeholder="e.g. Emotional Disturbance" />
-              </div>
-              <div className="mt-0.5">
-                <span className="font-bold">Secondary Disability:</span>{' '}
-                <FInput value={d.secondaryDisability} onChange={v => setDraft(prev => ({ ...prev, secondaryDisability: v }))} w="min-w-[200px]" placeholder="e.g. SLD" />
-              </div>
+        {/* ══════════════════ 1. STUDENT DEMOGRAPHICS ══════════════════ */}
+        <SectionCard id="demographics" title="Student Demographics" icon={User} isOpen={openSections.demographics} onToggle={toggleSection}>
+          <div className="space-y-4 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FInput label="Student Name" value={d.studentName} onChange={v => setDraft(prev => ({ ...prev, studentName: v }))} placeholder="Full name" />
+              <FInput label="Disability Category" value={d.disabilityCategory} onChange={v => setDraft(prev => ({ ...prev, disabilityCategory: v }))} placeholder="e.g. Emotional Disturbance" />
             </div>
-
-            {/* Student Demographic Information */}
-            <div className="border border-black p-2 mb-2">
-              <div className="font-bold mb-1">STUDENT DEMOGRAPHIC INFORMATION (Optional):</div>
-              <div className="space-y-1">
-                <div>
-                  <span className="font-bold">Current Address:</span>{' '}
-                  <FInput value={d.studentAddress} onChange={v => setDraft(prev => ({ ...prev, studentAddress: v }))} w="min-w-[300px]" placeholder="Student address" />
-                </div>
-                <div>
-                  <span className="font-bold">Phone:</span>{' '}
-                  <FInput value={d.studentPhone} onChange={v => setDraft(prev => ({ ...prev, studentPhone: v }))} w="min-w-[120px]" placeholder="Phone" />
-                  <span className="ml-4 font-bold">Birth Date:</span>{' '}
-                  <FInput value={d.birthDate} onChange={v => setDraft(prev => ({ ...prev, birthDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                  <span className="ml-4 font-bold">Age:</span>{' '}
-                  <FInput value={d.studentAge} onChange={v => setDraft(prev => ({ ...prev, studentAge: v }))} w="min-w-[30px]" placeholder="Age" />
-                </div>
-                <div>
-                  <span className="font-bold">Student ID #/MOSIS#:</span>{' '}
-                  <FInput value={d.studentMosisId} onChange={v => setDraft(prev => ({ ...prev, studentMosisId: v }))} w="min-w-[100px]" placeholder="ID number" />
-                </div>
-                <div>
-                  <span className="font-bold">Present Grade Level:</span>{' '}
-                  <FInput value={String(d.gradeLevel || '')} onChange={v => setDraft(prev => ({ ...prev, gradeLevel: v }))} w="min-w-[40px]" />
-                </div>
-                <div>
-                  <span className="font-bold">Resident District Home School:</span>{' '}
-                  <FInput value={d.district} onChange={v => setDraft(prev => ({ ...prev, district: v }))} w="min-w-[200px]" />
-                </div>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FInput label="Secondary Disability" value={d.secondaryDisability} onChange={v => setDraft(prev => ({ ...prev, secondaryDisability: v }))} placeholder="e.g. SLD" />
+              <FInput label="Birth Date" value={d.birthDate} onChange={v => setDraft(prev => ({ ...prev, birthDate: v }))} placeholder="MM/DD/YYYY" />
+              <FInput label="Age" value={d.studentAge} onChange={v => setDraft(prev => ({ ...prev, studentAge: v }))} />
             </div>
-
-            {/* School Info — pre-filled */}
-            <div className="border border-black p-2 mb-2 text-[8pt]">
-              <div className="italic text-gray-600 mb-1">If the child is not receiving his/her special education and related services in his/her home school or resident district, indicate below where the services are being provided.</div>
-              <div><span className="font-bold">District/Agency Name:</span> Lakeland Behavioral Health System</div>
-              <div><span className="font-bold">School Name:</span> Lakeland Regional School</div>
-              <div><span className="font-bold">Address:</span> 2323 West Grand Street, Springfield, MO 65802</div>
-              <div><span className="font-bold">Phone:</span> 417-865-5581</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FInput label="Grade Level" value={String(d.gradeLevel || '')} onChange={v => setDraft(prev => ({ ...prev, gradeLevel: v }))} />
+              <FInput label="Student ID / MOSIS #" value={d.studentMosisId} onChange={v => setDraft(prev => ({ ...prev, studentMosisId: v }))} />
+              <FInput label="Resident District" value={d.district} onChange={v => setDraft(prev => ({ ...prev, district: v }))} />
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FInput label="Current Address" value={d.studentAddress} onChange={v => setDraft(prev => ({ ...prev, studentAddress: v }))} placeholder="Student address" />
+              <FInput label="Phone" value={d.studentPhone} onChange={v => setDraft(prev => ({ ...prev, studentPhone: v }))} />
+            </div>
+            <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-500 border border-slate-100">
+              <p className="font-semibold text-slate-600 mb-1">Serving School</p>
+              <p>Lakeland Regional School &middot; 2323 West Grand Street, Springfield, MO 65802 &middot; 417-865-5581</p>
+            </div>
+          </div>
+        </SectionCard>
 
-            {/* Language & Decision Maker */}
-            <div className="border border-black p-2 mb-2">
-              <div className="mb-1">
-                <span className="font-bold">Primary Language or Communication Mode(s):</span>{' '}
-                <FCheck checked={true} onChange={() => {}} label="English" />
-                <FCheck checked={false} onChange={() => {}} label="Spanish" />
-                <FCheck checked={false} onChange={() => {}} label="Sign language" />
-                <FCheck checked={false} onChange={() => {}} label="Other" />
-              </div>
-              <div className="mb-1">
-                <span className="font-bold">Educational Decision Maker is:</span>{' '}
+        {/* ══════════════════ 2. DECISION MAKER & CASE MANAGER ══════════════════ */}
+        <SectionCard id="decisionMaker" title="Decision Maker & Case Manager" icon={Users} isOpen={openSections.decisionMaker} onToggle={toggleSection}>
+          <div className="space-y-4 pt-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-2">Educational Decision Maker Role</label>
+              <div className="flex flex-wrap gap-1">
                 {DECISION_MAKER_ROLES.map(r => (
                   <FCheck key={r} checked={d.decisionMakerRole === r} onChange={() => setDraft(prev => ({ ...prev, decisionMakerRole: r }))} label={r} />
                 ))}
               </div>
-              <div>
-                <span className="font-bold">Name:</span>{' '}
-                <FInput value={d.decisionMakerName} onChange={v => setDraft(prev => ({ ...prev, decisionMakerName: v }))} w="min-w-[200px]" placeholder="Parent/Guardian name" />
-              </div>
-              <div>
-                <span className="font-bold">Address:</span>{' '}
-                <FInput value={d.decisionMakerAddress} onChange={v => setDraft(prev => ({ ...prev, decisionMakerAddress: v }))} w="min-w-[300px]" placeholder="Address" />
-              </div>
-              <div>
-                <span className="font-bold">Phone:</span>{' '}
-                <FInput value={d.decisionMakerPhone} onChange={v => setDraft(prev => ({ ...prev, decisionMakerPhone: v }))} w="min-w-[100px]" placeholder="Phone" />
-                <span className="ml-2 font-bold">Email:</span>{' '}
-                <FInput value={d.decisionMakerEmail} onChange={v => setDraft(prev => ({ ...prev, decisionMakerEmail: v }))} w="min-w-[120px]" placeholder="Email" />
-                <span className="ml-2 font-bold">Fax:</span>{' '}
-                <FInput value={d.decisionMakerFax} onChange={v => setDraft(prev => ({ ...prev, decisionMakerFax: v }))} w="min-w-[100px]" placeholder="Fax" />
-              </div>
             </div>
-
-            {/* Case Manager & Dates */}
-            <div className="border border-black p-2 mb-2">
-              <div className="mb-1">
-                <span className="font-bold">IEP Case Manager:</span>{' '}
-                <FInput value={d.caseManager} onChange={v => setDraft(prev => ({ ...prev, caseManager: v }))} w="min-w-[150px]" placeholder="Case manager name" />
-                <span className="ml-6 font-bold">Case Manager Phone:</span>{' '}
-                <FInput value={d.caseManagerPhone} onChange={v => setDraft(prev => ({ ...prev, caseManagerPhone: v }))} w="min-w-[100px]" placeholder="Phone" />
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <div>
-                  <span className="font-bold">IEP Type:</span>{' '}
-                  <FCheck checked={d.meetingType === 'Initial'} onChange={() => setDraft(prev => ({ ...prev, meetingType: 'Initial' }))} label="Initial" />
-                  <FCheck checked={d.meetingType === 'Annual Review'} onChange={() => setDraft(prev => ({ ...prev, meetingType: 'Annual Review' }))} label="Annual" />
-                </div>
-                <div>
-                  <span className="font-bold">Date of most recent evaluation/reevaluation:</span>{' '}
-                  <FInput value={d.evalDate} onChange={v => setDraft(prev => ({ ...prev, evalDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                </div>
-                <div>
-                  <span className="font-bold">Date of Previous IEP Review:</span>{' '}
-                  <FInput value={d.prevIepDate} onChange={v => setDraft(prev => ({ ...prev, prevIepDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                </div>
-                <div>
-                  <span className="font-bold">Projected date for next triennial evaluation:</span>{' '}
-                  <FInput value={d.triennialDate} onChange={v => setDraft(prev => ({ ...prev, triennialDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                </div>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FInput label="Decision Maker Name" value={d.decisionMakerName} onChange={v => setDraft(prev => ({ ...prev, decisionMakerName: v }))} />
+              <FInput label="Phone" value={d.decisionMakerPhone} onChange={v => setDraft(prev => ({ ...prev, decisionMakerPhone: v }))} />
             </div>
-
-            {/* IEP Content Dates */}
-            <div className="border border-black p-2 mb-2">
-              <div className="font-bold mb-1">IEP CONTENT (Required):</div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <div>
-                  <span className="font-bold">Date of IEP Meeting:</span>{' '}
-                  <FInput value={d.iepDate} onChange={v => setDraft(prev => ({ ...prev, iepDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                </div>
-                <div>
-                  <span className="font-bold">Initiation Date of IEP:</span>{' '}
-                  <FInput value={d.iepInitiationDate} onChange={v => setDraft(prev => ({ ...prev, iepInitiationDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                </div>
-                <div>
-                  <span className="font-bold">Projected Date of Annual IEP Review:</span>{' '}
-                  <FInput value={d.iepDueDate} onChange={v => setDraft(prev => ({ ...prev, iepDueDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                </div>
-                <div>
-                  <span className="font-bold">Parent(s)/Legal Guardian(s) provided copy of this IEP:</span>{' '}
-                  <FInput value={d.copyProvidedDate} onChange={v => setDraft(prev => ({ ...prev, copyProvidedDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                </div>
-              </div>
+            <FInput label="Address" value={d.decisionMakerAddress} onChange={v => setDraft(prev => ({ ...prev, decisionMakerAddress: v }))} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FInput label="Email" value={d.decisionMakerEmail} onChange={v => setDraft(prev => ({ ...prev, decisionMakerEmail: v }))} />
+              <FInput label="Fax" value={d.decisionMakerFax} onChange={v => setDraft(prev => ({ ...prev, decisionMakerFax: v }))} />
             </div>
-
-            {/* Participants Table */}
-            <div className="border border-black mb-2 text-[8pt]">
-              <div className="font-bold p-1 bg-gray-200 border-b border-black text-[9pt]">PARTICIPANTS IN IEP MEETING AND ROLES</div>
-              <div className="p-1 border-b border-black italic text-gray-600">The names and roles of individuals participating in developing the IEP meeting must be documented.</div>
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="border border-black p-1 text-left w-[45%] bg-gray-100">Name of Person and Role</th>
-                    <th className="border border-black p-1 text-left w-[55%] bg-gray-100">Method of Attendance/Participation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {PARTICIPANT_ROWS.map(p => (
-                    <tr key={p.key}>
-                      <td className="border border-black p-1">{p.label}</td>
-                      <td className="border border-black p-1">
-                        <FSelect value={d[p.key]} onChange={v => setDraft(prev => ({ ...prev, [p.key]: v }))} options={ATTENDANCE_METHODS} placeholder="Select method..." />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <hr className="border-slate-200" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FInput label="IEP Case Manager" value={d.caseManager} onChange={v => setDraft(prev => ({ ...prev, caseManager: v }))} />
+              <FInput label="Case Manager Phone" value={d.caseManagerPhone} onChange={v => setDraft(prev => ({ ...prev, caseManagerPhone: v }))} />
             </div>
           </div>
+        </SectionCard>
 
-          {/* ═══════════════════════════════════════════════════════════════════
-              PAGE 2: PRESENT LEVELS (PLAAFP)
-              ═══════════════════════════════════════════════════════════════════ */}
-          <div className="p-[0.5in] pt-0">
-            <div className="font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0">Present Level of Academic Achievement and Functional Performance</div>
-            <div className="border border-black border-t-0 p-2 mb-2 text-[8pt]">
-              <div className="italic text-gray-600 mb-2">(Functional Performance refers to general ability and problem solving, attention and organization, communication, social skills, behavior, independent living skills, and career/vocational skills.)</div>
-
-              <div className="font-bold mb-0.5">How the child's disability affects his/her involvement and progress in the general education curriculum:</div>
-              <FArea value={d.academicLevels || d.impactStatement} onChange={v => setDraft(prev => ({ ...prev, academicLevels: v }))} rows={5} placeholder="Describe how the disability affects involvement and progress in the general education curriculum..." />
-
-              <div className="font-bold mb-0.5 mt-2">The strengths of the child:</div>
-              <FArea value={d.strengthsText} onChange={v => setDraft(prev => ({ ...prev, strengthsText: v }))} rows={3} placeholder="Describe the student's strengths and interests..." />
-
-              <div className="font-bold mb-0.5 mt-2">Concerns of the parent/guardian for enhancing the education of the student:</div>
-              <FArea value={d.parentInput} onChange={v => setDraft(prev => ({ ...prev, parentInput: v }))} rows={3} placeholder="Document parent concerns and input..." />
-
-              <div className="font-bold mb-0.5 mt-2">Changes in current functioning of the student since the initial or prior IEP:</div>
-              <FArea value={d.changesFunctioning} onChange={v => setDraft(prev => ({ ...prev, changesFunctioning: v }))} rows={3} placeholder="Changes in current functioning since the initial or prior IEP..." />
-
-              <div className="font-bold mb-0.5 mt-2">A summary of the most recent evaluation/re-evaluation results:</div>
-              <FArea value={d.evalSummary} onChange={v => setDraft(prev => ({ ...prev, evalSummary: v }))} rows={4} placeholder="Summary of the most recent evaluation/re-evaluation results..." />
-
-              <div className="font-bold mb-0.5 mt-2">A summary of formal and/or informal age appropriate transition assessments:</div>
-              <FArea value={d.transitionAssessments} onChange={v => setDraft(prev => ({ ...prev, transitionAssessments: v }))} rows={3} placeholder="Summary of formal/informal age appropriate transition assessments..." />
+        {/* ══════════════════ 3. MEETING INFORMATION ══════════════════ */}
+        <SectionCard id="meeting" title="Meeting Information" icon={Calendar} badge={d.iepDate ? `Meeting: ${d.iepDate}` : null} isOpen={openSections.meeting} onToggle={toggleSection}>
+          <div className="space-y-4 pt-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-2">IEP Type</label>
+              <div className="flex gap-4">
+                <FCheck checked={d.meetingType === 'Initial'} onChange={() => setDraft(prev => ({ ...prev, meetingType: 'Initial' }))} label="Initial" />
+                <FCheck checked={d.meetingType === 'Annual Review'} onChange={() => setDraft(prev => ({ ...prev, meetingType: 'Annual Review' }))} label="Annual Review" />
+              </div>
             </div>
-          </div>
-
-          {/* ═══════════════════════════════════════════════════════════════════
-              PAGE 3: SPECIAL CONSIDERATIONS
-              ═══════════════════════════════════════════════════════════════════ */}
-          <div className="p-[0.5in] pt-0">
-            <div className="font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0">2. Special Considerations: Federal and State Requirements</div>
-            <div className="border border-black border-t-0 p-2 mb-2 text-[8pt] space-y-1">
-              <div>
-                <span className="font-bold">Does the student exhibit behaviors that impede his/her learning or that of others?</span>{' '}
-                <FCheck checked={d.behaviorImpedes} onChange={() => setDraft(prev => ({ ...prev, behaviorImpedes: !prev.behaviorImpedes }))} label="Yes" />
-                <FCheck checked={!d.behaviorImpedes} onChange={() => setDraft(prev => ({ ...prev, behaviorImpedes: !prev.behaviorImpedes }))} label="No" />
-                {d.behaviorImpedes && <span className="ml-1 italic text-gray-600">Positive behavior interventions and supports are addressed in this IEP.</span>}
-              </div>
-              <div>
-                <span className="font-bold">Is the child blind or visually impaired?</span>{' '}
-                <FCheck checked={d.isBlind} onChange={() => setDraft(prev => ({ ...prev, isBlind: !prev.isBlind }))} label="Yes" />
-                <FCheck checked={!d.isBlind} onChange={() => setDraft(prev => ({ ...prev, isBlind: !prev.isBlind }))} label="No" />
-              </div>
-              <div>
-                <span className="font-bold">Is the child deaf or hard of hearing?</span>{' '}
-                <FCheck checked={d.isDeaf} onChange={() => setDraft(prev => ({ ...prev, isDeaf: !prev.isDeaf }))} label="Yes" />
-                <FCheck checked={!d.isDeaf} onChange={() => setDraft(prev => ({ ...prev, isDeaf: !prev.isDeaf }))} label="No" />
-              </div>
-              <div>
-                <span className="font-bold">Does the child have limited English proficiency?</span>{' '}
-                <FCheck checked={d.isLEP} onChange={() => setDraft(prev => ({ ...prev, isLEP: !prev.isLEP }))} label="Yes" />
-                <FCheck checked={!d.isLEP} onChange={() => setDraft(prev => ({ ...prev, isLEP: !prev.isLEP }))} label="No" />
-              </div>
-              <div>
-                <span className="font-bold">Does the child have communication needs?</span>{' '}
-                <FCheck checked={d.communicationNeeds} onChange={() => setDraft(prev => ({ ...prev, communicationNeeds: !prev.communicationNeeds }))} label="Yes" />
-                <FCheck checked={!d.communicationNeeds} onChange={() => setDraft(prev => ({ ...prev, communicationNeeds: !prev.communicationNeeds }))} label="No" />
-              </div>
-              <div>
-                <span className="font-bold">Does the child require assistive technology devices and/or services?</span>{' '}
-                <FCheck checked={d.assistiveTechnology} onChange={() => setDraft(prev => ({ ...prev, assistiveTechnology: !prev.assistiveTechnology }))} label="Yes" />
-                <FCheck checked={!d.assistiveTechnology} onChange={() => setDraft(prev => ({ ...prev, assistiveTechnology: !prev.assistiveTechnology }))} label="No" />
-              </div>
-              <div>
-                <span className="font-bold">Extended School Year:</span>{' '}
-                <FCheck checked={d.extendedSchoolYear} onChange={() => setDraft(prev => ({ ...prev, extendedSchoolYear: !prev.extendedSchoolYear }))} label="Yes" />
-                <FCheck checked={!d.extendedSchoolYear} onChange={() => setDraft(prev => ({ ...prev, extendedSchoolYear: !prev.extendedSchoolYear }))} label="No" />
-              </div>
-              <div>
-                <span className="font-bold">Post-secondary Transition Services:</span>{' '}
-                <FCheck checked={d.hasTransitionPlan} onChange={() => setDraft(prev => ({ ...prev, hasTransitionPlan: !prev.hasTransitionPlan }))} label="Yes (Form C)" />
-                <FCheck checked={!d.hasTransitionPlan} onChange={() => setDraft(prev => ({ ...prev, hasTransitionPlan: !prev.hasTransitionPlan }))} label="No" />
-              </div>
-              <div>
-                <span className="font-bold">Transfer of Rights at Age of Majority (at least one year prior to age 18):</span>{' '}
-                <FCheck checked={d.transferOfRights} onChange={() => setDraft(prev => ({ ...prev, transferOfRights: !prev.transferOfRights }))} label="Yes" />
-                <FCheck checked={!d.transferOfRights} onChange={() => setDraft(prev => ({ ...prev, transferOfRights: !prev.transferOfRights }))} label="No" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FInput label="Date of IEP Meeting" value={d.iepDate} onChange={v => setDraft(prev => ({ ...prev, iepDate: v }))} placeholder="MM/DD/YYYY" />
+              <FInput label="Initiation Date of IEP" value={d.iepInitiationDate} onChange={v => setDraft(prev => ({ ...prev, iepInitiationDate: v }))} placeholder="MM/DD/YYYY" />
+              <FInput label="Most Recent Evaluation Date" value={d.evalDate} onChange={v => setDraft(prev => ({ ...prev, evalDate: v }))} placeholder="MM/DD/YYYY" />
+              <FInput label="Previous IEP Review Date" value={d.prevIepDate} onChange={v => setDraft(prev => ({ ...prev, prevIepDate: v }))} placeholder="MM/DD/YYYY" />
+              <FInput label="Next Triennial Evaluation" value={d.triennialDate} onChange={v => setDraft(prev => ({ ...prev, triennialDate: v }))} placeholder="MM/DD/YYYY" />
+              <FInput label="Projected Annual Review Date" value={d.iepDueDate} onChange={v => setDraft(prev => ({ ...prev, iepDueDate: v }))} placeholder="MM/DD/YYYY" />
+              <FInput label="Copy Provided to Parent(s)" value={d.copyProvidedDate} onChange={v => setDraft(prev => ({ ...prev, copyProvidedDate: v }))} placeholder="MM/DD/YYYY" />
+            </div>
+            <hr className="border-slate-200" />
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-3">Meeting Participants</label>
+              <div className="space-y-2">
+                {PARTICIPANT_ROWS.map(p => (
+                  <div key={p.key} className="flex items-center gap-3">
+                    <span className="text-sm text-slate-700 w-56 shrink-0">{p.label}</span>
+                    <FSelect value={d[p.key]} onChange={v => setDraft(prev => ({ ...prev, [p.key]: v }))} options={ATTENDANCE_METHODS} placeholder="Select method..." />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+        </SectionCard>
 
-          {/* ═══════════════════════════════════════════════════════════════════
-              PAGES 4-5: ANNUAL MEASURABLE GOALS
-              ═══════════════════════════════════════════════════════════════════ */}
-          <div className="p-[0.5in] pt-0">
-            <div className="font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0 flex items-center justify-between">
-              <span>3. Annual Measurable Goals</span>
+        {/* ══════════════════ 4. PRESENT LEVELS (PLAAFP) ══════════════════ */}
+        <SectionCard id="presentLevels" title="Present Levels (PLAAFP)" icon={ClipboardList} isOpen={openSections.presentLevels} onToggle={toggleSection}>
+          <div className="space-y-4 pt-4">
+            <FArea label="How the disability affects involvement and progress in general education"
+              value={d.academicLevels || d.impactStatement} onChange={v => setDraft(prev => ({ ...prev, academicLevels: v }))} rows={5}
+              placeholder="Describe how the disability affects involvement and progress in the general education curriculum..." />
+            <FArea label="Student Strengths" value={d.strengthsText} onChange={v => setDraft(prev => ({ ...prev, strengthsText: v }))} rows={3}
+              placeholder="Student's strengths, preferences, and interests..." />
+            <FArea label="Parent/Guardian Concerns" value={d.parentInput} onChange={v => setDraft(prev => ({ ...prev, parentInput: v }))} rows={3}
+              placeholder="Concerns of the parent(s) for enhancing the education of their child..." />
+            <FArea label="Changes in Functioning Since Prior IEP" value={d.changesFunctioning} onChange={v => setDraft(prev => ({ ...prev, changesFunctioning: v }))} rows={3}
+              placeholder="Changes in condition or circumstance since the prior IEP..." />
+            <FArea label="Most Recent Evaluation/Re-evaluation Summary" value={d.evalSummary} onChange={v => setDraft(prev => ({ ...prev, evalSummary: v }))} rows={4}
+              placeholder="Summary of most recent evaluation results..." />
+            <FArea label="Age-Appropriate Transition Assessments Summary" value={d.transitionAssessments} onChange={v => setDraft(prev => ({ ...prev, transitionAssessments: v }))} rows={3}
+              placeholder="Summary of age-appropriate transition assessments..." />
+          </div>
+        </SectionCard>
+
+        {/* ══════════════════ 5. SPECIAL CONSIDERATIONS ══════════════════ */}
+        <SectionCard id="specialConsiderations" title="Special Considerations" icon={Settings}
+          badge={`${SPECIAL_CONSIDERATION_ITEMS.filter(i => d[i.key]).length} selected`}
+          isOpen={openSections.specialConsiderations} onToggle={toggleSection}>
+          <div className="space-y-1 pt-4">
+            {SPECIAL_CONSIDERATION_ITEMS.map(item => (
+              <div key={item.key} className="flex items-center justify-between py-2.5 border-b border-slate-100 last:border-0">
+                <span className="text-sm text-slate-700">{item.question}</span>
+                <div className="flex gap-3 shrink-0 ml-4">
+                  <FCheck checked={d[item.key]} onChange={() => setDraft(prev => ({ ...prev, [item.key]: !prev[item.key] }))} label="Yes" />
+                  <FCheck checked={!d[item.key]} onChange={() => setDraft(prev => ({ ...prev, [item.key]: !prev[item.key] }))} label="No" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        {/* ══════════════════ 6. ANNUAL GOALS ══════════════════ */}
+        <SectionCard id="goals" title="Annual Measurable Goals" icon={Target} badge={`${d.goals.length}/3 goals`} isOpen={openSections.goals} onToggle={toggleSection}>
+          <div className="space-y-4 pt-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-500">Add up to 3 annual goals with benchmarks and measurement methods.</p>
               <button
                 onClick={() => setShowGoalBank(true)}
                 disabled={d.goals.length >= 3}
-                className="flex items-center gap-1 px-2 py-0.5 text-[8pt] font-bold text-cyan-700 bg-white hover:bg-cyan-50 border border-cyan-300 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed print:hidden"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors disabled:opacity-40"
               >
-                <Plus className="w-3 h-3" /> Add from Goal Bank
+                <Plus className="w-4 h-4" /> Goal Bank
               </button>
             </div>
-            <div className="border border-black border-t-0 p-2 mb-2">
 
-              {d.goals.length === 0 && (
-                <div className="text-center py-6 text-gray-400 italic">
-                  <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No goals added yet. Click &quot;Add from Goal Bank&quot; above (3 goals required).</p>
-                </div>
-              )}
+            {d.goals.length === 0 && (
+              <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="font-semibold">No goals added yet</p>
+                <p className="text-xs mt-1">Use the Goal Bank to add up to 3 goals</p>
+              </div>
+            )}
 
-              {d.goals.map((goal, i) => (
-                <div key={goal.id} className={`${i > 0 ? 'mt-4 pt-4 border-t-2 border-gray-300' : ''}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-[10pt]">Annual Goal #{i + 1}</span>
-                    <button onClick={() => handleRemoveGoal(goal.id)} className="text-red-400 hover:text-red-600 transition-colors print:hidden">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+            {d.goals.map((goal, i) => (
+              <div key={goal.id} className="border border-slate-200 rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-700">Goal #{i + 1}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-semibold">{goal.area}</span>
                   </div>
-
-                  <div className="border border-gray-300 bg-gray-50 p-2 mb-2 whitespace-pre-wrap text-[9pt]">{goal.goalText}</div>
-
-                  <div className="font-bold mb-1 text-[9pt]">Measurable Benchmarks/Objectives:</div>
-                  {goal.benchmarks.map((bm, j) => (
-                    <div key={j} className="mb-0.5 pl-2 text-[9pt]">
-                      <span className="font-bold">{j + 1}.</span> {bm.text}
+                  <button onClick={() => handleRemoveGoal(goal.id)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="p-4 space-y-4">
+                  <div className="text-sm text-slate-800 leading-relaxed bg-white border border-slate-100 rounded-lg p-3">
+                    {goal.goalText}
+                  </div>
+                  {goal.benchmarks?.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-2">Benchmarks / Objectives</label>
+                      {goal.benchmarks.map((bm, j) => (
+                        <div key={j} className="flex items-start gap-2 text-sm text-slate-700 mb-1.5">
+                          <span className="text-cyan-500 font-bold mt-0.5">{j + 1}.</span>
+                          <span>{bm.text}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-
-                  {/* Transition Domain Selection */}
+                  )}
                   {d.hasTransitionPlan && (
-                    <div className="mt-2 pt-1 border-t border-gray-200">
-                      <div className="font-bold text-[8pt]">For students with Post-secondary Transition Plans, this annual goal supports:</div>
-                      <div className="text-[8pt] mt-0.5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-2">Supports Post-secondary Domain</label>
+                      <div className="flex flex-wrap gap-1">
                         {GOAL_DOMAINS.map(dom => (
                           <FCheck key={dom.id} checked={(goal.domains || []).includes(dom.id)} onChange={() => toggleGoalDomain(goal.id, dom.id)} label={dom.label} />
                         ))}
                       </div>
                     </div>
                   )}
-
-                  {/* Measurement Methods */}
-                  <div className="mt-2 pt-1 border-t border-gray-200">
-                    <div className="font-bold text-[8pt]">Progress toward the goal will be measured by:</div>
-                    <div className="text-[8pt] mt-0.5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2">Measurement Methods</label>
+                    <div className="grid grid-cols-2 gap-x-4">
                       {MEASUREMENT_METHODS.map(m => (
                         <FCheck key={m.id} checked={(goal.measureMethods || []).includes(m.id)} onChange={() => toggleGoalMeasure(goal.id, m.id)} label={m.label} />
                       ))}
                     </div>
                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
 
-                  {/* Progress Reporting Table */}
-                  <div className="mt-2">
-                    <table className="w-full border-collapse text-[8pt]">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          <th className="border border-black p-1 text-left w-[15%]">Date of Report</th>
-                          <th className="border border-black p-1 text-left w-[30%]">Summary Statement</th>
-                          <th className="border border-black p-1 text-left w-[55%]">Description of progress data</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[1, 2, 3].map(r => (
-                          <tr key={r}>
-                            <td className="border border-black p-1 h-8"></td>
-                            <td className="border border-black p-1 h-8 text-[7pt]">
-                              <FCheck checked={false} onChange={() => {}} label="Making progress" /><br/>
-                              <FCheck checked={false} onChange={() => {}} label="Not making progress" /><br/>
-                              <FCheck checked={false} onChange={() => {}} label="Goal met" />
-                            </td>
-                            <td className="border border-black p-1 h-8"></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+        {/* ══════════════════ 7. SERVICES, ACCOMMODATIONS, MODIFICATIONS ══════════════════ */}
+        <SectionCard id="services" title="Services, Accommodations & Modifications" icon={Briefcase}
+          badge={`${d.services.length} svc, ${d.accommodations.length} acc`}
+          isOpen={openSections.services} onToggle={toggleSection}>
+          <div className="space-y-5 pt-4">
+            <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-600 border border-slate-100">
+              <span className="font-semibold">Special Education Service:</span> 1050 min &middot; Weekly &middot; sped
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-xs font-semibold text-slate-500">Related Services</label>
+                <button onClick={() => setShowServiceForm(!showServiceForm)}
+                  className="flex items-center gap-1 text-sm font-bold text-cyan-600 hover:text-cyan-700 transition-colors">
+                  <Plus className="w-4 h-4" /> Add Service
+                </button>
+              </div>
+
+              {showServiceForm && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-cyan-50/50 rounded-lg border border-cyan-100 mb-3">
+                  <FSelect value={newService.type} onChange={v => setNewService(s => ({ ...s, type: v }))} options={SERVICE_TYPES.map(s => s.label)} placeholder="Service type..." />
+                  <FSelect value={newService.duration} onChange={v => setNewService(s => ({ ...s, duration: v }))} options={DURATION_OPTIONS} placeholder="Duration..." />
+                  <FSelect value={newService.frequency} onChange={v => setNewService(s => ({ ...s, frequency: v }))} options={FREQUENCY_OPTIONS} placeholder="Frequency..." />
+                  <FSelect value={newService.location} onChange={v => setNewService(s => ({ ...s, location: v }))} options={SERVICE_LOCATIONS} placeholder="Location..." />
+                  <div className="col-span-2 sm:col-span-4 flex justify-end">
+                    <button onClick={handleAddService} disabled={!newService.type}
+                      className="px-4 py-1.5 text-sm font-bold text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 disabled:opacity-50 transition-colors">
+                      Add
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {d.services.length === 0 && !showServiceForm && (
+                <p className="text-sm text-slate-400 italic">No related services added.</p>
+              )}
+              <div className="space-y-2">
+                {d.services.map(svc => (
+                  <div key={svc.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                    <div className="text-sm">
+                      <span className="font-semibold text-slate-800">{svc.type}</span>
+                      <span className="text-slate-400 ml-2">{svc.duration} &middot; {svc.frequency} &middot; {svc.location}</span>
+                    </div>
+                    <button onClick={() => handleRemoveService(svc.id)} className="text-red-400 hover:text-red-600 p-1 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <hr className="border-slate-200" />
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-3">Accommodations</label>
+              {Object.entries(ACCOMMODATIONS).map(([category, items]) => (
+                <div key={category} className="mb-4">
+                  <div className="text-sm font-semibold text-slate-600 mb-1.5">{category}</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                    {items.map(acc => (
+                      <FCheck key={acc.id} checked={d.accommodations.includes(acc.id)} onChange={() => toggleAccommodation(acc.id)} label={acc.label} />
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* ═══════════════════════════════════════════════════════════════════
-              PAGE 6: SERVICE SUMMARY
-              ═══════════════════════════════════════════════════════════════════ */}
-          <div className="p-[0.5in] pt-0">
-            <div className="font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0">5. Service Summary</div>
-            <div className="border border-black border-t-0 mb-2 text-[8pt]">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-black p-1 text-left" colSpan={2}>Service</th>
-                    <th className="border border-black p-1 text-center">Amount</th>
-                    <th className="border border-black p-1 text-center">Frequency</th>
-                    <th className="border border-black p-1 text-center">Location</th>
-                    <th className="border border-black p-1 text-center">Begin Date*</th>
-                    <th className="border border-black p-1 text-center">End Date*</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Pre-filled Special Ed row */}
-                  <tr>
-                    <td className="border border-black p-1 font-bold bg-gray-50" colSpan={2}>Special Education Service</td>
-                    <td className="border border-black p-1 text-center">1050 min</td>
-                    <td className="border border-black p-1 text-center">Weekly</td>
-                    <td className="border border-black p-1 text-center">sped</td>
-                    <td className="border border-black p-1 text-center"></td>
-                    <td className="border border-black p-1 text-center"></td>
-                  </tr>
+            <hr className="border-slate-200" />
 
-                  {/* Related Services header */}
-                  <tr>
-                    <td className="border border-black p-1 font-bold bg-gray-50" colSpan={7}>
-                      Related Services
-                      <button onClick={() => setShowServiceForm(!showServiceForm)} className="ml-3 text-cyan-600 hover:text-cyan-800 text-[8pt] font-bold print:hidden">
-                        [+ Add Service]
-                      </button>
-                    </td>
-                  </tr>
-
-                  {/* Add service form row */}
-                  {showServiceForm && (
-                    <tr className="print:hidden">
-                      <td className="border border-black p-1" colSpan={2}>
-                        <select value={newService.type} onChange={e => setNewService(s => ({ ...s, type: e.target.value }))} className="w-full p-1 border border-gray-300 rounded text-[8pt] bg-white">
-                          <option value="">Select service...</option>
-                          {SERVICE_TYPES.map(s => <option key={s.id} value={s.label}>{s.label}</option>)}
-                        </select>
-                      </td>
-                      <td className="border border-black p-1">
-                        <select value={newService.duration} onChange={e => setNewService(s => ({ ...s, duration: e.target.value }))} className="w-full p-1 border border-gray-300 rounded text-[8pt] bg-white">
-                          <option value="">Duration...</option>
-                          {DURATION_OPTIONS.map(dd => <option key={dd} value={dd}>{dd}</option>)}
-                        </select>
-                      </td>
-                      <td className="border border-black p-1">
-                        <select value={newService.frequency} onChange={e => setNewService(s => ({ ...s, frequency: e.target.value }))} className="w-full p-1 border border-gray-300 rounded text-[8pt] bg-white">
-                          <option value="">Freq...</option>
-                          {FREQUENCY_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
-                        </select>
-                      </td>
-                      <td className="border border-black p-1">
-                        <select value={newService.location} onChange={e => setNewService(s => ({ ...s, location: e.target.value }))} className="w-full p-1 border border-gray-300 rounded text-[8pt] bg-white">
-                          <option value="">Location...</option>
-                          {SERVICE_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                        </select>
-                      </td>
-                      <td className="border border-black p-1 text-center" colSpan={2}>
-                        <button onClick={handleAddService} disabled={!newService.type} className="px-2 py-0.5 text-[8pt] font-bold text-white bg-cyan-600 rounded hover:bg-cyan-700 disabled:opacity-50">
-                          Add
-                        </button>
-                      </td>
-                    </tr>
-                  )}
-
-                  {/* Service rows */}
-                  {d.services.map(svc => (
-                    <tr key={svc.id}>
-                      <td className="border border-black p-1" colSpan={2}>
-                        {svc.type}
-                        <button onClick={() => handleRemoveService(svc.id)} className="ml-2 text-red-400 hover:text-red-600 print:hidden">
-                          <Trash2 className="w-3 h-3 inline" />
-                        </button>
-                      </td>
-                      <td className="border border-black p-1 text-center">{svc.duration || '-'}</td>
-                      <td className="border border-black p-1 text-center">{svc.frequency || '-'}</td>
-                      <td className="border border-black p-1 text-center">{svc.location || '-'}</td>
-                      <td className="border border-black p-1 text-center"></td>
-                      <td className="border border-black p-1 text-center"></td>
-                    </tr>
-                  ))}
-                  {d.services.length === 0 && (
-                    <tr>
-                      <td className="border border-black p-1 text-gray-400 italic" colSpan={7}>No related services added.</td>
-                    </tr>
-                  )}
-
-                  {/* Accommodations & Modifications */}
-                  <tr>
-                    <td className="border border-black p-1 font-bold bg-gray-50" colSpan={7}>Program Modifications and Accommodations</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-black p-2" colSpan={7}>
-                      {Object.entries(ACCOMMODATIONS).map(([category, items]) => (
-                        <div key={category} className="mb-2">
-                          <div className="font-bold text-[8pt] mb-0.5">{category}</div>
-                          <div className="grid grid-cols-2 gap-x-4">
-                            {items.map(acc => (
-                              <FCheck key={acc.id} checked={d.accommodations.includes(acc.id)} onChange={() => toggleAccommodation(acc.id)} label={acc.label} />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                      <div className="mt-2 pt-1 border-t border-gray-200">
-                        <div className="font-bold text-[8pt] mb-0.5">Modifications</div>
-                        <div className="grid grid-cols-2 gap-x-4">
-                          {MODIFICATIONS.map(mod => (
-                            <FCheck key={mod.id} checked={d.modifications.includes(mod.id)} onChange={() => toggleModification(mod.id)} label={mod.label} />
-                          ))}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="p-1 text-[7pt] italic text-gray-500">*N/A if will be same as initiation and annual review date indicated on page 1.</div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-3">Modifications</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                {MODIFICATIONS.map(mod => (
+                  <FCheck key={mod.id} checked={d.modifications.includes(mod.id)} onChange={() => toggleModification(mod.id)} label={mod.label} />
+                ))}
+              </div>
             </div>
           </div>
+        </SectionCard>
 
-          {/* ═══════════════════════════════════════════════════════════════════
-              PAGES 7-8: REGULAR ED PARTICIPATION & PLACEMENT
-              ═══════════════════════════════════════════════════════════════════ */}
-          <div className="p-[0.5in] pt-0">
-            <div className="font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0">7. Regular Education Participation</div>
-            <div className="border border-black border-t-0 p-2 mb-2 text-[8pt] space-y-1">
-              <div className="font-bold">For K-12: Will this child receive all special education and related services in the regular education environment?</div>
-              <div>
+        {/* ══════════════════ 8. REGULAR ED & PLACEMENT ══════════════════ */}
+        <SectionCard id="regularEd" title="Regular Ed Participation & Placement" icon={GraduationCap} isOpen={openSections.regularEd} onToggle={toggleSection}>
+          <div className="space-y-4 pt-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Will this child receive all special education services in the regular education environment?
+              </label>
+              <div className="flex gap-4">
                 <FCheck checked={d.regularEdInRegular} onChange={() => setDraft(prev => ({ ...prev, regularEdInRegular: !prev.regularEdInRegular }))} label="Yes" />
-                {' '}
                 <FCheck checked={!d.regularEdInRegular} onChange={() => setDraft(prev => ({ ...prev, regularEdInRegular: !prev.regularEdInRegular }))} label="No" />
               </div>
-              {!d.regularEdInRegular && (
-                <div>
-                  <span className="font-bold">If no, explain why services cannot be provided in the regular education environment:</span>
-                  <FArea value={d.regularEdExplanation} onChange={v => setDraft(prev => ({ ...prev, regularEdExplanation: v }))} rows={2} placeholder="Student is placed in a private residential facility (Lakeland Behavioral Health System)." />
-                </div>
-              )}
             </div>
-          </div>
-
-          <div className="p-[0.5in] pt-0">
-            <div className="font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0">8. Placement Considerations and Decision</div>
-            <div className="border border-black border-t-0 p-2 mb-2 text-[8pt]">
-              <div className="mb-1 font-bold">Placement Continuum (K-12)</div>
-              <table className="w-full border-collapse text-[8pt]">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-black p-1 text-left">Placement Option</th>
-                    <th className="border border-black p-1 text-center w-16">Considered</th>
-                    <th className="border border-black p-1 text-center w-16">Selected</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(d.placementOptions || []).map((pl, i) => (
-                    <tr key={i}>
-                      <td className="border border-black p-1">{pl.label}</td>
-                      <td className="border border-black p-0.5 text-center">
-                        <FCheck checked={pl.considered} onChange={() => {
-                          setDraft(prev => {
-                            const opts = [...prev.placementOptions];
-                            opts[i] = { ...opts[i], considered: !opts[i].considered };
-                            return { ...prev, placementOptions: opts };
-                          });
-                        }} label="" />
-                      </td>
-                      <td className="border border-black p-0.5 text-center">
-                        <FCheck checked={pl.selected} onChange={() => {
-                          setDraft(prev => {
-                            const opts = prev.placementOptions.map((o, j) => ({ ...o, selected: j === i ? !o.selected : false }));
-                            return { ...prev, placementOptions: opts };
-                          });
-                        }} label="" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* ═══════════════════════════════════════════════════════════════════
-              PAGES 11-14: TRANSITION PLAN (if enabled)
-              ═══════════════════════════════════════════════════════════════════ */}
-          {d.hasTransitionPlan && (
-            <div className="p-[0.5in] pt-0">
-              <div className="font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0">Form C: Post-Secondary Transition Plan</div>
-              <div className="border border-black border-t-0 p-2 mb-2 text-[8pt] space-y-4">
-
-                {/* Assessment Table */}
-                <div>
-                  <div className="font-bold text-[9pt] mb-1">Age-Appropriate Transition Assessments</div>
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border border-black p-1 text-left w-[15%]">Date</th>
-                        <th className="border border-black p-1 text-left w-[25%]">Assessment</th>
-                        <th className="border border-black p-1 text-left w-[60%]">Summary of Results</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-black p-1">
-                          <FInput value={d.transitionAssessmentDate1} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate1: v }))} w="w-full" placeholder="Date" />
-                        </td>
-                        <td className="border border-black p-1">Career Interest Survey</td>
-                        <td className="border border-black p-1">
-                          <FInput value={d.careerInterestAreas} onChange={v => setDraft(prev => ({ ...prev, careerInterestAreas: v }))} w="w-full" placeholder="Career interest areas..." />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1">
-                          <FInput value={d.transitionAssessmentDate2} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate2: v }))} w="w-full" placeholder="Date" />
-                        </td>
-                        <td className="border border-black p-1">KTEA-III</td>
-                        <td className="border border-black p-1 text-[7pt]">{buildKteaSummary(kteaData) || <span className="text-gray-400 italic">Auto-filled from KTEA data</span>}</td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1">
-                          <FInput value={d.transitionAssessmentDate3} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate3: v }))} w="w-full" placeholder="Date" />
-                        </td>
-                        <td className="border border-black p-1">Independent Living</td>
-                        <td className="border border-black p-1">
-                          <FInput value={d.assessSummary3} onChange={v => setDraft(prev => ({ ...prev, assessSummary3: v }))} w="w-full" placeholder="Summary..." />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Graduation Info */}
-                <div>
-                  <div className="font-bold text-[9pt] mb-1">Graduation Information</div>
-                  <div className="mb-1">
-                    <span className="font-bold">Anticipated Graduation Date:</span>{' '}
-                    <FInput value={d.anticipatedGraduationDate} onChange={v => setDraft(prev => ({ ...prev, anticipatedGraduationDate: v }))} w="min-w-[100px]" placeholder="MM/DD/YYYY" />
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-bold">Graduation Option:</span>{' '}
-                    <FCheck checked={d.graduationOptCredits} onChange={() => setDraft(prev => ({ ...prev, graduationOptCredits: !prev.graduationOptCredits }))} label="Regular diploma based on credits" />
-                    <FCheck checked={d.graduationOptGoals} onChange={() => setDraft(prev => ({ ...prev, graduationOptGoals: !prev.graduationOptGoals }))} label="Regular diploma based on meeting goals" />
-                  </div>
-                  <div>
-                    <span className="font-bold">Pre-ETS Begin Date:</span>{' '}
-                    <FInput value={d.preEtsDate} onChange={v => setDraft(prev => ({ ...prev, preEtsDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                    <span className="ml-4 font-bold">VR Introduction Date:</span>{' '}
-                    <FInput value={d.vrIntroDate} onChange={v => setDraft(prev => ({ ...prev, vrIntroDate: v }))} w="min-w-[80px]" placeholder="MM/DD/YYYY" />
-                  </div>
-                </div>
-
-                {/* ─── EMPLOYMENT ─── */}
-                <div>
-                  <div className="font-bold text-[9pt] bg-amber-50 p-1 border border-amber-200 mb-1">Employment</div>
-                  <div className="mb-1">
-                    <span className="font-bold">Post-secondary Goal:</span> After high school,{' '}
-                    <FInput value={d.transition.postSecondaryEmployment} onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, postSecondaryEmployment: v } }))} w="min-w-[350px]" placeholder="the student will pursue employment in..." />
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-bold">Skills Already Obtained:</span>
-                    <FArea value={d.employmentSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, employmentSkillsObtained: v }))} rows={2} placeholder="List employment-related skills the student already has..." />
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-bold">Skills Needed Before Graduation:</span>
-                    <FArea value={d.employmentSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, employmentSkillsNeeded: v }))} rows={2} placeholder="Resume writing, job applications, interview skills..." />
-                  </div>
-                  <table className="w-full border-collapse mt-1">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border border-black p-1 text-left w-[25%]">Agency</th>
-                        <th className="border border-black p-1 text-left w-[35%]">Target Skills</th>
-                        <th className="border border-black p-1 text-left w-[40%]">Services/Activities</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">School</td>
-                        <td className="border border-black p-1"><FInput value={d.empSchoolSkills} onChange={v => setDraft(prev => ({ ...prev, empSchoolSkills: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.schoolEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, schoolEmploymentServices: v }))} w="w-full" placeholder="provide career exploration..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Student</td>
-                        <td className="border border-black p-1"><FInput value={d.empStudentSkill} onChange={v => setDraft(prev => ({ ...prev, empStudentSkill: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.studentEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, studentEmploymentServices: v }))} w="w-full" placeholder="participate in career exploration..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Parent/Guardian</td>
-                        <td className="border border-black p-1"><FInput value={d.empParentSkill} onChange={v => setDraft(prev => ({ ...prev, empParentSkill: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.parentEmploymentServices} onChange={v => setDraft(prev => ({ ...prev, parentEmploymentServices: v }))} w="w-full" placeholder="assist the student with..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Outside Agency</td>
-                        <td className="border border-black p-1" colSpan={2}><FInput value={d.empAgencyName} onChange={v => setDraft(prev => ({ ...prev, empAgencyName: v }))} w="w-full" placeholder="Agency name..." /></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* ─── EDUCATION/TRAINING ─── */}
-                <div>
-                  <div className="font-bold text-[9pt] bg-blue-50 p-1 border border-blue-200 mb-1">Education / Training</div>
-                  <div className="mb-1">
-                    <span className="font-bold">Post-secondary Goal:</span> After high school,{' '}
-                    <FInput value={d.transition.postSecondaryEducation} onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, postSecondaryEducation: v } }))} w="min-w-[350px]" placeholder="the student will attend..." />
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-bold">Skills Already Obtained:</span>
-                    <FArea value={d.educationSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, educationSkillsObtained: v }))} rows={2} placeholder="Use electronic media for career info, variety of resources..." />
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-bold">Skills Needed Before Graduation:</span>
-                    <FArea value={d.educationSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, educationSkillsNeeded: v }))} rows={2} placeholder="Identify vocational service providers, sources of financial aid..." />
-                  </div>
-                  <table className="w-full border-collapse mt-1">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border border-black p-1 text-left w-[25%]">Agency</th>
-                        <th className="border border-black p-1 text-left w-[35%]">Target Skills</th>
-                        <th className="border border-black p-1 text-left w-[40%]">Services/Activities</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">School</td>
-                        <td className="border border-black p-1"><FInput value={d.eduSchoolSkill} onChange={v => setDraft(prev => ({ ...prev, eduSchoolSkill: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.schoolEducationServices} onChange={v => setDraft(prev => ({ ...prev, schoolEducationServices: v }))} w="w-full" placeholder="provide educational opportunities..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Student</td>
-                        <td className="border border-black p-1"><FInput value={d.eduStudentSkill} onChange={v => setDraft(prev => ({ ...prev, eduStudentSkill: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.studentEducationServices} onChange={v => setDraft(prev => ({ ...prev, studentEducationServices: v }))} w="w-full" placeholder="take advantage of educational opportunities..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Parent/Guardian</td>
-                        <td className="border border-black p-1"><FInput value={d.eduParentSkill} onChange={v => setDraft(prev => ({ ...prev, eduParentSkill: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.parentEducationServices} onChange={v => setDraft(prev => ({ ...prev, parentEducationServices: v }))} w="w-full" placeholder="assist the student in locating..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Outside Agency</td>
-                        <td className="border border-black p-1" colSpan={2}><FInput value={d.eduAgencyName} onChange={v => setDraft(prev => ({ ...prev, eduAgencyName: v }))} w="w-full" placeholder="Agency name..." /></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* ─── INDEPENDENT LIVING ─── */}
-                <div>
-                  <div className="font-bold text-[9pt] bg-emerald-50 p-1 border border-emerald-200 mb-1">Independent Living</div>
-                  <div className="mb-1">
-                    <span className="font-bold">Post-secondary Goal:</span> After high school,{' '}
-                    <FInput value={d.transition.independentLiving} onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, independentLiving: v } }))} w="min-w-[350px]" placeholder="the student will demonstrate the ability to..." />
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-bold">Skills Already Obtained:</span>
-                    <FArea value={d.independentLivingSkillsObtained} onChange={v => setDraft(prev => ({ ...prev, independentLivingSkillsObtained: v }))} rows={2} placeholder="Skills the student already has for independent living..." />
-                  </div>
-                  <div className="mb-1">
-                    <span className="font-bold">Skills Needed Before Graduation:</span>
-                    <FArea value={d.independentLivingSkillsNeeded} onChange={v => setDraft(prev => ({ ...prev, independentLivingSkillsNeeded: v }))} rows={2} placeholder="Banking, checking account, ATM, budgeting, cooking..." />
-                  </div>
-                  <table className="w-full border-collapse mt-1">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border border-black p-1 text-left w-[25%]">Agency</th>
-                        <th className="border border-black p-1 text-left w-[35%]">Target Skills</th>
-                        <th className="border border-black p-1 text-left w-[40%]">Services/Activities</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">School</td>
-                        <td className="border border-black p-1"><FInput value={d.livSchoolSkill} onChange={v => setDraft(prev => ({ ...prev, livSchoolSkill: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.schoolIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, schoolIndependentLivingServices: v }))} w="w-full" placeholder="provide life skills materials..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Student</td>
-                        <td className="border border-black p-1"><FInput value={d.livStudentSkill} onChange={v => setDraft(prev => ({ ...prev, livStudentSkill: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.studentIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, studentIndependentLivingServices: v }))} w="w-full" placeholder="study and complete life skills materials..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Parent/Guardian</td>
-                        <td className="border border-black p-1"><FInput value={d.livParentSkill} onChange={v => setDraft(prev => ({ ...prev, livParentSkill: v }))} w="w-full" placeholder="Target skills..." /></td>
-                        <td className="border border-black p-1"><FInput value={d.parentIndependentLivingServices} onChange={v => setDraft(prev => ({ ...prev, parentIndependentLivingServices: v }))} w="w-full" placeholder="assist the student in determining..." /></td>
-                      </tr>
-                      <tr>
-                        <td className="border border-black p-1 font-bold">Outside Agency</td>
-                        <td className="border border-black p-1" colSpan={2}><FInput value={d.livAgencySvc} onChange={v => setDraft(prev => ({ ...prev, livAgencySvc: v }))} w="w-full" placeholder="Agency name/service..." /></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Transition Skills Checklist */}
-                <div>
-                  <div className="font-bold text-[9pt] mb-1">Transition Skills Checklist</div>
-                  {Object.entries(TRANSITION_SKILL_AREAS).map(([area, skills]) => (
-                    <div key={area} className="mb-2">
-                      <div className="font-bold text-[8pt] mb-0.5">{area}</div>
-                      <div className="grid grid-cols-2 gap-x-4">
-                        {skills.map(skill => (
-                          <FCheck
-                            key={skill}
-                            checked={d.transition.targetSkills?.includes(skill) || false}
-                            onChange={() => {
-                              setDraft(prev => {
-                                const current = prev.transition.targetSkills || [];
-                                const updated = current.includes(skill)
-                                  ? current.filter(s => s !== skill)
-                                  : [...current, skill];
-                                return { ...prev, transition: { ...prev.transition, targetSkills: updated } };
-                              });
-                            }}
-                            label={skill}
-                          />
-                        ))}
-                      </div>
+            {!d.regularEdInRegular && (
+              <FArea label="Explain why services cannot be provided in the regular education environment"
+                value={d.regularEdExplanation} onChange={v => setDraft(prev => ({ ...prev, regularEdExplanation: v }))} rows={2} />
+            )}
+            <hr className="border-slate-200" />
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-3">Placement Continuum (K-12)</label>
+              <div className="space-y-2">
+                {(d.placementOptions || []).map((pl, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
+                    <span className="text-sm text-slate-700">{pl.label}</span>
+                    <div className="flex items-center gap-6 shrink-0 ml-4">
+                      <FCheck checked={pl.considered} onChange={() => {
+                        setDraft(prev => {
+                          const opts = [...prev.placementOptions];
+                          opts[i] = { ...opts[i], considered: !opts[i].considered };
+                          return { ...prev, placementOptions: opts };
+                        });
+                      }} label="Considered" />
+                      <FCheck checked={pl.selected} onChange={() => {
+                        setDraft(prev => {
+                          const opts = prev.placementOptions.map((o, j) => ({ ...o, selected: j === i ? !o.selected : false }));
+                          return { ...prev, placementOptions: opts };
+                        });
+                      }} label="Selected" />
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
+          </div>
+        </SectionCard>
 
-        </div>
+        {/* ══════════════════ 9. TRANSITION PLAN (conditional) ══════════════════ */}
+        {d.hasTransitionPlan && (
+          <SectionCard id="transition" title="Post-Secondary Transition Plan (Form C)" icon={BookOpen} isOpen={openSections.transition} onToggle={toggleSection}>
+            <div className="space-y-6 pt-4">
+
+              {/* Assessment Table */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-3">Age-Appropriate Transition Assessments</label>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-3 items-end">
+                    <FInput label="Date" value={d.transitionAssessmentDate1} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate1: v }))} placeholder="MM/DD/YYYY" />
+                    <div className="text-sm font-medium text-slate-600 pb-2">Career Interest Survey</div>
+                    <FInput label="Areas of Interest" value={d.careerInterestAreas} onChange={v => setDraft(prev => ({ ...prev, careerInterestAreas: v }))} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 items-end">
+                    <FInput label="Date" value={d.transitionAssessmentDate2} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate2: v }))} placeholder="MM/DD/YYYY" />
+                    <div className="text-sm font-medium text-slate-600 pb-2">KTEA-III</div>
+                    <div className="text-sm text-slate-600 pb-2">{buildKteaSummary(kteaData) || <span className="italic text-slate-400">Auto-filled from KTEA data</span>}</div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 items-end">
+                    <FInput label="Date" value={d.transitionAssessmentDate3} onChange={v => setDraft(prev => ({ ...prev, transitionAssessmentDate3: v }))} placeholder="MM/DD/YYYY" />
+                    <div className="text-sm font-medium text-slate-600 pb-2">Independent Living</div>
+                    <FInput label="Summary" value={d.assessSummary3} onChange={v => setDraft(prev => ({ ...prev, assessSummary3: v }))} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Graduation Info */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-3">Graduation Information</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FInput label="Anticipated Graduation Date" value={d.anticipatedGraduationDate} onChange={v => setDraft(prev => ({ ...prev, anticipatedGraduationDate: v }))} placeholder="MM/DD/YYYY" />
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2">Graduation Option</label>
+                    <FCheck checked={d.graduationOptCredits} onChange={() => setDraft(prev => ({ ...prev, graduationOptCredits: !prev.graduationOptCredits }))} label="Regular diploma (credits)" />
+                    <FCheck checked={d.graduationOptGoals} onChange={() => setDraft(prev => ({ ...prev, graduationOptGoals: !prev.graduationOptGoals }))} label="Regular diploma (goals)" />
+                  </div>
+                  <FInput label="Pre-ETS Begin Date" value={d.preEtsDate} onChange={v => setDraft(prev => ({ ...prev, preEtsDate: v }))} placeholder="MM/DD/YYYY" />
+                  <FInput label="VR Introduction Date" value={d.vrIntroDate} onChange={v => setDraft(prev => ({ ...prev, vrIntroDate: v }))} placeholder="MM/DD/YYYY" />
+                </div>
+              </div>
+
+              {/* Transition Subsections: Employment, Education, Independent Living */}
+              {TRANSITION_SUBSECTIONS.map(sub => (
+                <div key={sub.id}>
+                  <div className={`text-sm font-bold px-3 py-2 rounded-lg border mb-3 ${sub.colorClass}`}>
+                    {sub.title}
+                  </div>
+                  <div className="space-y-3 pl-1">
+                    <FInput label="Post-secondary Goal" value={d.transition[sub.goalKey] || ''} onChange={v => setDraft(prev => ({ ...prev, transition: { ...prev.transition, [sub.goalKey]: v } }))} placeholder="After high school, the student will..." />
+                    <FArea label="Skills Already Obtained" value={d[sub.skillsObtainedKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.skillsObtainedKey]: v }))} rows={2} />
+                    <FArea label="Skills Needed Before Graduation" value={d[sub.skillsNeededKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.skillsNeededKey]: v }))} rows={2} />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <div className="text-xs font-semibold text-slate-500 mb-2">School</div>
+                        <FInput label="Target Skills" value={d[sub.schoolSkillKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.schoolSkillKey]: v }))} placeholder="Target skills..." />
+                        <div className="mt-2">
+                          <FInput label="Services/Activities" value={d[sub.schoolSvcKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.schoolSvcKey]: v }))} placeholder="Services..." />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-slate-500 mb-2">Student</div>
+                        <FInput label="Target Skills" value={d[sub.studentSkillKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.studentSkillKey]: v }))} placeholder="Target skills..." />
+                        <div className="mt-2">
+                          <FInput label="Services/Activities" value={d[sub.studentSvcKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.studentSvcKey]: v }))} placeholder="Services..." />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-slate-500 mb-2">Parent/Guardian</div>
+                        <FInput label="Target Skills" value={d[sub.parentSkillKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.parentSkillKey]: v }))} placeholder="Target skills..." />
+                        <div className="mt-2">
+                          <FInput label="Services/Activities" value={d[sub.parentSvcKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.parentSvcKey]: v }))} placeholder="Services..." />
+                        </div>
+                      </div>
+                    </div>
+                    <FInput label="Outside Agency" value={d[sub.agencyKey] || ''} onChange={v => setDraft(prev => ({ ...prev, [sub.agencyKey]: v }))} placeholder="Agency name/service..." />
+                  </div>
+                </div>
+              ))}
+
+              {/* Transition Skills Checklist */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-3">Transition Skills Checklist</label>
+                {Object.entries(TRANSITION_SKILL_AREAS).map(([area, skills]) => (
+                  <div key={area} className="mb-4">
+                    <div className="text-sm font-semibold text-slate-600 mb-1.5">{area}</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                      {skills.map(skill => (
+                        <FCheck
+                          key={skill}
+                          checked={d.transition.targetSkills?.includes(skill) || false}
+                          onChange={() => {
+                            setDraft(prev => {
+                              const current = prev.transition.targetSkills || [];
+                              const updated = current.includes(skill)
+                                ? current.filter(s => s !== skill)
+                                : [...current, skill];
+                              return { ...prev, transition: { ...prev.transition, targetSkills: updated } };
+                            });
+                          }}
+                          label={skill}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SectionCard>
+        )}
+
       </div>
     </div>
   );
@@ -1540,33 +1275,12 @@ function buildEvalSummary(draft, kteaData) {
   if (kteaData.preMathGE) parts.push(`Math: ${kteaData.preMathGE}`);
   if (kteaData.preWritingGE) parts.push(`Written Expression: ${kteaData.preWritingGE}`);
   if (kteaData.postReadingGE || kteaData.postMathGE || kteaData.postWritingGE) {
-    parts.push(`\nPost-test scores:`);
+    parts.push(`\nUpon most recent testing:`);
     if (kteaData.postReadingGE) parts.push(`Reading: ${kteaData.postReadingGE}`);
     if (kteaData.postMathGE) parts.push(`Math: ${kteaData.postMathGE}`);
     if (kteaData.postWritingGE) parts.push(`Written Expression: ${kteaData.postWritingGE}`);
   }
   return parts.join('\n');
-}
-
-// Print CSS
-const printStyles = `
-  @media print {
-    @page { margin: 0.25in; size: letter; }
-    body * { visibility: hidden; }
-    .iep-form, .iep-form * { visibility: visible; }
-    .iep-form { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; box-shadow: none !important; }
-    ::-webkit-scrollbar { display: none; }
-  }
-`;
-
-if (typeof document !== 'undefined') {
-  const existing = document.getElementById('iep-print-styles');
-  if (!existing) {
-    const style = document.createElement('style');
-    style.id = 'iep-print-styles';
-    style.textContent = printStyles;
-    document.head.appendChild(style);
-  }
 }
 
 export default IEPGenerator;
