@@ -5,7 +5,8 @@ import {
   Clock, Brain, Users, Compass, Trash2,
   AlertCircle, TrendingUp, Star,
 } from 'lucide-react';
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel } from 'docx';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import { IEP_GOAL_BANK, getSuggestedGoals, GOAL_AREAS } from '../../data/iepGoalBank';
@@ -216,117 +217,130 @@ const IEPGenerator = ({ user }) => {
 
   const handleExportDocx = async () => {
     const d = draft;
-    const cell = (text, bold = false) =>
-      new TableCell({
-        children: [new Paragraph({ children: [new TextRun({ text: text || '-', bold, size: 20 })], alignment: AlignmentType.LEFT })],
-        verticalAlign: 'center',
-      });
 
-    const sections = [];
+    // Choose template based on whether transition plan is included
+    const templateFile = d.hasTransitionPlan
+      ? 'iep_template_with_transition.docx'
+      : 'iep_template.docx';
 
-    // Header
-    sections.push(
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'LAKELAND REGIONAL SCHOOL', bold: true, size: 28 })], spacing: { after: 80 } }),
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'INDIVIDUALIZED EDUCATION PROGRAM (IEP)', bold: true, size: 24 })], spacing: { after: 300 } }),
-    );
+    try {
+      // Fetch the template
+      const response = await fetch(`/templates/${templateFile}`);
+      if (!response.ok) throw new Error(`Could not find template: ${templateFile}`);
+      const arrayBuffer = await response.arrayBuffer();
 
-    // Demographics
-    sections.push(
-      new Paragraph({ children: [new TextRun({ text: 'Student: ', bold: true }), new TextRun(d.studentName || '')] }),
-      new Paragraph({ children: [new TextRun({ text: 'Grade: ', bold: true }), new TextRun(String(d.gradeLevel || '')), new TextRun({ text: '    District: ', bold: true }), new TextRun(d.district || '')] }),
-      new Paragraph({ children: [new TextRun({ text: 'IEP Date: ', bold: true }), new TextRun(d.iepDate || ''), new TextRun({ text: '    Due Date: ', bold: true }), new TextRun(d.iepDueDate || '')] }),
-      new Paragraph({ children: [new TextRun({ text: 'Meeting Type: ', bold: true }), new TextRun(d.meetingType || '')], spacing: { after: 300 } }),
-    );
+      // Initialize docxtemplater
+      const zip = new PizZip(arrayBuffer);
+      const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
-    // Present Levels
-    sections.push(
-      new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: 'PRESENT LEVELS OF ACADEMIC ACHIEVEMENT AND FUNCTIONAL PERFORMANCE', bold: true })], spacing: { before: 200, after: 100 } }),
-      new Paragraph({ children: [new TextRun({ text: 'Academic Achievement:', bold: true, underline: {} })], spacing: { after: 50 } }),
-      ...splitToParagraphs(d.academicLevels),
-      new Paragraph({ children: [new TextRun({ text: 'Functional Performance:', bold: true, underline: {} })], spacing: { before: 200, after: 50 } }),
-      ...splitToParagraphs(d.functionalLevels),
-      new Paragraph({ children: [new TextRun({ text: 'Strengths:', bold: true, underline: {} })], spacing: { before: 200, after: 50 } }),
-      ...splitToParagraphs(d.strengthsText),
-      new Paragraph({ children: [new TextRun({ text: 'Impact of Disability:', bold: true, underline: {} })], spacing: { before: 200, after: 50 } }),
-      ...splitToParagraphs(d.impactStatement),
-    );
+      // Build the data mapping
+      const data = {
+        // Demographics
+        student_name: d.studentName || '',
+        disability_category: d.disabilityCategory || '',
+        secondary_disability: d.secondaryDisability || '',
+        student_address: d.studentAddress || '',
+        student_phone: d.studentPhone || '',
+        birth_date: d.birthDate || '',
+        student_age: d.studentAge || '',
+        grade_level: String(d.gradeLevel || ''),
+        resident_district: d.district || '',
 
-    // Goals
-    if (d.goals.length > 0) {
-      sections.push(
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: 'MEASURABLE ANNUAL GOALS', bold: true })], spacing: { before: 400, after: 100 } }),
-      );
-      d.goals.forEach((goal, i) => {
-        sections.push(
-          new Paragraph({ children: [new TextRun({ text: `Goal ${i + 1} (${goal.area}): `, bold: true }), new TextRun(goal.goalText)], spacing: { before: 200, after: 50 } }),
-          new Paragraph({ children: [new TextRun({ text: 'Measurement: ', bold: true, italics: true }), new TextRun({ text: goal.measureMethod, italics: true })], spacing: { after: 50 } }),
-        );
-        goal.benchmarks.forEach((bm, j) => {
-          sections.push(new Paragraph({ children: [new TextRun({ text: `  Benchmark ${j + 1}: `, bold: true }), new TextRun(bm.text)], spacing: { after: 30 } }));
+        // Decision Maker
+        decision_maker_name: d.decisionMakerName || '',
+        decision_maker_address: d.decisionMakerAddress || '',
+        decision_maker_phone: d.decisionMakerPhone || '',
+        decision_maker_email: d.decisionMakerEmail || '',
+        decision_maker_fax: d.decisionMakerFax || '',
+
+        // Case Manager
+        case_manager: d.caseManager || user?.name || '',
+        case_manager_phone: d.caseManagerPhone || '',
+
+        // Dates
+        eval_date: d.evalDate || '',
+        prev_iep_date: d.prevIepDate || '',
+        triennial_date: d.triennialDate || '',
+        iep_meeting_date: d.iepDate || '',
+        iep_initiation_date: d.iepInitiationDate || '',
+        annual_review_date: d.iepDueDate || '',
+        copy_provided_date: d.copyProvidedDate || '',
+
+        // Present Levels (PLAAFP)
+        disability_impact: [d.academicLevels, d.functionalLevels, d.impactStatement].filter(Boolean).join('\n\n') || '',
+        student_strengths: d.strengthsText || '',
+        parent_concerns: d.parentInput || '',
+        changes_functioning: d.changesFunctioning || '',
+        eval_summary: buildEvalSummary(d, kteaData),
+        transition_assessments: d.transitionAssessments || '',
+
+        // Goals (up to 4)
+        ...buildGoalData(d.goals, 1),
+        ...buildGoalData(d.goals, 2),
+        ...buildGoalData(d.goals, 3),
+        ...buildGoalData(d.goals, 4),
+
+        // Related Services (up to 3)
+        ...buildServiceData(d.services, 1),
+        ...buildServiceData(d.services, 2),
+        ...buildServiceData(d.services, 3),
+      };
+
+      // Add transition data if applicable
+      if (d.hasTransitionPlan) {
+        const ktea = kteaData || {};
+        Object.assign(data, {
+          transition_assessment_date_1: d.transitionAssessmentDate1 || '',
+          career_interest_areas: d.careerInterestAreas || '',
+          transition_assessment_date_2: d.transitionAssessmentDate2 || '',
+          ktea_reading_ge: ktea.postReadingGE || ktea.preReadingGE || '',
+          ktea_math_ge: ktea.postMathGE || ktea.preMathGE || '',
+          ktea_writing_ge: ktea.postWritingGE || ktea.preWritingGE || '',
+          transition_assessment_date_3: d.transitionAssessmentDate3 || '',
+          independent_living_worksheet: 'See Attached Worksheet',
+          anticipated_graduation_date: d.anticipatedGraduationDate || '',
+
+          // Employment
+          employment_goal: d.transition.postSecondaryEmployment || '',
+          employment_skills_obtained: d.employmentSkillsObtained || '',
+          employment_skills_needed: d.employmentSkillsNeeded || '',
+          school_employment_services: d.schoolEmploymentServices || 'The school will provide career exploration and planning on a weekly basis.',
+          student_employment_services: d.studentEmploymentServices || 'The student will participate in career exploration and planning, and participate in educational opportunities as required to graduate.',
+          parent_employment_services: d.parentEmploymentServices || 'The parent/guardian will assist the student with locating and accessing services from outside agencies.',
+
+          // Education/Training
+          education_goal: d.transition.postSecondaryEducation || '',
+          education_skills_obtained: d.educationSkillsObtained || '',
+          education_skills_needed: d.educationSkillsNeeded || '',
+          school_education_services: d.schoolEducationServices || 'The school will provide the secondary educational opportunities necessary for the student to gain the skills to graduate and attend post-secondary schools.',
+          student_education_services: d.studentEducationServices || 'The student will take advantage of secondary educational opportunities necessary for the student to gain the skills to graduate and attend post-secondary schools.',
+          parent_education_services: d.parentEducationServices || 'The parent/guardian will assist the student in locating post-secondary educational facilities in order to achieve their goals.',
+
+          // Independent Living
+          independent_living_goal: d.transition.independentLiving || '',
+          independent_living_skills_obtained: d.independentLivingSkillsObtained || '',
+          independent_living_skills_needed: d.independentLivingSkillsNeeded || '',
+          school_independent_living_services: d.schoolIndependentLivingServices || 'The school will provide life skills educational materials for practice in skills attainment.',
+          student_independent_living_services: d.studentIndependentLivingServices || 'The student will study and complete the life skills educational materials as provided.',
+          parent_independent_living_services: d.parentIndependentLivingServices || 'The parent/guardian will assist the student in determining independent living resources in their home state.',
         });
+      }
+
+      // Render the template
+      doc.render(data);
+
+      // Generate and download
+      const out = doc.getZip().generate({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       });
+      saveAs(out, `${d.studentName || 'Student'}_IEP.docx`);
+
+      await databaseService.logAudit(user, 'Exported IEP', `Exported IEP document for ${d.studentName}`);
+    } catch (error) {
+      console.error('Error generating IEP document:', error);
+      alert('Error generating IEP document. Ensure template files exist in public/templates/.');
     }
-
-    // Services
-    if (d.services.length > 0) {
-      sections.push(
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: 'SPECIAL EDUCATION SERVICES', bold: true })], spacing: { before: 400, after: 100 } }),
-        new Table({
-          width: { size: 100, type: WidthType.PERCENTAGE },
-          rows: [
-            new TableRow({ children: [cell('Service', true), cell('Location', true), cell('Frequency', true), cell('Duration', true)] }),
-            ...d.services.map(s => new TableRow({ children: [cell(s.type), cell(s.location), cell(s.frequency), cell(s.duration)] })),
-          ],
-        }),
-      );
-    }
-
-    // Accommodations
-    const accLabels = getAllAccommodationLabels(d.accommodations);
-    if (accLabels.length > 0) {
-      sections.push(
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: 'ACCOMMODATIONS', bold: true })], spacing: { before: 400, after: 100 } }),
-        ...accLabels.map(label => new Paragraph({ children: [new TextRun(`• ${label}`)], spacing: { after: 30 } })),
-      );
-    }
-
-    // Modifications
-    const modLabels = d.modifications.map(id => MODIFICATIONS.find(m => m.id === id)?.label).filter(Boolean);
-    if (modLabels.length > 0) {
-      sections.push(
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: 'MODIFICATIONS', bold: true })], spacing: { before: 300, after: 100 } }),
-        ...modLabels.map(label => new Paragraph({ children: [new TextRun(`• ${label}`)], spacing: { after: 30 } })),
-      );
-    }
-
-    // Transition
-    if (d.hasTransitionPlan) {
-      sections.push(
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: 'TRANSITION PLAN', bold: true })], spacing: { before: 400, after: 100 } }),
-        new Paragraph({ children: [new TextRun({ text: 'Post-Secondary Education Goal: ', bold: true }), new TextRun(d.transition.postSecondaryEducation || 'Not specified')] }),
-        new Paragraph({ children: [new TextRun({ text: 'Employment Goal: ', bold: true }), new TextRun(d.transition.postSecondaryEmployment || 'Not specified')] }),
-        new Paragraph({ children: [new TextRun({ text: 'Independent Living Goal: ', bold: true }), new TextRun(d.transition.independentLiving || 'Not specified')], spacing: { after: 100 } }),
-      );
-    }
-
-    // Signature lines
-    sections.push(
-      new Paragraph({ text: '', spacing: { before: 600 } }),
-      new Paragraph({ children: [new TextRun({ text: '___________________________________', size: 20 })], spacing: { after: 30 } }),
-      new Paragraph({ children: [new TextRun({ text: 'Special Education Teacher          Date', size: 18 })] }),
-      new Paragraph({ text: '', spacing: { before: 200 } }),
-      new Paragraph({ children: [new TextRun({ text: '___________________________________', size: 20 })], spacing: { after: 30 } }),
-      new Paragraph({ children: [new TextRun({ text: 'Parent/Guardian                              Date', size: 18 })] }),
-      new Paragraph({ text: '', spacing: { before: 200 } }),
-      new Paragraph({ children: [new TextRun({ text: '___________________________________', size: 20 })], spacing: { after: 30 } }),
-      new Paragraph({ children: [new TextRun({ text: 'LEA Representative                        Date', size: 18 })] }),
-    );
-
-    const doc = new Document({ sections: [{ children: sections }] });
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, `${d.studentName || 'Student'}_IEP.docx`);
-
-    await databaseService.logAudit(user, 'Exported IEP', `Exported IEP document for ${d.studentName}`);
   };
 
   // ─── RENDER ─────────────────────────────────────────────────────────────────
@@ -379,7 +393,7 @@ const IEPGenerator = ({ user }) => {
 
         {/* Step Content */}
         <div className="flex-1 overflow-y-auto p-5">
-          {step === 0 && <StudentStep students={filteredStudents} searchTerm={searchTerm} setSearchTerm={setSearchTerm} onSelect={handleSelectStudent} loading={loading} selectedStudent={selectedStudent} />}
+          {step === 0 && <StudentStep students={filteredStudents} searchTerm={searchTerm} setSearchTerm={setSearchTerm} onSelect={handleSelectStudent} loading={loading} selectedStudent={selectedStudent} draft={draft} setDraft={setDraft} />}
           {step === 1 && <PresentLevelsStep draft={draft} setDraft={setDraft} deficits={deficits} onSmartPopulate={handleSmartPopulate} kteaData={kteaData} enrollments={enrollments} student={selectedStudent} />}
           {step === 2 && <GoalsStep draft={draft} goals={goalSuggestions} goalSearch={goalSearch} setGoalSearch={setGoalSearch} goalAreaFilter={goalAreaFilter} setGoalAreaFilter={setGoalAreaFilter} showGoalBank={showGoalBank} setShowGoalBank={setShowGoalBank} onAddGoal={handleAddGoal} onRemoveGoal={handleRemoveGoal} expandedGoal={expandedGoal} setExpandedGoal={setExpandedGoal} studentName={selectedStudent?.firstName} />}
           {step === 3 && <ServicesStep draft={draft} setDraft={setDraft} toggleAccommodation={toggleAccommodation} toggleModification={toggleModification} showServiceForm={showServiceForm} setShowServiceForm={setShowServiceForm} newService={newService} setNewService={setNewService} onAddService={handleAddService} onRemoveService={handleRemoveService} />}
@@ -427,7 +441,7 @@ const IEPGenerator = ({ user }) => {
 
 // ─── STEP 1: STUDENT SELECTION ──────────────────────────────────────────────
 
-const StudentStep = ({ students, searchTerm, setSearchTerm, onSelect, loading, selectedStudent }) => (
+const StudentStep = ({ students, searchTerm, setSearchTerm, onSelect, loading, selectedStudent, draft, setDraft }) => (
   <div className="space-y-5">
     <div>
       <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wider border-b border-slate-200/80 pb-2 mb-4">Select IEP Student</h3>
@@ -503,6 +517,41 @@ const StudentStep = ({ students, searchTerm, setSearchTerm, onSelect, loading, s
         </div>
       )}
     </div>
+
+    {/* Demographics & Dates — visible after student selection */}
+    {selectedStudent && draft && (
+      <div className="space-y-4 border-t border-slate-200/80 pt-5">
+        <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Student Demographics</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <SmallField label="Disability Category" value={draft.disabilityCategory} onChange={v => setDraft(prev => ({ ...prev, disabilityCategory: v }))} placeholder="e.g. Emotional Disturbance" />
+          <SmallField label="Secondary Disability" value={draft.secondaryDisability} onChange={v => setDraft(prev => ({ ...prev, secondaryDisability: v }))} placeholder="e.g. SLD" />
+          <SmallField label="Address" value={draft.studentAddress} onChange={v => setDraft(prev => ({ ...prev, studentAddress: v }))} placeholder="Student address" />
+          <SmallField label="Phone" value={draft.studentPhone} onChange={v => setDraft(prev => ({ ...prev, studentPhone: v }))} placeholder="Phone number" />
+          <SmallField label="Birth Date" value={draft.birthDate} onChange={v => setDraft(prev => ({ ...prev, birthDate: v }))} placeholder="MM/DD/YYYY" />
+          <SmallField label="Age" value={draft.studentAge} onChange={v => setDraft(prev => ({ ...prev, studentAge: v }))} placeholder="Age" />
+        </div>
+
+        <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider pt-2">Educational Decision Maker</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <SmallField label="Name" value={draft.decisionMakerName} onChange={v => setDraft(prev => ({ ...prev, decisionMakerName: v }))} placeholder="Parent/Guardian name" />
+          <SmallField label="Phone" value={draft.decisionMakerPhone} onChange={v => setDraft(prev => ({ ...prev, decisionMakerPhone: v }))} placeholder="Phone" />
+          <SmallField label="Address" value={draft.decisionMakerAddress} onChange={v => setDraft(prev => ({ ...prev, decisionMakerAddress: v }))} placeholder="Address" />
+          <SmallField label="Email" value={draft.decisionMakerEmail} onChange={v => setDraft(prev => ({ ...prev, decisionMakerEmail: v }))} placeholder="Email" />
+          <SmallField label="Fax" value={draft.decisionMakerFax} onChange={v => setDraft(prev => ({ ...prev, decisionMakerFax: v }))} placeholder="Fax" />
+        </div>
+
+        <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider pt-2">Case Manager & Dates</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <SmallField label="IEP Case Manager" value={draft.caseManager} onChange={v => setDraft(prev => ({ ...prev, caseManager: v }))} placeholder="Case manager name" />
+          <SmallField label="Case Manager Phone" value={draft.caseManagerPhone} onChange={v => setDraft(prev => ({ ...prev, caseManagerPhone: v }))} placeholder="Phone" />
+          <SmallField label="Eval/Reeval Date" value={draft.evalDate} onChange={v => setDraft(prev => ({ ...prev, evalDate: v }))} placeholder="MM/DD/YYYY" />
+          <SmallField label="Previous IEP Date" value={draft.prevIepDate} onChange={v => setDraft(prev => ({ ...prev, prevIepDate: v }))} placeholder="MM/DD/YYYY" />
+          <SmallField label="Triennial Date" value={draft.triennialDate} onChange={v => setDraft(prev => ({ ...prev, triennialDate: v }))} placeholder="MM/DD/YYYY" />
+          <SmallField label="Initiation Date" value={draft.iepInitiationDate} onChange={v => setDraft(prev => ({ ...prev, iepInitiationDate: v }))} placeholder="MM/DD/YYYY" />
+          <SmallField label="Copy Provided" value={draft.copyProvidedDate} onChange={v => setDraft(prev => ({ ...prev, copyProvidedDate: v }))} placeholder="MM/DD/YYYY" />
+        </div>
+      </div>
+    )}
   </div>
 );
 
@@ -556,6 +605,9 @@ const PresentLevelsStep = ({ draft, setDraft, deficits, onSmartPopulate, kteaDat
     <NarrativeField label="Student Strengths" value={draft.strengthsText} onChange={v => setDraft(prev => ({ ...prev, strengthsText: v }))} placeholder="Describe the student's strengths and interests..." rows={3} />
     <NarrativeField label="Impact of Disability" value={draft.impactStatement} onChange={v => setDraft(prev => ({ ...prev, impactStatement: v }))} placeholder="How does the disability affect access to the general curriculum..." rows={4} />
     <NarrativeField label="Parent/Guardian Input" value={draft.parentInput} onChange={v => setDraft(prev => ({ ...prev, parentInput: v }))} placeholder="Document parent concerns and input..." rows={3} />
+    <NarrativeField label="Changes in Functioning" value={draft.changesFunctioning} onChange={v => setDraft(prev => ({ ...prev, changesFunctioning: v }))} placeholder="Changes in current functioning since the initial or prior IEP..." rows={3} />
+    <NarrativeField label="Evaluation Summary" value={draft.evalSummary} onChange={v => setDraft(prev => ({ ...prev, evalSummary: v }))} placeholder="Summary of the most recent evaluation/re-evaluation results..." rows={4} />
+    <NarrativeField label="Transition Assessments" value={draft.transitionAssessments} onChange={v => setDraft(prev => ({ ...prev, transitionAssessments: v }))} placeholder="Summary of formal/informal age appropriate transition assessments..." rows={3} />
   </div>
 );
 
@@ -1089,13 +1141,35 @@ const NarrativeField = ({ label, value, onChange, placeholder, rows = 4 }) => (
   </div>
 );
 
+const SmallField = ({ label, value, onChange, placeholder }) => (
+  <div>
+    <label className="block text-xs font-bold text-slate-500 mb-1">{label}</label>
+    <input
+      value={value || ''}
+      onChange={e => onChange(e.target.value)}
+      className="w-full p-2 border border-slate-300/80 rounded-lg text-sm focus:ring-4 focus:ring-cyan-500/20 outline-none transition-all bg-white/80"
+      placeholder={placeholder}
+    />
+  </div>
+);
+
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
 function createEmptyDraft() {
   return {
     studentId: '', studentName: '', gradeLevel: '', unitName: '', district: '',
     iepDate: '', iepDueDate: '', meetingType: '',
+    // Demographics for template
+    disabilityCategory: '', secondaryDisability: '',
+    studentAddress: '', studentPhone: '', birthDate: '', studentAge: '',
+    decisionMakerName: '', decisionMakerAddress: '', decisionMakerPhone: '',
+    decisionMakerEmail: '', decisionMakerFax: '',
+    caseManager: '', caseManagerPhone: '',
+    evalDate: '', prevIepDate: '', triennialDate: '',
+    iepInitiationDate: '', copyProvidedDate: '',
+    // Present Levels
     academicLevels: '', functionalLevels: '', parentInput: '', strengthsText: '', impactStatement: '',
+    changesFunctioning: '', evalSummary: '', transitionAssessments: '',
     kteaSnapshot: {},
     goals: [],
     services: [],
@@ -1117,11 +1191,61 @@ function getAllAccommodationLabels(selectedIds) {
   return labels;
 }
 
-function splitToParagraphs(text) {
-  if (!text) return [new Paragraph({ text: '' })];
-  return text.split('\n').filter(Boolean).map(line =>
-    new Paragraph({ children: [new TextRun({ text: line, size: 22 })], spacing: { after: 80 } })
-  );
+function buildGoalData(goals, goalNum) {
+  const idx = goalNum - 1;
+  const goal = goals[idx];
+  const prefix = `goal_${goalNum}`;
+  if (!goal) {
+    return {
+      [`${prefix}_number`]: '',
+      [`${prefix}_text`]: '',
+      [`${prefix}_benchmark_1`]: '',
+      [`${prefix}_benchmark_2`]: '',
+      [`${prefix}_benchmark_3`]: '',
+    };
+  }
+  return {
+    [`${prefix}_number`]: String(goalNum),
+    [`${prefix}_text`]: goal.goalText || '',
+    [`${prefix}_benchmark_1`]: goal.benchmarks?.[0]?.text || '',
+    [`${prefix}_benchmark_2`]: goal.benchmarks?.[1]?.text || '',
+    [`${prefix}_benchmark_3`]: goal.benchmarks?.[2]?.text || '',
+  };
+}
+
+function buildServiceData(services, serviceNum) {
+  const idx = serviceNum - 1;
+  const svc = services[idx];
+  const prefix = `related_service_${serviceNum}`;
+  if (!svc) {
+    return {
+      [`${prefix}_type`]: '',
+      [`${prefix}_amount`]: '',
+      [`${prefix}_frequency`]: '',
+    };
+  }
+  return {
+    [`${prefix}_type`]: svc.type || '',
+    [`${prefix}_amount`]: svc.duration || '',
+    [`${prefix}_frequency`]: svc.frequency || '',
+  };
+}
+
+function buildEvalSummary(draft, kteaData) {
+  if (draft.evalSummary) return draft.evalSummary;
+  if (!kteaData) return '';
+  const name = draft.studentName || 'The student';
+  const parts = [`Upon entrance to Lakeland Regional School, students are administered the KTEA-III in Math Computation, Reading Comprehension, and Written Expression. ${name} had grade level scores as follows:`];
+  if (kteaData.preReadingGE) parts.push(`Reading: ${kteaData.preReadingGE}`);
+  if (kteaData.preMathGE) parts.push(`Math: ${kteaData.preMathGE}`);
+  if (kteaData.preWritingGE) parts.push(`Written Expression: ${kteaData.preWritingGE}`);
+  if (kteaData.postReadingGE || kteaData.postMathGE || kteaData.postWritingGE) {
+    parts.push(`\nPost-test scores:`);
+    if (kteaData.postReadingGE) parts.push(`Reading: ${kteaData.postReadingGE}`);
+    if (kteaData.postMathGE) parts.push(`Math: ${kteaData.postMathGE}`);
+    if (kteaData.postWritingGE) parts.push(`Written Expression: ${kteaData.postWritingGE}`);
+  }
+  return parts.join('\n');
 }
 
 // Print CSS
