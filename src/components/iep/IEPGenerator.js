@@ -959,181 +959,420 @@ const TransitionStep = ({ draft, setDraft }) => (
 
 // ─── LIVE DOCUMENT PREVIEW ──────────────────────────────────────────────────
 
+const FormField = ({ value, className = '' }) => (
+  <span className={`border-b border-gray-400 inline-block min-w-[120px] px-0.5 text-blue-800 ${className}`}>
+    {value || '\u00A0'}
+  </span>
+);
+
+const CheckBox = ({ checked = false, label }) => (
+  <span className="inline-flex items-center gap-1 mr-3">
+    <span className={`inline-block w-3 h-3 border border-black text-[8px] leading-3 text-center ${checked ? 'bg-black text-white' : ''}`}>
+      {checked ? '\u2713' : ''}
+    </span>
+    <span>{label}</span>
+  </span>
+);
+
 const IEPDocumentPreview = ({ draft, deficits }) => {
   const d = draft;
+  const fs = 'text-[9pt]';
+  const fsSmall = 'text-[8pt]';
+  const sectionHeader = 'font-bold text-[10pt] bg-gray-200 p-1 border border-black mb-0';
+
   return (
-    <div className="page bg-white w-[8.5in] min-h-[11in] p-[0.75in] shadow-2xl shadow-slate-300/60 text-black font-serif print:shadow-none print:w-full print:m-0 print:absolute print:top-0 print:left-0">
-      {/* Header */}
-      <header className="text-center mb-6 border-b-2 border-black pb-4">
-        <h1 className="m-0 text-xl uppercase tracking-widest font-bold">LAKELAND REGIONAL SCHOOL</h1>
-        <div className="text-base font-bold mt-2">INDIVIDUALIZED EDUCATION PROGRAM (IEP)</div>
-      </header>
+    <div className="page bg-white w-[8.5in] shadow-2xl shadow-slate-300/60 text-black font-sans print:shadow-none print:w-full print:m-0 print:absolute print:top-0 print:left-0" style={{ fontSize: '9pt', lineHeight: '1.4' }}>
 
-      {/* Demographics */}
-      <section className="border border-black p-3 mb-5 text-[10pt] grid grid-cols-2 gap-1">
-        <div><span className="font-bold">Student:</span> {d.studentName || '-'}</div>
-        <div><span className="font-bold">Grade:</span> {d.gradeLevel || '-'}</div>
-        <div><span className="font-bold">District:</span> {d.district || '-'}</div>
-        <div><span className="font-bold">Unit:</span> {d.unitName || '-'}</div>
-        <div><span className="font-bold">IEP Date:</span> {d.iepDate || '-'}</div>
-        <div><span className="font-bold">Due Date:</span> {d.iepDueDate || '-'}</div>
-        <div className="col-span-2"><span className="font-bold">Meeting Type:</span> {d.meetingType || '-'}</div>
-      </section>
+      {/* ═══════════════ PAGE 1: DEMOGRAPHICS ═══════════════ */}
+      <div className="p-[0.5in]">
 
-      {/* Present Levels */}
-      <section className="mb-5 text-[11pt] leading-relaxed">
-        <h3 className="text-[11pt] font-bold uppercase border-b border-black mb-2 pb-1">Present Levels of Academic Achievement and Functional Performance</h3>
+        {/* Title */}
+        <div className="text-center mb-3">
+          <div className="font-bold text-[12pt] tracking-wide">THE INDIVIDUALIZED EDUCATION PROGRAM (IEP) FOR:</div>
+          <div className={`${fs} mt-1`}>
+            <span className="font-bold">Name:</span> <FormField value={d.studentName} className="min-w-[250px]" />
+          </div>
+          <div className={`${fs} mt-0.5`}><FormField value={d.disabilityCategory} className="min-w-[200px]" /></div>
+          <div className={`${fs} mt-0.5`}><FormField value={d.secondaryDisability} className="min-w-[200px]" /></div>
+        </div>
 
-        {d.academicLevels && (
-          <div className="mb-3">
-            <div className="font-bold text-[10pt] mb-1">Academic Achievement:</div>
-            <div className="whitespace-pre-wrap text-justify">{d.academicLevels}</div>
-          </div>
-        )}
-        {d.functionalLevels && (
-          <div className="mb-3">
-            <div className="font-bold text-[10pt] mb-1">Functional Performance:</div>
-            <div className="whitespace-pre-wrap text-justify">{d.functionalLevels}</div>
-          </div>
-        )}
-        {d.strengthsText && (
-          <div className="mb-3">
-            <div className="font-bold text-[10pt] mb-1">Strengths:</div>
-            <div className="whitespace-pre-wrap text-justify">{d.strengthsText}</div>
-          </div>
-        )}
-        {d.impactStatement && (
-          <div className="mb-3">
-            <div className="font-bold text-[10pt] mb-1">Impact of Disability:</div>
-            <div className="whitespace-pre-wrap text-justify">{d.impactStatement}</div>
-          </div>
-        )}
-        {d.parentInput && (
-          <div>
-            <div className="font-bold text-[10pt] mb-1">Parent/Guardian Input:</div>
-            <div className="whitespace-pre-wrap text-justify">{d.parentInput}</div>
-          </div>
-        )}
-      </section>
-
-      {/* Goals */}
-      {d.goals.length > 0 && (
-        <section className="mb-5 text-[11pt]">
-          <h3 className="text-[11pt] font-bold uppercase border-b border-black mb-2 pb-1">Measurable Annual Goals</h3>
-          {d.goals.map((goal, i) => (
-            <div key={goal.id} className="mb-4 pl-2 border-l-2 border-slate-300">
-              <div className="font-bold text-[10pt]">Goal {i + 1} — {goal.area}</div>
-              <div className="text-justify mt-1">{goal.goalText}</div>
-              <div className="mt-1 ml-3 text-[10pt] italic text-gray-600">Measurement: {goal.measureMethod}</div>
-              <div className="mt-1 ml-3 text-[10pt]">
-                {goal.benchmarks.map((bm, j) => (
-                  <div key={j} className="flex items-start gap-1 mt-0.5">
-                    <span className="font-bold shrink-0">Benchmark {j + 1}:</span>
-                    <span>{bm.text}</span>
-                  </div>
-                ))}
-              </div>
+        {/* Student Demographic Information */}
+        <div className="border border-black p-2 mb-2">
+          <div className={`font-bold ${fs} mb-1`}>STUDENT DEMOGRAPHIC INFORMATION (Optional):</div>
+          <div className={`${fs} space-y-0.5`}>
+            <div><span className="font-bold">Current Address:</span> <FormField value={d.studentAddress} className="min-w-[300px]" /></div>
+            <div>
+              <span className="font-bold">Phone:</span> <FormField value={d.studentPhone} className="min-w-[120px]" />
+              <span className="ml-4 font-bold">Birth Date:</span> <FormField value={d.birthDate} className="min-w-[80px]" />
+              <span className="ml-4 font-bold">Age:</span> <FormField value={d.studentAge} className="min-w-[30px]" />
             </div>
-          ))}
-        </section>
-      )}
+            <div>
+              <span className="font-bold">Student ID #/MOSIS#:</span> <FormField value="" className="min-w-[100px]" />
+            </div>
+            <div><span className="font-bold">Present Grade Level:</span> <FormField value={String(d.gradeLevel || '')} className="min-w-[40px]" /></div>
+            <div><span className="font-bold">Resident District Home School:</span> <FormField value={d.district} className="min-w-[200px]" /></div>
+          </div>
+        </div>
 
-      {/* Services */}
-      {d.services.length > 0 && (
-        <section className="mb-5 text-[11pt]">
-          <h3 className="text-[11pt] font-bold uppercase border-b border-black mb-2 pb-1">Special Education Services</h3>
-          <table className="w-full border-collapse text-[10pt]">
+        {/* School Info - pre-filled */}
+        <div className={`border border-black p-2 mb-2 ${fsSmall}`}>
+          <div className="italic text-gray-600 mb-1">If the child is not receiving his/her special education and related services in his/her home school or resident district, indicate below where the services are being provided.</div>
+          <div><span className="font-bold">District/Agency Name:</span> Lakeland Behavioral Health System</div>
+          <div><span className="font-bold">School Name:</span> Lakeland Regional School</div>
+          <div><span className="font-bold">Address:</span> 2323 West Grand Street, Springfield, MO 65802</div>
+          <div><span className="font-bold">Phone:</span> 417-865-5581</div>
+        </div>
+
+        {/* Language / Decision Maker */}
+        <div className={`border border-black p-2 mb-2 ${fs}`}>
+          <div className="mb-1"><span className="font-bold">Primary Language or Communication Mode(s):</span> <CheckBox checked label="English" /> <CheckBox label="Spanish" /> <CheckBox label="Sign language" /> <CheckBox label="Other" /></div>
+          <div className="mb-1">
+            <span className="font-bold">Educational Decision Maker is:</span>{' '}
+            <CheckBox label="Parent" /> <CheckBox label="Legal Guardian" /> <CheckBox label="Educational Surrogate" /> <CheckBox label="Foster Parent" /> <CheckBox label="Child [age 18+]" /> <CheckBox label="Other" />
+          </div>
+          <div><span className="font-bold">Name:</span> <FormField value={d.decisionMakerName} className="min-w-[200px]" /></div>
+          <div><span className="font-bold">Address:</span> <FormField value={d.decisionMakerAddress} className="min-w-[300px]" /></div>
+          <div>
+            <span className="font-bold">Phone:</span> <FormField value={d.decisionMakerPhone} className="min-w-[100px]" />
+            <span className="ml-2 font-bold">Email:</span> <FormField value={d.decisionMakerEmail} className="min-w-[120px]" />
+            <span className="ml-2 font-bold">Fax:</span> <FormField value={d.decisionMakerFax} className="min-w-[100px]" />
+          </div>
+        </div>
+
+        {/* Case Manager & Dates */}
+        <div className={`border border-black p-2 mb-2 ${fs}`}>
+          <div className="mb-1">
+            <span className="font-bold">IEP Case Manager:</span> <FormField value={d.caseManager} className="min-w-[150px]" />
+            <span className="ml-6 font-bold">Case Manager Phone:</span> <FormField value={d.caseManagerPhone} className="min-w-[100px]" />
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+            <div>
+              <span className="font-bold">IEP Type</span>{' '}<CheckBox label="Initial" />{' '}<CheckBox checked label="Annual" />
+            </div>
+            <div><span className="font-bold">Date of most recent evaluation/reevaluation:</span> <FormField value={d.evalDate} className="min-w-[80px]" /></div>
+            <div><span className="font-bold">Date of Previous IEP Review:</span> <FormField value={d.prevIepDate} className="min-w-[80px]" /></div>
+            <div><span className="font-bold">Projected date for next triennial evaluation:</span> <FormField value={d.triennialDate} className="min-w-[80px]" /></div>
+          </div>
+        </div>
+
+        {/* IEP Content Dates */}
+        <div className={`border border-black p-2 mb-2 ${fs}`}>
+          <div className="font-bold mb-1">IEP CONTENT (Required):</div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+            <div><span className="font-bold">Date of IEP Meeting:</span> <FormField value={d.iepDate} className="min-w-[80px]" /></div>
+            <div><span className="font-bold">Initiation Date of IEP:</span> <FormField value={d.iepInitiationDate} className="min-w-[80px]" /></div>
+            <div><span className="font-bold">Projected Date of Annual IEP Review:</span> <FormField value={d.iepDueDate} className="min-w-[80px]" /></div>
+            <div><span className="font-bold">Parent(s)/Legal Guardian(s) provided copy of this IEP:</span> <FormField value={d.copyProvidedDate} className="min-w-[80px]" /></div>
+          </div>
+        </div>
+
+        {/* Participants Table */}
+        <div className={`border border-black mb-2 ${fsSmall}`}>
+          <div className="font-bold p-1 bg-gray-100 border-b border-black text-[9pt]">PARTICIPANTS IN IEP MEETING AND ROLES</div>
+          <div className="p-1 border-b border-black italic text-gray-600">The names and roles of individuals participating in developing the IEP meeting must be documented.</div>
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-black p-1.5 text-left font-bold">Service</th>
-                <th className="border border-black p-1.5 text-left font-bold">Location</th>
-                <th className="border border-black p-1.5 text-left font-bold">Frequency</th>
-                <th className="border border-black p-1.5 text-left font-bold">Duration</th>
+              <tr>
+                <th className="border border-black p-1 text-left w-[40%]">Name of Person and Role</th>
+                <th className="border border-black p-1 text-left w-[60%]">Method of Attendance/Participation</th>
               </tr>
             </thead>
             <tbody>
-              {d.services.map(svc => (
-                <tr key={svc.id}>
-                  <td className="border border-black p-1.5">{svc.type}</td>
-                  <td className="border border-black p-1.5">{svc.location || '-'}</td>
-                  <td className="border border-black p-1.5">{svc.frequency || '-'}</td>
-                  <td className="border border-black p-1.5">{svc.duration || '-'}</td>
+              {['Parent/Guardian', 'Student', 'LEA Representative', 'Special Education Teacher', 'Regular Classroom Teacher'].map(role => (
+                <tr key={role}>
+                  <td className="border border-black p-1">{role}</td>
+                  <td className="border border-black p-1">
+                    <CheckBox checked label="in person" /> <CheckBox label="excused" /> <CheckBox label="by phone" />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </section>
-      )}
+        </div>
+      </div>
 
-      {/* Accommodations */}
-      {d.accommodations.length > 0 && (
-        <section className="mb-5 text-[11pt]">
-          <h3 className="text-[11pt] font-bold uppercase border-b border-black mb-2 pb-1">Accommodations</h3>
-          <ul className="list-disc pl-6 text-[10pt] space-y-0.5">
-            {getAllAccommodationLabels(d.accommodations).map((label, i) => (
-              <li key={i}>{label}</li>
+      {/* ═══════════════ PRESENT LEVELS (PLAAFP) ═══════════════ */}
+      <div className="p-[0.5in] pt-0">
+        <div className={sectionHeader}>Present Level of Academic Achievement and Functional Performance</div>
+        <div className={`border border-black border-t-0 p-2 mb-2 ${fsSmall}`}>
+          <div className="italic text-gray-600 mb-2">(Functional Performance refers to general ability and problem solving, attention and organization, communication, social skills, behavior, independent living skills, and career/vocational skills.)</div>
+
+          <div className="font-bold mb-0.5">How the child's disability affects his/her involvement and progress in the general education curriculum:</div>
+          <div className="border border-gray-300 p-1.5 min-h-[60px] mb-2 whitespace-pre-wrap bg-gray-50">{d.academicLevels || d.impactStatement || ''}</div>
+
+          <div className="font-bold mb-0.5">The strengths of the child:</div>
+          <div className="border border-gray-300 p-1.5 min-h-[40px] mb-2 whitespace-pre-wrap bg-gray-50">{d.strengthsText || ''}</div>
+
+          <div className="font-bold mb-0.5">Concerns of the parent/guardian for enhancing the education of the student:</div>
+          <div className="border border-gray-300 p-1.5 min-h-[40px] mb-2 whitespace-pre-wrap bg-gray-50">{d.parentInput || ''}</div>
+
+          <div className="font-bold mb-0.5">Changes in current functioning of the student since the initial or prior IEP:</div>
+          <div className="border border-gray-300 p-1.5 min-h-[40px] mb-2 whitespace-pre-wrap bg-gray-50">{d.changesFunctioning || ''}</div>
+
+          <div className="font-bold mb-0.5">A summary of the most recent evaluation/re-evaluation results:</div>
+          <div className="border border-gray-300 p-1.5 min-h-[40px] mb-2 whitespace-pre-wrap bg-gray-50">{d.evalSummary || ''}</div>
+
+          <div className="font-bold mb-0.5">A summary of formal and/or informal age appropriate transition assessments:</div>
+          <div className="border border-gray-300 p-1.5 min-h-[40px] whitespace-pre-wrap bg-gray-50">{d.transitionAssessments || ''}</div>
+        </div>
+      </div>
+
+      {/* ═══════════════ SPECIAL CONSIDERATIONS ═══════════════ */}
+      <div className="p-[0.5in] pt-0">
+        <div className={sectionHeader}>2. Special Considerations: Federal and State Requirements</div>
+        <div className={`border border-black border-t-0 p-2 mb-2 ${fsSmall} space-y-1`}>
+          <div><span className="font-bold">Does the student exhibit behaviors that impede his/her learning or that of others?</span> <CheckBox checked label="Yes" /> Positive behavior interventions and supports are addressed in this IEP.</div>
+          <div><span className="font-bold">Extended School Year:</span> <CheckBox label="Yes" /> <CheckBox checked label="No" /></div>
+          <div><span className="font-bold">Post-secondary Transition Services:</span> <CheckBox checked={d.hasTransitionPlan} label="Yes (Form C)" /> <CheckBox checked={!d.hasTransitionPlan} label="No" /></div>
+        </div>
+      </div>
+
+      {/* ═══════════════ GOALS ═══════════════ */}
+      {d.goals.length > 0 && d.goals.map((goal, i) => (
+        <div key={goal.id} className="p-[0.5in] pt-0">
+          <div className={sectionHeader}>3. Annual Measurable Goals</div>
+          <div className={`border border-black border-t-0 p-2 mb-2 ${fs}`}>
+            <div className="mb-2">
+              <span className="font-bold">Annual Goal #{i + 1}</span>
+            </div>
+            <div className="border border-gray-300 p-1.5 min-h-[50px] mb-3 whitespace-pre-wrap bg-gray-50">{goal.goalText}</div>
+
+            <div className="font-bold mb-1">Measurable Benchmarks/Objectives:</div>
+            {goal.benchmarks.map((bm, j) => (
+              <div key={j} className="mb-1 pl-2">
+                <span className="font-bold">{j + 1}.</span> {bm.text}
+              </div>
             ))}
-          </ul>
-        </section>
-      )}
 
-      {/* Modifications */}
-      {d.modifications.length > 0 && (
-        <section className="mb-5 text-[11pt]">
-          <h3 className="text-[11pt] font-bold uppercase border-b border-black mb-2 pb-1">Modifications</h3>
-          <ul className="list-disc pl-6 text-[10pt] space-y-0.5">
-            {d.modifications.map(id => MODIFICATIONS.find(m => m.id === id)).filter(Boolean).map((mod, i) => (
-              <li key={i}>{mod.label}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Transition */}
-      {d.hasTransitionPlan && (
-        <section className="mb-5 text-[11pt]">
-          <h3 className="text-[11pt] font-bold uppercase border-b border-black mb-2 pb-1">Transition Plan</h3>
-          <div className="space-y-2 text-[10pt]">
-            <div><span className="font-bold">Post-Secondary Education:</span> {d.transition.postSecondaryEducation || 'Not specified'}</div>
-            <div><span className="font-bold">Employment:</span> {d.transition.postSecondaryEmployment || 'Not specified'}</div>
-            <div><span className="font-bold">Independent Living:</span> {d.transition.independentLiving || 'Not specified'}</div>
-            {d.transition.targetSkills?.length > 0 && (
-              <div>
-                <div className="font-bold mb-1">Target Skills:</div>
-                <ul className="list-disc pl-6 space-y-0.5">
-                  {d.transition.targetSkills.map((s, i) => <li key={i}>{s}</li>)}
-                </ul>
+            {d.hasTransitionPlan && (
+              <div className="mt-2 pt-1 border-t border-gray-200">
+                <div className="font-bold text-[8pt]">For students with Post-secondary Transition Plans, this annual goal supports:</div>
+                <div className="text-[8pt]">
+                  <CheckBox label="Post-secondary Education/Training" />
+                  <CheckBox label="Employment" />
+                  <CheckBox label="Independent Living" />
+                </div>
               </div>
             )}
-          </div>
-        </section>
-      )}
 
-      {/* Signatures */}
-      <section className="mt-10 pt-6 border-t border-black text-[10pt]">
-        <div className="grid grid-cols-2 gap-8 mt-4">
-          <div>
-            <div className="border-b border-black mb-1 h-8" />
-            <div className="font-bold">Special Education Teacher</div>
-            <div className="text-gray-500">Date: _______________</div>
-          </div>
-          <div>
-            <div className="border-b border-black mb-1 h-8" />
-            <div className="font-bold">Parent / Guardian</div>
-            <div className="text-gray-500">Date: _______________</div>
-          </div>
-          <div>
-            <div className="border-b border-black mb-1 h-8" />
-            <div className="font-bold">LEA Representative</div>
-            <div className="text-gray-500">Date: _______________</div>
-          </div>
-          <div>
-            <div className="border-b border-black mb-1 h-8" />
-            <div className="font-bold">General Education Teacher</div>
-            <div className="text-gray-500">Date: _______________</div>
+            <div className="mt-2 pt-1 border-t border-gray-200">
+              <div className="font-bold text-[8pt]">Progress toward the goal will be measured by:</div>
+              <div className="text-[8pt]">
+                <CheckBox label="Work samples" /> <CheckBox label="Curriculum based tests" /> <CheckBox label="Portfolios" />
+                <CheckBox label="Checklists" /> <CheckBox label="Scoring guides" /> <CheckBox label="Observation chart" />
+                <CheckBox label="Reading record" /> <CheckBox label="Other" />
+              </div>
+            </div>
+
+            {/* Progress Reporting Table */}
+            <div className="mt-2">
+              <table className="w-full border-collapse text-[8pt]">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-black p-1 text-left w-[15%]">Date of Report</th>
+                    <th className="border border-black p-1 text-left w-[30%]">Summary Statement</th>
+                    <th className="border border-black p-1 text-left w-[55%]">Description of progress data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[1, 2, 3].map(r => (
+                    <tr key={r}>
+                      <td className="border border-black p-1 h-6"></td>
+                      <td className="border border-black p-1 h-6 text-[7pt]">
+                        <CheckBox label="Making progress" /><br/>
+                        <CheckBox label="Not making progress" /><br/>
+                        <CheckBox label="Goal met" />
+                      </td>
+                      <td className="border border-black p-1 h-6"></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </section>
+      ))}
+
+      {d.goals.length === 0 && (
+        <div className="p-[0.5in] pt-0">
+          <div className={sectionHeader}>3. Annual Measurable Goals</div>
+          <div className={`border border-black border-t-0 p-4 mb-2 text-center text-gray-400 italic ${fs}`}>
+            No goals added yet. Add goals in Step 3.
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════ SERVICE SUMMARY ═══════════════ */}
+      <div className="p-[0.5in] pt-0">
+        <div className={sectionHeader}>5. Service Summary</div>
+        <div className={`border border-black border-t-0 mb-2 ${fsSmall}`}>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-black p-1 text-left" colSpan={2}>Service</th>
+                <th className="border border-black p-1 text-center">Amount</th>
+                <th className="border border-black p-1 text-center">Frequency</th>
+                <th className="border border-black p-1 text-center">Location</th>
+                <th className="border border-black p-1 text-center">Begin Date*</th>
+                <th className="border border-black p-1 text-center">End Date*</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Special Education Service - pre-filled */}
+              <tr>
+                <td className="border border-black p-1 font-bold bg-gray-50" colSpan={2}>Special Education Service</td>
+                <td className="border border-black p-1 text-center">1050 min</td>
+                <td className="border border-black p-1 text-center">Weekly</td>
+                <td className="border border-black p-1 text-center">sped</td>
+                <td className="border border-black p-1 text-center"></td>
+                <td className="border border-black p-1 text-center"></td>
+              </tr>
+
+              {/* Related Services header */}
+              <tr>
+                <td className="border border-black p-1 font-bold bg-gray-50" colSpan={7}>Related Services {d.services.length === 0 && <span className="font-normal ml-2">None</span>}</td>
+              </tr>
+
+              {/* Related Services rows */}
+              {d.services.map((svc, i) => (
+                <tr key={svc.id}>
+                  <td className="border border-black p-1" colSpan={2}>{svc.type}</td>
+                  <td className="border border-black p-1 text-center">{svc.duration || '-'}</td>
+                  <td className="border border-black p-1 text-center">{svc.frequency || '-'}</td>
+                  <td className="border border-black p-1 text-center">{svc.location || '-'}</td>
+                  <td className="border border-black p-1 text-center"></td>
+                  <td className="border border-black p-1 text-center"></td>
+                </tr>
+              ))}
+              {d.services.length === 0 && (
+                <tr>
+                  <td className="border border-black p-1" colSpan={2}></td>
+                  <td className="border border-black p-1"></td>
+                  <td className="border border-black p-1"></td>
+                  <td className="border border-black p-1"></td>
+                  <td className="border border-black p-1"></td>
+                  <td className="border border-black p-1"></td>
+                </tr>
+              )}
+
+              {/* Accommodations */}
+              <tr>
+                <td className="border border-black p-1 font-bold bg-gray-50" colSpan={7}>
+                  Program Modifications and Accommodations
+                  {d.accommodations.length === 0 && d.modifications.length === 0 && <span className="font-normal ml-2">Documented on alternate Form F</span>}
+                </td>
+              </tr>
+              {(d.accommodations.length > 0 || d.modifications.length > 0) && (
+                <tr>
+                  <td className="border border-black p-1.5" colSpan={7}>
+                    <div className="text-[8pt] space-y-0.5">
+                      {getAllAccommodationLabels(d.accommodations).map((label, i) => (
+                        <div key={i}><CheckBox checked label={label} /></div>
+                      ))}
+                      {d.modifications.map(id => MODIFICATIONS.find(m => m.id === id)).filter(Boolean).map((mod, i) => (
+                        <div key={`m${i}`}><CheckBox checked label={`[Modification] ${mod.label}`} /></div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <div className="p-1 text-[7pt] italic text-gray-500">*N/A if will be same as initiation and annual review date indicated on page 1.</div>
+        </div>
+      </div>
+
+      {/* ═══════════════ REGULAR ED PARTICIPATION ═══════════════ */}
+      <div className="p-[0.5in] pt-0">
+        <div className={sectionHeader}>7. Regular Education Participation</div>
+        <div className={`border border-black border-t-0 p-2 mb-2 ${fsSmall} space-y-1`}>
+          <div className="font-bold">For K-12: Will this child receive all special education and related services in the regular education environment?</div>
+          <div><CheckBox label="Yes" /> <CheckBox checked label="No" /></div>
+          <div className="italic text-gray-600">Student is placed in a private residential facility (Lakeland Behavioral Health System).</div>
+        </div>
+      </div>
+
+      {/* ═══════════════ PLACEMENT ═══════════════ */}
+      <div className="p-[0.5in] pt-0">
+        <div className={sectionHeader}>8. Placement Considerations and Decision</div>
+        <div className={`border border-black border-t-0 p-2 mb-2 ${fsSmall}`}>
+          <div className="mb-1 font-bold">Placement Continuum (K-12)</div>
+          <table className="w-full border-collapse text-[8pt]">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-black p-1 text-left">Placement Option</th>
+                <th className="border border-black p-1 text-center w-16">Considered</th>
+                <th className="border border-black p-1 text-center w-16">Selected</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { label: 'Inside regular class at least 80% of time', considered: true, selected: false },
+                { label: 'Inside regular class 40% to 79% of time', considered: true, selected: false },
+                { label: 'Inside regular class less than 40% of time', considered: true, selected: false },
+                { label: 'Public separate school (day) facility', considered: true, selected: false },
+                { label: 'Private separate school (day) facility', considered: true, selected: false },
+                { label: 'Public residential facility', considered: true, selected: false },
+                { label: 'Private residential facility', considered: true, selected: true },
+                { label: 'Home/hospital', considered: false, selected: false },
+              ].map((pl, i) => (
+                <tr key={i}>
+                  <td className="border border-black p-1">{pl.label}</td>
+                  <td className="border border-black p-0.5 text-center">{pl.considered ? <CheckBox checked label="" /> : <CheckBox label="" />}</td>
+                  <td className="border border-black p-0.5 text-center">{pl.selected ? <CheckBox checked label="" /> : <CheckBox label="" />}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ═══════════════ TRANSITION (if enabled) ═══════════════ */}
+      {d.hasTransitionPlan && (
+        <div className="p-[0.5in] pt-0">
+          <div className={sectionHeader}>Form C: Post-Secondary Transition Plan</div>
+          <div className={`border border-black border-t-0 p-2 mb-2 ${fsSmall} space-y-3`}>
+
+            {/* Employment */}
+            <div>
+              <div className="font-bold text-[9pt] bg-amber-50 p-1 border border-amber-200 mb-1">Employment</div>
+              <div className="mb-1"><span className="font-bold">Post-secondary Goal:</span> After high school, <FormField value={d.transition.postSecondaryEmployment} className="min-w-[300px]" /></div>
+              <div className="mb-1"><span className="font-bold">Skills Already Obtained:</span> {d.employmentSkillsObtained || ''}</div>
+              <div className="mb-1"><span className="font-bold">Skills Needed Before Graduation:</span> {d.employmentSkillsNeeded || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The school will</span> {d.schoolEmploymentServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The student will</span> {d.studentEmploymentServices || ''}</div>
+              <div><span className="font-bold">The parent/guardian will</span> {d.parentEmploymentServices || ''}</div>
+            </div>
+
+            {/* Education */}
+            <div>
+              <div className="font-bold text-[9pt] bg-blue-50 p-1 border border-blue-200 mb-1">Education/Training</div>
+              <div className="mb-1"><span className="font-bold">Post-secondary Goal:</span> After high school, <FormField value={d.transition.postSecondaryEducation} className="min-w-[300px]" /></div>
+              <div className="mb-1"><span className="font-bold">Skills Already Obtained:</span> {d.educationSkillsObtained || ''}</div>
+              <div className="mb-1"><span className="font-bold">Skills Needed Before Graduation:</span> {d.educationSkillsNeeded || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The school will</span> {d.schoolEducationServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The student will</span> {d.studentEducationServices || ''}</div>
+              <div><span className="font-bold">The parent/guardian will</span> {d.parentEducationServices || ''}</div>
+            </div>
+
+            {/* Independent Living */}
+            <div>
+              <div className="font-bold text-[9pt] bg-emerald-50 p-1 border border-emerald-200 mb-1">Independent Living</div>
+              <div className="mb-1"><span className="font-bold">Post-secondary Goal:</span> After high school, <FormField value={d.transition.independentLiving} className="min-w-[300px]" /></div>
+              <div className="mb-1"><span className="font-bold">Skills Already Obtained:</span> {d.independentLivingSkillsObtained || ''}</div>
+              <div className="mb-1"><span className="font-bold">Skills Needed Before Graduation:</span> {d.independentLivingSkillsNeeded || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The school will</span> {d.schoolIndependentLivingServices || ''}</div>
+              <div className="mb-0.5"><span className="font-bold">The student will</span> {d.studentIndependentLivingServices || ''}</div>
+              <div><span className="font-bold">The parent/guardian will</span> {d.parentIndependentLivingServices || ''}</div>
+            </div>
+
+            <div className="pt-1 border-t border-gray-300">
+              <span className="font-bold">Anticipated Date of Graduation/Exit:</span> <FormField value={d.anticipatedGraduationDate} className="min-w-[100px]" />
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
