@@ -235,7 +235,7 @@ const HubShell = () => {
       <main className="flex-1 overflow-hidden flex flex-col">
         {currentView === 'home' && (
           <div className="hub-mesh-bg h-full flex flex-col">
-            <div className="max-w-6xl mx-auto px-8 py-4 flex-1 flex flex-col justify-start">
+            <div className="max-w-6xl mx-auto px-4 py-2 flex-1 flex flex-col justify-start">
 
               {/* === HERO SECTION === */}
               <div className="text-center mb-6 animate-slide-up">
@@ -260,7 +260,7 @@ const HubShell = () => {
 
 
               {/* === QUICK ACTIONS === */}
-              <div className="animate-slide-up mb-4" style={{ animationDelay: '900ms' }}>
+              <div className="animate-slide-up mb-2" style={{ animationDelay: '900ms' }}>
                 <div className="flex items-center gap-3 mb-4">
                   <Sparkles size={16} className="text-slate-400" />
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -281,7 +281,7 @@ const HubShell = () => {
               </div>
 
               {/* === MODULE GRID === */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1" style={{minHeight:0}}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 flex-1" style={{minHeight:0}}>
                 {visibleModules.map((m, index) => (
                   <LaunchCard
                     key={m.id}
