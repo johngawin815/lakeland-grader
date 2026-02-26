@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { X, Download, CheckSquare, Square, Loader2, FileDown, Users } from 'lucide-react';
 import JSZip from 'jszip';
 import PizZip from 'pizzip';
@@ -11,6 +11,12 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
   const [selectedIds, setSelectedIds] = useState(() => new Set(students.map(s => s.id)));
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (students.length > 0) {
+      setSelectedIds(new Set(students.map(s => s.id)));
+    }
+  }, [students]);
 
   const studentsWithGrades = useMemo(() => {
     return students.map(s => ({
@@ -39,7 +45,7 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
   const deselectAll = () => setSelectedIds(new Set());
 
   const handleExport = async () => {
-    const selected = studentsWithGrades.filter(s => selectedIds.has(s.id) && s.grade !== null);
+    const selected = studentsWithGrades.filter(s => selectedIds.has(s.id) && s.grade != null);
     if (selected.length === 0) return;
 
     setExporting(true);
@@ -67,7 +73,7 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
           report_date: formData?.reportDate || new Date().toLocaleDateString(),
           teacher_name: formData?.teacherName || '',
           total_credits: formData?.totalCredits || '',
-          comments: `Current grade: ${student.grade.toFixed(1)}% (${student.letter})`,
+          comments: `Current grade: ${student.grade != null ? student.grade.toFixed(1) : '0.0'}% (${student.letter || 'N/A'})`,
 
           eng_class: formData?.engClass || 'English',
           eng_grade: formData?.engGrade || '',
@@ -148,8 +154,8 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
                 : <Square className="w-5 h-5 text-slate-300 shrink-0" />
               }
               <span className="flex-1 text-sm font-bold text-slate-700">{s.name}</span>
-              <span className={`text-sm font-bold ${s.grade !== null ? (s.grade >= 60 ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-400 italic'}`}>
-                {s.grade !== null ? `${s.grade.toFixed(1)}% (${s.letter})` : 'N/A'}
+              <span className={`text-sm font-bold ${s.grade != null ? (s.grade >= 60 ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-400 italic'}`}>
+                {s.grade != null ? `${s.grade.toFixed(1)}% (${s.letter})` : 'N/A'}
               </span>
             </button>
           ))}
