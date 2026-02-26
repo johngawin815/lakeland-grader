@@ -177,7 +177,7 @@ const HubShell = () => {
     <div className="flex h-screen bg-slate-50 font-sans">
 
       {/* 1. SIDEBAR NAVIGATION */}
-      <aside className="w-[72px] bg-slate-900 flex flex-col items-center py-4 shrink-0 border-r border-slate-700/50 z-20">
+      <aside className="w-[96px] bg-slate-900 flex flex-col items-center py-4 shrink-0 border-r border-slate-700/50 z-20">
         {/* Logo / Home */}
         <button
           onClick={() => setCurrentView('home')}
