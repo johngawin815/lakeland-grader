@@ -341,7 +341,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                     Back to roster
                                 </button>
                             </div>
-                            <div className="flex-1 overflow-hidden">
+                            <div className="flex-1 overflow-y-auto">
                                 <EditableStudentProfileModal
                                     key={selectedStudentProfile.id}
                                     studentData={selectedStudentProfile}

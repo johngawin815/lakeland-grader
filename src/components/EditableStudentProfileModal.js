@@ -609,7 +609,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   // ==========================================
   if (mode === 'detail') {
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col bg-white">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col bg-white">
         {/* Compact Header */}
         <div className={`relative px-4 pt-3 pb-2 ${unitStyle.light} border-b border-slate-200/80 shrink-0`}>
           <button type="button" onClick={onClose} disabled={isSaving}
@@ -643,9 +643,9 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
 
         {/* Side-by-side content: Profile (left) + Sticky Notes (right) */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div className="flex flex-col md:flex-row overflow-hidden">
           {/* Profile Column */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
+          <div className="flex-1 px-4 py-3 space-y-2">
             {statusMessages}
             {compactProfileContent}
           </div>
