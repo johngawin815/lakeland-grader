@@ -161,12 +161,32 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         <input type="text" {...register('district')} disabled={isSaving} placeholder="School district" className={INPUT_CLASS} />
       </div>
 
-      {/* Row 3: Home School Contact */}
-      <div>
-        <label className={LABEL_CLASS}>
-          <UserCheck className="w-3.5 h-3.5" />Lead Contact (Home School)
-        </label>
-        <input type="text" {...register('homeSchoolContact')} disabled={isSaving} placeholder="e.g., Jane Smith, Guidance Counselor" className={INPUT_CLASS} />
+      {/* Row 3: Home School Contact Expanded */}
+      <div className="grid grid-cols-4 gap-3">
+        <div>
+          <label className={LABEL_CLASS}>
+            <UserCheck className="w-3.5 h-3.5" />Contact Name
+          </label>
+          <input type="text" {...register('homeSchoolContactName', { required: 'Required' })} disabled={isSaving} placeholder="e.g., Jane Smith" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <UserCheck className="w-3.5 h-3.5" />Position
+          </label>
+          <input type="text" {...register('homeSchoolContactPosition')} disabled={isSaving} placeholder="e.g., Guidance Counselor" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Phone className="w-3.5 h-3.5" />Contact Number
+          </label>
+          <input type="tel" {...register('homeSchoolContactNumber')} disabled={isSaving} placeholder="(555) 123-4567" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Mail className="w-3.5 h-3.5" />Email
+          </label>
+          <input type="email" {...register('homeSchoolContactEmail')} disabled={isSaving} placeholder="contact@email.com" className={INPUT_CLASS} />
+        </div>
       </div>
 
       {/* Row 4: Guardian Info */}
