@@ -9,7 +9,7 @@ import { seedDemoData } from '../../data/seedDatabase';
 
 // --- MODULE IMPORTS ---
 import KTEAReporter from '../ktea/KTEAReporter';
-import DischargeGenerator from '../discharge/DischargeGenerator';
+import DischargeNarrativeBuilder from '../discharge/DischargeNarrativeBuilder';
 import CurriculumMaps from '../curriculum/CurriculumMaps';
 import StudentMasterDashboard from '../dashboard/StudentMasterDashboard';
 import GradeGenerator from '../grading/GradeGenerator';
@@ -373,7 +373,7 @@ const HubShell = () => {
             {currentView === 'dashboard' && <StudentMasterDashboard setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
             {currentView === 'gradecards' && <GradeGenerator user={user} />}
             {currentView === 'ktea' && <KTEAReporter user={user} />}
-            {currentView === 'discharge' && <DischargeGenerator user={user} />}
+            {currentView === 'discharge' && <DischargeNarrativeBuilder user={user} />}
             {currentView === 'curriculum' && <CurriculumMaps />}
             {currentView === 'iep' && <IEPGenerator user={user} />}
             {currentView === 'audit' && <AuditLog />}
