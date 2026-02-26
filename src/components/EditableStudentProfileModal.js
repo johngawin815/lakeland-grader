@@ -16,6 +16,10 @@ const INPUT_CLASS = 'w-full px-3 py-2.5 rounded-lg border border-slate-200 text-
 
 const LABEL_CLASS = 'flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide';
 
+const COMPACT_INPUT_CLASS = 'w-full px-2 py-1.5 rounded-md border border-slate-200 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white outline-none transition-all disabled:opacity-50 placeholder:text-slate-400';
+
+const COMPACT_LABEL_CLASS = 'flex items-center gap-1 text-[10px] font-semibold text-slate-500 mb-0.5 uppercase tracking-wide';
+
 const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode = 'modal' }) => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm({
     defaultValues: {
@@ -371,6 +375,127 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     </>
   );
 
+  // --- Compact Profile Content (detail mode -- side-by-side with sticky notes) ---
+  const compactProfileContent = (
+    <>
+      {/* Row 1: Grade + Admit + Discharge + District */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+        <div>
+          <label className={COMPACT_LABEL_CLASS}>
+            <GraduationCap className="w-3 h-3" />Grade
+          </label>
+          <select {...register('gradeLevel', { required: 'Required' })} disabled={isSaving} className={COMPACT_INPUT_CLASS}>
+            <option value="">--</option>
+            <option value="9">9th</option>
+            <option value="10">10th</option>
+            <option value="11">11th</option>
+            <option value="12">12th</option>
+          </select>
+          {errors.gradeLevel && <p className="text-[10px] text-red-500 mt-0.5">{errors.gradeLevel.message}</p>}
+        </div>
+        <div>
+          <label className={COMPACT_LABEL_CLASS}>
+            <Calendar className="w-3 h-3" />Admit
+          </label>
+          <input type="date" {...register('admitDate', { required: 'Required' })} disabled={isSaving} className={COMPACT_INPUT_CLASS} />
+          {errors.admitDate && <p className="text-[10px] text-red-500 mt-0.5">{errors.admitDate.message}</p>}
+        </div>
+        <div>
+          <label className={COMPACT_LABEL_CLASS}>
+            <Clock className="w-3 h-3" />Discharge
+          </label>
+          <input type="date" {...register('expectedDischargeDate')} disabled={isSaving} className={COMPACT_INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={COMPACT_LABEL_CLASS}>
+            <MapPin className="w-3 h-3" />District
+          </label>
+          <input type="text" {...register('district')} disabled={isSaving} placeholder="District" className={COMPACT_INPUT_CLASS} />
+        </div>
+      </div>
+
+      {/* Row 2: Contact + Guardian + Phone */}
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <label className={COMPACT_LABEL_CLASS}>
+            <UserCheck className="w-3 h-3" />Contact
+          </label>
+          <input type="text" {...register('homeSchoolContact')} disabled={isSaving} placeholder="Home school contact" className={COMPACT_INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={COMPACT_LABEL_CLASS}>
+            <Phone className="w-3 h-3" />Guardian
+          </label>
+          <input type="text" {...register('guardianName')} disabled={isSaving} placeholder="Parent/Guardian" className={COMPACT_INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={COMPACT_LABEL_CLASS}>
+            <Phone className="w-3 h-3" />Phone
+          </label>
+          <input type="tel" {...register('guardianPhone')} disabled={isSaving} placeholder="(555) 123-4567" className={COMPACT_INPUT_CLASS} />
+        </div>
+      </div>
+
+      {/* Row 3: Unit chips */}
+      <div>
+        <label className={COMPACT_LABEL_CLASS}>
+          <Building2 className="w-3 h-3" />Unit
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {UNIT_OPTIONS.map((unit) => {
+            const isUnitSelected = watchedUnit === unit.key;
+            return (
+              <label key={unit.key}
+                className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
+                  isUnitSelected ? `${unit.light} ${unit.text} border-current` : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100 hover:text-slate-600'
+                } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+                <input type="radio" value={unit.key} {...register('unitName', { required: 'Required' })} disabled={isSaving} className="sr-only" />
+                {unit.label}
+              </label>
+            );
+          })}
+        </div>
+        {errors.unitName && <p className="text-[10px] text-red-500 mt-0.5">{errors.unitName.message}</p>}
+      </div>
+
+      {/* Row 4: IEP inline */}
+      <div>
+        <label className={COMPACT_LABEL_CLASS}>
+          <FileCheck className="w-3 h-3" />IEP
+        </label>
+        <div className="flex items-center gap-2 flex-wrap">
+          <label className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
+            watchedIep === 'no' ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'
+          } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+            <input type="radio" value="no" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
+            No IEP
+          </label>
+          <label className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
+            watchedIep === 'yes' ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'
+          } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+            <input type="radio" value="yes" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
+            Has IEP
+          </label>
+          {watchedIep === 'yes' && (
+            <div className="flex items-center gap-1.5 ml-1">
+              <span className="text-[10px] text-slate-500 font-semibold">Due:</span>
+              <input type="date" {...register('iepDueDate')} disabled={isSaving}
+                className="px-2 py-1 rounded-md border border-slate-200 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white outline-none transition-all disabled:opacity-50 w-36" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Status Footer */}
+      <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
+        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${studentData.active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' : 'bg-slate-100 text-slate-500 border border-slate-200/60'}`}>
+          {studentData.active !== false ? 'Active' : 'Discharged'}
+        </span>
+        <span className="text-[10px] text-slate-400 font-mono">{studentData.id}</span>
+      </div>
+    </>
+  );
+
   // --- MTP Notes Tab Content ---
   const notesContent = (
     <div className="space-y-4">
@@ -438,6 +563,81 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
               <p className="text-sm text-slate-700 leading-relaxed">{note.note}</p>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // --- Windows 11 Sticky Note Panel (detail mode) ---
+  const stickyNotePanel = (
+    <div className="h-64 md:h-auto w-full md:w-72 xl:w-80 shrink-0 border-t md:border-t-0 md:border-l border-slate-200/60 bg-amber-50 flex flex-col">
+      {/* Panel Header */}
+      <div className="px-3 py-2.5 bg-amber-100/80 border-b border-amber-200/40 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-1.5">
+          <StickyNote className="w-3.5 h-3.5 text-amber-600" />
+          <span className="text-xs font-bold text-amber-800">MTP Notes</span>
+          {mtpNotes.length > 0 && (
+            <span className="text-[10px] font-bold min-w-[16px] h-[16px] inline-flex items-center justify-center rounded-full bg-amber-200/60 text-amber-700">
+              {mtpNotes.length}
+            </span>
+          )}
+        </div>
+        <button type="button" onClick={() => setShowMtpInput(prev => !prev)} disabled={isSaving}
+          className="p-1 rounded-md text-amber-600 hover:bg-amber-200/60 transition disabled:opacity-50"
+          title="Add note">
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Notes List (scrollable -- only scroll point in the layout) */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+        {mtpNotes.length === 0 && !showMtpInput ? (
+          <div className="text-center py-6">
+            <StickyNote className="w-6 h-6 text-amber-300 mx-auto mb-1.5" />
+            <p className="text-[11px] text-amber-600/60 font-medium">No notes yet</p>
+          </div>
+        ) : (
+          [...mtpNotes].reverse().map((note) => (
+            <div key={note.id} className="bg-white/60 rounded-lg p-2.5 border border-amber-200/40 group/note">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-amber-800">
+                    {new Date(note.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
+                  <span className="text-[10px] text-amber-500">{note.author}</span>
+                </div>
+                <button type="button" onClick={() => removeMtpNote(note.id)} disabled={isSaving}
+                  className="opacity-0 group-hover/note:opacity-100 p-0.5 rounded text-amber-300 hover:text-rose-500 hover:bg-rose-50 transition-all disabled:opacity-50">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+              <p className="text-xs text-slate-700 leading-relaxed">{note.note}</p>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Compose Area (bottom, shrink-0) */}
+      {showMtpInput && (
+        <div className="border-t border-amber-200/60 bg-white/80 px-3 py-2 shrink-0 space-y-1.5">
+          <textarea
+            value={newMtpNote}
+            onChange={e => setNewMtpNote(e.target.value)}
+            disabled={isSaving}
+            placeholder="Monthly progress..."
+            className="w-full px-2 py-1.5 rounded-md border border-amber-200 text-xs text-slate-800 focus:ring-2 focus:ring-amber-300/40 focus:border-amber-400 bg-white outline-none resize-none disabled:opacity-50"
+            rows={2}
+          />
+          <div className="flex gap-1.5">
+            <button type="button" onClick={addMtpNote} disabled={isSaving || !newMtpNote.trim()}
+              className="px-2.5 py-1 rounded-md bg-amber-600 text-white text-[11px] font-bold hover:bg-amber-700 transition disabled:opacity-50">
+              Save
+            </button>
+            <button type="button" onClick={() => { setShowMtpInput(false); setNewMtpNote(''); }} disabled={isSaving}
+              className="px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-[11px] font-bold hover:bg-amber-200 transition disabled:opacity-50">
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -533,27 +733,27 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   );
 
   // ==========================================
-  // DETAIL MODE: inline master-detail panel (wide)
+  // DETAIL MODE: side-by-side profile + sticky notes (no scrolling)
   // ==========================================
   if (mode === 'detail') {
     return (
       <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col bg-white">
-        {/* Header -- wider layout */}
-        <div className={`relative px-6 pt-5 pb-4 ${unitStyle.light} border-b border-slate-200/80 shrink-0`}>
+        {/* Compact Header */}
+        <div className={`relative px-4 pt-3 pb-2 ${unitStyle.light} border-b border-slate-200/80 shrink-0`}>
           <button type="button" onClick={onClose} disabled={isSaving}
-            className="absolute top-4 right-4 p-2 rounded-lg bg-white/80 hover:bg-white text-slate-400 hover:text-slate-600 transition border border-slate-200/60"
+            className="absolute top-2.5 right-3 p-1.5 rounded-md bg-white/80 hover:bg-white text-slate-400 hover:text-slate-600 transition border border-slate-200/60 disabled:opacity-50"
             aria-label="Close">
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
-          <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-xl ${unitStyle.bg} ring-2 ring-white flex items-center justify-center text-white font-extrabold text-lg tracking-wide shadow-sm shrink-0`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg ${unitStyle.bg} ring-2 ring-white flex items-center justify-center text-white font-bold text-sm tracking-wide shadow-sm shrink-0`}>
               {initials.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-extrabold text-slate-900 leading-tight truncate">
+              <h3 className="text-base font-extrabold text-slate-900 leading-tight truncate">
                 {studentData.studentName}
               </h3>
-              <div className="flex items-center gap-3 mt-1 text-sm font-semibold text-slate-500">
+              <div className="flex items-center gap-2 mt-0.5 text-xs font-semibold text-slate-500">
                 <span>Grade {studentData.gradeLevel}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300" />
                 <span>{daysIn}d in program</span>
@@ -570,23 +770,27 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           </div>
         </div>
 
-        {tabNav}
+        {/* Side-by-side content: Profile (left) + Sticky Notes (right) */}
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          {/* Profile Column */}
+          <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden px-4 py-3 space-y-2">
+            {statusMessages}
+            {compactProfileContent}
+          </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {statusMessages}
-          {detailTab === 'profile' && wideProfileContent}
-          {detailTab === 'notes' && notesContent}
+          {/* Sticky Note Column */}
+          {stickyNotePanel}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50 shrink-0 flex gap-3">
+        {/* Compact Footer */}
+        <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 shrink-0 flex gap-2">
           <button type="button" onClick={onClose} disabled={isSaving}
-            className="px-6 bg-slate-100 text-slate-600 font-bold py-2.5 rounded-xl hover:bg-slate-200/80 transition-all disabled:opacity-50 text-sm">
+            className="px-4 bg-slate-100 text-slate-600 font-bold py-1.5 rounded-lg hover:bg-slate-200/80 transition-all disabled:opacity-50 text-xs">
             Close
           </button>
           <button type="submit" disabled={isSaving}
-            className="flex-1 max-w-xs bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
-            {isSaving ? (<><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>) : (<><Save className="w-4 h-4" /> Save Changes</>)}
+            className="flex-1 max-w-[200px] bg-indigo-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 text-xs">
+            {isSaving ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>) : (<><Save className="w-3.5 h-3.5" /> Save</>)}
           </button>
         </div>
       </form>
