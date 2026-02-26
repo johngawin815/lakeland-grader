@@ -171,46 +171,65 @@ const HubShell = () => {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
+  const visibleModules = modules.filter(m => !m.adminOnly || user.role === 'admin');
+
   return (
-    <div className="flex flex-col h-screen bg-slate-50 font-sans">
+    <div className="flex h-screen bg-slate-50 font-sans">
 
-      {/* 1. TOP NAVIGATION BAR */}
-      <header className="bg-slate-900 border-b border-slate-700/50 h-20 flex items-center justify-between px-6 z-20 shrink-0 shadow-2xl shadow-slate-900/40">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
-            <School size={32} className="text-indigo-500" />
-            <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
+      {/* 1. SIDEBAR NAVIGATION */}
+      <aside className="w-[72px] bg-slate-900 flex flex-col items-center py-4 shrink-0 border-r border-slate-700/50 z-20">
+        {/* Logo / Home */}
+        <button
+          onClick={() => setCurrentView('home')}
+          className={`w-14 flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-200 ${
+            currentView === 'home'
+              ? 'bg-indigo-600/20 text-white'
+              : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+          }`}
+        >
+          <School size={26} className="text-indigo-500" />
+          <span className="text-[10px] font-bold tracking-tight">Home</span>
+        </button>
+
+        <div className="w-8 h-px bg-slate-700/50 my-2" />
+
+        {/* Module nav buttons */}
+        <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto w-full px-2">
+          {visibleModules.map(m => (
+            <SidebarButton
+              key={m.id}
+              label={m.title}
+              icon={m.icon}
+              color={m.color.icon}
+              active={currentView === m.id}
+              onClick={() => navigateTo(m.id)}
+            />
+          ))}
+        </nav>
+
+        <div className="w-8 h-px bg-slate-700/50 my-2" />
+
+        {/* Exports */}
+        <SidebarButton
+          label="Exports"
+          icon={FileSpreadsheet}
+          active={false}
+          onClick={() => setIsSpreadsheetModalOpen(true)}
+        />
+
+        <div className="w-8 h-px bg-slate-700/50 my-2" />
+
+        {/* User */}
+        <div className="flex flex-col items-center gap-1">
+          <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-sm border-2 border-slate-700/80">
+            {user.name.charAt(0)}
           </div>
-          <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
-            {modules.filter(m => !m.adminOnly || user.role === 'admin').map(m => (
-              <NavButton
-                key={m.id}
-                label={m.title}
-                icon={m.icon}
-                active={currentView === m.id}
-                onClick={() => navigateTo(m.id)}
-              />
-            ))}
-            <button
-              onClick={() => setIsSpreadsheetModalOpen(true)}
-              className="px-3 xl:px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 flex items-center gap-1.5"
-            >
-              <FileSpreadsheet size={16} />
-              Exports
-            </button>
-          </nav>
+          <span className="text-[10px] font-medium text-slate-400 truncate w-full text-center px-1">{user.name.split(' ')[0]}</span>
+          <button onClick={handleLogout} className="text-[10px] font-semibold text-slate-500 hover:text-indigo-400 transition-colors">
+            Sign Out
+          </button>
         </div>
-
-        <div className="flex items-center gap-3 pl-4">
-            <div className="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700/80">
-              {user.name.charAt(0)}
-            </div>
-            <div className="text-sm">
-              <div className="font-bold text-slate-200">{user.name}</div>
-              <button onClick={handleLogout} className="text-slate-400 hover:text-indigo-400 font-semibold transition-colors">Sign Out</button>
-            </div>
-        </div>
-      </header>
+      </aside>
 
       {/* 2. MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto">
@@ -241,7 +260,7 @@ const HubShell = () => {
 
               {/* === MODULE GRID === */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {modules.filter(m => !m.adminOnly || user.role === 'admin').map((m, index) => (
+                {visibleModules.map((m, index) => (
                   <LaunchCard
                     key={m.id}
                     icon={m.icon}
@@ -301,18 +320,20 @@ const HubShell = () => {
 
 // --- HELPER COMPONENTS ---
 
-const NavButton = ({ label, icon: Icon, active, onClick }) => (
+const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
   <button
     onClick={onClick}
-    className={`px-3 xl:px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-200 flex items-center gap-1.5 ${
-      active
-        ? 'bg-slate-700/80 text-white shadow-inner shadow-black/20'
-        : 'bg-transparent text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
-    }`}
     title={label}
+    className={`w-full flex flex-col items-center gap-0.5 py-2 rounded-xl transition-all duration-200
+      ${active
+        ? 'bg-indigo-600/20 text-white'
+        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+      }`}
   >
-    {Icon && <Icon size={14} className="shrink-0" />}
-    <span className="hidden xl:inline">{label}</span>
+    <Icon size={22} className={active && color ? color : undefined} />
+    <span className="text-[10px] font-medium leading-tight text-center truncate w-full px-1">
+      {label}
+    </span>
   </button>
 );
 
