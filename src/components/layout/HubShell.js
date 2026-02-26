@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
-  Users, Calendar, FileBarChart, Sparkles, ArrowRight, TrendingUp, UserPlus,
+  Calendar, Sparkles, ArrowRight, UserPlus,
   Database, Loader2, CheckCircle2, FileCheck
 } from 'lucide-react';
 import { seedDemoData } from '../../data/seedDatabase';
@@ -16,7 +16,7 @@ import GradeGenerator from '../grading/GradeGenerator';
 import GradeSpreadsheetModal from '../grading/GradeSpreadsheetModal';
 import AuditLog from './AuditLog';
 import IEPGenerator from '../iep/IEPGenerator';
-import { databaseService } from '../../services/databaseService';
+
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 
 // --- HELPER FUNCTIONS ---
@@ -37,34 +37,6 @@ const formatDate = () => {
   });
 };
 
-// --- COUNT-UP HOOK ---
-
-const useCountUp = (target, duration = 1200) => {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (target === null || target === undefined) return;
-    if (target === 0) { setCount(0); return; }
-
-    let startTime = null;
-    let raf;
-    const step = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
-      if (progress < 1) {
-        raf = requestAnimationFrame(step);
-      } else {
-        setCount(target);
-      }
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration]);
-
-  return count;
-};
 
 // --- COLOR-CODED MODULE DEFINITIONS ---
 
@@ -167,7 +139,6 @@ const HubShell = () => {
     if (result.success) {
       setSeedStatus('done');
       setSeedMessage(`Seeded ${result.stats.students} students, ${result.stats.courses} courses, ${result.stats.enrollments} enrollments, ${result.stats.gradebooks} gradebooks, ${result.stats.ktea} KTEA reports`);
-      setStatsLoaded(false); // refresh home stats
       setTimeout(() => setSeedStatus('idle'), 5000);
     } else {
       setSeedStatus('error');
@@ -175,54 +146,6 @@ const HubShell = () => {
       setTimeout(() => setSeedStatus('idle'), 5000);
     }
   };
-
-  // --- LIVE STATS ---
-  const [hubStats, setHubStats] = useState({
-    students: null, courses: null, enrollments: null, reports: null,
-  });
-  const [statsLoaded, setStatsLoaded] = useState(false);
-
-  useEffect(() => {
-    if (currentView !== 'home' || statsLoaded || !user) return;
-
-    let cancelled = false;
-    const fetchStats = async () => {
-      try {
-        const [students, courses, reports] = await Promise.all([
-          databaseService.getAllStudents(),
-          databaseService.getCoursesByTeacher(user.name),
-          databaseService.getAllKteaReports(),
-        ]);
-
-        let totalEnrollments = 0;
-        if (courses.length > 0) {
-          const enrollmentResults = await Promise.all(
-            courses.map(c => databaseService.getEnrollmentsByCourse(c.id))
-          );
-          totalEnrollments = enrollmentResults.reduce((sum, arr) => sum + arr.length, 0);
-        }
-
-        if (!cancelled) {
-          setHubStats({
-            students: students.length,
-            courses: courses.length,
-            enrollments: totalEnrollments,
-            reports: reports.length,
-          });
-          setStatsLoaded(true);
-        }
-      } catch (err) {
-        console.error('Failed to fetch hub stats:', err);
-        if (!cancelled) {
-          setHubStats({ students: 0, courses: 0, enrollments: 0, reports: 0 });
-          setStatsLoaded(true);
-        }
-      }
-    };
-
-    fetchStats();
-    return () => { cancelled = true; };
-  }, [currentView, statsLoaded, user]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -232,7 +155,6 @@ const HubShell = () => {
   const handleLogout = () => {
     setUser(null);
     setCurrentView("home");
-    setStatsLoaded(false);
   };
 
   const navigateTo = (moduleId) => {
@@ -294,10 +216,10 @@ const HubShell = () => {
       <main className="flex-1 overflow-y-auto">
         {currentView === 'home' && (
           <div className="hub-mesh-bg min-h-full">
-            <div className="max-w-6xl mx-auto px-8 py-12">
+            <div className="max-w-6xl mx-auto px-8 py-6">
 
               {/* === HERO SECTION === */}
-              <div className="text-center mb-10 animate-slide-up">
+              <div className="text-center mb-6 animate-slide-up">
                 <div className="inline-flex items-center gap-2 mb-4 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1.5">
                   <Calendar size={14} />
                   {formatDate()}
@@ -305,7 +227,7 @@ const HubShell = () => {
                   <span>{getAcademicQuarter()} &middot; {getCurrentSchoolYear()}</span>
                 </div>
 
-                <h1 className="text-5xl font-extrabold text-slate-900 tracking-tight">
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
                   {getGreeting()},{' '}
                   <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
                     {user.name.split(' ')[0]}
@@ -316,20 +238,9 @@ const HubShell = () => {
                 </p>
               </div>
 
-              {/* === STATS BAR === */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatCard icon={Users} value={hubStats.students} label="Total Students"
-                  accentColor="bg-gradient-to-br from-blue-500 to-blue-600" delay={200} />
-                <StatCard icon={BookOpen} value={hubStats.courses} label="My Courses"
-                  accentColor="bg-gradient-to-br from-emerald-500 to-emerald-600" delay={300} />
-                <StatCard icon={TrendingUp} value={hubStats.enrollments} label="Active Enrollments"
-                  accentColor="bg-gradient-to-br from-violet-500 to-violet-600" delay={400} />
-                <StatCard icon={FileBarChart} value={hubStats.reports} label="Reports Generated"
-                  accentColor="bg-gradient-to-br from-amber-500 to-amber-600" delay={500} />
-              </div>
 
               {/* === MODULE GRID === */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 {modules.map((m, index) => (
                   <LaunchCard
                     key={m.id}
@@ -405,37 +316,10 @@ const NavButton = ({ label, icon: Icon, active, onClick }) => (
   </button>
 );
 
-const StatCard = ({ icon: Icon, value, label, accentColor, delay }) => {
-  const displayValue = useCountUp(value);
-
-  return (
-    <div
-      className="animate-shimmer-in flex items-center gap-4 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-shadow duration-300"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <div className={`p-2.5 rounded-xl ${accentColor}`}>
-        <Icon size={22} className="text-white" />
-      </div>
-      <div>
-        <div className="text-2xl font-extrabold text-slate-800 tabular-nums">
-          {value === null ? (
-            <span className="inline-block w-8 h-6 bg-slate-200 rounded animate-pulse" />
-          ) : (
-            displayValue
-          )}
-        </div>
-        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-          {label}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay }) => (
   <div
     onClick={onClick}
-    className={`animate-slide-up bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border ${color.border} rounded-2xl p-6 group cursor-pointer transition-all duration-300 hover:shadow-2xl ${color.hoverShadow} ${color.hoverBorder} hover:-translate-y-2 relative overflow-hidden`}
+    className={`animate-slide-up bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border ${color.border} rounded-2xl p-4 group cursor-pointer transition-all duration-300 hover:shadow-2xl ${color.hoverShadow} ${color.hoverBorder} hover:-translate-y-2 relative overflow-hidden`}
     style={{ animationDelay: `${delay}ms` }}
   >
     <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${color.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
@@ -446,7 +330,7 @@ const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay }) => (
       </div>
       <ChevronRight className={`w-6 h-6 text-slate-300 ${color.chevronHover} group-hover:translate-x-1 transition-all duration-300`} />
     </div>
-    <div className="mt-4">
+    <div className="mt-2">
       <h3 className="text-lg font-bold text-slate-800 group-hover:text-slate-900 transition-colors">{title}</h3>
       <p className="text-sm text-slate-500 mt-1">{desc}</p>
     </div>
