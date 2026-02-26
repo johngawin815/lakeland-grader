@@ -106,7 +106,7 @@ const modules = [
   },
   {
     id: 'audit', title: 'Audit Log', desc: 'Security & Compliance',
-    icon: Shield,
+    icon: Shield, adminOnly: true,
     color: {
       icon: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-200',
       hoverShadow: 'hover:shadow-slate-200/50', hoverBorder: 'hover:border-slate-300/60',
@@ -149,7 +149,7 @@ const HubShell = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    setUser({ name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" });
+    setUser({ name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu", role: "admin" });
   };
 
   const handleLogout = () => {
@@ -182,7 +182,7 @@ const HubShell = () => {
             <span className="text-xl font-extrabold text-white tracking-tight">LRS Hub</span>
           </div>
           <nav className="flex gap-1 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
-            {modules.map(m => (
+            {modules.filter(m => !m.adminOnly || user.role === 'admin').map(m => (
               <NavButton
                 key={m.id}
                 label={m.title}
@@ -241,7 +241,7 @@ const HubShell = () => {
 
               {/* === MODULE GRID === */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {modules.map((m, index) => (
+                {modules.filter(m => !m.adminOnly || user.role === 'admin').map((m, index) => (
                   <LaunchCard
                     key={m.id}
                     icon={m.icon}
@@ -287,7 +287,7 @@ const HubShell = () => {
             {currentView === 'discharge' && <DischargeNarrativeBuilder user={user} />}
             {currentView === 'curriculum' && <CurriculumMaps />}
             {currentView === 'iep' && <IEPGenerator user={user} />}
-            {currentView === 'audit' && <AuditLog />}
+            {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
           </div>
         )}
       </main>
