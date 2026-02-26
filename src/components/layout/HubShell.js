@@ -258,23 +258,9 @@ const HubShell = () => {
               </div>
 
 
-              {/* === MODULE GRID === */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {visibleModules.map((m, index) => (
-                  <LaunchCard
-                    key={m.id}
-                    icon={m.icon}
-                    title={m.title}
-                    desc={m.desc}
-                    color={m.color}
-                    delay={400 + (index * 80)}
-                    onClick={() => navigateTo(m.id)}
-                  />
-                ))}
-              </div>
 
               {/* === QUICK ACTIONS === */}
-              <div className="animate-slide-up" style={{ animationDelay: '900ms' }}>
+              <div className="animate-slide-up mb-6" style={{ animationDelay: '900ms' }}>
                 <div className="flex items-center gap-3 mb-4">
                   <Sparkles size={16} className="text-slate-400" />
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -292,6 +278,21 @@ const HubShell = () => {
                     onClick={() => navigateTo('iep')} />
                   <SeedButton status={seedStatus} message={seedMessage} onClick={handleSeedDemoData} />
                 </div>
+              </div>
+
+              {/* === MODULE GRID === */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {visibleModules.map((m, index) => (
+                  <LaunchCard
+                    key={m.id}
+                    icon={m.icon}
+                    title={m.title}
+                    desc={m.desc}
+                    color={m.color}
+                    delay={400 + (index * 80)}
+                    onClick={() => navigateTo(m.id)}
+                  />
+                ))}
               </div>
 
             </div>
