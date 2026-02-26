@@ -42,12 +42,12 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
 
   return (
     <div className="w-full h-full box-border flex flex-col font-sans max-w-7xl mx-auto relative">
-      <div className="flex justify-between items-center px-6 pt-6 pb-4 shrink-0">
+      <div className="flex justify-between items-center px-6 pt-4 pb-3 shrink-0">
         <div>
-          <h2 className="text-slate-900 text-2xl font-extrabold tracking-tight">
+          <h2 className="text-slate-900 text-xl font-extrabold tracking-tight">
             Teacher Dashboard
           </h2>
-          <p className="mt-1 text-slate-500 text-sm">
+          <p className="text-slate-500 text-sm">
             {user.unit} Unit &middot; {user.name}
           </p>
         </div>
@@ -212,7 +212,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
     return (
         <div className="flex-1 flex flex-col overflow-hidden h-full">
             {/* Unit Selector + Search + Add Student */}
-            <div className="flex flex-wrap items-center gap-2 px-6 py-4 shrink-0 border-b border-slate-100">
+            <div className="flex flex-wrap items-center gap-2 px-6 py-3 shrink-0 border-b border-slate-100">
                 {UNIT_CONFIG.map(unit => {
                     const Icon = unit.icon;
                     const isActive = selectedUnit === unit.key;
@@ -225,7 +225,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                 setSelectedStudentProfile(null);
                                 setSearchQuery('');
                             }}
-                            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
                                 isActive
                                     ? `${unit.badge} border-current shadow-md ring-1 ring-current/20`
                                     : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
@@ -243,6 +243,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                         </button>
                     );
                 })}
+                {!isDetailOpen && (
                 <div className="ml-auto flex items-center gap-3">
                     <div className="relative">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -266,6 +267,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                         {showIntakeForm ? 'Cancel' : 'Add Student'}
                     </button>
                 </div>
+                )}
             </div>
 
             {/* Intake Form (collapsible) */}

@@ -645,7 +645,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         {/* Side-by-side content: Profile (left) + Sticky Notes (right) */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Profile Column */}
-          <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden px-4 py-3 space-y-2">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2">
             {statusMessages}
             {compactProfileContent}
           </div>
