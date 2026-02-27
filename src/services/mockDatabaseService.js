@@ -7,6 +7,10 @@ import {
   MOCK_STUDENTS, MOCK_COURSES, COURSE_STUDENTS, COURSE_ASSIGNMENTS,
   GRADEBOOK_CATEGORIES, STUDENT_PROFILES, MOCK_KTEA_REPORTS, ATTENDANCE_DATES,
 } from '../data/mockData';
+// Mock data import disabled for real/fake student testing
+// import { MOCK_STUDENTS, MOCK_COURSES, COURSE_STUDENTS, COURSE_ASSIGNMENTS,
+//   GRADEBOOK_CATEGORIES, STUDENT_PROFILES, MOCK_KTEA_REPORTS, ATTENDANCE_DATES,
+// } from '../data/mockData';
 
 // ─── DETERMINISTIC PRNG ────────────────────────────────────────────────────────
 

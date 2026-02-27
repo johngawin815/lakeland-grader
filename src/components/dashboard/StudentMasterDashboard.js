@@ -11,6 +11,9 @@ import EditableStudentProfileModal from '../EditableStudentProfileModal';
 // Mock user, as requested. In a real app, this would come from an auth context.
 const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };
 
+// Mock data import disabled for real/fake student testing
+// import { MOCK_STUDENTS } from '../../data/mockData';
+
 // --- Main Dashboard Component ---
 const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'roster');
