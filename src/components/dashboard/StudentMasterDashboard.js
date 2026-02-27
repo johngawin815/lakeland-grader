@@ -11,7 +11,6 @@ import EditableStudentProfileModal from '../EditableStudentProfileModal';
 const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };
 
 // Mock data import disabled for real/fake student testing
-// import { MOCK_STUDENTS } from '../../data/mockData';
 
 // --- Main Dashboard Component ---
 const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, initialTab }) => {
