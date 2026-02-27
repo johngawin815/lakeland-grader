@@ -5,7 +5,6 @@ import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
 import IntakeForm from './IntakeForm';
 import { databaseService } from '../../services/databaseService';
-import { MOCK_STUDENTS } from '../../data/mockData';
 import EditableStudentProfileModal from '../EditableStudentProfileModal';
 
 // Mock user, as requested. In a real app, this would come from an auth context.
@@ -140,11 +139,11 @@ const UnitRoster = ({ defaultUnit, user }) => {
             if (students && students.length > 0) {
                 setRoster(students);
             } else {
-                setRoster(generateMockRoster().filter(s => s.unitName === selectedUnit));
+                setRoster([]);
             }
         } catch (error) {
             console.error("Failed to fetch unit roster:", error);
-            setRoster(generateMockRoster().filter(s => s.unitName === selectedUnit));
+            setRoster([]);
         }
         setLoading(false);
     };
@@ -678,7 +677,5 @@ const UNIT_CONFIG = [
   { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400", avatarBg: "bg-blue-500", avatarRing: "ring-blue-200", accentBorder: "border-l-blue-500", tagBg: "bg-blue-50 text-blue-700" },
   { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400", avatarBg: "bg-slate-400", avatarRing: "ring-slate-200", accentBorder: "border-l-slate-400", tagBg: "bg-slate-100 text-slate-600" }
 ];
-
-const generateMockRoster = () => MOCK_STUDENTS.filter(s => s.active);
 
 export default StudentMasterDashboard;
