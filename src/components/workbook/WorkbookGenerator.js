@@ -155,7 +155,6 @@ const WorkbookGenerator = ({ user }) => {
   const [saved, setSaved] = useState(false);
   const [repairing, setRepairing] = useState(false);
   const iframeRef = useRef(null);
-  const repairAbortRef = useRef(null);
 
   // Settings overlay
   const [showSettings, setShowSettings] = useState(false);
@@ -346,35 +345,19 @@ const WorkbookGenerator = ({ user }) => {
 
   // ─── REPAIR ─────────────────────────────────────────────────────────────────
 
-  const handleRepair = async () => {
+  const handleRepair = () => {
     if (!previewHtml || repairing) return;
     setRepairing(true);
-    const controller = new AbortController();
-    repairAbortRef.current = controller;
 
     try {
-      const systemPrompt = [
-        '=== MANDATORY CSS (THE MIT PRINT ENGINE V69 PLATINUM) ===',
-        'The workbook MUST embed this EXACT CSS inside a <style> tag in the <head>.\n',
-        PRINT_ENGINE_CSS,
-        '\n\n=== MANDATORY HTML STRUCTURE REFERENCE ===',
-        'Every page MUST follow this exact DOM structure.\n',
-        STRUCTURAL_REFERENCE,
-      ].join('\n');
-
-      const fixedHtml = await repairWorkbook({
-        htmlContent: previewHtml,
-        systemPrompt,
-        onChunk: () => {},
-        signal: controller.signal,
-      });
-
-      setPreviewHtml(fixedHtml);
+      const { html, fixes } = repairWorkbook(previewHtml, PRINT_ENGINE_CSS);
+      setPreviewHtml(html);
       setSaved(false);
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        alert(`Repair failed: ${err.message || 'Unknown error'}`);
+      if (fixes.length === 0) {
+        alert('No structural issues detected — the workbook looks structurally correct.');
       }
+    } catch (err) {
+      alert(`Repair failed: ${err.message || 'Unknown error'}`);
     }
     setRepairing(false);
   };

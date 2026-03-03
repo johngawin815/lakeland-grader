@@ -51,55 +51,166 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onChunk, sign
   return extractHtml(accumulated);
 }
 
-// ─── REPAIR WORKBOOK (STREAMING) ────────────────────────────────────────────
+// ─── REPAIR WORKBOOK (DETERMINISTIC DOM FIXES) ─────────────────────────────
 
-export async function repairWorkbook({ htmlContent, systemPrompt, onChunk, signal }) {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error('No Gemini API key configured.');
+export function repairWorkbook(htmlContent, mandatoryCss) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlContent, 'text/html');
+  const fixes = [];
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: getModel(),
-    systemInstruction: systemPrompt,
-    generationConfig: { temperature: 0.3, maxOutputTokens: 65536 },
-  });
-
-  const userPrompt = `You are a print-layout QA engineer. The HTML workbook below has rendering defects.
-Analyze every page against the MANDATORY CSS and STRUCTURAL REFERENCE provided in the system prompt.
-
-COMMON DEFECTS TO FIX:
-1. OVERFLOW: Content exceeding the 11-inch page boundary — shorten text, reduce textarea heights, or tighten spacing
-2. INVISIBLE/MISSING HEADERS: <h1>, <h2>, <h3> missing or improperly styled
-3. WHITESPACE GAPS: Pages missing flex-grow:1 on the last expanding element before the footer
-4. FOOTER DETACHED: .page-footer not anchored to bottom — ensure parent .print-page uses display:flex; flex-direction:column and the last content element has flex-grow:1
-5. MISSING CSS: If the <style> tag is absent or incomplete, inject the full MANDATORY CSS
-6. PAGE 2 DUPLICATION: Page 2 must NOT have an <h1> or mission objective box
-7. SHIELD-CANVAS POLLUTION: .shield-canvas must be completely empty (no child elements)
-8. BOLD SYNTAX: Replace any markdown **text** with <strong>text</strong>; punctuation must sit OUTSIDE <strong> tags
-9. TEXTAREA HEIGHTS: Verify correct heights per page type (Page 1: 76px, Page 2: 38px, Page 10: 76px/114px, Page 11: 128px)
-10. STRUCTURAL INTEGRITY: Ensure every page has header-row, page-footer, and correct class names
-
-RULES:
-- Return the COMPLETE fixed HTML document (<!DOCTYPE html> through </html>)
-- Do NOT change the pedagogical content, vocabulary words, narrative text, or educational substance
-- ONLY fix layout, structure, CSS, and rendering issues
-- Preserve all existing content — this is a REPAIR, not a rewrite
-
-Here is the HTML to fix:
-
-${htmlContent}`;
-
-  const result = await model.generateContentStream(userPrompt);
-
-  let accumulated = '';
-  for await (const chunk of result.stream) {
-    if (signal?.aborted) throw new DOMException('Repair cancelled', 'AbortError');
-    const text = chunk.text();
-    accumulated += text;
-    if (onChunk) onChunk(accumulated);
+  // 1. CSS INJECTION — ensure the mandatory CSS is present and complete
+  let styleTag = doc.querySelector('style');
+  if (!styleTag) {
+    styleTag = doc.createElement('style');
+    (doc.head || doc.documentElement).appendChild(styleTag);
+  }
+  if (!styleTag.textContent.includes('MIT PRINT ENGINE')) {
+    styleTag.textContent = mandatoryCss;
+    fixes.push('Injected mandatory Print Engine CSS');
   }
 
-  return extractHtml(accumulated);
+  // 2. PAGE STRUCTURE — ensure every .print-page has flex column layout
+  const pages = doc.querySelectorAll('.print-page');
+  pages.forEach((page, i) => {
+    if (!page.style.display || page.style.display !== 'flex') {
+      page.style.display = 'flex';
+      page.style.flexDirection = 'column';
+    }
+    if (!page.style.height) page.style.height = '11in';
+    if (!page.style.overflow) page.style.overflow = 'hidden';
+
+    // 3. FOOTER ANCHORING — ensure page-footer exists and last content element has flex-grow
+    const footer = page.querySelector('.page-footer');
+    if (footer) {
+      footer.style.flexShrink = '0';
+      footer.style.marginTop = 'auto';
+      // Find the content element right before the footer and give it flex-grow
+      const prev = footer.previousElementSibling;
+      if (prev && !prev.classList.contains('page-footer')) {
+        const tagName = prev.tagName.toLowerCase();
+        const growable = ['div', 'textarea', 'section'];
+        if (growable.includes(tagName) || prev.classList.contains('checkpoint-box') ||
+            prev.classList.contains('vocab-grid') || prev.classList.contains('law-block') ||
+            prev.classList.contains('shield-canvas') || prev.querySelector('textarea')) {
+          prev.style.flexGrow = '1';
+        }
+      }
+    }
+
+    // 4. HEADER-ROW — ensure it exists
+    const headerRow = page.querySelector('.header-row');
+    if (!headerRow) {
+      const hr = doc.createElement('div');
+      hr.className = 'header-row';
+      hr.innerHTML = '<span>STUDENT: ______________________________</span><span>Page ' + (i + 1) + ' of 11</span>';
+      page.insertBefore(hr, page.firstChild);
+      fixes.push(`Page ${i + 1}: Added missing header-row`);
+    }
+
+    // 5. MISSING FOOTER — add if absent
+    if (!footer) {
+      const ft = doc.createElement('div');
+      ft.className = 'page-footer';
+      ft.innerHTML = '<span></span><span></span><span>Page ' + (i + 1) + ' of 11</span>';
+      page.appendChild(ft);
+      fixes.push(`Page ${i + 1}: Added missing page-footer`);
+    }
+  });
+
+  // 6. PAGE 2 — remove <h1> and mission objective box if present
+  const page2 = pages[1];
+  if (page2) {
+    const h1 = page2.querySelector('h1');
+    if (h1) {
+      h1.remove();
+      fixes.push('Page 2: Removed duplicate h1 title');
+    }
+    // Remove mission objective box (div with background #eee containing MISSION)
+    page2.querySelectorAll('div').forEach(div => {
+      if (div.textContent.includes('MISSION OBJECTIVE') &&
+          div.style.background?.includes('eee')) {
+        div.remove();
+        fixes.push('Page 2: Removed duplicate mission objective box');
+      }
+    });
+  }
+
+  // 7. SHIELD-CANVAS — clear any child content
+  doc.querySelectorAll('.shield-canvas').forEach(canvas => {
+    if (canvas.childNodes.length > 0) {
+      canvas.innerHTML = '';
+      fixes.push('Cleared shield-canvas child elements');
+    }
+  });
+
+  // 8. BOLD SYNTAX — convert remaining markdown **text** to <strong>
+  const body = doc.body;
+  const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) textNodes.push(node);
+  textNodes.forEach(tn => {
+    if (/\*\*[^*]+\*\*/.test(tn.textContent)) {
+      const span = doc.createElement('span');
+      span.innerHTML = tn.textContent.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+      tn.parentNode.replaceChild(span, tn);
+      fixes.push('Converted markdown bold to <strong>');
+    }
+  });
+
+  // 9. TEXTAREA HEIGHTS — enforce correct sizes by page position
+  pages.forEach((page, i) => {
+    const textareas = page.querySelectorAll('textarea.ruled-input');
+    if (i === 0) {
+      // Page 1: vocab textareas = 76px
+      textareas.forEach(ta => { ta.style.height = '76px'; });
+    } else if (i === 1) {
+      // Page 2: vocab textareas = 38px
+      textareas.forEach(ta => { ta.style.height = '38px'; });
+    }
+    // Pages 3-8: checkpoint textareas keep flex-grow (no forced height)
+    // Page 10: heights set inline by generator (76px, 114px) — leave as-is
+    // Page 11: reflection textareas = 128px
+    if (i === 10) {
+      textareas.forEach(ta => {
+        if (!ta.style.height || parseInt(ta.style.height) > 128) {
+          ta.style.height = '128px';
+        }
+      });
+    }
+  });
+
+  // 10. INVISIBLE HEADERS — ensure h1/h2/h3 have proper display
+  doc.querySelectorAll('h1, h2, h3').forEach(h => {
+    if (h.style.display === 'none' || h.style.visibility === 'hidden' || h.style.opacity === '0') {
+      h.style.display = '';
+      h.style.visibility = '';
+      h.style.opacity = '';
+      fixes.push(`Fixed hidden ${h.tagName.toLowerCase()}: "${h.textContent.substring(0, 40)}"`);
+    }
+    if (h.style.color === '#fff' || h.style.color === 'white' || h.style.color === '#ffffff') {
+      h.style.color = '';
+      fixes.push(`Fixed white-on-white ${h.tagName.toLowerCase()}`);
+    }
+  });
+
+  // 11. WHITESPACE — ensure any vocab-grid, law-block containers, checkpoint-box have flex-grow
+  doc.querySelectorAll('.vocab-grid').forEach(vg => { vg.style.flexGrow = '1'; });
+  doc.querySelectorAll('.checkpoint-box').forEach(cb => { cb.style.flexGrow = '1'; });
+  doc.querySelectorAll('.shield-canvas').forEach(sc => { sc.style.flexGrow = '1'; });
+
+  // Serialize back to full HTML string
+  const serializer = new XMLSerializer();
+  let result = serializer.serializeToString(doc);
+
+  // XMLSerializer outputs XHTML — convert back to HTML5
+  result = result.replace(/ xmlns="[^"]*"/g, '');
+  // Ensure DOCTYPE
+  if (!result.trimStart().startsWith('<!DOCTYPE')) {
+    result = '<!DOCTYPE html>\n' + result;
+  }
+
+  return { html: result, fixes };
 }
 
 // ─── SUGGEST DAY FOCUS ──────────────────────────────────────────────────────
