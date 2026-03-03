@@ -51,6 +51,57 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onChunk, sign
   return extractHtml(accumulated);
 }
 
+// ─── REPAIR WORKBOOK (STREAMING) ────────────────────────────────────────────
+
+export async function repairWorkbook({ htmlContent, systemPrompt, onChunk, signal }) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('No Gemini API key configured.');
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: getModel(),
+    systemInstruction: systemPrompt,
+    generationConfig: { temperature: 0.3, maxOutputTokens: 65536 },
+  });
+
+  const userPrompt = `You are a print-layout QA engineer. The HTML workbook below has rendering defects.
+Analyze every page against the MANDATORY CSS and STRUCTURAL REFERENCE provided in the system prompt.
+
+COMMON DEFECTS TO FIX:
+1. OVERFLOW: Content exceeding the 11-inch page boundary — shorten text, reduce textarea heights, or tighten spacing
+2. INVISIBLE/MISSING HEADERS: <h1>, <h2>, <h3> missing or improperly styled
+3. WHITESPACE GAPS: Pages missing flex-grow:1 on the last expanding element before the footer
+4. FOOTER DETACHED: .page-footer not anchored to bottom — ensure parent .print-page uses display:flex; flex-direction:column and the last content element has flex-grow:1
+5. MISSING CSS: If the <style> tag is absent or incomplete, inject the full MANDATORY CSS
+6. PAGE 2 DUPLICATION: Page 2 must NOT have an <h1> or mission objective box
+7. SHIELD-CANVAS POLLUTION: .shield-canvas must be completely empty (no child elements)
+8. BOLD SYNTAX: Replace any markdown **text** with <strong>text</strong>; punctuation must sit OUTSIDE <strong> tags
+9. TEXTAREA HEIGHTS: Verify correct heights per page type (Page 1: 76px, Page 2: 38px, Page 10: 76px/114px, Page 11: 128px)
+10. STRUCTURAL INTEGRITY: Ensure every page has header-row, page-footer, and correct class names
+
+RULES:
+- Return the COMPLETE fixed HTML document (<!DOCTYPE html> through </html>)
+- Do NOT change the pedagogical content, vocabulary words, narrative text, or educational substance
+- ONLY fix layout, structure, CSS, and rendering issues
+- Preserve all existing content — this is a REPAIR, not a rewrite
+
+Here is the HTML to fix:
+
+${htmlContent}`;
+
+  const result = await model.generateContentStream(userPrompt);
+
+  let accumulated = '';
+  for await (const chunk of result.stream) {
+    if (signal?.aborted) throw new DOMException('Repair cancelled', 'AbortError');
+    const text = chunk.text();
+    accumulated += text;
+    if (onChunk) onChunk(accumulated);
+  }
+
+  return extractHtml(accumulated);
+}
+
 // ─── SUGGEST DAY FOCUS ──────────────────────────────────────────────────────
 
 export async function suggestDayFocus({ unitTopic, dayNumber, previousDays, dayDirective }) {

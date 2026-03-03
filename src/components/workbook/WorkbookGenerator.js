@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   NotebookPen, Key, Eye, EyeOff, Sparkles, ArrowLeft, Printer,
   Download, Save, CheckCircle2, Loader2, Trash2, Search, Plus,
-  BookOpen, AlertTriangle, X, Settings, ChevronRight
+  BookOpen, AlertTriangle, X, Settings, ChevronRight, Wrench
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import {
   hasApiKey, getApiKey, setApiKey,
-  generateWorkbook, testConnection, suggestDayFocus
+  generateWorkbook, repairWorkbook, testConnection, suggestDayFocus
 } from '../../services/geminiService';
 import { PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE } from '../../data/workbookCssTemplate';
 
@@ -153,7 +153,9 @@ const WorkbookGenerator = ({ user }) => {
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewMeta, setPreviewMeta] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [repairing, setRepairing] = useState(false);
   const iframeRef = useRef(null);
+  const repairAbortRef = useRef(null);
 
   // Settings overlay
   const [showSettings, setShowSettings] = useState(false);
@@ -340,6 +342,41 @@ const WorkbookGenerator = ({ user }) => {
     setPreviewMeta(wb);
     setSaved(true);
     setView('preview');
+  };
+
+  // ─── REPAIR ─────────────────────────────────────────────────────────────────
+
+  const handleRepair = async () => {
+    if (!previewHtml || repairing) return;
+    setRepairing(true);
+    const controller = new AbortController();
+    repairAbortRef.current = controller;
+
+    try {
+      const systemPrompt = [
+        '=== MANDATORY CSS (THE MIT PRINT ENGINE V69 PLATINUM) ===',
+        'The workbook MUST embed this EXACT CSS inside a <style> tag in the <head>.\n',
+        PRINT_ENGINE_CSS,
+        '\n\n=== MANDATORY HTML STRUCTURE REFERENCE ===',
+        'Every page MUST follow this exact DOM structure.\n',
+        STRUCTURAL_REFERENCE,
+      ].join('\n');
+
+      const fixedHtml = await repairWorkbook({
+        htmlContent: previewHtml,
+        systemPrompt,
+        onChunk: () => {},
+        signal: controller.signal,
+      });
+
+      setPreviewHtml(fixedHtml);
+      setSaved(false);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        alert(`Repair failed: ${err.message || 'Unknown error'}`);
+      }
+    }
+    setRepairing(false);
   };
 
   // ─── FILTERED LIBRARY ────────────────────────────────────────────────────
@@ -705,6 +742,12 @@ const WorkbookGenerator = ({ user }) => {
               <CheckCircle2 className="w-3.5 h-3.5" /> Saved
             </span>
           )}
+
+          <button onClick={handleRepair} disabled={repairing}
+            className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-xs font-bold text-amber-700 hover:bg-amber-100 transition flex items-center gap-1.5 disabled:opacity-50">
+            {repairing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wrench className="w-3.5 h-3.5" />}
+            {repairing ? 'Fixing...' : 'Fix'}
+          </button>
 
           <button onClick={handlePrint}
             className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5">
