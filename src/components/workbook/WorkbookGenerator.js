@@ -369,6 +369,12 @@ const WorkbookGenerator = ({ user }) => {
     document.body.appendChild(iframe);
   };
 
+  const handleAddDay = (unitName, existingReadingLevel) => {
+    setUnitTopic(unitName);
+    setReadingLevel(existingReadingLevel);
+    setView('form');
+  };
+
   // ─── REPAIR ─────────────────────────────────────────────────────────────────
 
   const handleRepair = () => {
@@ -536,46 +542,84 @@ const WorkbookGenerator = ({ user }) => {
               </button>
             </div>
           ) : (
-            Object.entries(grouped).map(([unit, wbs]) => (
-              <div key={unit} className="mb-6">
-                <h2 className="text-sm font-extrabold text-slate-700 uppercase tracking-wide mb-2 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-lime-500" />
-                  {unit}
-                  <span className="text-xs font-medium text-slate-400 normal-case">({wbs.length} {wbs.length === 1 ? 'day' : 'days'})</span>
-                  {wbs.length === 8 && (
+            <div className="space-y-5">
+            {Object.entries(grouped).map(([unit, wbs]) => {
+              const nextDay = Math.max(...wbs.map(w => w.dayNumber || 0)) + 1;
+              const unitReadingLevel = wbs[0]?.readingLevel || READING_LEVELS[1].value;
+              const isComplete = wbs.length >= 8;
+              return (
+              <div key={unit} className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                {/* Unit card header */}
+                <div className="px-5 pt-4 pb-3 flex items-center gap-3 flex-wrap">
+                  <div className="w-8 h-8 rounded-lg bg-lime-50 flex items-center justify-center shrink-0">
+                    <BookOpen className="w-4 h-4 text-lime-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-sm font-extrabold text-slate-800 truncate">{unit}</h2>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[11px] font-semibold text-lime-600">{wbs.length} of 8 days</span>
+                      <span className="text-[10px] text-slate-400">{unitReadingLevel}</span>
+                    </div>
+                  </div>
+                  {!isComplete && (
+                    <button onClick={() => handleAddDay(unit, unitReadingLevel)}
+                      className="px-3 py-1.5 rounded-lg bg-lime-600 text-white text-xs font-bold hover:bg-lime-700 transition flex items-center gap-1.5 shadow-sm shadow-lime-200">
+                      <Plus className="w-3.5 h-3.5" /> Add Day {nextDay}
+                    </button>
+                  )}
+                  {isComplete && (
                     <button onClick={() => handlePrintUnit(unit)}
-                      className="ml-auto px-3 py-1.5 rounded-lg border border-lime-300 bg-lime-50 text-xs font-bold text-lime-700 hover:bg-lime-100 transition flex items-center gap-1.5 normal-case"
+                      className="px-3 py-1.5 rounded-lg border border-lime-300 bg-lime-50 text-xs font-bold text-lime-700 hover:bg-lime-100 transition flex items-center gap-1.5"
                       title="Print all 8 days as a single document">
                       <FileDown className="w-3.5 h-3.5" /> Print Full Unit
                     </button>
                   )}
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  {wbs.map(wb => (
-                    <div key={wb.id}
-                      className="group relative bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-lg hover:shadow-lime-100/50 hover:border-lime-300/60 transition-all cursor-pointer"
-                      onClick={() => handleOpenSaved(wb)}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-extrabold text-lime-600 bg-lime-50 px-2 py-0.5 rounded-md">
-                          Day {wb.dayNumber}
-                        </span>
-                        <button
-                          onClick={e => { e.stopPropagation(); if (window.confirm(`Delete Day ${wb.dayNumber}?`)) handleDelete(wb.id); }}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                </div>
+                {/* Progress bar */}
+                <div className="px-5 pb-3">
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-lime-400 to-lime-500 rounded-full transition-all duration-500"
+                      style={{ width: `${(wbs.length / 8) * 100}%` }} />
+                  </div>
+                </div>
+                {/* Day cards grid */}
+                <div className="px-5 pb-5">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                    {wbs.map(wb => (
+                      <div key={wb.id}
+                        className="group relative bg-slate-50 rounded-xl border border-slate-200/60 p-3 hover:shadow-md hover:border-lime-300/60 transition-all cursor-pointer"
+                        onClick={() => handleOpenSaved(wb)}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-extrabold text-lime-600 bg-lime-50 px-1.5 py-0.5 rounded">
+                            Day {wb.dayNumber}
+                          </span>
+                          <button
+                            onClick={e => { e.stopPropagation(); if (window.confirm(`Delete Day ${wb.dayNumber}?`)) handleDelete(wb.id); }}
+                            className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <p className="text-xs font-bold text-slate-700 truncate">{wb.dayFocus || 'Untitled'}</p>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          {wb.createdAt ? new Date(wb.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                        </p>
                       </div>
-                      <p className="text-sm font-bold text-slate-800 truncate mb-1">{wb.dayFocus || 'Untitled'}</p>
-                      <p className="text-[11px] text-slate-500 truncate">{wb.readingLevel}</p>
-                      <p className="text-[10px] text-slate-400 mt-2">
-                        {wb.createdAt ? new Date(wb.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                      </p>
-                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-hover:text-lime-500 transition" />
-                    </div>
-                  ))}
+                    ))}
+                    {/* Add next day placeholder card */}
+                    {!isComplete && (
+                      <div
+                        onClick={() => handleAddDay(unit, unitReadingLevel)}
+                        className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 p-3 cursor-pointer hover:border-lime-400 hover:bg-lime-50/50 transition-all group">
+                        <Plus className="w-5 h-5 text-slate-400 group-hover:text-lime-500 transition" />
+                        <span className="text-[10px] font-bold text-slate-400 group-hover:text-lime-600 mt-1 transition">Day {nextDay}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))
+              );
+            })}
+            </div>
           )}
         </div>
       </div>
