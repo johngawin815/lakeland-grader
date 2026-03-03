@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 1: History of Music // Platinum Master v69</title>
+    <style>
+        /* =========================================
+           THE MIT PRINT ENGINE (V69 PLATINUM)
+           ========================================= */
+        :root {
+            --font-header: 'Georgia', serif;
+            --font-body: 'Verdana', sans-serif;
+            --line-height: 38px;
+            --border-heavy: 2px solid black;
+            --border-light: 1px solid #444;
+        }
+        body { margin: 0; padding: 0; background-color: #f5f5f5; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        
+        /* PAGE CONTAINER */
+        .print-page {
+            width: 8.5in; height: 11in; margin: 0 auto 20px auto; background: white;
+            position: relative; display: flex; flex-direction: column;
+            padding: 0.3in 0.5in;
+            box-sizing: border-box; overflow: hidden; page-break-after: always;
+        }
+        @media print { body { background: white; } .print-page { margin: 0; box-shadow: none; page-break-after: always; height: 11in; } }
+
+        /* HEADERS */
+        h1 { font-family: var(--font-header); font-weight: 900; font-size: 18pt; border-bottom: 4px solid black; margin: 0 0 4px 0; line-height: 1.1; text-transform: uppercase; }
+        h2 { font-family: var(--font-header); font-weight: bold; font-size: 12pt; margin: 4px 0 2px 0; border-bottom: 1px solid black; padding-bottom: 1px; }
+        h3 { font-family: var(--font-body); font-weight: bold; font-size: 11pt; text-transform: uppercase; margin: 0 0 4px 0; color: #444; letter-spacing: 1px; }
+        p { font-family: var(--font-body); font-size: 11.5pt; line-height: 1.5; margin-bottom: 6px; text-align: justify; }
+
+        /* INPUTS */
+        .ruled-input {
+            width: 100%; border: none; resize: none; outline: none;
+            font-family: 'Verdana', sans-serif; font-size: 14px;
+            line-height: var(--line-height);
+            background-image: linear-gradient(to bottom, transparent 37px, #999 37px);
+            background-size: 100% 38px; background-color: transparent;
+            padding-top: 6px; box-sizing: border-box;
+        }
+
+        /* VOCAB GRID */
+        .vocab-grid { display: flex; flex-direction: column; gap: 3px; flex-grow: 1; padding-bottom: 0px; }
+        .vocab-item { border: var(--border-heavy); padding: 2px 6px; display: flex; flex-direction: column; background: #fff; flex-grow: 1; }
+        .vocab-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; border-bottom: 1px solid #000; padding-bottom: 1px; }
+        .term { font-weight: 900; font-size: 11pt; font-family: var(--font-body); }
+        .pos { font-style: italic; font-size: 9pt; color: #666; }
+        .vocab-details { font-size: 9pt; font-family: var(--font-body); background: #f9f9f9; padding: 2px 4px; margin-bottom: 2px; border-left: 3px solid #666; line-height: 1.2; }
+
+        /* NARRATIVE & NOTES */
+        .narrative-container { border-left: 4px solid black; padding-left: 20px; margin-bottom: 8px; }
+        .scriptorium-notes {
+            border: 1px dotted #666; background-color: #fdfdfd;
+            padding: 6px 10px; margin-top: 8px; margin-bottom: 10px;
+            font-family: var(--font-body); font-size: 10pt; display: flex; gap: 20px;
+        }
+        .note-col { flex: 1; }
+        .note-header { font-weight: 900; text-transform: uppercase; font-size: 0.8em; border-bottom: 2px solid #ccc; margin-bottom: 4px; }
+        .note-list { list-style-type: none; padding: 0; margin: 0; }
+        .note-list li { margin-bottom: 2px; position: relative; padding-left: 12px; }
+        .note-list li::before { content: "•"; position: absolute; left: 0; font-weight: bold; }
+
+        /* CHECKPOINTS (AUTO-EXPANDING) */
+        .checkpoint-box {
+            margin-top: 10px; border: var(--border-heavy); padding: 8px; background-color: #fff;
+            flex-grow: 1; display: flex; flex-direction: column; margin-bottom: 5px;
+        }
+        .question-stem { font-weight: bold; font-family: var(--font-header); font-size: 11pt; margin-bottom: 5px; }
+        .scaffold { font-weight: bold; font-size: 12pt; color: black; margin-bottom: 5px; font-style: normal; }
+        .checkpoint-box .ruled-input { flex-grow: 1; height: 100%; font-weight: 900; font-size: 13pt; color: #000; }
+
+        /* PAGE 9 & 10 SPECIFICS */
+        .job-deck-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; background: #eee; padding: 4px; border: var(--border-heavy); }
+        .job-tile { background: #fff; border: 1px solid #444; padding: 2px; text-align: center; font-size: 9pt; font-weight: bold; }
+        .pillar-container { display: flex; gap: 10px; height: 350px; margin-bottom: 12px; }
+        .pillar-column { flex: 1; border: var(--border-heavy); padding: 8px; display: flex; flex-direction: column; }
+        .pillar-header { text-align: center; font-weight: 900; border-bottom: 2px solid black; margin-bottom: 6px; padding-bottom: 6px; font-size: 9.5pt; text-transform: uppercase; }
+        
+        .law-block { border: var(--border-heavy); margin-bottom: 10px; padding: 0; background: #fff; flex-grow: 1; display: flex; flex-direction: column; }
+        .law-header { background: black; color: white; padding: 4px 8px; font-weight: bold; font-family: var(--font-header); font-size: 10.5pt; }
+        .law-body { padding: 4px 8px; flex-grow: 1; }
+        .prompt-label { font-weight: bold; font-size: 9pt; margin-top: 2px; display: block; }
+
+        /* SHIELD & FOOTER */
+        .shield-canvas { width: 320px; flex-grow: 1; min-height: 250px; margin: 10px auto; border: 4px solid black; border-radius: 0 0 160px 160px; position: relative; background: #fff; }
+        .page-footer { margin-top: 5px; border-top: 2px solid black; padding-top: 4px; display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 8pt; text-transform: uppercase; font-weight: bold; flex-shrink: 0; }
+        .header-row { display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 9pt; border-bottom: var(--border-heavy); padding-bottom: 4px; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <!-- PAGE 1: THE ANCHOR -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>DATE: __________________</span></div>
+        
+        <h1>DAY 1: THE FIRST SOUNDS</h1>
+        <div style="border: 1px solid #000; padding: 8px; background: #eee; margin-bottom: 10px;">
+            <strong>MISSION OBJECTIVE:</strong> Discover how early humans created the first music. Before electricity, Spotify, or metal strings, our ancestors used the world around them—and their own bodies—to create rhythms and melodies to survive, communicate, and celebrate.
+        </div>
+
+        <h2>I. THE VOCABULARY LAB (PART A)</h2>
+        <p style="font-size: 10pt; margin-bottom: 6px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">
+            <strong>INSTRUCTIONS:</strong> Read the definition. Review the forms. Read the example. Write your own sentence.
+        </p>
+
+        <div class="vocab-grid">
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">1. RHYTHM</span><span class="pos">(Noun)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> A strong, regular, repeated pattern of sound or movement.</div>
+                    <div><strong>Forms:</strong> Rhythmic (Adj), Rhythms (Noun)</div>
+                    <div><strong>Example:</strong> The steady <strong>rhythm</strong> of the drummer kept the marchers in step.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 76px;">My Sentence:</textarea>
+            </div>
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">2. MELODY</span><span class="pos">(Noun)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> A sequence of single musical notes that form a satisfying tune.</div>
+                    <div><strong>Forms:</strong> Melodic (Adj), Melodies (Noun)</div>
+                    <div><strong>Example:</strong> She hummed a beautiful <strong>melody</strong> to help the baby fall asleep.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 76px;">My Sentence:</textarea>
+            </div>
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">3. INSTRUMENT</span><span class="pos">(Noun)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> A tool or device used to make musical sounds.</div>
+                    <div><strong>Forms:</strong> Instrumental (Adj), Instruments (Noun)</div>
+                    <div><strong>Example:</strong> The piano is the most difficult <strong>instrument</strong> to move into a new house.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 76px;">My Sentence:</textarea>
+            </div>
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">4. CHANT</span><span class="pos">(Noun/Verb)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> A repeated rhythmic phrase, often spoken or sung in unison.</div>
+                    <div><strong>Forms:</strong> Chanted (Verb), Chanting (Verb)</div>
+                    <div><strong>Example:</strong> The crowd began to <strong>chant</strong> the hero's name when he entered the stadium.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 76px;">My Sentence:</textarea>
+            </div>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 1 of 11</span></div>
+    </div>
+
+    <!-- PAGE 2: THE TOOLBOX -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>VOCABULARY EXTENSION</span></div>
+        <h2>I. THE VOCABULARY LAB (PART B)</h2>
+        <p style="font-size: 10pt; margin-bottom: 4px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">
+            <strong>INSTRUCTIONS:</strong> These terms will help you analyze the narrative. Write a sentence for each one.
+        </p>
+
+        <div class="vocab-grid">
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">5. ACOUSTIC</span><span class="pos">(Adjective)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> Sound that is not amplified by electricity.</div>
+                    <div><strong>Forms:</strong> Acoustics (Noun), Acoustical (Adj)</div>
+                    <div><strong>Example:</strong> An <strong>acoustic</strong> guitar relies on its hollow wooden body to make sound.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 38px;">My Sentence:</textarea>
+            </div>
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">6. PERCUSSION</span><span class="pos">(Noun)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> Instruments played by hitting, shaking, or scraping.</div>
+                    <div><strong>Forms:</strong> Percussive (Adj), Percussionist (Noun)</div>
+                    <div><strong>Example:</strong> The drums and bells are the loudest part of the <strong>percussion</strong> section.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 38px;">My Sentence:</textarea>
+            </div>
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">7. IMITATE</span><span class="pos">(Verb)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> To copy the way someone or something looks, acts, or sounds.</div>
+                    <div><strong>Forms:</strong> Imitation (Noun), Imitated (Verb)</div>
+                    <div><strong>Example:</strong> The clever parrot learned to <strong>imitate</strong> the sound of a ringing telephone.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 38px;">My Sentence:</textarea>
+            </div>
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">8. RESONATE</span><span class="pos">(Verb)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> To produce a deep, full, and echoing sound.</div>
+                    <div><strong>Forms:</strong> Resonance (Noun), Resonant (Adj)</div>
+                    <div><strong>Example:</strong> His deep voice began to <strong>resonate</strong> against the cold stone walls of the cave.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 38px;">My Sentence:</textarea>
+            </div>
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">9. CEREMONY</span><span class="pos">(Noun)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> A formal event or ritual held to celebrate a special occasion.</div>
+                    <div><strong>Forms:</strong> Ceremonial (Adj), Ceremonies (Noun)</div>
+                    <div><strong>Example:</strong> The graduation <strong>ceremony</strong> was filled with beautiful speeches and music.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 38px;">My Sentence:</textarea>
+            </div>
+            <div class="vocab-item">
+                <div class="vocab-top"><span class="term">10. PITCH</span><span class="pos">(Noun)</span></div>
+                <div class="vocab-details">
+                    <div><strong>Definition:</strong> How high or low a sound or musical note is.</div>
+                    <div><strong>Forms:</strong> Pitched (Verb), Pitchy (Adj)</div>
+                    <div><strong>Example:</strong> A tiny mouse squeaks at a very high <strong>pitch</strong>, while a bear growls at a low one.</div>
+                </div>
+                <textarea class="ruled-input" style="height: 38px;">My Sentence:</textarea>
+            </div>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 2 of 11</span></div>
+    </div>
+
+    <!-- PAGE 3: NARRATIVE CH 1 -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>CHAPTER I</span></div>
+        <h3>CHAPTER I</h3><h1>THE WORLD OF SOUND</h1>
+        <div class="narrative-container">
+            <p>Long before cities were built, the world was already filled with sound. Kael, an early human, sat outside his cave and listened. He did not have words for music yet, but he knew what he liked to hear.</p>
+            <p>He listened to the invisible <strong>Wind</strong> whistling through the dry canyon rocks. It sounded like a long, sad sigh. Down in the valley, he could hear the rushing water of the cold <strong>River</strong> crashing against the stones. It never stopped moving.</p>
+            <p>Above him, high in the tall pine trees, Kael heard a sharp, sweet <strong>Birdsong</strong>. The little creature was making a melody to call out to its friends. Kael realized that the earth was never truly quiet. The world was alive, and it was speaking to him through sound. He wondered if he could speak back.</p>
+        </div>
+        <div class="scriptorium-notes">
+            <div class="note-col">
+                <div class="note-header">ACTIVE ANALYSIS</div>
+                <ul class="note-list">
+                    <li><strong>Circle</strong> the three natural sounds Kael heard in this chapter.</li>
+                    <li><strong>Underline</strong> what the bird was trying to do with its song.</li>
+                </ul>
+            </div>
+            <div class="note-col" style="border-left: 1px dotted #ccc; padding-left: 15px;">
+                <div class="note-header">TERMS</div>
+                <ul class="note-list">
+                    <li><strong>Invisible:</strong> Unable to be seen with the eyes.</li>
+                    <li><strong>Valley:</strong> A low area of land between hills or mountains.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="checkpoint-box">
+            <div class="question-stem">CHECKPOINT 1: NATURE'S ORCHESTRA</div>
+            <div class="scaffold"><strong>Prompt:</strong> Before humans created instruments, where did the "music" of the world come from?</div>
+            <textarea class="ruled-input">Before humans made instruments, the music of the world came from...</textarea>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 3 of 11</span></div>
+    </div>
+
+    <!-- PAGE 4: NARRATIVE CH 2 -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>CHAPTER II</span></div>
+        <h3>CHAPTER II</h3><h1>THE FIRST RHYTHM</h1>
+        <div class="narrative-container">
+            <p>The sky turned dark gray, and the air grew heavy. A storm was coming. Kael ran toward the safety of the rocky overhang. As he ran, he could feel his own heavy <strong>Breathing</strong> in his chest. It went in and out, in and out, in a perfect, steady pattern.</p>
+            <p>Suddenly, a massive boom shook the ground beneath his feet. It was a crack of <strong>Thunder</strong>. It was the loudest percussion instrument in nature, a terrifying beat that warned everyone to hide.</p>
+            <p>Kael reached the cave just as the sky opened up. He sat near the entrance and watched. Plop. Plop. Plop. A single heavy <strong>Raindrop</strong> began hitting a wide green leaf nearby. It did not stop. It kept the exact same pace. Tap... tap... tap. Kael closed his eyes. He wasn't just hearing a storm; he was hearing a rhythm.</p>
+        </div>
+        <div class="scriptorium-notes">
+            <div class="note-col">
+                <div class="note-header">ACTIVE ANALYSIS</div>
+                <ul class="note-list">
+                    <li><strong>Highlight</strong> the word that describes Kael's steady body pattern.</li>
+                    <li><strong>Circle</strong> what is called the "loudest percussion instrument in nature."</li>
+                </ul>
+            </div>
+            <div class="note-col" style="border-left: 1px dotted #ccc; padding-left: 15px;">
+                <div class="note-header">TERMS</div>
+                <ul class="note-list">
+                    <li><strong>Overhang:</strong> A piece of rock that sticks out and provides shelter.</li>
+                    <li><strong>Pace:</strong> The speed at which something happens.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="checkpoint-box">
+            <div class="question-stem">CHECKPOINT 2: DISCOVERING THE BEAT</div>
+            <div class="scaffold"><strong>Prompt:</strong> How did Kael discover the concept of "rhythm" during the storm?</div>
+            <textarea class="ruled-input">Kael discovered rhythm during the storm by listening to...</textarea>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 4 of 11</span></div>
+    </div>
+
+    <!-- PAGE 5: NARRATIVE CH 3 -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>CHAPTER III</span></div>
+        <h3>CHAPTER III</h3><h1>THE BODY AS AN INSTRUMENT</h1>
+        <div class="narrative-container">
+            <p>Kael wanted to join the storm. He wanted to make his own sounds. He started with the most basic tools he had: his own two hands. He brought them together hard, <strong>Clapping</strong> in time with the dripping water. Smack... smack... smack.</p>
+            <p>Next, he stood up and used his heavy legs. He hit the dirt floor of the cave with his heel, <strong>Stomping</strong> hard to make a deep, low thud. He clapped and stomped together. Now he was making a complex beat.</p>
+            <p>But he needed something more. He wanted a melody. He opened his mouth, pushed air from his lungs, and began <strong>Singing</strong> a long, low note. It wasn't a word; it was just a pure sound. His voice resonated in the rocky cave. For the first time, a human was making music on purpose.</p>
+        </div>
+        <div class="scriptorium-notes">
+            <div class="note-col">
+                <div class="note-header">ACTIVE ANALYSIS</div>
+                <ul class="note-list">
+                    <li><strong>Underline</strong> the two ways Kael used his body to make a percussion beat.</li>
+                    <li><strong>Highlight</strong> why Kael opened his mouth to make a sound.</li>
+                </ul>
+            </div>
+            <div class="note-col" style="border-left: 1px dotted #ccc; padding-left: 15px;">
+                <div class="note-header">TERMS</div>
+                <ul class="note-list">
+                    <li><strong>Complex:</strong> Made up of many different, connecting parts.</li>
+                    <li><strong>Lungs:</strong> The organs in the chest used for breathing.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="checkpoint-box">
+            <div class="question-stem">CHECKPOINT 3: THE FIRST MUSICIAN</div>
+            <div class="scaffold"><strong>Prompt:</strong> Why is the human body considered the very first musical instrument?</div>
+            <textarea class="ruled-input">The human body is considered the first instrument because...</textarea>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 5 of 11</span></div>
+    </div>
+
+    <!-- PAGE 6: NARRATIVE CH 4 -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>CHAPTER IV</span></div>
+        <h3>CHAPTER IV</h3><h1>TOOLS OF THE EARTH</h1>
+        <div class="narrative-container">
+            <p>When the storm passed, the rest of the tribe returned from hunting. Kael showed them his new sounds. The tribe loved it, but human hands and feet were not loud enough to echo across the valley. They needed tools.</p>
+            <p>One man grabbed a heavy stick and struck a large <strong>Hollow Log</strong> that had fallen in the dirt. It made a loud, wooden "tock" sound. A woman took a piece of dried leather, stretched it tight over a wooden bowl, and created a <strong>Skin Drum</strong>. When she hit it, it sounded like thunder.</p>
+            <p>A small child who had been to the distant ocean pulled out a large, spiraled <strong>Seashell</strong>. When the child blew air through the broken tip, it made a massive, loud honk. The tribe was learning how to use the earth's garbage to create beautiful noise.</p>
+        </div>
+        <div class="scriptorium-notes">
+            <div class="note-col">
+                <div class="note-header">ACTIVE ANALYSIS</div>
+                <ul class="note-list">
+                    <li><strong>Circle</strong> the reason why the tribe needed tools instead of just their hands.</li>
+                    <li><strong>Highlight</strong> how the woman created the drum.</li>
+                </ul>
+            </div>
+            <div class="note-col" style="border-left: 1px dotted #ccc; padding-left: 15px;">
+                <div class="note-header">TERMS</div>
+                <ul class="note-list">
+                    <li><strong>Echo:</strong> A sound that bounces back off a surface.</li>
+                    <li><strong>Spiraled:</strong> Winding in a continuous curve, like a snail's shell.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="checkpoint-box">
+            <div class="question-stem">CHECKPOINT 4: ENGINEERING SOUND</div>
+            <div class="scaffold"><strong>Prompt:</strong> How did the early humans upgrade their music from just clapping and stomping?</div>
+            <textarea class="ruled-input">Early humans upgraded their music by using objects from nature like...</textarea>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 6 of 11</span></div>
+    </div>
+
+    <!-- PAGE 7: NARRATIVE CH 5 -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>CHAPTER V</span></div>
+        <h3>CHAPTER V</h3><h1>THE MAGIC OF MELODY</h1>
+        <div class="narrative-container">
+            <p>Rhythm was powerful, but humans also wanted to imitate the birds. Kael found the leg bone of a large, hollow bird. He used a sharp rock to carve three small holes in it. When he blew air through it and covered the holes with his fingers, he had created a <strong>Bone Flute</strong>. He could change the pitch!</p>
+            <p>Music wasn't just for fun; it was for survival. When hunters went out, they carried a hollowed-out <strong>Animal Horn</strong>. If they saw danger, they would blow into the horn to send a loud warning signal to the village.</p>
+            <p>One evening, as the sun went down, the tribe heard a long, lonely <strong>Wolf Howl</strong> from the dark forest. It was a scary sound. But Kael picked up his bone flute and played a high melody back into the woods. He was talking to the wild through music.</p>
+        </div>
+        <div class="scriptorium-notes">
+            <div class="note-col">
+                <div class="note-header">ACTIVE ANALYSIS</div>
+                <ul class="note-list">
+                    <li><strong>Underline</strong> how Kael could change the pitch on his invention.</li>
+                    <li><strong>Circle</strong> the instrument used for survival and warning.</li>
+                </ul>
+            </div>
+            <div class="note-col" style="border-left: 1px dotted #ccc; padding-left: 15px;">
+                <div class="note-header">TERMS</div>
+                <ul class="note-list">
+                    <li><strong>Hollow:</strong> Having an empty space inside.</li>
+                    <li><strong>Signal:</strong> A sound or action that passes a specific message.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="checkpoint-box">
+            <div class="question-stem">CHECKPOINT 5: COMMUNICATION</div>
+            <div class="scaffold"><strong>Prompt:</strong> Explain how music was used for more than just entertainment in the ancient world.</div>
+            <textarea class="ruled-input">Music was not just for fun; it was used for survival because hunters would...</textarea>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 7 of 11</span></div>
+    </div>
+
+    <!-- PAGE 8: NARRATIVE CH 6 -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>CHAPTER VI</span></div>
+        <h3>CHAPTER VI</h3><h1>THE FIRST CONCERT</h1>
+        <div class="narrative-container">
+            <p>Night fell, and the tribe built a massive fire. Everyone gathered around. A woman brought out a dried gourd filled with hard seeds. When she shook it, it made a sharp "chik-chik-chik" sound as a <strong>Rattle</strong>. The drummers began to hit the hollow logs and skin drums.</p>
+            <p>The oldest man in the tribe closed his eyes. He began <strong>Chanting</strong> a story about the great bear hunt, repeating the same heavy words over and over. The rhythm took control of the crowd.</p>
+            <p>People jumped to their feet. They began leaping and spinning around the fire, <strong>Dancing</strong> to the beat of the drums. Kael played his flute while the others clapped. They were no longer just surviving the harsh world. Through music, they were celebrating it. The history of music had begun.</p>
+        </div>
+        <div class="scriptorium-notes">
+            <div class="note-col">
+                <div class="note-header">ACTIVE ANALYSIS</div>
+                <ul class="note-list">
+                    <li><strong>Highlight</strong> the materials used to make the rattle.</li>
+                    <li><strong>Circle</strong> what the old man was telling a story about.</li>
+                </ul>
+            </div>
+            <div class="note-col" style="border-left: 1px dotted #ccc; padding-left: 15px;">
+                <div class="note-header">TERMS</div>
+                <ul class="note-list">
+                    <li><strong>Gourd:</strong> A fleshy, large fruit with a hard skin, often dried and used as a container.</li>
+                    <li><strong>Celebrating:</strong> Showing joy and honoring an event.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="checkpoint-box">
+            <div class="question-stem">CHECKPOINT 6: THE CELEBRATION</div>
+            <div class="scaffold"><strong>Prompt:</strong> How did music bring the tribe together around the fire?</div>
+            <textarea class="ruled-input">Music brought the tribe together because everyone was...</textarea>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 8 of 11</span></div>
+    </div>
+
+    <!-- PAGE 9: SYNTHESIS -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>ACTIVITY: CATEGORIZATION</span></div>
+        <h2>II. THE ORIGINS OF SOUND</h2>
+        <p><strong>INSTRUCTIONS:</strong> Below are 18 elements from the story. Sort them into the three columns: <strong>Early Instruments</strong>, <strong>Natural Sounds</strong>, and <strong>Human Actions</strong>.</p>
+
+        <div class="job-deck-container">
+            <div class="job-tile">1. Bone Flute</div><div class="job-tile">2. Wind</div><div class="job-tile">3. Clapping</div>
+            <div class="job-tile">4. Animal Horn</div><div class="job-tile">5. River</div><div class="job-tile">6. Stomping</div>
+            <div class="job-tile">7. Hollow Log</div><div class="job-tile">8. Thunder</div><div class="job-tile">9. Breathing</div>
+            <div class="job-tile">10. Seashell</div><div class="job-tile">11. Raindrop</div><div class="job-tile">12. Singing</div>
+            <div class="job-tile">13. Skin Drum</div><div class="job-tile">14. Birdsong</div><div class="job-tile">15. Dancing</div>
+            <div class="job-tile">16. Rattle</div><div class="job-tile">17. Wolf Howl</div><div class="job-tile">18. Chanting</div>
+        </div>
+
+        <div class="pillar-container">
+            <div class="pillar-column"><div class="pillar-header">EARLY INSTRUMENTS</div><textarea class="ruled-input" style="flex-grow: 1;"></textarea></div>
+            <div class="pillar-column"><div class="pillar-header">NATURAL SOUNDS</div><textarea class="ruled-input" style="flex-grow: 1;"></textarea></div>
+            <div class="pillar-column"><div class="pillar-header">HUMAN ACTIONS</div><textarea class="ruled-input" style="flex-grow: 1;"></textarea></div>
+        </div>
+
+        <h3>CRITICAL THINKING</h3>
+        <p>Look at the "Early Instruments" column. Why did early humans have to rely on animals and plants to make their tools? Use the word <strong>nature</strong> or <strong>survival</strong> in your answer.</p>
+        <textarea class="ruled-input" style="flex-grow: 1; border: 2px solid black; padding: 10px; margin-bottom: 5px;"></textarea>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 9 of 11</span></div>
+    </div>
+
+    <!-- PAGE 10: LEGISLATION -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>THE RULES</span></div>
+        <h2>III. LAWS OF THE TRIBE'S MUSIC</h2>
+        <p><strong>SCENARIO:</strong> Imagine you are the leader of Kael's early tribe. Music is powerful and must be used carefully. Write the rules for how your tribe is allowed to use sound.</p>
+
+        <div class="law-block">
+            <div class="law-header">RULE I: THE WARNING SIGNAL</div>
+            <div class="law-body">
+                <span class="prompt-label">THE LAW: When are you allowed to blow the animal horn?</span>
+                <textarea class="ruled-input" style="height: 76px;">The animal horn may only be blown when...</textarea>
+                <span class="prompt-label">THE REASON: What happens if people blow it as a joke?</span>
+                <textarea class="ruled-input" style="height: 114px;">If someone blows the horn as a joke, the tribe will...</textarea>
+            </div>
+        </div>
+
+        <div class="law-block">
+            <div class="law-header">RULE II: THE HUNTING CEREMONY</div>
+            <div class="law-body">
+                <span class="prompt-label">THE LAW: What music must we make before a dangerous hunt?</span>
+                <textarea class="ruled-input" style="height: 76px;">Before we hunt the great bear, the tribe must...</textarea>
+                <span class="prompt-label">THE REASON: Why is this rhythm important to the hunters?</span>
+                <textarea class="ruled-input" style="height: 114px;">This rhythm is important because it makes the hunters feel...</textarea>
+            </div>
+        </div>
+
+        <div class="law-block">
+            <div class="law-header">RULE III: THE CELEBRATION</div>
+            <div class="law-body">
+                <span class="prompt-label">THE LAW: Who is allowed to dance around the fire?</span>
+                <textarea class="ruled-input" style="height: 76px;">During the night celebration, everyone is allowed to...</textarea>
+                <span class="prompt-label">THE REASON: Why do we need to celebrate together?</span>
+                <textarea class="ruled-input" style="height: 114px;">We must celebrate together so that our tribe will stay...</textarea>
+            </div>
+        </div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 10 of 11</span></div>
+    </div>
+
+    <!-- PAGE 11: REFLECTION -->
+    <div class="print-page">
+        <div class="header-row"><span>STUDENT: ______________________________</span><span>CREATIVITY</span></div>
+        <h2>IV. THE EVOLUTION OF SOUND</h2>
+        <p><strong>TASK:</strong> Draw a visual connection between the past and the present. On the left side, draw an <strong>Early Tribal Instrument</strong> (like a bone flute or skin drum). On the right side, draw a <strong>Modern Instrument</strong> that evolved from it (like a trumpet, guitar, or electric drum kit).</p>
+        <div class="shield-canvas"></div>
+
+        <h3>PERSONAL CONNECTION</h3>
+        <p>Think about a time when a specific song, rhythm, or piece of music made you feel a strong emotion (happy, sad, excited, or pumped up). Describe that moment.</p>
+        <div style="margin-bottom: 15px;"><strong>The music made me feel...</strong><textarea class="ruled-input" style="height: 128px;"></textarea></div>
+        <div><strong>I realized that sound has the power to...</strong><textarea class="ruled-input" style="height: 128px;"></textarea></div>
+        <div class="page-footer"><span>Unit: History of Music</span><span>Day 1</span><span>Page 11 of 11</span></div>
+    </div>
+
+</body>
+</html>

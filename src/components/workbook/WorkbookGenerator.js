@@ -10,15 +10,18 @@ import {
   hasApiKey, getApiKey, setApiKey,
   generateWorkbook, testConnection
 } from '../../services/geminiService';
+import { PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE } from '../../data/workbookCssTemplate';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const READING_LEVELS = [
-  { value: '3rd-5th Grade (Elementary)', label: '3rd–5th Grade (Elementary)' },
-  { value: '6th-8th Grade (Middle School)', label: '6th–8th Grade (Middle School)' },
-  { value: '9th-10th Grade (High School)', label: '9th–10th Grade (High School)' },
-  { value: '11th-12th Grade (Advanced)', label: '11th–12th Grade (Advanced)' },
+  { value: '3rd-5th Grade Reading Level', label: '3rd–5th Grade Reading Level' },
+  { value: '6th-8th Grade Reading Level', label: '6th–8th Grade Reading Level' },
+  { value: '9th-10th Grade Reading Level', label: '9th–10th Grade Reading Level' },
+  { value: '11th-12th Grade Reading Level', label: '11th–12th Grade Reading Level' },
 ];
+
+const AUDIENCE_DIRECTIVE = `CRITICAL AUDIENCE CONSTRAINT: All students are HIGH SCHOOL TEENAGERS (ages 14-18), regardless of the reading level selected. The reading level controls ONLY vocabulary complexity, sentence length, and syntactic sophistication. It does NOT change the target age group. Even at a 3rd-5th grade reading level, content must use age-appropriate themes, scenarios, and emotional hooks that resonate with teenagers — not elementary-age children. References, examples, and narrative protagonists should reflect teenage life, concerns, and cultural awareness. Never "talk down" to the student; simplify the language, not the maturity of the ideas.`;
 
 const FRAMEWORK_KEYWORDS = {
   vocab: [
@@ -158,16 +161,28 @@ const WorkbookGenerator = ({ user }) => {
       const agentResp = await fetch('/curriculum_generator_agent.md');
       const agentSpec = await agentResp.text();
 
+      // Build the full system prompt: agent spec + exact CSS + structural HTML reference
+      const fullSystemPrompt = [
+        agentSpec,
+        '\n\n=== MANDATORY CSS (THE MIT PRINT ENGINE V69 PLATINUM) ===',
+        'You MUST embed this EXACT CSS inside a <style> tag in the <head> of the HTML. Do NOT modify, optimize, or omit any part of it.\n',
+        PRINT_ENGINE_CSS,
+        '\n\n=== MANDATORY HTML STRUCTURE REFERENCE ===',
+        'You MUST follow this exact DOM structure for every page. Do NOT deviate from these class names or nesting patterns.\n',
+        STRUCTURAL_REFERENCE,
+      ].join('\n');
+
       const prevContext = buildPreviousDaysContext(unitWorkbooks);
       const userPrompt = [
         `[Unit Topic]: ${unitTopic.trim()}`,
         `[Day Number & Specific Focus]: Day ${dayNumber} — ${dayFocus.trim()}`,
-        `[Target Audience & Reading Level]: ${readingLevel}`,
+        `[Target Audience & Reading Level]: High school teenagers (ages 14-18) reading at a ${readingLevel}`,
+        `\n${AUDIENCE_DIRECTIVE}`,
         prevContext ? `\n---\nPREVIOUS DAYS IN THIS UNIT (for the Absolute Variety Mandate — you MUST use different frameworks than these):\n${prevContext}` : '',
       ].join('\n');
 
       const html = await generateWorkbook({
-        systemPrompt: agentSpec,
+        systemPrompt: fullSystemPrompt,
         userPrompt,
         onChunk: (text) => setStreamText(text),
         signal: controller.signal,
