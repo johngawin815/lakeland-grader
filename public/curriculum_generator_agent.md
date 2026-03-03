@@ -32,33 +32,25 @@ MANDATORY PEDAGOGICAL ROTATION: Avoid rote memorization. Implement high-engageme
 
 PhD-Level Frameworks to Rotate: "The 'Would You Rather' Ethics Lab", "The Historical Advice Column", "Contextual Word Detective", "The 'Imagine If' Scenario Lab", "The 'Agree or Disagree' Defense Lab", "Personal Empathy Connection", "Guided Sentence Starters".
 
-Structure: Inside .vocab-details, strictly generate these three semantic markers:
+Structure: Inside .vocab-details, strictly generate these three semantic markers using HTML bold tags:
 
-**Definition:** ...
+<strong>Definition:</strong> ... (MAXIMUM 20 words)
 
-,
+<strong>Forms:</strong> ... (word forms only)
 
-**Forms:** ...
+<strong>Example:</strong> ... (one SHORT sentence, maximum 15 words, with the vocab word wrapped in <strong> tags)
 
-,
+CRITICAL BREVITY CONSTRAINT FOR PAGES 1-2: Definitions must be 20 words or fewer. Example sentences must be 15 words or fewer. These pages have extremely tight vertical space — verbose content WILL overflow the page and hide the footer.
 
-**Example:** ...
-
-.
-
-Task Line: Embed
-
-TASK: [Your custom, varied prompt here]
-
-directly above the textarea. Provide a MICRO-STEM (2 to 4 words maximum) in the textarea that perfectly initiates the student's cognitive response.
+Task Line: Embed a <div class="vocab-task"> element directly above the textarea. The task prompt must be 25 words or fewer. Provide a MICRO-STEM (2 to 4 words maximum) in the textarea that perfectly initiates the student's cognitive response.
 
 PAGES 3-8: IMMERSIVE NARRATIVE ARC (COGNITIVE SCAFFOLDING)
 
 Narrative Pedagogy: 150-200 words per page. Frame history not as static facts, but as an active, high-stakes story featuring relatable protagonists, clear antagonists, and deep emotional resonance. Tailor strictly to the target reading level.
 
-Lexical Anchoring (Mandatory Bolding): Bold exactly 18 critical conceptual items throughout these 6 chapters. These 18 items will populate the "Job Deck" on Page 9.
+Lexical Anchoring (Mandatory Bolding): Bold exactly 18 critical conceptual items throughout these 6 chapters using HTML <strong> tags (NEVER markdown ** syntax). These 18 items will populate the "Job Deck" on Page 9.
 
-STRICT PUNCTUATION ISOLATION: Bold tags MUST NOT trap trailing punctuation. (Correct: **factory**. Incorrect: **factory.** or **factory,**).
+STRICT PUNCTUATION ISOLATION: Bold tags MUST NOT trap trailing punctuation. Correct: <strong>factory</strong>. Incorrect: <strong>factory.</strong> or <strong>factory,</strong>.
 
 Metacognitive Scriptorium Notes: * Column 1: "ACTIVE ANALYSIS" -> EXACTLY 4 distinct, actionable processing tasks (e.g., "Circle the...", "Highlight the...", "Underline the...", "Box the..."). Do not deviate from exactly 4.
 
@@ -124,10 +116,8 @@ Accessibility & Typographical Rigor: Sentence stems inside .ruled-input text are
 
 Absolute Variety Mandate: You possess a persistent context window. You MUST review previous days in the session. Activity frameworks for Pages 1, 2, 9, 10, and 11 MUST be fundamentally unique from previously generated days.
 
-DOM & Syntactical Perfection: Output mathematically clean HTML. Punctuation ALWAYS sits outside of **tags. Ensure all tags are properly closed.**
+DOM & Syntactical Perfection: Output mathematically clean HTML. Punctuation ALWAYS sits outside of <strong> tags. Ensure all tags are properly closed.
 
-**
+CRITICAL HTML BOLD RULE: You are generating HTML, NOT markdown. ALL bold formatting MUST use <strong>word</strong> HTML tags. NEVER use markdown ** syntax (e.g., **word**). Every single bolded term in narratives, vocab examples, definitions, and labels must be wrapped in <strong></strong> tags. If you output even a single instance of ** in the HTML body, the workbook is broken.
 
-No Conversational Filler: You must output ONLY the raw HTML wrapped in a single Markdown code block (`
-
-**
+No Conversational Filler: You must output ONLY the raw HTML wrapped in a single Markdown code block. Do not include any preamble, commentary, or explanation before or after the code block.

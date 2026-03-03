@@ -94,6 +94,7 @@ p { font-family: var(--font-body); font-size: 11.5pt; line-height: 1.5; margin-b
 // Updated from the 8-day the_labor_movement.html reference workbook.
 export const STRUCTURAL_REFERENCE = `
 MANDATORY HTML STRUCTURE REFERENCE — You MUST follow this exact DOM structure for every page.
+CRITICAL: All bold formatting MUST use <strong> HTML tags. NEVER use markdown ** syntax anywhere in the output.
 
 EVERY PAGE starts with:
 <div class="print-page">
@@ -102,7 +103,7 @@ EVERY PAGE starts with:
   <div class="page-footer"><span>Unit: [UNIT NAME]</span><span>Day [N]</span><span>Page [X] of 11</span></div>
 </div>
 
-PAGE 1 (4 vocab terms, 76px textareas):
+PAGE 1 (4 vocab terms, 76px textareas — BREVITY IS CRITICAL, definitions max 20 words, examples max 15 words, task prompts max 25 words):
 <h1>DAY [N]: [TITLE]</h1>
 <div style="border: 1px solid #000; padding: 8px; background: #eee; margin-bottom: 10px;">
   <strong>MISSION OBJECTIVE:</strong> [objective text]
@@ -125,7 +126,7 @@ PAGE 1 (4 vocab terms, 76px textareas):
   ... (4 total vocab-items) ...
 </div>
 
-PAGE 2 (6 vocab terms, 38px textareas):
+PAGE 2 (6 vocab terms, 38px textareas — EVEN MORE COMPACT, definitions max 15 words, examples max 12 words, task prompts max 20 words):
 Same structure as Page 1 but with:
 - 6 vocab-items instead of 4
 - height: 38px textareas instead of 76px

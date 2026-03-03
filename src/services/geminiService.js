@@ -18,7 +18,11 @@ export const setModel = (m) => localStorage.setItem(MODEL_KEY, m);
 
 function extractHtml(text) {
   const match = text.match(/```html?\s*\n([\s\S]*?)```/);
-  return match ? match[1].trim() : text.trim();
+  let html = match ? match[1].trim() : text.trim();
+  // Safety net: convert any remaining markdown **bold** to <strong> tags.
+  // The AI sometimes outputs **word** instead of <strong>word</strong>.
+  html = html.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+  return html;
 }
 
 // ─── GENERATE WORKBOOK (STREAMING) ───────────────────────────────────────────
