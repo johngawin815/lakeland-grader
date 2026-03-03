@@ -212,12 +212,19 @@ const WorkbookGenerator = ({ user }) => {
         prevContext ? `\n---\nPREVIOUS DAYS IN THIS UNIT (for the Absolute Variety Mandate — you MUST use different frameworks than these):\n${prevContext}` : '',
       ].join('\n');
 
-      const html = await generateWorkbook({
+      let html = await generateWorkbook({
         systemPrompt: fullSystemPrompt,
         userPrompt,
         onChunk: (text) => setStreamText(text),
         signal: controller.signal,
       });
+
+      // Safety net: if the AI omitted the full HTML document wrapper, add it.
+      // The print engine CSS is required for proper page rendering and printing.
+      if (!html.trimStart().startsWith('<!DOCTYPE') && !html.trimStart().startsWith('<html')) {
+        const title = `${unitTopic.trim()} - Day ${dayNumber}`;
+        html = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>${title}</title>\n<style>\n${PRINT_ENGINE_CSS}\n</style>\n</head>\n<body>\n${html}\n</body>\n</html>`;
+      }
 
       const meta = {
         unitTopic: unitTopic.trim(),
