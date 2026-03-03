@@ -84,8 +84,8 @@ p { font-family: var(--font-body); font-size: 11.5pt; line-height: 1.5; margin-b
 .prompt-label { font-weight: bold; font-size: 9pt; margin-top: 2px; display: block; }
 
 /* SHIELD & FOOTER */
-.shield-canvas { width: 320px; flex-grow: 1; min-height: 250px; margin: 10px auto; border: 4px solid black; border-radius: 0 0 160px 160px; position: relative; background: #fff; }
-.shield-instruction { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-size: 9pt; color: #ccc; width: 80%; text-transform: uppercase; letter-spacing: 1px; }
+.shield-canvas { width: 400px; flex-grow: 1; min-height: 280px; margin: 10px auto; border: 4px solid black; border-radius: 0 0 200px 200px; position: relative; background: #fff; }
+.shield-instruction { display: none; }
 .page-footer { margin-top: 5px; border-top: 2px solid black; padding-top: 4px; display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 8pt; text-transform: uppercase; font-weight: bold; flex-shrink: 0; }
 .header-row { display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 9pt; border-bottom: var(--border-heavy); padding-bottom: 4px; margin-bottom: 8px; }`;
 
@@ -191,6 +191,7 @@ PAGE 11 (Creative + Reflection):
 <h2>[SECTION TITLE]</h2>
 <p><strong>TASK:</strong> [creative drawing/visual task with 2 required thematic symbols]</p>
 <div class="shield-canvas"></div>
+IMPORTANT: The shield-canvas div must be COMPLETELY EMPTY — do NOT put any text, instructions, or child elements inside it. It is a blank drawing area for the student.
 <h3>PERSONAL CONNECTION</h3>
 <p>[reflection prompt]</p>
 <div style="margin-bottom: 15px;"><strong>[MICRO-STEM]...</strong><textarea class="ruled-input" style="height: 128px; font-weight: 900; font-size: 13pt;"></textarea></div>
