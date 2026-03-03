@@ -142,8 +142,6 @@ const WorkbookGenerator = ({ user }) => {
   const [dayFocus, setDayFocus] = useState('');
   const [readingLevel, setReadingLevel] = useState(READING_LEVELS[1].value);
   const [unitWorkbooks, setUnitWorkbooks] = useState([]);
-  const [suggesting, setSuggesting] = useState(false);
-  const [isAutoSuggested, setIsAutoSuggested] = useState(false);
   const suggestTimeoutRef = useRef(null);
 
   // Generation
@@ -195,13 +193,10 @@ const WorkbookGenerator = ({ user }) => {
   // ─── SMART DAY FOCUS SUGGESTION ───────────────────────────────────────────
 
   useEffect(() => {
-    // Only auto-suggest if the field is empty or was previously auto-suggested
     if (!unitTopic.trim() || !hasApiKey()) return;
-    if (dayFocus && !isAutoSuggested) return;
 
     clearTimeout(suggestTimeoutRef.current);
     suggestTimeoutRef.current = setTimeout(async () => {
-      setSuggesting(true);
       try {
         const suggestion = await suggestDayFocus({
           unitTopic: unitTopic.trim(),
@@ -211,10 +206,8 @@ const WorkbookGenerator = ({ user }) => {
         });
         if (suggestion) {
           setDayFocus(suggestion);
-          setIsAutoSuggested(true);
         }
       } catch { /* silent — suggestion is optional */ }
-      setSuggesting(false);
     }, 800);
 
     return () => clearTimeout(suggestTimeoutRef.current);
@@ -263,9 +256,10 @@ const WorkbookGenerator = ({ user }) => {
 
       const prevContext = buildPreviousDaysContext(unitWorkbooks);
       const scope = getDayScope(dayNumber);
+      const focusLabel = dayFocus.trim() || scope?.label || '';
       const userPrompt = [
         `[Unit Topic]: ${unitTopic.trim()}`,
-        `[Day Number & Specific Focus]: Day ${dayNumber} — ${dayFocus.trim()}`,
+        `[Day Number & Specific Focus]: Day ${dayNumber} — ${focusLabel}`,
         scope ? `[Pedagogical Day Type]: ${scope.label} — ${scope.directive}` : '',
         scope ? `[Standards Alignment]: ${scope.standards}` : '',
         `[Target Audience & Reading Level]: High school teenagers (ages 14-18) reading at a ${readingLevel}`,
@@ -290,7 +284,7 @@ const WorkbookGenerator = ({ user }) => {
       const meta = {
         unitTopic: unitTopic.trim(),
         dayNumber,
-        dayFocus: dayFocus.trim(),
+        dayFocus: focusLabel,
         readingLevel,
         frameworksUsed: extractFrameworks(html),
       };
@@ -538,7 +532,7 @@ const WorkbookGenerator = ({ user }) => {
   // ─── RENDER: GENERATOR FORM ──────────────────────────────────────────────
 
   if (view === 'form') {
-    const canGenerate = unitTopic.trim() && dayFocus.trim() && dayNumber > 0;
+    const canGenerate = unitTopic.trim() && dayNumber > 0;
     return (
       <div className="h-full flex flex-col bg-slate-50/30">
         <div className="shrink-0 px-6 py-4 bg-white border-b border-slate-200/60 flex items-center gap-3">
@@ -590,23 +584,6 @@ const WorkbookGenerator = ({ user }) => {
                   </p>
                 </div>
               )}
-
-              {/* Day Focus */}
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
-                  Day Focus
-                  {suggesting && <Loader2 className="w-3 h-3 animate-spin text-lime-500" />}
-                  {isAutoSuggested && !suggesting && (
-                    <span className="text-[10px] font-medium text-lime-500 flex items-center gap-0.5">
-                      <Sparkles className="w-2.5 h-2.5" /> AI suggested
-                    </span>
-                  )}
-                </label>
-                <input type="text" value={dayFocus}
-                  onChange={e => { setDayFocus(e.target.value); setIsAutoSuggested(false); }}
-                  placeholder={suggesting ? 'Generating suggestion...' : 'e.g., The Rise of Factory Life'}
-                  className={`w-full px-3 py-2.5 rounded-lg border text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400 outline-none ${isAutoSuggested ? 'border-lime-300 bg-lime-50/50' : 'border-slate-200'}`} />
-              </div>
 
               {/* Generate Button */}
               <button onClick={handleGenerate} disabled={!canGenerate}
