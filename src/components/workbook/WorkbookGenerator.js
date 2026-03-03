@@ -22,14 +22,54 @@ const READING_LEVELS = [
 ];
 
 const DAY_SCOPE_SEQUENCE = [
-  { day: 1, label: 'Overview & Introduction', directive: 'Broad overview and introduction to the topic — establish foundational knowledge, key vocabulary, and historical context' },
-  { day: 2, label: 'Historical Narrative I', directive: 'High-interest historical fictional narrative Part 1 — immersive story-driven exploration of a key event or figure' },
-  { day: 3, label: 'Historical Narrative II', directive: 'High-interest historical fictional narrative Part 2 — continuation and deepening of the narrative arc from Day 2' },
-  { day: 4, label: 'Primary Source Analysis', directive: 'Primary source analysis focus — examining original documents, speeches, letters, photographs, or artifacts related to the topic' },
-  { day: 5, label: 'Opinion & Persuasion', directive: 'Opinion reading and persuasive writing — analyzing arguments, evaluating perspectives, and crafting evidence-based positions' },
-  { day: 6, label: 'Engaging Activity I', directive: 'High-interest fun activity with integrated reading and writing — creative, hands-on, game-like learning experience' },
-  { day: 7, label: 'Engaging Activity II', directive: 'High-interest fun activity with integrated reading and writing — different modality or format from Day 6' },
-  { day: 8, label: 'Informational Writing', directive: 'Planning and drafting informational text — students synthesize everything learned across the unit into organized expository writing' },
+  {
+    day: 1,
+    label: 'Overview & Introduction',
+    directive: 'Activate schema and build background knowledge. Introduce the unit essential question and foundational vocabulary through an anticipatory set and guided exploration of the topic\'s historical context.',
+    standards: 'ELA: RI.1 cite textual evidence, L.4 determine word meaning, L.6 academic vocabulary / SS: Developing questions and planning inquiries',
+  },
+  {
+    day: 2,
+    label: 'Historical Narrative I',
+    directive: 'Immersive high-interest historical fiction — Part 1. Students experience a key event or era through a compelling narrative protagonist, building historical empathy and temporal-spatial understanding.',
+    standards: 'ELA: RL.3 analyze character/event development, RL.5 analyze text structure, W.3 narrative writing / SS: Historical empathy, cause and effect, contextualization',
+  },
+  {
+    day: 3,
+    label: 'Historical Narrative II',
+    directive: 'Continuation of the narrative arc from Day 2. Deepen the central conflict, introduce a turning point, and connect personal experience to historical consequence through guided close reading.',
+    standards: 'ELA: RL.2 determine theme/central idea, RL.6 analyze point of view, W.3 narrative writing / SS: Continuity and change, multiple historical perspectives',
+  },
+  {
+    day: 4,
+    label: 'Primary Source Analysis',
+    directive: 'Examine authentic primary documents — speeches, letters, photographs, political cartoons, or data. Apply sourcing, contextualization, corroboration, and close-reading protocols.',
+    standards: 'ELA: RI.6 author\'s purpose/point of view, RI.8 evaluate argument/claims, RI.9 analyze seminal U.S. documents / SS: Gathering and evaluating sources, using evidence',
+  },
+  {
+    day: 5,
+    label: 'Opinion & Persuasion',
+    directive: 'Read opinion/editorial texts, identify rhetorical moves (ethos, pathos, logos), then craft evidence-based argumentative writing using a clear claim-evidence-reasoning framework.',
+    standards: 'ELA: W.1 write arguments, RI.8 evaluate reasoning, SL.3 evaluate speaker\'s point of view / SS: Civic literacy, evaluating perspectives, evidence-based reasoning',
+  },
+  {
+    day: 6,
+    label: 'Engaging Activity I',
+    directive: 'High-interest creative activity integrating reading and writing — simulation, role-play, collaborative problem-solving, or gamified challenge that reinforces unit concepts.',
+    standards: 'ELA: SL.1 collaborative discussion, W.4 produce clear/coherent writing, RI.7 integrate multiple sources / SS: Applying disciplinary concepts, communicating conclusions',
+  },
+  {
+    day: 7,
+    label: 'Engaging Activity II',
+    directive: 'Second high-interest activity using a different modality from Day 6 — visual literacy, debate, Socratic seminar, multimedia creation, or design challenge.',
+    standards: 'ELA: SL.4 present information clearly, RI.7 analyze accounts in different mediums, W.6 use technology / SS: Constructing explanations, reasoning with evidence',
+  },
+  {
+    day: 8,
+    label: 'Informational Writing',
+    directive: 'Synthesize unit learning into a structured informational/explanatory text. Scaffold with planning organizers, model introductions, and revision protocols.',
+    standards: 'ELA: W.2 write informative/explanatory texts, W.4 clear/coherent writing, W.5 develop writing through planning/revision / SS: Communicating conclusions, taking informed action',
+  },
 ];
 
 function getDayScope(dayNum) {
@@ -143,7 +183,8 @@ const WorkbookGenerator = ({ user }) => {
         const existing = await databaseService.getWorkbooksByUnit(unitTopic.trim());
         setUnitWorkbooks(existing);
         if (existing.length > 0) {
-          setDayNumber(Math.max(...existing.map(w => w.dayNumber || 0)) + 1);
+          const next = Math.max(...existing.map(w => w.dayNumber || 0)) + 1;
+          setDayNumber(Math.min(next, 8));
         }
       })();
     } else {
@@ -226,6 +267,7 @@ const WorkbookGenerator = ({ user }) => {
         `[Unit Topic]: ${unitTopic.trim()}`,
         `[Day Number & Specific Focus]: Day ${dayNumber} — ${dayFocus.trim()}`,
         scope ? `[Pedagogical Day Type]: ${scope.label} — ${scope.directive}` : '',
+        scope ? `[Standards Alignment]: ${scope.standards}` : '',
         `[Target Audience & Reading Level]: High school teenagers (ages 14-18) reading at a ${readingLevel}`,
         `\n${AUDIENCE_DIRECTIVE}`,
         prevContext ? `\n---\nPREVIOUS DAYS IN THIS UNIT (for the Absolute Variety Mandate — you MUST use different frameworks than these):\n${prevContext}` : '',
@@ -518,18 +560,17 @@ const WorkbookGenerator = ({ user }) => {
                   className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400 outline-none" />
               </div>
 
-              {/* Day Number + Reading Level */}
+              {/* Day Scope & Reading Level */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Day Number</label>
-                  <input type="number" min={1} max={30} value={dayNumber}
-                    onChange={e => setDayNumber(parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400 outline-none" />
-                  {getDayScope(dayNumber) && (
-                    <p className="mt-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
-                      {getDayScope(dayNumber).label}
-                    </p>
-                  )}
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">Day & Scope</label>
+                  <select value={dayNumber}
+                    onChange={e => setDayNumber(parseInt(e.target.value, 10))}
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400 outline-none bg-white">
+                    {DAY_SCOPE_SEQUENCE.map(s => (
+                      <option key={s.day} value={s.day}>Day {s.day}: {s.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1.5">Reading Level</label>
@@ -539,6 +580,16 @@ const WorkbookGenerator = ({ user }) => {
                   </select>
                 </div>
               </div>
+              {getDayScope(dayNumber) && (
+                <div className="bg-indigo-50 border border-indigo-200/60 rounded-lg p-3 -mt-1">
+                  <p className="text-[11px] font-semibold text-indigo-700 leading-snug">
+                    {getDayScope(dayNumber).directive}
+                  </p>
+                  <p className="text-[9px] text-indigo-500 mt-1.5 leading-snug">
+                    {getDayScope(dayNumber).standards}
+                  </p>
+                </div>
+              )}
 
               {/* Day Focus */}
               <div>
