@@ -27,6 +27,7 @@ function buildRealService() {
   const coursesContainer = database.container("Courses");
   const enrollmentsContainer = database.container("Enrollments");
   const iepContainer = database.container("IEP_Drafts");
+  const transcriptPlanContainer = database.container("Transcript_Plans");
 
   return {
     getAllStudents: async () => {
@@ -144,6 +145,25 @@ function buildRealService() {
       return resources;
     },
     deleteIepDraft: async (id) => { await iepContainer.item(id, id).delete(); },
+
+    // === TRANSCRIPT PLANS ===
+    saveTranscriptPlan: async (plan) => {
+      const doc = { ...plan, id: plan.id || `tplan-${Date.now()}`, updatedAt: new Date().toISOString() };
+      if (!doc.createdAt) doc.createdAt = doc.updatedAt;
+      const { resource } = await transcriptPlanContainer.items.upsert(doc);
+      return resource;
+    },
+    getTranscriptPlanByStudent: async (studentId) => {
+      const { resources } = await transcriptPlanContainer.items
+        .query({ query: "SELECT * FROM c WHERE c.studentId = @sid ORDER BY c.updatedAt DESC", parameters: [{ name: "@sid", value: studentId }] })
+        .fetchAll();
+      return resources.length > 0 ? resources[0] : null;
+    },
+    getAllTranscriptPlans: async () => {
+      const { resources } = await transcriptPlanContainer.items.query("SELECT * FROM c").fetchAll();
+      return resources;
+    },
+    deleteTranscriptPlan: async (id) => { await transcriptPlanContainer.item(id, id).delete(); },
 
     logAudit: async (user, action, details) => {
       if (!user) return;

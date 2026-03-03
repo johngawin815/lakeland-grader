@@ -1,6 +1,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Save } from 'lucide-react';
+import { STATE_OPTIONS } from '../../data/stateGraduationRequirements';
 
 const IntakeForm = ({ onSave, units, defaultUnit }) => {
   const { register, handleSubmit } = useForm({
@@ -56,9 +57,18 @@ const IntakeForm = ({ onSave, units, defaultUnit }) => {
                 </div>
 
                 {/* District */}
-                <div className="md:col-span-2">
+                <div>
                     <label className={labelClasses}>Home District</label>
                     <input {...register("district")} className={inputClasses} placeholder="e.g., Lakeland Regional" />
+                </div>
+
+                {/* Home State */}
+                <div>
+                    <label className={labelClasses}>Home State</label>
+                    <select {...register("homeState")} className={inputClasses}>
+                        <option value="">Select state...</option>
+                        {STATE_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                    </select>
                 </div>
 
                 {/* IEP Status */}

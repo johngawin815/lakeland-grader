@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
-  Calendar, Sparkles, ArrowRight, UserPlus,
+  Calendar, Sparkles, ArrowRight, UserPlus, ScrollText,
   Database, Loader2, CheckCircle2, FileCheck
 } from 'lucide-react';
 import { seedDemoData } from '../../data/seedDatabase';
@@ -16,6 +16,7 @@ import GradeGenerator from '../grading/GradeGenerator';
 import GradeSpreadsheetModal from '../grading/GradeSpreadsheetModal';
 import AuditLog from './AuditLog';
 import IEPGenerator from '../iep/IEPGenerator';
+import TranscriptGenerator from '../transcript/TranscriptGenerator';
 
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 
@@ -102,6 +103,15 @@ const modules = [
       icon: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100',
       hoverShadow: 'hover:shadow-cyan-200/50', hoverBorder: 'hover:border-cyan-300/60',
       accent: 'from-cyan-500 to-cyan-600', chevronHover: 'group-hover:text-cyan-600',
+    }
+  },
+  {
+    id: 'transcript', title: 'Transcripts', desc: 'Graduation Plans',
+    icon: ScrollText,
+    color: {
+      icon: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100',
+      hoverShadow: 'hover:shadow-orange-200/50', hoverBorder: 'hover:border-orange-300/60',
+      accent: 'from-orange-500 to-orange-600', chevronHover: 'group-hover:text-orange-600',
     }
   },
   {
@@ -307,6 +317,7 @@ const HubShell = () => {
             {currentView === 'discharge' && <DischargeNarrativeBuilder user={user} />}
             {currentView === 'curriculum' && <CurriculumMaps />}
             {currentView === 'iep' && <IEPGenerator user={user} />}
+            {currentView === 'transcript' && <TranscriptGenerator user={user} />}
             {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
           </div>
         )}

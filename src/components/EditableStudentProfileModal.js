@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail } from 'lucide-react';
+import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
+import { STATE_OPTIONS } from '../data/stateGraduationRequirements';
 
 const UNIT_OPTIONS = [
   { key: 'Determination', label: 'Determination', bg: 'bg-purple-600', text: 'text-purple-700', light: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' },
@@ -28,6 +29,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       admitDate: studentData?.admitDate || '',
       expectedDischargeDate: studentData?.expectedDischargeDate || '',
       district: studentData?.district || '',
+      homeState: studentData?.homeState || '',
       iepStatus: studentData?.iep === 'Yes' ? 'yes' : 'no',
       homeSchoolContact: studentData?.homeSchoolContact || '',
       guardianName: studentData?.guardianName || '',
@@ -91,6 +93,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         admitDate: formData.admitDate,
         expectedDischargeDate: formData.expectedDischargeDate || null,
         district: formData.district,
+        homeState: formData.homeState || '',
         iep: formData.iepStatus === 'yes' ? 'Yes' : 'No',
         homeSchoolContact: formData.homeSchoolContact || '',
         guardianName: formData.guardianName || '',
@@ -153,12 +156,23 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
       </div>
 
-      {/* Row 2: District */}
-      <div>
-        <label className={LABEL_CLASS}>
-          <MapPin className="w-3.5 h-3.5" />District
-        </label>
-        <input type="text" {...register('district')} disabled={isSaving} placeholder="School district" className={INPUT_CLASS} />
+      {/* Row 2: District + Home State */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={LABEL_CLASS}>
+            <MapPin className="w-3.5 h-3.5" />District
+          </label>
+          <input type="text" {...register('district')} disabled={isSaving} placeholder="School district" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Globe className="w-3.5 h-3.5" />Home State
+          </label>
+          <select {...register('homeState')} disabled={isSaving} className={INPUT_CLASS}>
+            <option value="">Select state...</option>
+            {STATE_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* Row 3: Home School Contact Expanded */}
@@ -270,8 +284,8 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   // --- Compact Profile Content (detail mode -- side-by-side with sticky notes) ---
   const compactProfileContent = (
     <>
-      {/* Row 1: Grade + Admit + Discharge + District */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+      {/* Row 1: Grade + Admit + Discharge + District + State */}
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-2">
         <div>
           <label className={COMPACT_LABEL_CLASS}>
             <GraduationCap className="w-3 h-3" />Grade
@@ -303,6 +317,15 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
             <MapPin className="w-3 h-3" />District
           </label>
           <input type="text" {...register('district')} disabled={isSaving} placeholder="District" className={COMPACT_INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={COMPACT_LABEL_CLASS}>
+            <Globe className="w-3 h-3" />State
+          </label>
+          <select {...register('homeState')} disabled={isSaving} className={COMPACT_INPUT_CLASS}>
+            <option value="">--</option>
+            {STATE_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
         </div>
       </div>
 

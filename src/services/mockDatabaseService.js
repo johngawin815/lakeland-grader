@@ -118,6 +118,7 @@ const kteaReports = loadMap('kteaReports') || new Map(MOCK_KTEA_REPORTS.map(r =>
 const enrollments = loadMap('enrollments') || new Map();
 const gradebooks  = loadMap('gradebooks')  || new Map();
 const iepDrafts   = loadMap('iepDrafts')   || new Map();
+const transcriptPlans = loadMap('transcriptPlans') || new Map();
 const auditLogs   = loadArray('auditLogs') || [];
 
 // ─── AUTO-POPULATE GRADEBOOKS & ENROLLMENTS (first launch only) ──────────────
@@ -191,6 +192,7 @@ if (!hasPersistedData) {
   saveMap('enrollments', enrollments);
   saveMap('gradebooks', gradebooks);
   saveMap('iepDrafts', iepDrafts);
+  saveMap('transcriptPlans', transcriptPlans);
   saveArray('auditLogs', auditLogs);
   localStorage.setItem(STORAGE_PREFIX + 'initialized', 'true');
   console.info('[mockDB] First launch — initialized and saved to localStorage.');
@@ -350,6 +352,28 @@ export const mockDatabaseService = {
     saveArray('auditLogs', auditLogs);
   },
 
+  // === TRANSCRIPT PLANS ===
+  saveTranscriptPlan: async (plan) => {
+    const id = plan.id || `tplan-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const record = { ...plan, id, updatedAt: new Date().toISOString() };
+    if (!record.createdAt) record.createdAt = record.updatedAt;
+    transcriptPlans.set(id, record);
+    saveMap('transcriptPlans', transcriptPlans);
+    return record;
+  },
+
+  getTranscriptPlanByStudent: async (studentId) => {
+    const plans = [...transcriptPlans.values()].filter(p => p.studentId === studentId);
+    return plans.length > 0 ? plans.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))[0] : null;
+  },
+
+  getAllTranscriptPlans: async () => [...transcriptPlans.values()],
+
+  deleteTranscriptPlan: async (id) => {
+    transcriptPlans.delete(id);
+    saveMap('transcriptPlans', transcriptPlans);
+  },
+
   // === DATA MANAGEMENT ===
   resetAllData: async () => {
     students.clear();
@@ -358,6 +382,7 @@ export const mockDatabaseService = {
     enrollments.clear();
     gradebooks.clear();
     iepDrafts.clear();
+    transcriptPlans.clear();
     auditLogs.length = 0;
     Object.keys(localStorage)
       .filter(k => k.startsWith(STORAGE_PREFIX))
