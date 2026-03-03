@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   NotebookPen, Key, Eye, EyeOff, Sparkles, ArrowLeft, Printer,
   Download, Save, CheckCircle2, Loader2, Trash2, Search, Plus,
-  BookOpen, AlertTriangle, X, Settings, ChevronRight, Wrench, FileDown
+  BookOpen, AlertTriangle, X, Settings, Wrench, FileDown
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
