@@ -303,7 +303,7 @@ const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
     title={label}
     className={`w-full flex flex-col items-center gap-0.5 py-1.5 rounded-xl transition-all duration-200
       ${active
-        ? `${color?.bg || 'bg-indigo-600/20'} ring-1 ring-white/10 text-white`
+        ? 'bg-white/10 ring-1 ring-white/10 text-white'
         : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
       }`}
   >
