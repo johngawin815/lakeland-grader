@@ -58,66 +58,80 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
   const doc = parser.parseFromString(htmlContent, 'text/html');
   const fixes = [];
 
-  // 1. CSS INJECTION — ensure the mandatory CSS is present and complete
+  // ── 1. CSS — ALWAYS force-replace with the canonical Print Engine CSS ─────
+  // The AI frequently generates subtly broken CSS (wrong heights, missing rules,
+  // altered overflow). Unconditionally replacing guarantees correct rendering.
   let styleTag = doc.querySelector('style');
   if (!styleTag) {
     styleTag = doc.createElement('style');
-    (doc.head || doc.documentElement).appendChild(styleTag);
+    doc.head.appendChild(styleTag);
+    fixes.push('Added missing <style> tag');
   }
-  if (!styleTag.textContent.includes('MIT PRINT ENGINE')) {
-    styleTag.textContent = mandatoryCss;
-    fixes.push('Injected mandatory Print Engine CSS');
+  const prevCss = styleTag.textContent;
+  // Append repair-specific overrides after the base CSS
+  const repairOverrides = `
+/* ── REPAIR OVERRIDES ── */
+.print-page {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 8.5in !important;
+  height: 11in !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+.page-footer {
+  flex-shrink: 0 !important;
+  margin-top: auto !important;
+}
+.header-row {
+  flex-shrink: 0 !important;
+}
+`;
+  styleTag.textContent = mandatoryCss + repairOverrides;
+  if (prevCss !== styleTag.textContent) {
+    fixes.push('Replaced CSS with canonical Print Engine + repair overrides');
   }
 
-  // 2. PAGE STRUCTURE — ensure every .print-page has flex column layout
+  // ── 2. PAGE STRUCTURE — enforce flex column on every page ─────────────────
   const pages = doc.querySelectorAll('.print-page');
   pages.forEach((page, i) => {
-    if (!page.style.display || page.style.display !== 'flex') {
-      page.style.display = 'flex';
-      page.style.flexDirection = 'column';
-    }
-    if (!page.style.height) page.style.height = '11in';
-    if (!page.style.overflow) page.style.overflow = 'hidden';
+    // Remove any inline styles that might conflict with CSS
+    page.style.removeProperty('position');
+    page.style.removeProperty('display');
+    page.style.removeProperty('flex-direction');
+    page.style.removeProperty('height');
+    page.style.removeProperty('overflow');
 
-    // 3. FOOTER ANCHORING — ensure page-footer exists and last content element has flex-grow
+    // ── 3. FOOTER ANCHORING ─────────────────────────────────────────────────
     const footer = page.querySelector('.page-footer');
     if (footer) {
-      footer.style.flexShrink = '0';
-      footer.style.marginTop = 'auto';
-      // Find the content element right before the footer and give it flex-grow
-      const prev = footer.previousElementSibling;
-      if (prev && !prev.classList.contains('page-footer')) {
-        const tagName = prev.tagName.toLowerCase();
-        const growable = ['div', 'textarea', 'section'];
-        if (growable.includes(tagName) || prev.classList.contains('checkpoint-box') ||
-            prev.classList.contains('vocab-grid') || prev.classList.contains('law-block') ||
-            prev.classList.contains('shield-canvas') || prev.querySelector('textarea')) {
-          prev.style.flexGrow = '1';
-        }
-      }
+      // Remove stale inline margin-top that might override auto
+      footer.style.removeProperty('margin-top');
+      footer.style.removeProperty('flex-shrink');
     }
 
-    // 4. HEADER-ROW — ensure it exists
+    // ── 4. HEADER-ROW — ensure it exists ────────────────────────────────────
     const headerRow = page.querySelector('.header-row');
     if (!headerRow) {
       const hr = doc.createElement('div');
       hr.className = 'header-row';
       hr.innerHTML = '<span>STUDENT: ______________________________</span><span>Page ' + (i + 1) + ' of 11</span>';
       page.insertBefore(hr, page.firstChild);
-      fixes.push(`Page ${i + 1}: Added missing header-row`);
+      fixes.push('Page ' + (i + 1) + ': Added missing header-row');
     }
 
-    // 5. MISSING FOOTER — add if absent
+    // ── 5. MISSING FOOTER — add if absent ───────────────────────────────────
     if (!footer) {
       const ft = doc.createElement('div');
       ft.className = 'page-footer';
       ft.innerHTML = '<span></span><span></span><span>Page ' + (i + 1) + ' of 11</span>';
       page.appendChild(ft);
-      fixes.push(`Page ${i + 1}: Added missing page-footer`);
+      fixes.push('Page ' + (i + 1) + ': Added missing page-footer');
     }
   });
 
-  // 6. PAGE 2 — remove <h1> and mission objective box if present
+  // ── 6. PAGE 2 — remove <h1> and mission objective box if present ──────────
   const page2 = pages[1];
   if (page2) {
     const h1 = page2.querySelector('h1');
@@ -125,17 +139,18 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
       h1.remove();
       fixes.push('Page 2: Removed duplicate h1 title');
     }
-    // Remove mission objective box (div with background #eee containing MISSION)
+    // Remove mission objective box (any div containing MISSION OBJECTIVE)
     page2.querySelectorAll('div').forEach(div => {
-      if (div.textContent.includes('MISSION OBJECTIVE') &&
-          div.style.background?.includes('eee')) {
+      if (div.classList.contains('header-row') || div.classList.contains('page-footer') ||
+          div.classList.contains('vocab-grid') || div.classList.contains('vocab-item')) return;
+      if (div.textContent.includes('MISSION OBJECTIVE')) {
         div.remove();
         fixes.push('Page 2: Removed duplicate mission objective box');
       }
     });
   }
 
-  // 7. SHIELD-CANVAS — clear any child content
+  // ── 7. SHIELD-CANVAS — clear any child content ────────────────────────────
   doc.querySelectorAll('.shield-canvas').forEach(canvas => {
     if (canvas.childNodes.length > 0) {
       canvas.innerHTML = '';
@@ -143,9 +158,8 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
     }
   });
 
-  // 8. BOLD SYNTAX — convert remaining markdown **text** to <strong>
-  const body = doc.body;
-  const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+  // ── 8. BOLD SYNTAX — convert markdown **text** to <strong> ────────────────
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
   const textNodes = [];
   let node;
   while ((node = walker.nextNode())) textNodes.push(node);
@@ -158,19 +172,14 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
     }
   });
 
-  // 9. TEXTAREA HEIGHTS — enforce correct sizes by page position
+  // ── 9. TEXTAREA HEIGHTS — enforce correct sizes by page position ──────────
   pages.forEach((page, i) => {
     const textareas = page.querySelectorAll('textarea.ruled-input');
     if (i === 0) {
-      // Page 1: vocab textareas = 76px
       textareas.forEach(ta => { ta.style.height = '76px'; });
     } else if (i === 1) {
-      // Page 2: vocab textareas = 38px
       textareas.forEach(ta => { ta.style.height = '38px'; });
     }
-    // Pages 3-8: checkpoint textareas keep flex-grow (no forced height)
-    // Page 10: heights set inline by generator (76px, 114px) — leave as-is
-    // Page 11: reflection textareas = 128px
     if (i === 10) {
       textareas.forEach(ta => {
         if (!ta.style.height || parseInt(ta.style.height) > 128) {
@@ -180,35 +189,30 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
     }
   });
 
-  // 10. INVISIBLE HEADERS — ensure h1/h2/h3 have proper display
+  // ── 10. INVISIBLE HEADERS ─────────────────────────────────────────────────
   doc.querySelectorAll('h1, h2, h3').forEach(h => {
     if (h.style.display === 'none' || h.style.visibility === 'hidden' || h.style.opacity === '0') {
-      h.style.display = '';
-      h.style.visibility = '';
-      h.style.opacity = '';
-      fixes.push(`Fixed hidden ${h.tagName.toLowerCase()}: "${h.textContent.substring(0, 40)}"`);
+      h.style.removeProperty('display');
+      h.style.removeProperty('visibility');
+      h.style.removeProperty('opacity');
+      fixes.push('Fixed hidden ' + h.tagName.toLowerCase() + ': "' + h.textContent.substring(0, 40) + '"');
     }
-    if (h.style.color === '#fff' || h.style.color === 'white' || h.style.color === '#ffffff') {
-      h.style.color = '';
-      fixes.push(`Fixed white-on-white ${h.tagName.toLowerCase()}`);
+    const c = h.style.color;
+    if (c === '#fff' || c === 'white' || c === '#ffffff' || c === 'rgb(255, 255, 255)') {
+      h.style.removeProperty('color');
+      fixes.push('Fixed white-on-white ' + h.tagName.toLowerCase());
     }
   });
 
-  // 11. WHITESPACE — ensure any vocab-grid, law-block containers, checkpoint-box have flex-grow
+  // ── 11. WHITESPACE — flex-grow on expandable containers ───────────────────
   doc.querySelectorAll('.vocab-grid').forEach(vg => { vg.style.flexGrow = '1'; });
   doc.querySelectorAll('.checkpoint-box').forEach(cb => { cb.style.flexGrow = '1'; });
   doc.querySelectorAll('.shield-canvas').forEach(sc => { sc.style.flexGrow = '1'; });
 
-  // Serialize back to full HTML string
-  const serializer = new XMLSerializer();
-  let result = serializer.serializeToString(doc);
-
-  // XMLSerializer outputs XHTML — convert back to HTML5
-  result = result.replace(/ xmlns="[^"]*"/g, '');
-  // Ensure DOCTYPE
-  if (!result.trimStart().startsWith('<!DOCTYPE')) {
-    result = '<!DOCTYPE html>\n' + result;
-  }
+  // ── SERIALIZE — use outerHTML (NOT XMLSerializer) to avoid XHTML damage ───
+  // XMLSerializer turns <textarea></textarea> into <textarea/> which browsers
+  // interpret as an unclosed tag, destroying everything after it.
+  let result = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
 
   return { html: result, fixes };
 }
