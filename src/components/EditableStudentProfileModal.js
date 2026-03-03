@@ -131,8 +131,8 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
 
   if (!studentData) return null;
 
-  // --- Profile Tab Content ---
-  const profileContent = (
+  // --- Profile Tab Content (only evaluated for modal/panel modes to avoid phantom register() calls) ---
+  const profileContent = (mode === 'modal' || mode === 'panel') ? (
     <>
       {/* Row 1: Grade + Admit Date + Discharge */}
       <div className="grid grid-cols-3 gap-3">
@@ -288,9 +288,9 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         <span className="text-xs text-slate-400 font-mono">{studentData.id}</span>
       </div>
     </>
-  );
-  // --- Compact Profile Content (detail mode -- side-by-side with sticky notes) ---
-  const compactProfileContent = (
+  ) : null;
+  // --- Compact Profile Content (only evaluated for detail mode) ---
+  const compactProfileContent = (mode === 'detail') ? (
     <>
       {/* Row 1: Grade + Admit + Discharge + District + State */}
       <div className="grid grid-cols-2 xl:grid-cols-5 gap-2">
@@ -417,7 +417,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         <span className="text-[10px] text-slate-400 font-mono">{studentData.id}</span>
       </div>
     </>
-  );
+  ) : null;
 
   // --- MTP Notes Tab Content ---
   const notesContent = (
@@ -660,7 +660,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   // ==========================================
   if (mode === 'detail') {
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col bg-white">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col bg-white h-full">
         {/* Compact Header */}
         <div className={`relative px-4 pt-3 pb-2 ${unitStyle.light} border-b border-slate-200/80 shrink-0`}>
           <button type="button" onClick={onClose} disabled={isSaving}
@@ -694,7 +694,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
 
         {/* Side-by-side content: Profile (left) + Sticky Notes (right) */}
-        <div className="flex flex-col md:flex-row overflow-hidden">
+        <div className="flex flex-col md:flex-row overflow-hidden flex-1">
           {/* Profile Column */}
           <div className="flex-1 px-4 py-3 space-y-2">
             {statusMessages}
