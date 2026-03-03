@@ -21,6 +21,22 @@ const READING_LEVELS = [
   { value: '11th-12th Grade Reading Level', label: '11th–12th Grade Reading Level' },
 ];
 
+const DAY_SCOPE_SEQUENCE = [
+  { day: 1, label: 'Overview & Introduction', directive: 'Broad overview and introduction to the topic — establish foundational knowledge, key vocabulary, and historical context' },
+  { day: 2, label: 'Historical Narrative I', directive: 'High-interest historical fictional narrative Part 1 — immersive story-driven exploration of a key event or figure' },
+  { day: 3, label: 'Historical Narrative II', directive: 'High-interest historical fictional narrative Part 2 — continuation and deepening of the narrative arc from Day 2' },
+  { day: 4, label: 'Primary Source Analysis', directive: 'Primary source analysis focus — examining original documents, speeches, letters, photographs, or artifacts related to the topic' },
+  { day: 5, label: 'Opinion & Persuasion', directive: 'Opinion reading and persuasive writing — analyzing arguments, evaluating perspectives, and crafting evidence-based positions' },
+  { day: 6, label: 'Engaging Activity I', directive: 'High-interest fun activity with integrated reading and writing — creative, hands-on, game-like learning experience' },
+  { day: 7, label: 'Engaging Activity II', directive: 'High-interest fun activity with integrated reading and writing — different modality or format from Day 6' },
+  { day: 8, label: 'Informational Writing', directive: 'Planning and drafting informational text — students synthesize everything learned across the unit into organized expository writing' },
+];
+
+function getDayScope(dayNum) {
+  if (dayNum >= 1 && dayNum <= 8) return DAY_SCOPE_SEQUENCE[dayNum - 1];
+  return null;
+}
+
 const AUDIENCE_DIRECTIVE = `CRITICAL AUDIENCE CONSTRAINT: All students are HIGH SCHOOL TEENAGERS (ages 14-18), regardless of the reading level selected. The reading level controls ONLY vocabulary complexity, sentence length, and syntactic sophistication. It does NOT change the target age group. Even at a 3rd-5th grade reading level, content must use age-appropriate themes, scenarios, and emotional hooks that resonate with teenagers — not elementary-age children. References, examples, and narrative protagonists should reflect teenage life, concerns, and cultural awareness. Never "talk down" to the student; simplify the language, not the maturity of the ideas.`;
 
 const FRAMEWORK_KEYWORDS = {
@@ -150,6 +166,7 @@ const WorkbookGenerator = ({ user }) => {
           unitTopic: unitTopic.trim(),
           dayNumber,
           previousDays: unitWorkbooks,
+          dayDirective: getDayScope(dayNumber)?.directive || '',
         });
         if (suggestion) {
           setDayFocus(suggestion);
@@ -204,13 +221,15 @@ const WorkbookGenerator = ({ user }) => {
       ].join('\n');
 
       const prevContext = buildPreviousDaysContext(unitWorkbooks);
+      const scope = getDayScope(dayNumber);
       const userPrompt = [
         `[Unit Topic]: ${unitTopic.trim()}`,
         `[Day Number & Specific Focus]: Day ${dayNumber} — ${dayFocus.trim()}`,
+        scope ? `[Pedagogical Day Type]: ${scope.label} — ${scope.directive}` : '',
         `[Target Audience & Reading Level]: High school teenagers (ages 14-18) reading at a ${readingLevel}`,
         `\n${AUDIENCE_DIRECTIVE}`,
         prevContext ? `\n---\nPREVIOUS DAYS IN THIS UNIT (for the Absolute Variety Mandate — you MUST use different frameworks than these):\n${prevContext}` : '',
-      ].join('\n');
+      ].filter(Boolean).join('\n');
 
       let html = await generateWorkbook({
         systemPrompt: fullSystemPrompt,
@@ -506,6 +525,11 @@ const WorkbookGenerator = ({ user }) => {
                   <input type="number" min={1} max={30} value={dayNumber}
                     onChange={e => setDayNumber(parseInt(e.target.value, 10) || 1)}
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400 outline-none" />
+                  {getDayScope(dayNumber) && (
+                    <p className="mt-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
+                      {getDayScope(dayNumber).label}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1.5">Reading Level</label>

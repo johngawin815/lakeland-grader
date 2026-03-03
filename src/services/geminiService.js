@@ -53,7 +53,7 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onChunk, sign
 
 // ─── SUGGEST DAY FOCUS ──────────────────────────────────────────────────────
 
-export async function suggestDayFocus({ unitTopic, dayNumber, previousDays }) {
+export async function suggestDayFocus({ unitTopic, dayNumber, previousDays, dayDirective }) {
   const apiKey = getApiKey();
   if (!apiKey) return null;
 
@@ -67,7 +67,11 @@ export async function suggestDayFocus({ unitTopic, dayNumber, previousDays }) {
     ? `\nDays already covered:\n${previousDays.map(d => `- Day ${d.dayNumber}: ${d.dayFocus}`).join('\n')}`
     : '';
 
-  const prompt = `You are a curriculum designer planning an 8-day unit for high school students on "${unitTopic}".${prevList}
+  const scopeContext = dayDirective
+    ? `\nDay ${dayNumber} pedagogical focus: ${dayDirective}\nYour suggested title must align with this pedagogical approach while being specific to the unit topic.`
+    : '';
+
+  const prompt = `You are a PhD-level curriculum designer (Teachers College) planning an 8-day unit for high school students on "${unitTopic}".${prevList}${scopeContext}
 
 What should Day ${dayNumber} focus on? Respond with ONLY the day focus title (3-8 words, no quotes, no explanation). Example format: The Rise of Factory Life`;
 
