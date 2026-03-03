@@ -8,7 +8,7 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import {
   hasApiKey, getApiKey, setApiKey,
-  generateWorkbook, testConnection
+  generateWorkbook, testConnection, suggestDayFocus
 } from '../../services/geminiService';
 import { PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE } from '../../data/workbookCssTemplate';
 
@@ -86,6 +86,9 @@ const WorkbookGenerator = ({ user }) => {
   const [dayFocus, setDayFocus] = useState('');
   const [readingLevel, setReadingLevel] = useState(READING_LEVELS[1].value);
   const [unitWorkbooks, setUnitWorkbooks] = useState([]);
+  const [suggesting, setSuggesting] = useState(false);
+  const [isAutoSuggested, setIsAutoSuggested] = useState(false);
+  const suggestTimeoutRef = useRef(null);
 
   // Generation
   const [streamText, setStreamText] = useState('');
@@ -131,6 +134,34 @@ const WorkbookGenerator = ({ user }) => {
       setUnitWorkbooks([]);
     }
   }, [unitTopic]);
+
+  // ─── SMART DAY FOCUS SUGGESTION ───────────────────────────────────────────
+
+  useEffect(() => {
+    // Only auto-suggest if the field is empty or was previously auto-suggested
+    if (!unitTopic.trim() || !hasApiKey()) return;
+    if (dayFocus && !isAutoSuggested) return;
+
+    clearTimeout(suggestTimeoutRef.current);
+    suggestTimeoutRef.current = setTimeout(async () => {
+      setSuggesting(true);
+      try {
+        const suggestion = await suggestDayFocus({
+          unitTopic: unitTopic.trim(),
+          dayNumber,
+          previousDays: unitWorkbooks,
+        });
+        if (suggestion) {
+          setDayFocus(suggestion);
+          setIsAutoSuggested(true);
+        }
+      } catch { /* silent — suggestion is optional */ }
+      setSuggesting(false);
+    }, 800);
+
+    return () => clearTimeout(suggestTimeoutRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unitTopic, dayNumber, unitWorkbooks]);
 
   // ─── API KEY HANDLERS ────────────────────────────────────────────────────
 
@@ -480,10 +511,19 @@ const WorkbookGenerator = ({ user }) => {
 
               {/* Day Focus */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1.5">Day Focus</label>
-                <input type="text" value={dayFocus} onChange={e => setDayFocus(e.target.value)}
-                  placeholder="e.g., The Rise of Factory Life"
-                  className="w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400 outline-none" />
+                <label className="block text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
+                  Day Focus
+                  {suggesting && <Loader2 className="w-3 h-3 animate-spin text-lime-500" />}
+                  {isAutoSuggested && !suggesting && (
+                    <span className="text-[10px] font-medium text-lime-500 flex items-center gap-0.5">
+                      <Sparkles className="w-2.5 h-2.5" /> AI suggested
+                    </span>
+                  )}
+                </label>
+                <input type="text" value={dayFocus}
+                  onChange={e => { setDayFocus(e.target.value); setIsAutoSuggested(false); }}
+                  placeholder={suggesting ? 'Generating suggestion...' : 'e.g., The Rise of Factory Life'}
+                  className={`w-full px-3 py-2.5 rounded-lg border text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400 outline-none ${isAutoSuggested ? 'border-lime-300 bg-lime-50/50' : 'border-slate-200'}`} />
               </div>
 
               {/* Generate Button */}

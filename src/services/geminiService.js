@@ -47,6 +47,31 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onChunk, sign
   return extractHtml(accumulated);
 }
 
+// ─── SUGGEST DAY FOCUS ──────────────────────────────────────────────────────
+
+export async function suggestDayFocus({ unitTopic, dayNumber, previousDays }) {
+  const apiKey = getApiKey();
+  if (!apiKey) return null;
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: getModel(),
+    generationConfig: { temperature: 0.4, maxOutputTokens: 100 },
+  });
+
+  const prevList = previousDays.length > 0
+    ? `\nDays already covered:\n${previousDays.map(d => `- Day ${d.dayNumber}: ${d.dayFocus}`).join('\n')}`
+    : '';
+
+  const prompt = `You are a curriculum designer planning an 8-day unit for high school students on "${unitTopic}".${prevList}
+
+What should Day ${dayNumber} focus on? Respond with ONLY the day focus title (3-8 words, no quotes, no explanation). Example format: The Rise of Factory Life`;
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim().replace(/^["']|["']$/g, '');
+  return text;
+}
+
 // ─── TEST CONNECTION ─────────────────────────────────────────────────────────
 
 export async function testConnection() {
