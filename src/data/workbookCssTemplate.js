@@ -127,11 +127,25 @@ PAGE 1 (4 vocab terms, 76px textareas — BREVITY IS CRITICAL, definitions max 2
   ... (4 total vocab-items) ...
 </div>
 
-PAGE 2 (6 vocab terms, 38px textareas — EVEN MORE COMPACT, definitions max 15 words, examples max 12 words, task prompts max 20 words):
-Same structure as Page 1 but with:
-- 6 vocab-items instead of 4
-- height: 38px textareas instead of 76px
-- Header label "VOCABULARY EXTENSION" instead of "DATE: __________________"
+PAGE 2 (6 vocab terms, 38px textareas — THIS PAGE IS EXTREMELY TIGHT, definitions max 15 words, examples max 12 words, task prompts max 20 words):
+CRITICAL: Page 2 must NOT include an <h1> title or a mission objective box. Go straight from header-row to <h2>.
+<h2>II. VOCABULARY EXTENSION (PART B)</h2>
+<p style="font-size: 10pt; margin-bottom: 4px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">
+  <strong>INSTRUCTIONS:</strong> [instructions — keep SHORT, one sentence]
+</p>
+<div class="vocab-grid">
+  <div class="vocab-item">
+    <div class="vocab-top"><span class="term">[N]. [WORD]</span><span class="pos">([Part of Speech])</span></div>
+    <div class="vocab-details">
+      <div><strong>Definition:</strong> ...</div>
+      <div><strong>Forms:</strong> ...</div>
+      <div><strong>Example:</strong> [sentence with <strong>word</strong> bolded]</div>
+    </div>
+    <div class="vocab-task">[SHORT task prompt]</div>
+    <textarea class="ruled-input" style="height: 38px;">[MICRO-STEM]</textarea>
+  </div>
+  ... (6 total vocab-items, numbering continues from Page 1: 5-10) ...
+</div>
 
 PAGES 3-8 (Narrative chapters):
 <h3>CHAPTER [ROMAN NUMERAL]</h3><h1>[CHAPTER TITLE]</h1>
