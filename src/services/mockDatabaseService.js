@@ -1,16 +1,52 @@
 /**
- * Mock Database Service — Fully functional in-memory database
- * Pre-populated with fictional character data so the app works without Cosmos DB.
- * All CRUD operations work against in-memory Maps.
+ * Mock Database Service — Fully functional local database with localStorage persistence.
+ * Data survives browser refreshes, tab closures, and computer restarts.
+ * All CRUD operations work against in-memory Maps backed by localStorage.
  */
 import {
   MOCK_STUDENTS, MOCK_COURSES, COURSE_STUDENTS, COURSE_ASSIGNMENTS,
   GRADEBOOK_CATEGORIES, STUDENT_PROFILES, MOCK_KTEA_REPORTS, ATTENDANCE_DATES,
 } from '../data/mockData';
-// Mock data import disabled for real/fake student testing
-// import { MOCK_STUDENTS, MOCK_COURSES, COURSE_STUDENTS, COURSE_ASSIGNMENTS,
-//   GRADEBOOK_CATEGORIES, STUDENT_PROFILES, MOCK_KTEA_REPORTS, ATTENDANCE_DATES,
-// } from '../data/mockData';
+
+// ─── localStorage HELPERS ────────────────────────────────────────────────────
+
+const STORAGE_PREFIX = 'lakeland_hub_';
+
+function loadMap(key) {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + key);
+    if (raw !== null) return new Map(JSON.parse(raw));
+  } catch (e) {
+    console.warn(`[localStorage] Failed to load "${key}", starting fresh.`, e);
+  }
+  return null;
+}
+
+function saveMap(key, map) {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify([...map.entries()]));
+  } catch (e) {
+    console.warn(`[localStorage] Failed to save "${key}".`, e);
+  }
+}
+
+function loadArray(key) {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + key);
+    if (raw !== null) return JSON.parse(raw);
+  } catch (e) {
+    console.warn(`[localStorage] Failed to load "${key}", starting fresh.`, e);
+  }
+  return null;
+}
+
+function saveArray(key, arr) {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(arr));
+  } catch (e) {
+    console.warn(`[localStorage] Failed to save "${key}".`, e);
+  }
+}
 
 // ─── DETERMINISTIC PRNG ────────────────────────────────────────────────────────
 
@@ -72,82 +108,95 @@ function calculateWeightedPct(studentId, assignments, grades, categories) {
   return wTotal > 0 ? Math.round((wSum / wTotal) * 100) : 0;
 }
 
-// ─── IN-MEMORY COLLECTIONS ────────────────────────────────────────────────────
+// ─── IN-MEMORY COLLECTIONS (backed by localStorage) ──────────────────────────
 
-const students = new Map(MOCK_STUDENTS.map(s => [s.id, { ...s }]));
-const courses = new Map(MOCK_COURSES.map(c => [c.id, { ...c }]));
-const kteaReports = new Map(MOCK_KTEA_REPORTS.map(r => [r.id, { ...r }]));
-const enrollments = new Map();
-const gradebooks = new Map();
-const iepDrafts = new Map();
-const auditLogs = [];
+const hasPersistedData = localStorage.getItem(STORAGE_PREFIX + 'initialized') !== null;
 
-// ─── AUTO-POPULATE GRADEBOOKS & ENROLLMENTS ────────────────────────────────────
+const students   = loadMap('students')    || new Map(MOCK_STUDENTS.map(s => [s.id, { ...s }]));
+const courses    = loadMap('courses')     || new Map(MOCK_COURSES.map(c => [c.id, { ...c }]));
+const kteaReports = loadMap('kteaReports') || new Map(MOCK_KTEA_REPORTS.map(r => [r.id, { ...r }]));
+const enrollments = loadMap('enrollments') || new Map();
+const gradebooks  = loadMap('gradebooks')  || new Map();
+const iepDrafts   = loadMap('iepDrafts')   || new Map();
+const auditLogs   = loadArray('auditLogs') || [];
 
-(function init() {
-  for (const courseId of Object.keys(COURSE_STUDENTS)) {
-    const course = courses.get(courseId);
-    const studentIds = COURSE_STUDENTS[courseId];
-    const assignments = COURSE_ASSIGNMENTS[courseId];
+// ─── AUTO-POPULATE GRADEBOOKS & ENROLLMENTS (first launch only) ──────────────
 
-    // Generate grades
-    const grades = {};
-    for (const sid of studentIds) {
-      const profile = STUDENT_PROFILES[sid] || { level: 0.75, variance: 0.10, attendance: 0.85 };
-      grades[sid] = {};
-      for (const a of assignments) {
-        grades[sid][a.id] = generateScore(sid, a.id, a.maxScore, profile);
-      }
-    }
+if (!hasPersistedData) {
+  (function init() {
+    for (const courseId of Object.keys(COURSE_STUDENTS)) {
+      const course = courses.get(courseId);
+      const studentIds = COURSE_STUDENTS[courseId];
+      const assignments = COURSE_ASSIGNMENTS[courseId];
 
-    // Generate attendance
-    const attendance = {};
-    for (const date of ATTENDANCE_DATES) {
-      attendance[date] = {};
+      const grades = {};
       for (const sid of studentIds) {
-        const profile = STUDENT_PROFILES[sid] || { attendance: 0.85 };
-        const rng = seededRandom(`${sid}-${date}`);
-        const roll = rng();
-        if (roll < profile.attendance * 0.95) {
-          attendance[date][sid] = 'Present';
-        } else if (roll < profile.attendance) {
-          attendance[date][sid] = 'Tardy';
-        } else {
-          attendance[date][sid] = 'Absent';
+        const profile = STUDENT_PROFILES[sid] || { level: 0.75, variance: 0.10, attendance: 0.85 };
+        grades[sid] = {};
+        for (const a of assignments) {
+          grades[sid][a.id] = generateScore(sid, a.id, a.maxScore, profile);
         }
       }
-    }
 
-    // Store gradebook
-    gradebooks.set(courseId, {
-      id: courseId,
-      assignments: [...assignments],
-      categories: [...GRADEBOOK_CATEGORIES],
-      grades,
-      attendance,
-    });
+      const attendance = {};
+      for (const date of ATTENDANCE_DATES) {
+        attendance[date] = {};
+        for (const sid of studentIds) {
+          const profile = STUDENT_PROFILES[sid] || { attendance: 0.85 };
+          const rng = seededRandom(`${sid}-${date}`);
+          const roll = rng();
+          if (roll < profile.attendance * 0.95) {
+            attendance[date][sid] = 'Present';
+          } else if (roll < profile.attendance) {
+            attendance[date][sid] = 'Tardy';
+          } else {
+            attendance[date][sid] = 'Absent';
+          }
+        }
+      }
 
-    // Create enrollment records with calculated grades
-    for (const sid of studentIds) {
-      const student = students.get(sid);
-      const pct = calculateWeightedPct(sid, assignments, grades, GRADEBOOK_CATEGORIES);
-      const enrollId = `mock-e-${courseId.replace('mock-', '')}-${sid.replace('mock-', '')}`;
-      enrollments.set(enrollId, {
-        id: enrollId,
-        studentId: sid,
-        courseId,
-        courseName: course.courseName,
-        subjectArea: course.subjectArea,
-        teacherName: course.teacherName,
-        letterGrade: calculateLetterGrade(pct),
-        percentage: pct,
-        enrollmentDate: student?.admitDate || '2024-09-01',
-        term: course.term,
-        status: 'Active',
+      gradebooks.set(courseId, {
+        id: courseId,
+        assignments: [...assignments],
+        categories: [...GRADEBOOK_CATEGORIES],
+        grades,
+        attendance,
       });
+
+      for (const sid of studentIds) {
+        const student = students.get(sid);
+        const pct = calculateWeightedPct(sid, assignments, grades, GRADEBOOK_CATEGORIES);
+        const enrollId = `mock-e-${courseId.replace('mock-', '')}-${sid.replace('mock-', '')}`;
+        enrollments.set(enrollId, {
+          id: enrollId,
+          studentId: sid,
+          courseId,
+          courseName: course.courseName,
+          subjectArea: course.subjectArea,
+          teacherName: course.teacherName,
+          letterGrade: calculateLetterGrade(pct),
+          percentage: pct,
+          enrollmentDate: student?.admitDate || '2024-09-01',
+          term: course.term,
+          status: 'Active',
+        });
+      }
     }
-  }
-})();
+  })();
+
+  // Save initial state and mark as initialized
+  saveMap('students', students);
+  saveMap('courses', courses);
+  saveMap('kteaReports', kteaReports);
+  saveMap('enrollments', enrollments);
+  saveMap('gradebooks', gradebooks);
+  saveMap('iepDrafts', iepDrafts);
+  saveArray('auditLogs', auditLogs);
+  localStorage.setItem(STORAGE_PREFIX + 'initialized', 'true');
+  console.info('[mockDB] First launch — initialized and saved to localStorage.');
+} else {
+  console.info('[mockDB] Restored data from localStorage.');
+}
 
 // ─── MOCK SERVICE (mirrors every databaseService method) ───────────────────────
 
@@ -165,10 +214,14 @@ export const mockDatabaseService = {
     const id = data.id || `student-${Date.now()}`;
     const record = { ...data, id };
     students.set(id, record);
+    saveMap('students', students);
     return record;
   },
 
-  deleteStudent: async (id) => { students.delete(id); },
+  deleteStudent: async (id) => {
+    students.delete(id);
+    saveMap('students', students);
+  },
 
   getStudentsByUnit: async (unitName) =>
     [...students.values()].filter(s => s.unitName === unitName),
@@ -178,6 +231,7 @@ export const mockDatabaseService = {
     const id = `ktea-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const report = { ...item, id, timestamp: new Date().toISOString() };
     kteaReports.set(id, report);
+    saveMap('kteaReports', kteaReports);
     return report;
   },
 
@@ -191,10 +245,14 @@ export const mockDatabaseService = {
   updateKteaReport: async (id, data) => {
     const record = { ...data, id };
     kteaReports.set(id, record);
+    saveMap('kteaReports', kteaReports);
     return record;
   },
 
-  deleteKteaReport: async (id) => { kteaReports.delete(id); },
+  deleteKteaReport: async (id) => {
+    kteaReports.delete(id);
+    saveMap('kteaReports', kteaReports);
+  },
 
   // === COURSES ===
   getCoursesByTeacher: async (teacherName) =>
@@ -206,24 +264,33 @@ export const mockDatabaseService = {
     const id = courseData.id || `course-${Date.now()}`;
     const record = { ...courseData, id };
     courses.set(id, record);
+    saveMap('courses', courses);
     return record;
   },
 
   updateCourse: async (id, courseData) => {
     const record = { ...courseData, id };
     courses.set(id, record);
+    saveMap('courses', courses);
     return record;
   },
 
-  deleteCourse: async (id) => { courses.delete(id); },
+  deleteCourse: async (id) => {
+    courses.delete(id);
+    saveMap('courses', courses);
+  },
 
   // === ENROLLMENTS ===
   enrollStudent: async (data) => {
     enrollments.set(data.id, data);
+    saveMap('enrollments', enrollments);
     return data;
   },
 
-  unenrollStudent: async (id) => { enrollments.delete(id); },
+  unenrollStudent: async (id) => {
+    enrollments.delete(id);
+    saveMap('enrollments', enrollments);
+  },
 
   getEnrollmentsByCourse: async (courseId) =>
     [...enrollments.values()].filter(e => e.courseId === courseId && e.status === 'Active'),
@@ -233,6 +300,7 @@ export const mockDatabaseService = {
 
   saveCourseGrade: async (data) => {
     enrollments.set(data.id, data);
+    saveMap('enrollments', enrollments);
     return data;
   },
 
@@ -242,6 +310,7 @@ export const mockDatabaseService = {
   // === GRADEBOOK ===
   saveGradebook: async (data) => {
     gradebooks.set(data.id, data);
+    saveMap('gradebooks', gradebooks);
     return data;
   },
 
@@ -255,6 +324,7 @@ export const mockDatabaseService = {
     const id = data.id || `iep-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const record = { ...data, id, lastModified: new Date().toISOString() };
     iepDrafts.set(id, record);
+    saveMap('iepDrafts', iepDrafts);
     return record;
   },
 
@@ -263,7 +333,10 @@ export const mockDatabaseService = {
 
   getAllIepDrafts: async () => [...iepDrafts.values()],
 
-  deleteIepDraft: async (id) => { iepDrafts.delete(id); },
+  deleteIepDraft: async (id) => {
+    iepDrafts.delete(id);
+    saveMap('iepDrafts', iepDrafts);
+  },
 
   // === AUDIT LOGGING ===
   logAudit: async (user, action, details) => {
@@ -274,5 +347,21 @@ export const mockDatabaseService = {
       details,
       timestamp: new Date().toISOString(),
     });
+    saveArray('auditLogs', auditLogs);
+  },
+
+  // === DATA MANAGEMENT ===
+  resetAllData: async () => {
+    students.clear();
+    courses.clear();
+    kteaReports.clear();
+    enrollments.clear();
+    gradebooks.clear();
+    iepDrafts.clear();
+    auditLogs.length = 0;
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(STORAGE_PREFIX))
+      .forEach(k => localStorage.removeItem(k));
+    console.info('[mockDB] All local data cleared.');
   },
 };
