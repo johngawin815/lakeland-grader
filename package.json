@@ -7,6 +7,7 @@
     "@azure/keyvault-secrets": "^4.10.0",
     "@azure/msal-browser": "^5.0.2",
     "@azure/msal-react": "^5.0.2",
+    "@google/generative-ai": "^0.24.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

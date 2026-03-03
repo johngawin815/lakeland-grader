@@ -28,6 +28,7 @@ function buildRealService() {
   const enrollmentsContainer = database.container("Enrollments");
   const iepContainer = database.container("IEP_Drafts");
   const transcriptPlanContainer = database.container("Transcript_Plans");
+  const workbookContainer = database.container("Workbooks");
 
   return {
     getAllStudents: async () => {
@@ -164,6 +165,31 @@ function buildRealService() {
       return resources;
     },
     deleteTranscriptPlan: async (id) => { await transcriptPlanContainer.item(id, id).delete(); },
+
+    // === WORKBOOKS ===
+    saveWorkbook: async (wb) => {
+      const doc = { ...wb, id: wb.id || `wb-${Date.now()}`, updatedAt: new Date().toISOString() };
+      if (!doc.createdAt) doc.createdAt = doc.updatedAt;
+      const { resource } = await workbookContainer.items.upsert(doc);
+      return resource;
+    },
+    getWorkbook: async (id) => {
+      try {
+        const { resource } = await workbookContainer.item(id, id).read();
+        return resource || null;
+      } catch { return null; }
+    },
+    getWorkbooksByUnit: async (unitTopic) => {
+      const { resources } = await workbookContainer.items
+        .query({ query: "SELECT * FROM c WHERE c.unitTopic = @ut ORDER BY c.dayNumber", parameters: [{ name: "@ut", value: unitTopic }] })
+        .fetchAll();
+      return resources;
+    },
+    getAllWorkbooks: async () => {
+      const { resources } = await workbookContainer.items.query("SELECT * FROM c").fetchAll();
+      return resources;
+    },
+    deleteWorkbook: async (id) => { await workbookContainer.item(id, id).delete(); },
 
     logAudit: async (user, action, details) => {
       if (!user) return;

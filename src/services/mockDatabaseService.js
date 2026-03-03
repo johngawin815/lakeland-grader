@@ -119,6 +119,7 @@ const enrollments = loadMap('enrollments') || new Map();
 const gradebooks  = loadMap('gradebooks')  || new Map();
 const iepDrafts   = loadMap('iepDrafts')   || new Map();
 const transcriptPlans = loadMap('transcriptPlans') || new Map();
+const workbooks = loadMap('workbooks') || new Map();
 const auditLogs   = loadArray('auditLogs') || [];
 
 // ─── AUTO-POPULATE GRADEBOOKS & ENROLLMENTS (first launch only) ──────────────
@@ -193,6 +194,7 @@ if (!hasPersistedData) {
   saveMap('gradebooks', gradebooks);
   saveMap('iepDrafts', iepDrafts);
   saveMap('transcriptPlans', transcriptPlans);
+  saveMap('workbooks', workbooks);
   saveArray('auditLogs', auditLogs);
   localStorage.setItem(STORAGE_PREFIX + 'initialized', 'true');
   console.info('[mockDB] First launch — initialized and saved to localStorage.');
@@ -374,6 +376,27 @@ export const mockDatabaseService = {
     saveMap('transcriptPlans', transcriptPlans);
   },
 
+  // === WORKBOOKS ===
+  saveWorkbook: async (wb) => {
+    const id = wb.id || `wb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const record = { ...wb, id, updatedAt: new Date().toISOString() };
+    if (!record.createdAt) record.createdAt = record.updatedAt;
+    workbooks.set(id, record);
+    saveMap('workbooks', workbooks);
+    return record;
+  },
+  getWorkbook: async (id) => workbooks.get(id) || null,
+  getWorkbooksByUnit: async (unitTopic) => {
+    return [...workbooks.values()]
+      .filter(w => w.unitTopic === unitTopic)
+      .sort((a, b) => (a.dayNumber || 0) - (b.dayNumber || 0));
+  },
+  getAllWorkbooks: async () => [...workbooks.values()],
+  deleteWorkbook: async (id) => {
+    workbooks.delete(id);
+    saveMap('workbooks', workbooks);
+  },
+
   // === DATA MANAGEMENT ===
   resetAllData: async () => {
     students.clear();
@@ -383,6 +406,7 @@ export const mockDatabaseService = {
     gradebooks.clear();
     iepDrafts.clear();
     transcriptPlans.clear();
+    workbooks.clear();
     auditLogs.length = 0;
     Object.keys(localStorage)
       .filter(k => k.startsWith(STORAGE_PREFIX))

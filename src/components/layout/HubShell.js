@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
   Calendar, Sparkles, ArrowRight, UserPlus, ScrollText,
-  Database, Loader2, CheckCircle2, FileCheck
+  Database, Loader2, CheckCircle2, FileCheck, NotebookPen
 } from 'lucide-react';
 import { seedDemoData } from '../../data/seedDatabase';
 
@@ -17,6 +17,7 @@ import GradeSpreadsheetModal from '../grading/GradeSpreadsheetModal';
 import AuditLog from './AuditLog';
 import IEPGenerator from '../iep/IEPGenerator';
 import TranscriptGenerator from '../transcript/TranscriptGenerator';
+import WorkbookGenerator from '../workbook/WorkbookGenerator';
 
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 
@@ -112,6 +113,15 @@ const modules = [
       icon: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100',
       hoverShadow: 'hover:shadow-orange-200/50', hoverBorder: 'hover:border-orange-300/60',
       accent: 'from-orange-500 to-orange-600', chevronHover: 'group-hover:text-orange-600',
+    }
+  },
+  {
+    id: 'workbook', title: 'Unit Generator', desc: 'AI Workbooks',
+    icon: NotebookPen,
+    color: {
+      icon: 'text-lime-600', bg: 'bg-lime-50', border: 'border-lime-100',
+      hoverShadow: 'hover:shadow-lime-200/50', hoverBorder: 'hover:border-lime-300/60',
+      accent: 'from-lime-500 to-lime-600', chevronHover: 'group-hover:text-lime-600',
     }
   },
   {
@@ -318,6 +328,7 @@ const HubShell = () => {
             {currentView === 'curriculum' && <CurriculumMaps />}
             {currentView === 'iep' && <IEPGenerator user={user} />}
             {currentView === 'transcript' && <TranscriptGenerator user={user} />}
+            {currentView === 'workbook' && <WorkbookGenerator user={user} />}
             {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
           </div>
         )}
