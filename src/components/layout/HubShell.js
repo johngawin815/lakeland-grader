@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
-  Calendar, Sparkles, ArrowRight, UserPlus, ScrollText,
-  Database, Loader2, CheckCircle2, FileCheck, NotebookPen
+  Calendar, ScrollText,
+  FileCheck, NotebookPen
 } from 'lucide-react';
-import { seedDemoData } from '../../data/seedDatabase';
 
 // --- MODULE IMPORTS ---
 import KTEAReporter from '../ktea/KTEAReporter';
@@ -143,30 +142,6 @@ const HubShell = () => {
   const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
   const [dashboardInitialTab, setDashboardInitialTab] = useState(null);
 
-  // --- SEED DEMO DATA ---
-  const [seedStatus, setSeedStatus] = useState('idle'); // idle | seeding | done | error
-  const [seedMessage, setSeedMessage] = useState('');
-
-  const handleSeedDemoData = async () => {
-    if (seedStatus === 'seeding') return;
-    if (!window.confirm('Seed the database with 39 fictional character residents, 5 courses, gradebook data, and KTEA reports?\n\nExisting mock data will be updated (not duplicated).')) return;
-
-    setSeedStatus('seeding');
-    setSeedMessage('Starting...');
-
-    const result = await seedDemoData((msg) => setSeedMessage(msg));
-
-    if (result.success) {
-      setSeedStatus('done');
-      setSeedMessage(`Seeded ${result.stats.students} students, ${result.stats.courses} courses, ${result.stats.enrollments} enrollments, ${result.stats.gradebooks} gradebooks, ${result.stats.ktea} KTEA reports`);
-      setTimeout(() => setSeedStatus('idle'), 5000);
-    } else {
-      setSeedStatus('error');
-      setSeedMessage(`Failed: ${result.error}`);
-      setTimeout(() => setSeedStatus('idle'), 5000);
-    }
-  };
-
   const handleLogin = (e) => {
     e.preventDefault();
     setUser({ name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu", role: "admin" });
@@ -279,27 +254,6 @@ const HubShell = () => {
 
 
 
-              {/* === QUICK ACTIONS === */}
-              <div className="animate-slide-up mb-2" style={{ animationDelay: '900ms' }}>
-                <div className="flex items-center gap-3 mb-4">
-                  <Sparkles size={16} className="text-slate-400" />
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    Quick Actions
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <QuickAction icon={UserPlus} label="New Student Intake" delay={950}
-                    onClick={() => navigateTo('dashboard')} />
-                  <QuickAction icon={GraduationCap} label="Generate Grade Card" delay={1000}
-                    onClick={() => navigateTo('gradecards')} />
-                  <QuickAction icon={ClipboardList} label="Run KTEA Assessment" delay={1050}
-                    onClick={() => navigateTo('ktea')} />
-                  <QuickAction icon={FileCheck} label="Build IEP" delay={1100}
-                    onClick={() => navigateTo('iep')} />
-                  <SeedButton status={seedStatus} message={seedMessage} onClick={handleSeedDemoData} />
-                </div>
-              </div>
-
               {/* === MODULE GRID === */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 flex-1" style={{minHeight:0}}>
                 {visibleModules.map((m, index) => (
@@ -380,55 +334,6 @@ const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay }) => (
     </div>
   </div>
 );
-
-const QuickAction = ({ icon: Icon, label, onClick, delay }) => (
-  <button
-    onClick={onClick}
-    className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-full text-sm font-semibold text-slate-600 hover:text-indigo-700 hover:border-indigo-200 hover:bg-indigo-50/80 hover:shadow-md shadow-sm transition-all duration-300 group"
-    style={{ animationDelay: `${delay}ms` }}
-  >
-    <Icon size={16} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
-    {label}
-    <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all duration-300" />
-  </button>
-);
-
-const SeedButton = ({ status, message, onClick }) => {
-  if (status === 'seeding') {
-    return (
-      <div className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-amber-50/80 border border-amber-200/60 rounded-full text-sm font-semibold text-amber-700 shadow-sm" style={{ animationDelay: '1100ms' }}>
-        <Loader2 size={16} className="animate-spin" />
-        {message}
-      </div>
-    );
-  }
-  if (status === 'done') {
-    return (
-      <div className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-emerald-50/80 border border-emerald-200/60 rounded-full text-sm font-semibold text-emerald-700 shadow-sm" style={{ animationDelay: '1100ms' }}>
-        <CheckCircle2 size={16} />
-        {message}
-      </div>
-    );
-  }
-  if (status === 'error') {
-    return (
-      <div className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-red-50/80 border border-red-200/60 rounded-full text-sm font-semibold text-red-700 shadow-sm" style={{ animationDelay: '1100ms' }}>
-        {message}
-      </div>
-    );
-  }
-  return (
-    <button
-      onClick={onClick}
-      className="animate-slide-up inline-flex items-center gap-2.5 px-5 py-2.5 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-full text-sm font-semibold text-slate-600 hover:text-violet-700 hover:border-violet-200 hover:bg-violet-50/80 hover:shadow-md shadow-sm transition-all duration-300 group"
-      style={{ animationDelay: '1100ms' }}
-    >
-      <Database size={16} className="text-slate-400 group-hover:text-violet-500 transition-colors" />
-      Seed Demo Data
-      <ArrowRight size={14} className="text-slate-300 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all duration-300" />
-    </button>
-  );
-};
 
 const LoginScreen = ({ onLogin }) => (
   <div className="w-full h-screen flex items-center justify-center bg-slate-900">
