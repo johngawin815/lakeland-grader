@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   NotebookPen, Key, Eye, EyeOff, Sparkles, ArrowLeft, Printer,
   Download, Save, CheckCircle2, Loader2, Trash2, Search, Plus,
-  BookOpen, AlertTriangle, X, Settings, ChevronRight, Wrench
+  BookOpen, AlertTriangle, X, Settings, ChevronRight, Wrench, FileDown
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
@@ -117,6 +117,15 @@ function buildPreviousDaysContext(savedWorkbooks) {
     if (fw.creative) parts.push(`Page 11 used '${fw.creative}'`);
     return `- Day ${w.dayNumber}: ${parts.length ? parts.join(', ') : 'frameworks unknown'}`;
   }).join('\n');
+}
+
+function combineUnitHtml(workbooks) {
+  const bodies = workbooks.map(wb => {
+    const match = wb.htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    return match ? match[1] : wb.htmlContent;
+  });
+  const title = workbooks[0]?.unitTopic || 'Unit';
+  return `<!DOCTYPE html>\n<html lang="en"><head><meta charset="UTF-8">\n<title>${title} — Full Unit</title>\n<style>${PRINT_ENGINE_CSS}</style>\n</head><body>${bodies.join('\n')}</body></html>`;
 }
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
@@ -343,6 +352,23 @@ const WorkbookGenerator = ({ user }) => {
     setView('preview');
   };
 
+  const handlePrintUnit = (unitName) => {
+    const unitWbs = allWorkbooks
+      .filter(w => w.unitTopic === unitName)
+      .sort((a, b) => (a.dayNumber || 0) - (b.dayNumber || 0));
+    if (unitWbs.length === 0) return;
+    const html = combineUnitHtml(unitWbs);
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-9999px';
+    iframe.srcdoc = html;
+    iframe.onload = () => {
+      iframe.contentWindow.print();
+      setTimeout(() => document.body.removeChild(iframe), 1000);
+    };
+    document.body.appendChild(iframe);
+  };
+
   // ─── REPAIR ─────────────────────────────────────────────────────────────────
 
   const handleRepair = () => {
@@ -516,6 +542,13 @@ const WorkbookGenerator = ({ user }) => {
                   <BookOpen className="w-4 h-4 text-lime-500" />
                   {unit}
                   <span className="text-xs font-medium text-slate-400 normal-case">({wbs.length} {wbs.length === 1 ? 'day' : 'days'})</span>
+                  {wbs.length === 8 && (
+                    <button onClick={() => handlePrintUnit(unit)}
+                      className="ml-auto px-3 py-1.5 rounded-lg border border-lime-300 bg-lime-50 text-xs font-bold text-lime-700 hover:bg-lime-100 transition flex items-center gap-1.5 normal-case"
+                      title="Print all 8 days as a single document">
+                      <FileDown className="w-3.5 h-3.5" /> Print Full Unit
+                    </button>
+                  )}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {wbs.map(wb => (
