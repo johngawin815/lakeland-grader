@@ -83,9 +83,18 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
 .page-footer {
   flex-shrink: 0 !important;
   margin-top: auto !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 .header-row {
   flex-shrink: 0 !important;
+}
+/* Force content children to shrink so footer stays on-page */
+.print-page > *:not(.header-row):not(.page-footer) {
+  min-height: 0 !important;
+  flex-shrink: 1 !important;
+  overflow: hidden !important;
 }
 `;
   styleTag.textContent = mandatoryCss + repairOverrides;
@@ -240,6 +249,43 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
       el.style.removeProperty('font-weight');
       fixes.push('Removed inline font-weight from <' + el.tagName.toLowerCase() + '>');
     }
+  });
+
+  // ── 13. FOOTER VISIBILITY & CONTENT OVERFLOW ───────────────────────────────
+  // Ensure the footer is always visible and content never bleeds over it.
+  pages.forEach((page, i) => {
+    const footer = page.querySelector('.page-footer');
+    if (!footer) return;
+
+    // A. Ensure footer is the LAST child of the page
+    if (footer !== page.lastElementChild) {
+      page.appendChild(footer);
+      fixes.push('Page ' + (i + 1) + ': Moved footer to end of page');
+    }
+
+    // B. Strip any inline styles that could hide the footer
+    ['display', 'visibility', 'opacity', 'position', 'height', 'max-height', 'z-index'].forEach(prop => {
+      if (footer.style.getPropertyValue(prop)) {
+        footer.style.removeProperty(prop);
+        fixes.push('Page ' + (i + 1) + ': Stripped inline ' + prop + ' from footer');
+      }
+    });
+
+    // C. Remove excessive explicit heights on content elements that push footer off-page
+    Array.from(page.children).forEach(child => {
+      if (child.classList.contains('header-row') || child.classList.contains('page-footer')) return;
+      const h = parseInt(child.style.height);
+      if (h > 600) {
+        child.style.removeProperty('height');
+        fixes.push('Page ' + (i + 1) + ': Removed oversized height (' + h + 'px) from content');
+      }
+      // Remove absolute/fixed positioning that causes overlap
+      const pos = child.style.position;
+      if (pos === 'absolute' || pos === 'fixed') {
+        child.style.removeProperty('position');
+        fixes.push('Page ' + (i + 1) + ': Removed ' + pos + ' positioning from content');
+      }
+    });
   });
 
   // ── SERIALIZE — use outerHTML (NOT XMLSerializer) to avoid XHTML damage ───
