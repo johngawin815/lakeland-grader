@@ -37,12 +37,13 @@ p { font-family: var(--font-body); font-size: 11.5pt; line-height: 1.5; margin-b
     line-height: var(--line-height);
     background-image: linear-gradient(to bottom, transparent 37px, #999 37px);
     background-size: 100% 38px; background-color: transparent;
-    padding-top: 6px; box-sizing: border-box;
+    padding-top: 6px; box-sizing: border-box; overflow: hidden;
 }
 
 /* VOCAB GRID */
 .vocab-grid { display: flex; flex-direction: column; gap: 3px; flex-grow: 1; padding-bottom: 0px; }
 .vocab-item { border: var(--border-heavy); padding: 2px 6px; display: flex; flex-direction: column; background: #fff; flex-grow: 1; }
+.vocab-item .ruled-input { flex-grow: 1; }
 .vocab-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; border-bottom: 1px solid #000; padding-bottom: 1px; }
 .term { font-weight: 900; font-size: 11pt; font-family: var(--font-body); }
 .pos { font-style: italic; font-size: 9pt; color: #666; }
