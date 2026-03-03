@@ -197,7 +197,7 @@ const HubShell = () => {
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
 
       {/* 1. SIDEBAR NAVIGATION */}
-      <aside className="w-[96px] bg-slate-900 flex flex-col items-center py-4 shrink-0 border-r border-slate-700/50 z-20">
+      <aside className="w-[140px] bg-slate-900 flex flex-col items-center py-4 shrink-0 border-r border-slate-700/50 z-20">
         {/* Logo / Home */}
         <button
           onClick={() => setCurrentView('home')}
@@ -214,13 +214,13 @@ const HubShell = () => {
         <div className="w-8 h-px bg-slate-700/50 my-2" />
 
         {/* Module nav buttons */}
-        <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto w-full px-2">
+        <nav className="flex-1 flex flex-col items-center gap-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full px-2">
           {visibleModules.map(m => (
             <SidebarButton
               key={m.id}
               label={m.title}
               icon={m.icon}
-              color={m.color.icon}
+              color={m.color}
               active={currentView === m.id}
               onClick={() => navigateTo(m.id)}
             />
@@ -347,14 +347,14 @@ const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
   <button
     onClick={onClick}
     title={label}
-    className={`w-full flex flex-col items-center gap-0.5 py-2 rounded-xl transition-all duration-200
+    className={`w-full flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all duration-200
       ${active
-        ? 'bg-indigo-600/20 text-white'
+        ? `${color?.bg || 'bg-indigo-600/20'} ring-1 ring-white/10 text-white`
         : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
       }`}
   >
-    <Icon size={22} className={active && color ? color : undefined} />
-    <span className="text-[10px] font-medium leading-tight text-center truncate w-full px-1">
+    <Icon size={26} className={color?.icon || undefined} />
+    <span className="text-[11px] font-semibold leading-tight text-center px-1">
       {label}
     </span>
   </button>
