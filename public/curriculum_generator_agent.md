@@ -46,7 +46,7 @@ Task Line: Embed a <div class="vocab-task"> element directly above the textarea.
 
 PAGES 3-8: IMMERSIVE NARRATIVE ARC (COGNITIVE SCAFFOLDING)
 
-Narrative Pedagogy: 150-200 words per page. Frame history not as static facts, but as an active, high-stakes story featuring relatable protagonists, clear antagonists, and deep emotional resonance. Tailor strictly to the target reading level.
+Narrative Pedagogy: 150-200 words per page. Frame history not as static facts, but as an active, high-stakes story featuring relatable protagonists, clear antagonists, and deep emotional resonance. Tailor strictly to the target reading level. IMPORTANT: Split each page's narrative into 2-3 separate <p> paragraphs inside the narrative-container (NOT one long block). Each paragraph should contain approximately one <strong>bolded key term</strong>.
 
 Lexical Anchoring (Mandatory Bolding): Bold exactly 18 critical conceptual items throughout these 6 chapters using HTML <strong> tags (NEVER markdown ** syntax). These 18 items will populate the "Job Deck" on Page 9.
 

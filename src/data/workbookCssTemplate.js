@@ -142,7 +142,7 @@ PAGES 3-8 (Narrative chapters):
     <div class="note-header">ACTIVE ANALYSIS</div>
     <ul class="note-list">
       <li><strong>[Action verb]</strong> [task]</li>
-      ... (exactly 2 items) ...
+      ... (exactly 4 items: Circle, Highlight, Underline, Box) ...
     </ul>
   </div>
   <div class="note-col" style="border-left: 1px dotted #ccc; padding-left: 15px;">
@@ -171,7 +171,7 @@ PAGE 9 (Synthesis — 18-item job deck + 3 pillar columns):
 </div>
 <h3>CRITICAL THINKING</h3>
 <p>[synthesis prompt requiring 2 specific words from the bank]</p>
-<textarea class="ruled-input" style="flex-grow: 1; border: 2px solid black; padding: 10px; margin-bottom: 5px;"></textarea>
+<textarea class="ruled-input" style="flex-grow: 1; border: 2px solid black; padding: 10px; margin-bottom: 5px; font-weight: 900; font-size: 13pt; color: #000;">[MICRO-STEM]...</textarea>
 
 PAGE 10 (Scenario — 3 law-blocks):
 <h2>[SECTION TITLE]</h2>
@@ -180,9 +180,9 @@ PAGE 10 (Scenario — 3 law-blocks):
   <div class="law-header">[RULE/BLOCK TITLE]</div>
   <div class="law-body">
     <span class="prompt-label">[LABEL]: [question]</span>
-    <textarea class="ruled-input" style="height: 76px;">[MICRO-STEM]...</textarea>
+    <textarea class="ruled-input" style="height: 76px; font-weight: 900; font-size: 13pt;">[MICRO-STEM]...</textarea>
     <span class="prompt-label">[LABEL]: [question]</span>
-    <textarea class="ruled-input" style="height: 114px;">[MICRO-STEM]...</textarea>
+    <textarea class="ruled-input" style="height: 114px; font-weight: 900; font-size: 13pt;">[MICRO-STEM]...</textarea>
   </div>
 </div>
 ... (3 total law-blocks) ...
