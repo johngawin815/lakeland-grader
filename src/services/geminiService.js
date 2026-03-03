@@ -209,6 +209,39 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
   doc.querySelectorAll('.checkpoint-box').forEach(cb => { cb.style.flexGrow = '1'; });
   doc.querySelectorAll('.shield-canvas').forEach(sc => { sc.style.flexGrow = '1'; });
 
+  // ── 12. EXCESSIVE BOLD — strip bold that wraps entire paragraphs ────────────
+  // The AI sometimes wraps all text in <strong>/<b> instead of just key terms.
+  // Properly-generated paragraphs use short <strong> spans for specific terms only.
+  doc.querySelectorAll('p').forEach(p => {
+    const totalLen = p.textContent.length;
+    if (totalLen < 40) return; // skip short labels like "INSTRUCTIONS: ..."
+    Array.from(p.children).forEach(child => {
+      if (child.tagName !== 'STRONG' && child.tagName !== 'B') return;
+      const boldLen = child.textContent.length;
+      if (boldLen / totalLen > 0.5) {
+        const tag = child.tagName.toLowerCase();
+        while (child.firstChild) {
+          p.insertBefore(child.firstChild, child);
+        }
+        child.remove();
+        fixes.push('Unwrapped <' + tag + '> covering ' + Math.round(boldLen / totalLen * 100) + '% of paragraph');
+      }
+    });
+  });
+
+  // Remove font-weight inline styles from containers that shouldn't be bold
+  const boldByDesign = ['term', 'vocab-task', 'question-stem', 'scaffold',
+    'note-header', 'pillar-header', 'prompt-label', 'job-tile', 'law-header'];
+  doc.querySelectorAll('[style]').forEach(el => {
+    if (boldByDesign.some(c => el.classList.contains(c))) return;
+    if (['H1', 'H2', 'H3', 'TEXTAREA'].includes(el.tagName)) return;
+    const fw = el.style.fontWeight;
+    if (fw === 'bold' || (parseInt(fw) >= 700)) {
+      el.style.removeProperty('font-weight');
+      fixes.push('Removed inline font-weight from <' + el.tagName.toLowerCase() + '>');
+    }
+  });
+
   // ── SERIALIZE — use outerHTML (NOT XMLSerializer) to avoid XHTML damage ───
   // XMLSerializer turns <textarea></textarea> into <textarea/> which browsers
   // interpret as an unclosed tag, destroying everything after it.
