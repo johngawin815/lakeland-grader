@@ -369,9 +369,15 @@ const WorkbookGenerator = ({ user }) => {
     document.body.appendChild(iframe);
   };
 
-  const handleAddDay = (unitName, existingReadingLevel) => {
+  const handleAddDay = async (unitName, existingReadingLevel) => {
     setUnitTopic(unitName);
     setReadingLevel(existingReadingLevel);
+    const existing = await databaseService.getWorkbooksByUnit(unitName.trim());
+    setUnitWorkbooks(existing);
+    if (existing.length > 0) {
+      const next = Math.max(...existing.map(w => w.dayNumber || 0)) + 1;
+      setDayNumber(Math.min(next, 8));
+    }
     setView('form');
   };
 
