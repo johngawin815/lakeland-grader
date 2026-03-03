@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search, BookOpen, Flag, TrendingUp, Lightbulb, ChevronDown, AlertTriangle,
-  CheckCircle2, Download, Save, Loader2, UserPlus, GraduationCap, Info, Globe
+  CheckCircle2, Download, Save, Loader2, UserPlus, GraduationCap, Info
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import stateGraduationRequirements, { SUBJECT_AREAS, STATE_OPTIONS } from '../../data/stateGraduationRequirements';
+import stateGraduationRequirements, { SUBJECT_AREAS } from '../../data/stateGraduationRequirements';
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -51,8 +51,6 @@ const getInitials = (name) => {
   const parts = name.trim().split(/\s+/);
   return (parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '');
 };
-
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
 // ─── SECTION CARD WRAPPER ───────────────────────────────────────────────────
 
