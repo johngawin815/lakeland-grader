@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   NotebookPen, Key, Eye, EyeOff, Sparkles, ArrowLeft, Printer,
   Download, Save, CheckCircle2, Loader2, Trash2, Search, Plus,
-  BookOpen, AlertTriangle, X, Settings, Wrench, FileDown
+  BookOpen, AlertTriangle, X, Settings, Wrench, FileDown, CloudUpload
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
@@ -11,6 +11,10 @@ import {
   generateWorkbook, repairWorkbook, testConnection, suggestDayFocus
 } from '../../services/geminiService';
 import { PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE } from '../../data/workbookCssTemplate';
+import { generatePdfBlob } from '../../services/pdfService';
+import { uploadToOneDrive } from '../../services/oneDriveService';
+import { isMsalConfigured } from '../../config/msalInstance';
+import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../../services/googleDriveService';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -167,6 +171,37 @@ const WorkbookGenerator = ({ user }) => {
 
   // Settings overlay
   const [showSettings, setShowSettings] = useState(false);
+
+  // OneDrive save
+  const [oneDriveStatus, setOneDriveStatus] = useState(null); // null | 'generating' | 'uploading' | 'success' | 'error'
+  const [oneDriveError, setOneDriveError] = useState(null);
+
+  // Auto-clear OneDrive success/error status
+  useEffect(() => {
+    if (oneDriveStatus === 'success') {
+      const t = setTimeout(() => setOneDriveStatus(null), 3000);
+      return () => clearTimeout(t);
+    }
+    if (oneDriveStatus === 'error') {
+      const t = setTimeout(() => { setOneDriveStatus(null); setOneDriveError(null); }, 5000);
+      return () => clearTimeout(t);
+    }
+  }, [oneDriveStatus]);
+
+  // Google Drive save
+  const [gDriveStatus, setGDriveStatus] = useState(null); // null | 'generating' | 'uploading' | 'success' | 'error'
+  const [gDriveError, setGDriveError] = useState(null);
+
+  useEffect(() => {
+    if (gDriveStatus === 'success') {
+      const t = setTimeout(() => setGDriveStatus(null), 3000);
+      return () => clearTimeout(t);
+    }
+    if (gDriveStatus === 'error') {
+      const t = setTimeout(() => { setGDriveStatus(null); setGDriveError(null); }, 5000);
+      return () => clearTimeout(t);
+    }
+  }, [gDriveStatus]);
 
   // ─── LOAD LIBRARY ────────────────────────────────────────────────────────
 
@@ -338,6 +373,30 @@ const WorkbookGenerator = ({ user }) => {
 
   const handlePrint = () => {
     iframeRef.current?.contentWindow?.print();
+  };
+
+  const handleSaveToOneDrive = async () => {
+    if (!previewHtml || !previewMeta) return;
+
+    if (!isMsalConfigured()) {
+      setOneDriveStatus('error');
+      setOneDriveError('OneDrive requires Microsoft account setup. Contact IT to configure Entra ID.');
+      return;
+    }
+
+    try {
+      setOneDriveStatus('generating');
+      const pdfBlob = await generatePdfBlob(previewHtml);
+
+      setOneDriveStatus('uploading');
+      const fileName = `${previewMeta.unitTopic.replace(/\s+/g, '_')}_Day${previewMeta.dayNumber}.pdf`;
+      await uploadToOneDrive(fileName, pdfBlob);
+
+      setOneDriveStatus('success');
+    } catch (err) {
+      setOneDriveStatus('error');
+      setOneDriveError(err.message || 'Failed to save to OneDrive.');
+    }
   };
 
   const handleDelete = async (id) => {
@@ -823,6 +882,27 @@ const WorkbookGenerator = ({ user }) => {
             className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5">
             <Download className="w-3.5 h-3.5" /> Download
           </button>
+
+          <button onClick={handleSaveToOneDrive}
+            disabled={oneDriveStatus === 'generating' || oneDriveStatus === 'uploading'}
+            className="px-3 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-xs font-bold text-blue-700 hover:bg-blue-100 transition flex items-center gap-1.5 disabled:opacity-50">
+            {oneDriveStatus === 'generating' || oneDriveStatus === 'uploading'
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <CloudUpload className="w-3.5 h-3.5" />}
+            {oneDriveStatus === 'generating' ? 'Creating PDF...'
+              : oneDriveStatus === 'uploading' ? 'Uploading...'
+              : 'OneDrive'}
+          </button>
+          {oneDriveStatus === 'success' && (
+            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Saved to OneDrive!
+            </span>
+          )}
+          {oneDriveStatus === 'error' && oneDriveError && (
+            <span className="text-xs font-bold text-red-500 max-w-[200px] truncate" title={oneDriveError}>
+              {oneDriveError}
+            </span>
+          )}
         </div>
 
         {/* Iframe */}

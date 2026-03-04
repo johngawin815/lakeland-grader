@@ -17,6 +17,7 @@
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "firebase": "^12.8.0",
+    "html2pdf.js": "^0.14.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.563.0",
     "papaparse": "^5.5.3",

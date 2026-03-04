@@ -37,3 +37,9 @@ export const keyVaultConfig = {
 export const keyVaultTokenRequest = {
   scopes: ["https://vault.azure.net/.default"],
 };
+
+// Scope required to upload files to OneDrive via Microsoft Graph
+// Requested on-demand (incremental consent) when user clicks "Save to OneDrive"
+export const graphFilesRequest = {
+  scopes: ["Files.ReadWrite"],
+};
