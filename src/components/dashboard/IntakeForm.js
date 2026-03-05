@@ -29,6 +29,7 @@ const IntakeForm = ({ onSave, units, defaultUnit }) => {
                 <div>
                     <label className={labelClasses}>Grade</label>
                     <select {...register("gradeLevel")} className={inputClasses}>
+                        <option>8</option>
                         <option>9</option>
                         <option>10</option>
                         <option>11</option>
