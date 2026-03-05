@@ -115,19 +115,24 @@ const UnitRoster = ({ defaultUnit, user }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [unitCounts, setUnitCounts] = useState({});
 
+    const loadCounts = async () => {
+        try {
+            const all = await databaseService.getAllStudents();
+            const counts = {};
+            UNIT_CONFIG.forEach(u => { counts[u.key] = 0; });
+            all.forEach(s => {
+                if (s.active !== false && counts[s.unitName] !== undefined) {
+                    counts[s.unitName]++;
+                } else if (s.active === false) {
+                    counts["Discharged"]++;
+                }
+            });
+            setUnitCounts(counts);
+        } catch (err) { console.error('Failed to load unit counts:', err); }
+    };
+
     // Load unit counts on mount
     useEffect(() => {
-        const loadCounts = async () => {
-            try {
-                const all = await databaseService.getAllStudents();
-                const counts = {};
-                UNIT_CONFIG.forEach(u => { counts[u.key] = 0; });
-                all.forEach(s => {
-                    if (s.active !== false && counts[s.unitName] !== undefined) counts[s.unitName]++;
-                });
-                setUnitCounts(counts);
-            } catch { /* fail silently */ }
-        };
         loadCounts();
     }, []);
 
@@ -149,6 +154,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
     useEffect(() => {
         fetchRoster();
+        loadCounts();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedUnit]);
 
@@ -193,6 +199,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
             }
             setShowIntakeForm(false);
             fetchRoster();
+            loadCounts();
         } catch (err) {
             console.error('Failed to save new student:', err);
             alert('Failed to save new student: ' + (err.message || 'Unknown error'));
@@ -347,7 +354,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                     key={selectedStudentProfile.id}
                                     studentData={selectedStudentProfile}
                                     onClose={() => setSelectedStudentProfile(null)}
-                                    onSaved={fetchRoster}
+                                    onSaved={() => { fetchRoster(); loadCounts(); }}
                                     user={user}
                                     mode="detail"
                                 />
