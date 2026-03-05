@@ -85,7 +85,7 @@ p { font-family: var(--font-body); font-size: 11.5pt; line-height: 1.5; margin-b
 .prompt-label { font-weight: bold; font-size: 9pt; margin-top: 2px; display: block; }
 
 /* SHIELD & FOOTER */
-.shield-canvas { width: 400px; flex-grow: 1; min-height: 280px; margin: 10px auto; border: 4px solid black; border-radius: 0 0 200px 200px; position: relative; background: #fff; }
+.shield-canvas { width: 400px; height: 340px; flex-grow: 0; flex-shrink: 0; margin: 10px auto; border: 4px solid black; border-radius: 0 0 200px 200px; position: relative; background: #fff; }
 .shield-instruction { display: none; }
 .page-footer { margin-top: 5px; border-top: 2px solid black; padding-top: 4px; display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 8pt; text-transform: uppercase; font-weight: bold; flex-shrink: 0; }
 .header-row { display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 9pt; border-bottom: var(--border-heavy); padding-bottom: 4px; margin-bottom: 8px; }`;

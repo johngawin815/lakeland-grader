@@ -96,6 +96,13 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
   flex-shrink: 1 !important;
   overflow: hidden !important;
 }
+/* Shield canvas must stay fixed-size — override the blanket shrink rule */
+.shield-canvas {
+  height: 340px !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  min-height: 340px !important;
+}
 `;
   styleTag.textContent = mandatoryCss + repairOverrides;
   if (prevCss !== styleTag.textContent) {
@@ -216,7 +223,11 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
   // ── 11. WHITESPACE — flex-grow on expandable containers ───────────────────
   doc.querySelectorAll('.vocab-grid').forEach(vg => { vg.style.flexGrow = '1'; });
   doc.querySelectorAll('.checkpoint-box').forEach(cb => { cb.style.flexGrow = '1'; });
-  doc.querySelectorAll('.shield-canvas').forEach(sc => { sc.style.flexGrow = '1'; });
+  doc.querySelectorAll('.shield-canvas').forEach(sc => {
+    sc.style.height = '340px';
+    sc.style.flexGrow = '0';
+    sc.style.flexShrink = '0';
+  });
 
   // ── 12. EXCESSIVE BOLD — strip bold that wraps entire paragraphs ────────────
   // The AI sometimes wraps all text in <strong>/<b> instead of just key terms.

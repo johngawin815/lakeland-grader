@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   NotebookPen, Key, Eye, EyeOff, Sparkles, ArrowLeft, Printer,
   Download, Save, CheckCircle2, Loader2, Trash2, Search, Plus,
-  BookOpen, AlertTriangle, X, Settings, Wrench, FileDown, CloudUpload
+  BookOpen, AlertTriangle, X, Settings, Wrench, FileDown, CloudUpload,
+  ChevronDown, ChevronRight
 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
@@ -81,6 +82,47 @@ function getDayScope(dayNum) {
   return null;
 }
 
+const ACTIVITY_OPTIONS = {
+  vocabulary: [
+    { id: 'auto', label: 'Auto (AI Chooses)' },
+    { id: 'would-you-rather', label: 'Would You Rather Ethics Lab' },
+    { id: 'advice-column', label: 'Historical Advice Column' },
+    { id: 'imagine-if', label: 'Imagine If Scenario Lab' },
+    { id: 'courtroom', label: 'Vocab Courtroom' },
+    { id: 'time-traveler', label: "Time Traveler's Dictionary" },
+    { id: 'sentence-starters', label: 'Guided Sentence Starters' },
+  ],
+  synthesis: [
+    { id: 'auto', label: 'Auto (AI Chooses)' },
+    { id: 'tri-pillar', label: 'Tri-Pillar Categorization' },
+    { id: 'hierarchy', label: 'Hierarchy of Impact' },
+    { id: 'causal-chain', label: 'Causal Chain Mapping' },
+    { id: 'odd-one-out', label: 'Odd One Out Defense' },
+  ],
+  scenario: [
+    { id: 'auto', label: 'Auto (AI Chooses)' },
+    { id: 'legislative', label: 'Legislative Drafting' },
+    { id: 'executive', label: 'Executive Persuasion' },
+    { id: 'debate', label: 'Debate Prep Matrix' },
+    { id: 'journalistic', label: 'Journalistic Inquiry' },
+  ],
+  creative: [
+    { id: 'auto', label: 'Auto (AI Chooses)' },
+    { id: 'protest-poster', label: 'Protest Poster' },
+    { id: 'editorial-cartoon', label: 'Editorial Cartoon' },
+    { id: 'monument', label: 'Monument/Memorial Design' },
+    { id: 'comic-strip', label: 'Comic Strip' },
+    { id: 'invention', label: 'Invention Blueprint' },
+  ],
+};
+
+const ACTIVITY_SECTION_LABELS = {
+  vocabulary: { title: 'Vocabulary Activity', pages: 'Pages 1\u20132' },
+  synthesis: { title: 'Synthesis Framework', pages: 'Page 9' },
+  scenario: { title: 'Scenario Type', pages: 'Page 10' },
+  creative: { title: 'Creative Canvas', pages: 'Page 11' },
+};
+
 const AUDIENCE_DIRECTIVE = `CRITICAL AUDIENCE CONSTRAINT: All students are HIGH SCHOOL TEENAGERS (ages 14-18), regardless of the reading level selected. The reading level controls ONLY vocabulary complexity, sentence length, and syntactic sophistication. It does NOT change the target age group. Even at a 3rd-5th grade reading level, content must use age-appropriate themes, scenarios, and emotional hooks that resonate with teenagers — not elementary-age children. References, examples, and narrative protagonists should reflect teenage life, concerns, and cultural awareness. Never "talk down" to the student; simplify the language, not the maturity of the ideas.`;
 
 const FRAMEWORK_KEYWORDS = {
@@ -156,6 +198,13 @@ const WorkbookGenerator = ({ user }) => {
   const [readingLevel, setReadingLevel] = useState(READING_LEVELS[1].value);
   const [unitWorkbooks, setUnitWorkbooks] = useState([]);
   const suggestTimeoutRef = useRef(null);
+
+  // Activity selections
+  const [activityChoices, setActivityChoices] = useState({
+    vocabulary: 'auto', synthesis: 'auto', scenario: 'auto', creative: 'auto',
+  });
+  const [showActivities, setShowActivities] = useState(false);
+  const setActivity = (section, id) => setActivityChoices(prev => ({ ...prev, [section]: id }));
 
   // Generation
   const [streamText, setStreamText] = useState('');
@@ -302,7 +351,7 @@ const WorkbookGenerator = ({ user }) => {
       const prevContext = buildPreviousDaysContext(unitWorkbooks);
       const scope = getDayScope(dayNumber);
       const focusLabel = dayFocus.trim() || scope?.label || '';
-      const userPrompt = [
+      let userPrompt = [
         `[Unit Topic]: ${unitTopic.trim()}`,
         `[Day Number & Specific Focus]: Day ${dayNumber} — ${focusLabel}`,
         scope ? `[Pedagogical Day Type]: ${scope.label} — ${scope.directive}` : '',
@@ -311,6 +360,18 @@ const WorkbookGenerator = ({ user }) => {
         `\n${AUDIENCE_DIRECTIVE}`,
         prevContext ? `\n---\nPREVIOUS DAYS IN THIS UNIT (for the Absolute Variety Mandate — you MUST use different frameworks than these):\n${prevContext}` : '',
       ].filter(Boolean).join('\n');
+
+      // Append any manually-selected activity directives
+      const activityDirectives = Object.entries(activityChoices)
+        .filter(([, id]) => id !== 'auto')
+        .map(([section, id]) => {
+          const option = ACTIVITY_OPTIONS[section].find(o => o.id === id);
+          const sectionLabel = ACTIVITY_SECTION_LABELS[section];
+          return `- ${sectionLabel.title} (${sectionLabel.pages}): You MUST use "${option.label}"`;
+        });
+      if (activityDirectives.length > 0) {
+        userPrompt += '\n\n## MANDATORY ACTIVITY SELECTIONS (override the rotation for these sections):\n' + activityDirectives.join('\n');
+      }
 
       let html = await generateWorkbook({
         systemPrompt: fullSystemPrompt,
@@ -746,6 +807,64 @@ const WorkbookGenerator = ({ user }) => {
                   </p>
                 </div>
               )}
+
+              {/* Customize Activities */}
+              <div className="border border-slate-200/60 rounded-lg overflow-hidden">
+                <button type="button" onClick={() => setShowActivities(!showActivities)}
+                  className="w-full px-3 py-2.5 flex items-center gap-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition select-none">
+                  {showActivities
+                    ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+                  Customize Activities
+                  {Object.values(activityChoices).some(v => v !== 'auto') && (
+                    <span className="ml-auto text-[10px] font-semibold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">
+                      {Object.values(activityChoices).filter(v => v !== 'auto').length} selected
+                    </span>
+                  )}
+                </button>
+                {showActivities && (
+                  <div className="px-3 pb-3 pt-1 space-y-3 border-t border-slate-100">
+                    {Object.entries(ACTIVITY_OPTIONS).map(([section, options]) => (
+                      <div key={section}>
+                        <div className="flex items-baseline gap-1.5 mb-1.5">
+                          <span className="text-[11px] font-bold text-slate-700">
+                            {ACTIVITY_SECTION_LABELS[section].title}
+                          </span>
+                          <span className="text-[9px] text-slate-400">
+                            {ACTIVITY_SECTION_LABELS[section].pages}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {options.map(opt => {
+                            const isSelected = activityChoices[section] === opt.id;
+                            const isAuto = opt.id === 'auto';
+                            return (
+                              <button key={opt.id} type="button"
+                                onClick={() => setActivity(section, opt.id)}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all ${
+                                  isSelected
+                                    ? isAuto
+                                      ? 'bg-slate-100 text-slate-600 border-slate-300'
+                                      : 'bg-indigo-500 text-white border-indigo-500 shadow-sm shadow-indigo-200/50'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
+                                }`}>
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    {Object.values(activityChoices).some(v => v !== 'auto') && (
+                      <button type="button"
+                        onClick={() => setActivityChoices({ vocabulary: 'auto', synthesis: 'auto', scenario: 'auto', creative: 'auto' })}
+                        className="text-[10px] text-slate-400 hover:text-slate-600 underline transition">
+                        Reset all to Auto
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Generate Button */}
               <button onClick={handleGenerate} disabled={!canGenerate}
