@@ -91,6 +91,12 @@ const ACTIVITY_OPTIONS = {
     { id: 'courtroom', label: 'Vocab Courtroom' },
     { id: 'time-traveler', label: "Time Traveler's Dictionary" },
     { id: 'sentence-starters', label: 'Guided Sentence Starters' },
+    { id: 'visual-vocab-map', label: 'Visual Vocabulary Map' },
+    { id: 'meme-creator', label: 'Vocab Meme Creator' },
+    { id: 'bilingual-bridge', label: 'Bilingual Bridge' },
+    { id: 'word-sort', label: 'Word Sort & Categorize' },
+    { id: 'personal-dictionary', label: 'My Life Dictionary' },
+    { id: 'emoji-translator', label: 'Emoji-to-Word Translator' },
   ],
   synthesis: [
     { id: 'auto', label: 'Auto (AI Chooses)' },
@@ -98,6 +104,11 @@ const ACTIVITY_OPTIONS = {
     { id: 'hierarchy', label: 'Hierarchy of Impact' },
     { id: 'causal-chain', label: 'Causal Chain Mapping' },
     { id: 'odd-one-out', label: 'Odd One Out Defense' },
+    { id: 'diamond-ranking', label: 'Diamond Ranking' },
+    { id: 'concept-sketch', label: 'Concept Sketch Map' },
+    { id: 'community-web', label: 'Community Connection Web' },
+    { id: 'gallery-walk', label: 'Gallery Walk Response Cards' },
+    { id: 'think-pair-share', label: 'Think-Pair-Share Matrix' },
   ],
   scenario: [
     { id: 'auto', label: 'Auto (AI Chooses)' },
@@ -105,6 +116,11 @@ const ACTIVITY_OPTIONS = {
     { id: 'executive', label: 'Executive Persuasion' },
     { id: 'debate', label: 'Debate Prep Matrix' },
     { id: 'journalistic', label: 'Journalistic Inquiry' },
+    { id: 'community-action', label: 'Community Action Plan' },
+    { id: 'future-self-letter', label: 'Letter to My Future Self' },
+    { id: 'social-media-campaign', label: 'Social Media Campaign' },
+    { id: 'psa', label: 'Public Service Announcement' },
+    { id: 'restorative-circle', label: 'Restorative Circle Prep' },
   ],
   creative: [
     { id: 'auto', label: 'Auto (AI Chooses)' },
@@ -113,6 +129,11 @@ const ACTIVITY_OPTIONS = {
     { id: 'monument', label: 'Monument/Memorial Design' },
     { id: 'comic-strip', label: 'Comic Strip' },
     { id: 'invention', label: 'Invention Blueprint' },
+    { id: 'spoken-word', label: 'Spoken Word / Rap Lyrics' },
+    { id: 'vision-board', label: 'Vision Board' },
+    { id: 'graphic-novel', label: 'Graphic Novel Page' },
+    { id: 'album-cover', label: 'Album Cover Design' },
+    { id: 'photo-essay', label: 'Photo Essay Storyboard' },
   ],
 };
 
@@ -128,17 +149,26 @@ const AUDIENCE_DIRECTIVE = `CRITICAL AUDIENCE CONSTRAINT: All students are HIGH 
 const FRAMEWORK_KEYWORDS = {
   vocab: [
     'Would You Rather', 'Historical Advice Column', 'Contextual Word Detective',
-    'Imagine If', 'Agree or Disagree', 'Personal Empathy Connection', 'Guided Sentence Starters'
+    'Imagine If', 'Agree or Disagree', 'Personal Empathy Connection', 'Guided Sentence Starters',
+    'Visual Vocabulary Map', 'Vocab Meme', 'Meme Creator', 'Bilingual Bridge',
+    'Word Sort', 'Categorize', 'My Life Dictionary', 'Emoji-to-Word', 'Emoji Translator'
   ],
   analysis: [
-    'Tri-Pillar', 'Hierarchy of Impact', 'Causal Chain', 'Odd One Out'
+    'Tri-Pillar', 'Hierarchy of Impact', 'Causal Chain', 'Odd One Out',
+    'Diamond Ranking', 'Concept Sketch', 'Community Connection Web',
+    'Gallery Walk', 'Response Cards', 'Think-Pair-Share'
   ],
   scenario: [
-    'Legislative Drafting', 'Executive Persuasion', 'Debate Preparation', 'Journalistic Inquiry'
+    'Legislative Drafting', 'Executive Persuasion', 'Debate Preparation', 'Journalistic Inquiry',
+    'Community Action Plan', 'Letter to My Future Self', 'Future Self',
+    'Social Media Campaign', 'Public Service Announcement', 'PSA',
+    'Restorative Circle', 'Restorative Justice'
   ],
   creative: [
     'Protest Poster', 'Editorial Cartoon', 'Monument', 'Memorial Design',
-    'Comic Strip', 'Invention Blueprint'
+    'Comic Strip', 'Invention Blueprint',
+    'Spoken Word', 'Rap Lyrics', 'Vision Board', 'Graphic Novel',
+    'Album Cover', 'Photo Essay', 'Storyboard'
   ],
 };
 

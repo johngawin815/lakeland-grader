@@ -32,6 +32,20 @@ MANDATORY PEDAGOGICAL ROTATION: Avoid rote memorization. Implement high-engageme
 
 PhD-Level Frameworks to Rotate: "The 'Would You Rather' Ethics Lab", "The Historical Advice Column", "Contextual Word Detective", "The 'Imagine If' Scenario Lab", "The 'Agree or Disagree' Defense Lab", "Personal Empathy Connection", "Guided Sentence Starters".
 
+EXPANDED HIGH-RISK & ELL FRAMEWORKS (use when mandated by activity selection or to increase variety):
+
+"Visual Vocabulary Map" — Students sketch a quick symbol or icon representing each term, then write a 1-sentence caption connecting image to meaning. Ideal for ELL students: reduces linguistic demand while maintaining conceptual rigor through dual-coding (Paivio). Task prompt: "Draw a symbol and write one sentence explaining how your image captures the meaning."
+
+"Vocab Meme Creator" — Students design a meme concept for each term: describe the image, write the top/bottom text, and explain why it captures the word's meaning. Leverages adolescent digital culture as an asset (culturally sustaining pedagogy, Paris & Alim 2017). High engagement for disengaged learners. Task prompt: "Describe your meme and explain how it nails this word's meaning."
+
+"Bilingual Bridge" — Students write the term's closest equivalent in their home language (or any language they know), then explain in English what gets lost or changed in translation. Asset-based ELL strategy grounded in translanguaging theory (García & Wei). If the student is monolingual, they compare the term to slang or informal English. Task prompt: "Write this word in another language you know — what meaning shifts?"
+
+"Word Sort & Categorize" — Students receive all vocab terms unsorted and must group them into 2-3 teacher-defined categories, then justify their placement in writing. Builds schema through classification (Marzano's Building Background Knowledge). Low writing demand, high cognitive organization. Task prompt: "Sort these terms into the given categories and defend one choice."
+
+"My Life Dictionary" — Students define each term using only personal experiences, memories, or things from their own neighborhood/community. Grounded in Funds of Knowledge theory (Moll et al.). Validates lived experience as academic currency. Task prompt: "Define this word using only your own life — no textbook allowed."
+
+"Emoji-to-Word Translator" — Students select 2-3 emojis that represent the term's meaning, then write a sentence defending their emoji choices. Multimodal entry point that lowers writing anxiety while requiring abstract reasoning. Particularly effective for newcomer ELLs and students with writing-related trauma. Task prompt: "Pick 2-3 emojis for this word and explain your choices."
+
 Structure: Inside .vocab-details, strictly generate these three semantic markers using HTML bold tags:
 
 <strong>Definition:</strong> ... (MAXIMUM 20 words)
@@ -74,6 +88,18 @@ Causal Chain Mapping (Column 1: Catalyst, Column 2: Immediate Reaction, Column 3
 
 The "Odd One Out" Defense (Grouping related terms and defending the outlier).
 
+EXPANDED HIGH-RISK & ELL SYNTHESIS FRAMEWORKS:
+
+"Diamond Ranking" — Arrange 9 key concepts from the word bank in a diamond shape (1-2-3-2-1) from most to least important. Student writes a justification for their top choice and bottom choice. Low writing demand, high analytical rigor. Excellent for ELL students because the visual structure scaffolds the thinking. Uses .pillar-container with 5 rows.
+
+"Concept Sketch Map" — Students create labeled sketches (stick figures, simple diagrams) connecting 6 terms from the word bank with arrows showing relationships, then write one synthesis sentence. Dual-coding reduces linguistic barrier while requiring relational thinking (Novak & Cañas concept mapping). Uses .pillar-container as a drawing + writing space.
+
+"Community Connection Web" — The 3 pillars are relabeled: "My Community", "The Historical Context", "The Bridge Between Them". Students sort word bank terms into the first two columns, then write connections in the third. Rooted in Funds of Knowledge and culturally sustaining pedagogy — validates students' neighborhoods, families, and lived realities as legitimate intellectual resources.
+
+"Gallery Walk Response Cards" — Each pillar represents a different student "station" with a provocative claim using word bank terms. Student writes an agree/disagree/complicate response at each station. Simulates the social accountability of a physical gallery walk. Builds academic discourse skills for ELL students through structured sentence frames ("I agree because...", "I would add that...").
+
+"Think-Pair-Share Matrix" — Column 1: "My First Thought" (individual response). Column 2: "My Partner's Thought" (space to record a peer's perspective). Column 3: "Our Refined Answer" (collaborative synthesis). Scaffolds academic conversation for students who struggle with unstructured discussion. Particularly effective in trauma-informed settings where trust-building through structured peer interaction is essential.
+
 Job Deck: A perfectly aligned grid of the 18 bolded items utilizing .job-deck-container.
 
 Critical Thinking Synthesis Box: A high-rigor prompt demanding the student fuse two specific words from the word bank to justify a complex historical dynamic. Use flex-grow: 1 and a MICRO-STEM (2-4 words maximum).
@@ -94,6 +120,18 @@ Debate Preparation Matrix: Pro vs. Con ideological arguments on a controversial 
 
 The Journalistic Inquiry: Act as an investigative reporter asking 3 tough questions; student generates the historical figure's strategic answers.
 
+EXPANDED HIGH-RISK & ELL SCENARIO FRAMEWORKS:
+
+"Community Action Plan" — The 3 law-blocks become: Block 1: "The Problem in My Community" (identify a modern parallel to the unit's historical issue), Block 2: "My Plan of Action" (3 concrete steps the student would take), Block 3: "Who I Need On My Team & Why" (building coalitions). Grounded in Freire's critical pedagogy — students as agents of change, not passive recipients. Builds self-efficacy for high-risk students who often feel powerless.
+
+"Letter to My Future Self" — Block 1: "What I Learned" (the historical lesson), Block 2: "How It Connects to My Life Right Now" (personal transfer), Block 3: "What I Promise Myself" (commitment to action or growth). Trauma-informed reflective practice that builds future orientation — a key protective factor for at-risk youth. Low stakes, high personal meaning.
+
+"Social Media Campaign" — Block 1: "My Post" (design a social media post about the issue — caption + image description), Block 2: "The Comments" (predict 2 responses — one supportive, one challenging, and write replies), Block 3: "The Impact" (articulate what change the campaign seeks). Leverages digital-native culture as academic currency. High engagement for disengaged students.
+
+"Public Service Announcement" — Block 1: "The Hook" (attention-grabbing opening line + visual description), Block 2: "The Facts" (3 evidence-based claims from the unit), Block 3: "The Call to Action" (what should the audience DO?). Multimodal scaffold that combines persuasion with civic engagement. Accessible for ELL students because PSA conventions are culturally universal.
+
+"Restorative Circle Prep" — Block 1: "The Harm" (who was hurt and how, from the historical context), Block 2: "The Perspectives" (write from 2 different stakeholder viewpoints), Block 3: "The Path Forward" (propose a restorative — not punitive — solution). Directly mirrors the restorative justice practices used in therapeutic school settings. Builds empathy, perspective-taking, and conflict resolution — critical skills for students in residential treatment.
+
 Textareas: Each block MUST contain two textareas (heights 76px and 114px) equipped with MICRO-STEMS (2-4 words maximum) to lower the barrier to entry for writing.
 
 PAGE 11: CONSTRUCTIVIST CREATION & SELF-ACTUALIZATION
@@ -101,6 +139,18 @@ PAGE 11: CONSTRUCTIVIST CREATION & SELF-ACTUALIZATION
 The Creative Canvas (MANDATORY VARIETY): A visual synthesis task housed within .shield-canvas (Bloom's Taxonomy: Create). Rotate the modality of creation every Day.
 
 Examples: The Protest Poster, The Editorial Cartoon, The Monument/Memorial Design, The Historical Comic Strip, The Invention Blueprint. Mandate the inclusion of two specific thematic symbols.
+
+EXPANDED HIGH-RISK & ELL CREATIVE MODALITIES:
+
+"Spoken Word / Rap Lyrics" — Student writes 8-12 lines of spoken word poetry or rap lyrics that synthesize the unit's themes. The shield-canvas becomes a lyric sheet with a title and artist name field. Must include at least 2 vocabulary terms from the unit. Leverages hip-hop pedagogy (Emdin's Reality Pedagogy) as a bridge between student identity and academic content. Extremely high engagement for students who resist traditional writing.
+
+"Vision Board" — Student designs a vision board inside the shield-canvas: 4 quadrants, each containing a sketch + caption representing (1) a key lesson from the unit, (2) a personal goal it inspires, (3) a community change they want to see, (4) a symbol of who they want to become. Therapeutic and future-oriented — a core practice in trauma-informed counseling adapted for academic synthesis.
+
+"Graphic Novel Page" — Student creates a 4-panel graphic novel page inside the shield-canvas, telling the most important moment from the unit as a visual narrative with speech bubbles and captions. Drawing + minimal text = high access for ELL students and reluctant writers. Maintains narrative rigor through sequential art (McCloud's Understanding Comics).
+
+"Album Cover Design" — Student designs a music album cover inside the shield-canvas that captures the unit's themes: album title, artist name, 3 song titles (each referencing a key concept), and a visual design. Students explain their design choices below. Culturally sustaining — connects academic content to the music students actually care about.
+
+"Photo Essay Storyboard" — Student plans a 4-image photo essay inside the shield-canvas: sketch each "photo," write a caption, and sequence them to tell a story about the unit's central theme. Final frame must connect to the student's own world. Multimodal, scaffolded, and accessible — the visual planning reduces writing anxiety while demanding narrative organization.
 
 Personal Empathy Connection: 2 profound metacognitive reflection prompts requiring the student to explicitly bridge the historical narrative to their modern life, internal emotional state, or current societal environment. Both textareas must be height: 128px with MICRO-STEMS (2 to 4 words maximum).
 
