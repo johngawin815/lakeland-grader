@@ -49,7 +49,7 @@ echo.
 start http://localhost:3000
 
 :: Serve the production build
-call serve -s build -l 3000
+call npx serve -s build -l 3000
 
 echo.
 echo Server has stopped.
