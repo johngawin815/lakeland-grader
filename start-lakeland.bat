@@ -49,6 +49,9 @@ echo    Press Ctrl+C to stop the server.
 echo ============================================
 echo.
 
+:: Open the browser automatically
+start http://localhost:3000
+
 :: Serve the production build
 serve -s build -l 3000
 pause

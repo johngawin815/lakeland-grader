@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a"/>
+      <stop offset="50%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.2)"/>
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg)"/>
+
+  <!-- Subtle shine overlay -->
+  <rect x="16" y="16" width="480" height="240" rx="96" ry="96" fill="url(#shine)"/>
+
+  <!-- Letter L -->
+  <text x="128" y="355" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="280" fill="white" letter-spacing="-10">L</text>
+
+  <!-- Letter H -->
+  <text x="272" y="355" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="300" font-size="280" fill="rgba(255,255,255,0.85)" letter-spacing="-10">H</text>
+
+  <!-- Subtle underline accent -->
+  <rect x="120" y="380" width="272" height="6" rx="3" fill="rgba(255,255,255,0.5)"/>
+</svg>
