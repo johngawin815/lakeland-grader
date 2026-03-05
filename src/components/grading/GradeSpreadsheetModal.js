@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 
 const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
-const GRADE_LEVELS = ['9', '10', '11', '12'];
+const GRADE_LEVELS = ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const COLUMNS = [
   { id: 'name', label: 'Student Name', default: true },
   { id: 'gradeLevel', label: 'Grade Level', default: true },

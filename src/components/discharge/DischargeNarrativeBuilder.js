@@ -498,7 +498,7 @@ const DischargeNarrativeBuilder = ({ user }) => {
               <label className={LABEL_CLASS}><GraduationCap className="w-3 h-3" />Grade Level</label>
               <select value={draft.gradeLevel} onChange={e => updateDraft('gradeLevel', e.target.value)} className={INPUT_CLASS}>
                 <option value="">--</option>
-                {[6, 7, 8, 9, 10, 11, 12].map(g => <option key={g} value={String(g)}>{g}th</option>)}
+                {['K', ...Array.from({length: 12}, (_, i) => i + 1)].map(g => <option key={g} value={String(g)}>{g === 'K' ? 'K' : `${g}th`}</option>)}
               </select>
             </div>
             <div>
