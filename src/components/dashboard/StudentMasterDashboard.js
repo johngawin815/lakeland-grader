@@ -208,14 +208,14 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
     const isDetailOpen = !!selectedStudentProfile;
 
-    // Filter roster by search query
+    // Filter roster by search query and sort alphabetically by first name
     const filteredRoster = roster.filter(s => {
         if (!searchQuery.trim()) return true;
         const q = searchQuery.toLowerCase();
         return s.studentName?.toLowerCase().includes(q) ||
                s.district?.toLowerCase().includes(q) ||
                s.guardianName?.toLowerCase().includes(q);
-    });
+    }).sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden h-full">
