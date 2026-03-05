@@ -9,7 +9,6 @@ echo.
 cd /d "%~dp0"
 if %errorlevel% neq 0 (
     echo ERROR: Could not navigate to app folder.
-    echo Path: "%~dp0"
     pause
     exit /b 1
 )
@@ -19,8 +18,6 @@ where node >nul 2>&1
 if %errorlevel% neq 0 (
     echo ERROR: Node.js is not installed or not in your PATH.
     echo Download it from https://nodejs.org
-    echo After installing, close and reopen this script.
-    echo.
     pause
     exit /b 1
 )
@@ -31,10 +28,9 @@ echo.
 
 :: Install dependencies if node_modules is missing
 if not exist "node_modules\" (
-    echo Installing dependencies (first run only, this may take a few minutes)...
+    echo Installing dependencies - first run only, please wait...
     call npm install
     if %errorlevel% neq 0 (
-        echo.
         echo ERROR: npm install failed.
         pause
         exit /b 1
@@ -45,10 +41,9 @@ if not exist "node_modules\" (
 :: Install serve globally if not present
 where serve >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Installing serve (first run only)...
+    echo Installing serve - first run only...
     call npm install -g serve
     if %errorlevel% neq 0 (
-        echo.
         echo ERROR: Failed to install serve.
         pause
         exit /b 1
@@ -60,7 +55,6 @@ if %errorlevel% neq 0 (
 echo Building the app...
 call npm run build
 if %errorlevel% neq 0 (
-    echo.
     echo ERROR: Build failed. Check the output above.
     pause
     exit /b 1
