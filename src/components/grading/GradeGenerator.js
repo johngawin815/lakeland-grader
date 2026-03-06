@@ -657,9 +657,9 @@ const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, cat
   const currentValue = data[classFieldName] || '';
 
   return (
-    <div className="flex flex-col md:flex-row gap-3 items-end md:items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
-      <div className="flex items-center gap-2 w-full md:w-56">
-        <div className="text-slate-400">{icon}</div>
+    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-2">
+      <div className="flex items-center gap-2">
+        <div className="text-slate-400 shrink-0">{icon}</div>
         <select
           name={classFieldName}
           value={options.includes(currentValue) ? currentValue : ''}
@@ -670,7 +670,7 @@ const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, cat
           {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
       </div>
-      <div className="flex gap-2 flex-1 w-full">
+      <div className="flex gap-2 pl-6">
         <div className="flex-1">
           <input name={`${prefix}Grade`} value={data[`${prefix}Grade`]} onChange={onChange} placeholder="Letter Grade" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
         </div>
