@@ -375,16 +375,20 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const currentConfig = TEMPLATES[selectedTemplate];
 
   return (
-    <div className="bg-slate-50 p-8 font-sans text-slate-800">
+    <div className="bg-slate-50 p-4 font-sans text-slate-800">
 
       {/* HEADER & ACTIONS */}
-      <div className="max-w-6xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-indigo-600" />
+      <div className="max-w-6xl mx-auto mb-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 print:hidden">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+            <FileText className="w-6 h-6 text-indigo-600" />
             Grade Cards
           </h1>
-          <p className="text-slate-500 mt-1">Select a template, fill in the grades, and export.</p>
+          {mode === 'full' && (
+            <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+              {Object.values(TEMPLATES).map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+          )}
         </div>
 
         <div className="flex gap-2 items-center flex-wrap">
@@ -579,17 +583,10 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
           {/* FORM */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-slate-100 p-6 border-b border-slate-200">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Select Template Type</label>
-              <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="w-full md:w-1/2 p-3 rounded-lg border border-slate-300 bg-white text-slate-800 font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
-                {Object.values(TEMPLATES).map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-              </select>
-            </div>
-
-            <div className="p-8 space-y-8">
+            <div className="p-4 space-y-3">
               <section>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><User className="w-5 h-5 text-indigo-500" /> Student Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><User className="w-4 h-4 text-indigo-500" /> Student Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Jane Doe" />
                   <Input label="Report Date" name="reportDate" type="date" value={formData.reportDate} onChange={handleChange} />
                   <Input label="Quarter" name="quarterName" value={formData.quarterName} onChange={handleChange} placeholder="Q1, Mid-Term..." />
@@ -605,52 +602,56 @@ const GradeGenerator = ({ user, activeStudent }) => {
                 </div>
               </section>
 
-              <section>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><BookOpen className="w-5 h-5 text-emerald-500" /> Core Classes</h3>
-                {(() => {
-                  const gl = parseInt(formData.gradeLevel, 10);
-                  const isHS = gl >= 9 && gl <= 12;
-                  return (
-                    <>
-                      {isHS && (
-                        <div className="flex items-center gap-2 px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          <span className="flex-1 pl-6">Course</span>
-                          <span className="w-16 text-center">Grade</span>
-                          <span className="w-14 text-center">%</span>
-                          <span className="w-16 text-center">Credits</span>
-                        </div>
-                      )}
-                      <div className="space-y-1.5">
-                        <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} category="English" showCredits={isHS} />
-                        <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} category="Math" showCredits={isHS} />
-                        <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} category="Science" showCredits={isHS} />
-                        <ClassRow icon={<Globe className="w-4 h-4" />} label="Social Studies" prefix="soc" data={formData} onChange={handleChange} category="Social Studies" showCredits={isHS} />
-                      </div>
-                    </>
-                  );
-                })()}
-              </section>
-
-              {currentConfig.hasElectives && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* LEFT COLUMN: Core Classes */}
                 <section>
-                  <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><Music className="w-5 h-5 text-purple-500" /> Electives</h3>
+                  <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><BookOpen className="w-4 h-4 text-emerald-500" /> Core Classes</h3>
                   {(() => {
-                    const gl = parseInt(formData.gradeLevel, 10);
-                    const isHS = gl >= 9 && gl <= 12;
+                    const showCr = currentConfig.hasCredits;
                     return (
-                      <div className="space-y-1.5">
-                        <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective category="Electives" showCredits={isHS} />
-                        <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective category="Electives" showCredits={isHS} />
-                      </div>
+                      <>
+                        {showCr && (
+                          <div className="flex items-center gap-2 px-2 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <span className="flex-1 pl-6">Course</span>
+                            <span className="w-16 text-center">Grade</span>
+                            <span className="w-14 text-center">%</span>
+                            <span className="w-16 text-center">Credits</span>
+                          </div>
+                        )}
+                        <div className="space-y-1">
+                          <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} category="English" showCredits={showCr} />
+                          <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} category="Math" showCredits={showCr} />
+                          <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} category="Science" showCredits={showCr} />
+                          <ClassRow icon={<Globe className="w-4 h-4" />} label="Social Studies" prefix="soc" data={formData} onChange={handleChange} category="Social Studies" showCredits={showCr} />
+                        </div>
+                      </>
                     );
                   })()}
                 </section>
-              )}
 
-              <section>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><FileText className="w-5 h-5 text-orange-500" /> Comments</h3>
-                <textarea name="comments" value={formData.comments} onChange={handleChange} className="w-full p-4 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none h-32 resize-y text-sm" placeholder="Enter overall comments..." />
-              </section>
+                {/* RIGHT COLUMN: Electives + Comments */}
+                <div className="space-y-3">
+                  {currentConfig.hasElectives && (
+                    <section>
+                      <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><Music className="w-4 h-4 text-purple-500" /> Electives</h3>
+                      {(() => {
+                        const showCr = currentConfig.hasCredits;
+                        return (
+                          <div className="space-y-1">
+                            <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective category="Electives" showCredits={showCr} />
+                            <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective category="Electives" showCredits={showCr} />
+                          </div>
+                        );
+                      })()}
+                    </section>
+                  )}
+
+                  <section>
+                    <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><FileText className="w-4 h-4 text-orange-500" /> Comments</h3>
+                    <textarea name="comments" value={formData.comments} onChange={handleChange} className="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none h-20 resize-y text-sm" placeholder="Enter overall comments..." />
+                  </section>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -695,7 +696,7 @@ const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, cat
   const currentValue = data[classFieldName] || '';
 
   return (
-    <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+    <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded border border-slate-100">
       <div className="text-slate-400 shrink-0">{icon}</div>
       <select
         name={classFieldName}
