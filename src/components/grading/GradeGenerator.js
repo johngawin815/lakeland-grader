@@ -92,6 +92,19 @@ const TEMPLATES = {
     hasCredits: false,
     hasGradeLevel: false,
     hasSchoolYear: false
+  },
+  upper_level: {
+    id: 'upper_level',
+    label: 'Upper Level Grade Card',
+    filename: 'Upper Level Grade Card.docx',
+    hasElectives: true,
+    hasTeacher: false,
+    hasCredits: true,
+    hasGradeLevel: true,
+    hasSchoolYear: true,
+    hasInstructors: true,
+    hasAdmitDischarge: true,
+    hasSummerQuarter: true,
   }
 };
 
@@ -132,6 +145,12 @@ const GradeGenerator = ({ user, activeStudent }) => {
     // Electives
     elec1Class: '', elec1Grade: '', elec1Pct: '', elec1Credits: '',
     elec2Class: '', elec2Grade: '', elec2Pct: '', elec2Credits: '',
+
+    // Upper Level fields
+    admitDate: '',
+    dischargeDate: '',
+    engInstructor: '', mathInstructor: '', sciInstructor: '', socInstructor: '',
+    elec1Instructor: '', elec2Instructor: '',
   });
 
   // Quick mode state
@@ -259,6 +278,16 @@ const GradeGenerator = ({ user, activeStudent }) => {
     }
   }, [activeStudent]);
 
+  // Auto-select Upper Level template for grades 9-12
+  useEffect(() => {
+    const gl = parseInt(formData.gradeLevel, 10);
+    if (gl >= 9 && gl <= 12) {
+      setSelectedTemplate('upper_level');
+    } else if (gl >= 1 && gl <= 8 && selectedTemplate === 'upper_level') {
+      setSelectedTemplate('quarter');
+    }
+  }, [formData.gradeLevel, selectedTemplate]);
+
   // Auto-sum per-course credits into totalCredits
   useEffect(() => {
     const fields = ['engCredits', 'mathCredits', 'sciCredits', 'socCredits', 'elec1Credits', 'elec2Credits'];
@@ -303,6 +332,37 @@ const GradeGenerator = ({ user, activeStudent }) => {
     };
   };
 
+  const getUpperLevelMappedData = () => {
+    const qMap = { Q1: 'q1', Q2: 'q2', Q3: 'q3', Q4: 'q4', Summer: 'q5' };
+    const qPrefix = qMap[formData.quarterName] || 'q1';
+
+    const data = {
+      student_name: formData.studentName,
+      school_year: formData.schoolYear,
+      grade: formData.gradeLevel,
+      admit_date: formData.admitDate,
+      discharge_date: formData.dischargeDate,
+    };
+
+    const subjects = [
+      { prefix: 'eng', row: 1 },
+      { prefix: 'math', row: 2 },
+      { prefix: 'sci', row: 3 },
+      { prefix: 'soc', row: 4 },
+      { prefix: 'elec1', row: 5 },
+      { prefix: 'elec2', row: 6 },
+    ];
+
+    subjects.forEach(({ prefix, row }) => {
+      data[`${qPrefix}_r${row}_credits`] = formData[`${prefix}Credits`] || '';
+      data[`${qPrefix}_r${row}_course`] = formData[`${prefix}Class`] || '';
+      data[`${qPrefix}_r${row}_grade`] = formData[`${prefix}Grade`] || '';
+      data[`${qPrefix}_r${row}_instructor`] = formData[`${prefix}Instructor`] || '';
+    });
+
+    return data;
+  };
+
   const generateDocx = async () => {
     const templateConfig = TEMPLATES[selectedTemplate];
     setLoading(true);
@@ -313,9 +373,16 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
       const arrayBuffer = await response.arrayBuffer();
       const zip = new PizZip(arrayBuffer);
-      const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        nullGetter: () => '',
+      });
 
-      doc.render(getMappedData());
+      const data = selectedTemplate === 'upper_level'
+        ? getUpperLevelMappedData()
+        : getMappedData();
+      doc.render(data);
 
       const out = doc.getZip().generate({
         type: 'blob',
@@ -713,10 +780,21 @@ const GradeGenerator = ({ user, activeStudent }) => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Jane Doe" />
                   <Input label="Report Date" name="reportDate" type="date" value={formData.reportDate} onChange={handleChange} />
-                  <Input label="Quarter" name="quarterName" value={formData.quarterName} onChange={handleChange} placeholder="Q1, Mid-Term..." />
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quarter</label>
+                    <select name="quarterName" value={formData.quarterName} onChange={handleChange} className="p-2.5 rounded border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
+                      <option value="Q1">Q1</option>
+                      <option value="Q2">Q2</option>
+                      <option value="Q3">Q3</option>
+                      <option value="Q4">Q4</option>
+                      {currentConfig.hasSummerQuarter && <option value="Summer">Summer Credit Recovery</option>}
+                    </select>
+                  </div>
                   {currentConfig.hasGradeLevel && <Input label="Grade Level" name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} placeholder="9" />}
                   {currentConfig.hasSchoolYear && <Input label="School Year" name="schoolYear" value={formData.schoolYear} onChange={handleChange} placeholder="2025-2026" />}
                   {currentConfig.hasTeacher && <Input label="Teacher Name" name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Mr. Smith" />}
+                  {currentConfig.hasAdmitDischarge && <Input label="Admit Date" name="admitDate" type="date" value={formData.admitDate} onChange={handleChange} />}
+                  {currentConfig.hasAdmitDischarge && <Input label="Discharge Date" name="dischargeDate" type="date" value={formData.dischargeDate} onChange={handleChange} />}
                   {currentConfig.hasCredits && formData.totalCredits && (
                     <div className="flex flex-col gap-1">
                       <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Credits</label>
@@ -732,6 +810,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
                   <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><BookOpen className="w-4 h-4 text-emerald-500" /> Core Classes</h3>
                   {(() => {
                     const showCr = currentConfig.hasCredits;
+                    const showInstr = currentConfig.hasInstructors;
                     return (
                       <>
                         {showCr && (
@@ -740,13 +819,14 @@ const GradeGenerator = ({ user, activeStudent }) => {
                             <span className="w-16 text-center">Grade</span>
                             <span className="w-14 text-center">%</span>
                             <span className="w-16 text-center">Credits</span>
+                            {showInstr && <span className="w-24 text-center">Instructor</span>}
                           </div>
                         )}
                         <div className="space-y-1">
-                          <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} category="English" showCredits={showCr} />
-                          <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} category="Math" showCredits={showCr} />
-                          <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} category="Science" showCredits={showCr} />
-                          <ClassRow icon={<Globe className="w-4 h-4" />} label="Social Studies" prefix="soc" data={formData} onChange={handleChange} category="Social Studies" showCredits={showCr} />
+                          <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} category="English" showCredits={showCr} showInstructor={showInstr} />
+                          <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} category="Math" showCredits={showCr} showInstructor={showInstr} />
+                          <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} category="Science" showCredits={showCr} showInstructor={showInstr} />
+                          <ClassRow icon={<Globe className="w-4 h-4" />} label="Social Studies" prefix="soc" data={formData} onChange={handleChange} category="Social Studies" showCredits={showCr} showInstructor={showInstr} />
                         </div>
                       </>
                     );
@@ -760,10 +840,11 @@ const GradeGenerator = ({ user, activeStudent }) => {
                       <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><Music className="w-4 h-4 text-purple-500" /> Electives</h3>
                       {(() => {
                         const showCr = currentConfig.hasCredits;
+                        const showInstr = currentConfig.hasInstructors;
                         return (
                           <div className="space-y-1">
-                            <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective category="Electives" showCredits={showCr} />
-                            <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective category="Electives" showCredits={showCr} />
+                            <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective category="Electives" showCredits={showCr} showInstructor={showInstr} />
+                            <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective category="Electives" showCredits={showCr} showInstructor={showInstr} />
                           </div>
                         );
                       })()}
@@ -808,10 +889,11 @@ const GradeGenerator = ({ user, activeStudent }) => {
 };
 
 const Input = ({ label, name, value, onChange, type = "text", placeholder }) => (<div className="flex flex-col gap-1"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label><input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="p-2.5 rounded border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" /></div>);
-const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, category, showCredits }) => {
+const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, category, showCredits, showInstructor }) => {
   const options = category ? COURSE_OPTIONS[category] || [] : [];
   const classFieldName = `${prefix}Class`;
   const creditsFieldName = `${prefix}Credits`;
+  const instructorFieldName = `${prefix}Instructor`;
   const currentValue = data[classFieldName] || '';
 
   return (
@@ -830,6 +912,9 @@ const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, cat
       <input name={`${prefix}Pct`} value={data[`${prefix}Pct`]} onChange={onChange} placeholder="%" className="w-14 p-1.5 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
       {showCredits && (
         <input name={creditsFieldName} value={data[creditsFieldName] || ''} onChange={onChange} placeholder="Cr" type="number" step="0.05" min="0" max="0.99" className="w-16 p-1.5 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
+      )}
+      {showInstructor && (
+        <input name={instructorFieldName} value={data[instructorFieldName] || ''} onChange={onChange} placeholder="Instructor" className="w-24 p-1.5 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
       )}
     </div>
   );

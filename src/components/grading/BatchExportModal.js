@@ -12,6 +12,13 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // Upper level template config for grade-level-based auto-selection
+  const UPPER_LEVEL_CONFIG = {
+    id: 'upper_level',
+    label: 'Upper Level Grade Card',
+    filename: 'Upper Level Grade Card.docx',
+  };
+
   useEffect(() => {
     if (students.length > 0) {
       setSelectedIds(new Set(students.map(s => s.id)));
@@ -52,55 +59,100 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
     setProgress(0);
 
     try {
-      const filename = templateConfig?.filename || 'quarter_card_template.docx';
-      const response = await fetch(`/templates/${filename}`);
-      if (!response.ok) throw new Error(`Template not found: ${filename}`);
+      // Pre-fetch both templates
+      const defaultFilename = templateConfig?.filename || 'quarter_card_template.docx';
+      const upperFilename = UPPER_LEVEL_CONFIG.filename;
 
-      const templateBuffer = await response.arrayBuffer();
+      const [defaultResp, upperResp] = await Promise.all([
+        fetch(`/templates/${defaultFilename}`),
+        fetch(`/templates/${upperFilename}`),
+      ]);
+      if (!defaultResp.ok) throw new Error(`Template not found: ${defaultFilename}`);
+
+      const defaultBuffer = await defaultResp.arrayBuffer();
+      const upperBuffer = upperResp.ok ? await upperResp.arrayBuffer() : null;
+
       const zip = new JSZip();
 
       for (let i = 0; i < selected.length; i++) {
         const student = selected[i];
+        const gradeLevel = parseInt(formData?.gradeLevel || '0', 10);
+        const useUpperLevel = gradeLevel >= 9 && gradeLevel <= 12 && upperBuffer;
 
+        const templateBuffer = useUpperLevel ? upperBuffer : defaultBuffer;
         const docZip = new PizZip(templateBuffer);
-        const doc = new Docxtemplater(docZip, { paragraphLoop: true, linebreaks: true });
+        const doc = new Docxtemplater(docZip, {
+          paragraphLoop: true,
+          linebreaks: true,
+          nullGetter: () => '',
+        });
 
-        const data = {
-          student_name: student.name,
-          grade_level: formData?.gradeLevel || '',
-          school_year: formData?.schoolYear || getCurrentSchoolYear(),
-          quarter_name: formData?.quarterName || getAcademicQuarter(),
-          report_date: formData?.reportDate || new Date().toLocaleDateString(),
-          teacher_name: formData?.teacherName || '',
-          total_credits: formData?.totalCredits || '',
-          comments: `Current grade: ${student.grade != null ? student.grade.toFixed(1) : '0.0'}% (${student.letter || 'N/A'})`,
+        let data;
+        if (useUpperLevel) {
+          const qMap = { Q1: 'q1', Q2: 'q2', Q3: 'q3', Q4: 'q4', Summer: 'q5' };
+          const qPrefix = qMap[formData?.quarterName] || 'q1';
 
-          eng_class: formData?.engClass || 'English',
-          eng_grade: formData?.engGrade || '',
-          eng_pct: formData?.engPct || '',
-          eng_cred: formData?.engCredits || '',
-          math_class: formData?.mathClass || 'Math',
-          math_grade: formData?.mathGrade || '',
-          math_pct: formData?.mathPct || '',
-          math_cred: formData?.mathCredits || '',
-          sci_class: formData?.sciClass || 'Science',
-          sci_grade: formData?.sciGrade || '',
-          sci_pct: formData?.sciPct || '',
-          sci_cred: formData?.sciCredits || '',
-          soc_class: formData?.socClass || 'Social Studies',
-          soc_grade: formData?.socGrade || '',
-          soc_pct: formData?.socPct || '',
-          soc_cred: formData?.socCredits || '',
+          data = {
+            student_name: student.name,
+            school_year: formData?.schoolYear || getCurrentSchoolYear(),
+            grade: formData?.gradeLevel || '',
+            admit_date: formData?.admitDate || '',
+            discharge_date: formData?.dischargeDate || '',
+          };
 
-          elec1_class: formData?.elec1Class || '',
-          elec1_grade: student.letter || '',
-          elec1_pct: student.grade?.toFixed(1) || '',
-          elec1_cred: formData?.elec1Credits || '',
-          elec2_class: formData?.elec2Class || '',
-          elec2_grade: formData?.elec2Grade || '',
-          elec2_pct: formData?.elec2Pct || '',
-          elec2_cred: formData?.elec2Credits || '',
-        };
+          const subjects = [
+            { prefix: 'eng', row: 1 },
+            { prefix: 'math', row: 2 },
+            { prefix: 'sci', row: 3 },
+            { prefix: 'soc', row: 4 },
+            { prefix: 'elec1', row: 5 },
+            { prefix: 'elec2', row: 6 },
+          ];
+
+          subjects.forEach(({ prefix, row }) => {
+            data[`${qPrefix}_r${row}_credits`] = formData?.[`${prefix}Credits`] || '';
+            data[`${qPrefix}_r${row}_course`] = formData?.[`${prefix}Class`] || '';
+            data[`${qPrefix}_r${row}_grade`] = formData?.[`${prefix}Grade`] || '';
+            data[`${qPrefix}_r${row}_instructor`] = formData?.[`${prefix}Instructor`] || '';
+          });
+        } else {
+          data = {
+            student_name: student.name,
+            grade_level: formData?.gradeLevel || '',
+            school_year: formData?.schoolYear || getCurrentSchoolYear(),
+            quarter_name: formData?.quarterName || getAcademicQuarter(),
+            report_date: formData?.reportDate || new Date().toLocaleDateString(),
+            teacher_name: formData?.teacherName || '',
+            total_credits: formData?.totalCredits || '',
+            comments: `Current grade: ${student.grade != null ? student.grade.toFixed(1) : '0.0'}% (${student.letter || 'N/A'})`,
+
+            eng_class: formData?.engClass || 'English',
+            eng_grade: formData?.engGrade || '',
+            eng_pct: formData?.engPct || '',
+            eng_cred: formData?.engCredits || '',
+            math_class: formData?.mathClass || 'Math',
+            math_grade: formData?.mathGrade || '',
+            math_pct: formData?.mathPct || '',
+            math_cred: formData?.mathCredits || '',
+            sci_class: formData?.sciClass || 'Science',
+            sci_grade: formData?.sciGrade || '',
+            sci_pct: formData?.sciPct || '',
+            sci_cred: formData?.sciCredits || '',
+            soc_class: formData?.socClass || 'Social Studies',
+            soc_grade: formData?.socGrade || '',
+            soc_pct: formData?.socPct || '',
+            soc_cred: formData?.socCredits || '',
+
+            elec1_class: formData?.elec1Class || '',
+            elec1_grade: student.letter || '',
+            elec1_pct: student.grade?.toFixed(1) || '',
+            elec1_cred: formData?.elec1Credits || '',
+            elec2_class: formData?.elec2Class || '',
+            elec2_grade: formData?.elec2Grade || '',
+            elec2_pct: formData?.elec2Pct || '',
+            elec2_cred: formData?.elec2Credits || '',
+          };
+        }
 
         doc.render(data);
 
