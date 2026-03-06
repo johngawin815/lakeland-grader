@@ -331,6 +331,8 @@ const GradeGenerator = ({ user, activeStudent }) => {
     }
   };
 
+  const XLSX_UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
+
   const exportToSpreadsheet = async () => {
     setXlsxLoading(true);
     try {
@@ -346,26 +348,96 @@ const GradeGenerator = ({ user, activeStudent }) => {
       // Update title row with current quarter/year
       sheet.getCell('A1').value = `${formData.quarterName} Grade Spreadsheet ${formData.schoolYear}`;
 
-      // Write student data into the first data row (row 4)
-      const row = sheet.getRow(4);
-      row.getCell(2).value = formData.studentName;       // B - Name
-      row.getCell(3).value = formData.gradeLevel;         // C - Grade Level
-      row.getCell(4).value = formData.socClass;            // D - Soc Studies course
-      row.getCell(5).value = formData.socGrade;            // E - Soc Studies grade
-      row.getCell(6).value = formData.sciClass;            // F - Science course
-      row.getCell(7).value = formData.sciGrade;            // G - Science grade
-      row.getCell(8).value = formData.mathClass;           // H - Mathematics course
-      row.getCell(9).value = formData.mathGrade;           // I - Mathematics grade
-      row.getCell(10).value = formData.engClass;           // J - English course
-      row.getCell(11).value = formData.engGrade;           // K - English grade
-      row.getCell(12).value = formData.elec1Grade || '';   // L - PE / Elective 1 grade
-      row.getCell(13).value = formData.elec2Grade || '';   // M - AP / Elective 2 grade
-      row.getCell(14).value = formData.studentName;        // N - Name (repeated)
-      row.commit();
+      // Fetch all active students + their enrollments
+      const allStudents = await databaseService.getAllStudents();
+      const active = allStudents.filter(s => s.active !== false && s.unitName && s.unitName !== 'Discharged');
+
+      const studentRows = await Promise.all(active.map(async (student) => {
+        const name = student.studentName || `${student.firstName || ''} ${student.lastName || ''}`.trim();
+        const row = {
+          name, gradeLevel: student.gradeLevel ? String(student.gradeLevel) : '',
+          unitName: student.unitName || '',
+          socClass: '', socGrade: '', sciClass: '', sciGrade: '',
+          mathClass: '', mathGrade: '', engClass: '', engGrade: '',
+          elec1Grade: '', elec2Grade: '',
+        };
+        try {
+          const enrollments = await databaseService.getStudentEnrollments(student.id);
+          let elecCount = 0;
+          enrollments.forEach(e => {
+            const mapping = SUBJECT_FIELD_MAP[e.subjectArea];
+            if (mapping) {
+              row[mapping.classField] = e.courseName || '';
+              row[mapping.gradeField] = e.letterGrade || '';
+            } else {
+              elecCount++;
+              if (elecCount === 1) row.elec1Grade = e.letterGrade || '';
+              else if (elecCount === 2) row.elec2Grade = e.letterGrade || '';
+            }
+          });
+        } catch { /* skip */ }
+        return row;
+      }));
+
+      // Group by unit
+      const grouped = {};
+      studentRows.forEach(r => {
+        if (!grouped[r.unitName]) grouped[r.unitName] = [];
+        grouped[r.unitName].push(r);
+      });
+      Object.values(grouped).forEach(rows => rows.sort((a, b) => a.name.localeCompare(b.name)));
+
+      // Determine unit order (known units first, then any extras)
+      const unitKeys = XLSX_UNIT_ORDER.filter(u => grouped[u] && grouped[u].length > 0);
+      Object.keys(grouped).forEach(u => { if (!unitKeys.includes(u) && grouped[u].length > 0) unitKeys.push(u); });
+
+      // Write stacked data starting at row 4
+      let currentRow = 4;
+
+      const unitHeaderFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+      const unitHeaderFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+
+      unitKeys.forEach(unitName => {
+        const students = grouped[unitName];
+
+        // Unit header row
+        const headerRow = sheet.getRow(currentRow);
+        sheet.mergeCells(currentRow, 1, currentRow, 14);
+        headerRow.getCell(1).value = `${unitName} (${students.length})`;
+        headerRow.getCell(1).fill = unitHeaderFill;
+        headerRow.getCell(1).font = unitHeaderFont;
+        headerRow.getCell(1).alignment = { vertical: 'middle' };
+        headerRow.height = 24;
+        headerRow.commit();
+        currentRow++;
+
+        // Student rows
+        students.forEach(s => {
+          const row = sheet.getRow(currentRow);
+          row.getCell(2).value = s.name;
+          row.getCell(3).value = s.gradeLevel;
+          row.getCell(4).value = s.socClass;
+          row.getCell(5).value = s.socGrade;
+          row.getCell(6).value = s.sciClass;
+          row.getCell(7).value = s.sciGrade;
+          row.getCell(8).value = s.mathClass;
+          row.getCell(9).value = s.mathGrade;
+          row.getCell(10).value = s.engClass;
+          row.getCell(11).value = s.engGrade;
+          row.getCell(12).value = s.elec1Grade;
+          row.getCell(13).value = s.elec2Grade;
+          row.getCell(14).value = s.name;
+          row.commit();
+          currentRow++;
+        });
+
+        // Empty spacer row between units
+        currentRow++;
+      });
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      saveAs(blob, `${formData.studentName || 'Student'}_GradeSpreadsheet.xlsx`);
+      saveAs(blob, `${formData.quarterName}_GradeSpreadsheet_${formData.schoolYear}.xlsx`);
     } catch (error) {
       console.error('Error exporting spreadsheet:', error);
       alert('Error exporting spreadsheet. Ensure grade_spreadsheet.xlsx exists in public/templates/.');
@@ -631,7 +703,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
       {/* FULL MODE */}
       {mode === 'full' && (
-        <div className={`max-w-6xl mx-auto print:hidden ${showPreview ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : ''}`}>
+        <div className="max-w-6xl mx-auto print:hidden">
 
           {/* FORM */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -706,17 +778,12 @@ const GradeGenerator = ({ user, activeStudent }) => {
               </div>
             </div>
           </div>
-
-          {/* LIVE PREVIEW */}
-          {showPreview && (
-            <div className="lg:sticky lg:top-6 lg:self-start">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Eye className="w-4 h-4" /> Spreadsheet Preview
-              </div>
-              <GradeCardPreview formData={formData} />
-            </div>
-          )}
         </div>
+      )}
+
+      {/* PREVIEW MODAL */}
+      {showPreview && (
+        <GradeCardPreview formData={formData} onClose={() => setShowPreview(false)} />
       )}
 
       {/* PRINT VIEW */}
