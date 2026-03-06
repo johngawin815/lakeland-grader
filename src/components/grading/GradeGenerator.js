@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { FileDown, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2, Eye, EyeOff, Zap, Users, Info, RefreshCw } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2, Eye, EyeOff, Zap, Users, Info, RefreshCw } from 'lucide-react';
 import { useGrading } from '../../context/GradingContext';
 import GradeCardPreview from './GradeCardPreview';
 import BatchExportModal from './BatchExportModal';
@@ -110,6 +111,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const [batchStudents, setBatchStudents] = useState([]);
   const [batchGrades, setBatchGrades] = useState({});
   const [isBatchLoading, setIsBatchLoading] = useState(false);
+  const [xlsxLoading, setXlsxLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     studentName: activeStudent || '',
@@ -329,6 +331,49 @@ const GradeGenerator = ({ user, activeStudent }) => {
     }
   };
 
+  const exportToSpreadsheet = async () => {
+    setXlsxLoading(true);
+    try {
+      const response = await fetch('/templates/grade_spreadsheet.xlsx');
+      if (!response.ok) throw new Error('Could not find template: grade_spreadsheet.xlsx');
+
+      const templateBuffer = await response.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(templateBuffer);
+
+      const sheet = workbook.worksheets[0];
+
+      // Update title row with current quarter/year
+      sheet.getCell('A1').value = `${formData.quarterName} Grade Spreadsheet ${formData.schoolYear}`;
+
+      // Write student data into the first data row (row 4)
+      const row = sheet.getRow(4);
+      row.getCell(2).value = formData.studentName;       // B - Name
+      row.getCell(3).value = formData.gradeLevel;         // C - Grade Level
+      row.getCell(4).value = formData.socClass;            // D - Soc Studies course
+      row.getCell(5).value = formData.socGrade;            // E - Soc Studies grade
+      row.getCell(6).value = formData.sciClass;            // F - Science course
+      row.getCell(7).value = formData.sciGrade;            // G - Science grade
+      row.getCell(8).value = formData.mathClass;           // H - Mathematics course
+      row.getCell(9).value = formData.mathGrade;           // I - Mathematics grade
+      row.getCell(10).value = formData.engClass;           // J - English course
+      row.getCell(11).value = formData.engGrade;           // K - English grade
+      row.getCell(12).value = formData.elec1Grade || '';   // L - PE / Elective 1 grade
+      row.getCell(13).value = formData.elec2Grade || '';   // M - AP / Elective 2 grade
+      row.getCell(14).value = formData.studentName;        // N - Name (repeated)
+      row.commit();
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, `${formData.studentName || 'Student'}_GradeSpreadsheet.xlsx`);
+    } catch (error) {
+      console.error('Error exporting spreadsheet:', error);
+      alert('Error exporting spreadsheet. Ensure grade_spreadsheet.xlsx exists in public/templates/.');
+    } finally {
+      setXlsxLoading(false);
+    }
+  };
+
   const saveToCloud = async () => {
     const nameToSave = mode === 'quick' ? quickData.studentName : formData.studentName;
     if (!nameToSave) return alert("Please enter a student name.");
@@ -475,6 +520,13 @@ const GradeGenerator = ({ user, activeStudent }) => {
             <button onClick={generateDocx} disabled={loading} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors shadow-md disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
               {loading ? 'Generating...' : 'Download .DOCX'}
+            </button>
+          )}
+
+          {mode === 'full' && (
+            <button onClick={exportToSpreadsheet} disabled={xlsxLoading} className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg font-bold text-sm hover:bg-teal-700 transition-colors shadow-md disabled:opacity-50">
+              {xlsxLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+              {xlsxLoading ? 'Exporting...' : 'Export .XLSX'}
             </button>
           )}
         </div>
