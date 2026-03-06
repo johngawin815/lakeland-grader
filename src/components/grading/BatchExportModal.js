@@ -78,22 +78,28 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
           eng_class: formData?.engClass || 'English',
           eng_grade: formData?.engGrade || '',
           eng_pct: formData?.engPct || '',
+          eng_cred: formData?.engCredits || '',
           math_class: formData?.mathClass || 'Math',
           math_grade: formData?.mathGrade || '',
           math_pct: formData?.mathPct || '',
+          math_cred: formData?.mathCredits || '',
           sci_class: formData?.sciClass || 'Science',
           sci_grade: formData?.sciGrade || '',
           sci_pct: formData?.sciPct || '',
+          sci_cred: formData?.sciCredits || '',
           soc_class: formData?.socClass || 'Social Studies',
           soc_grade: formData?.socGrade || '',
           soc_pct: formData?.socPct || '',
+          soc_cred: formData?.socCredits || '',
 
           elec1_class: formData?.elec1Class || '',
           elec1_grade: student.letter || '',
           elec1_pct: student.grade?.toFixed(1) || '',
+          elec1_cred: formData?.elec1Credits || '',
           elec2_class: formData?.elec2Class || '',
           elec2_grade: formData?.elec2Grade || '',
           elec2_pct: formData?.elec2Pct || '',
+          elec2_cred: formData?.elec2Credits || '',
         };
 
         doc.render(data);

@@ -291,13 +291,13 @@ const GradeGenerator = ({ user, activeStudent }) => {
       total_credits: formData.totalCredits,
       comments: formData.comments,
 
-      eng_class: formData.engClass, eng_grade: formData.engGrade, eng_pct: formData.engPct, eng_credits: formData.engCredits,
-      math_class: formData.mathClass, math_grade: formData.mathGrade, math_pct: formData.mathPct, math_credits: formData.mathCredits,
-      sci_class: formData.sciClass, sci_grade: formData.sciGrade, sci_pct: formData.sciPct, sci_credits: formData.sciCredits,
-      soc_class: formData.socClass, soc_grade: formData.socGrade, soc_pct: formData.socPct, soc_credits: formData.socCredits,
+      eng_class: formData.engClass, eng_grade: formData.engGrade, eng_pct: formData.engPct, eng_cred: formData.engCredits,
+      math_class: formData.mathClass, math_grade: formData.mathGrade, math_pct: formData.mathPct, math_cred: formData.mathCredits,
+      sci_class: formData.sciClass, sci_grade: formData.sciGrade, sci_pct: formData.sciPct, sci_cred: formData.sciCredits,
+      soc_class: formData.socClass, soc_grade: formData.socGrade, soc_pct: formData.socPct, soc_cred: formData.socCredits,
 
-      elec1_class: formData.elec1Class, elec1_grade: formData.elec1Grade, elec1_pct: formData.elec1Pct, elec1_credits: formData.elec1Credits,
-      elec2_class: formData.elec2Class, elec2_grade: formData.elec2Grade, elec2_pct: formData.elec2Pct, elec2_credits: formData.elec2Credits,
+      elec1_class: formData.elec1Class, elec1_grade: formData.elec1Grade, elec1_pct: formData.elec1Pct, elec1_cred: formData.elec1Credits,
+      elec2_class: formData.elec2Class, elec2_grade: formData.elec2Grade, elec2_pct: formData.elec2Pct, elec2_cred: formData.elec2Credits,
     };
   };
 
