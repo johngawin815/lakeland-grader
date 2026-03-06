@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, BookOpen, Calculator, FlaskConical, Shapes, Layers, FileText, Video, Printer } from 'lucide-react';
+import { getCurrentSchoolYear } from '../../utils/smartUtils';
 
 // --- CONFIGURATION: CLOUD STORAGE ---
 // The centralized Base URL for your Azure container
@@ -31,7 +32,7 @@ export default function CurriculumMaps() {
       {/* --- HEADER --- */}
       <header className="bg-gradient-to-br from-slate-800 to-black text-white py-12 px-4 text-center shadow-md relative print:hidden">
         <h1 className="text-4xl font-extrabold tracking-tight m-0">LAKELAND CURRICULUM HUB</h1>
-        <p className="opacity-80 mt-1 text-sm tracking-widest">ACADEMIC YEAR 2024-2025</p>
+        <p className="opacity-80 mt-1 text-sm tracking-widest">ACADEMIC YEAR {getCurrentSchoolYear()}</p>
         <button 
             onClick={() => window.print()}
             className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-all print:hidden"
