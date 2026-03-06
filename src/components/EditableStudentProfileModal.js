@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe } from 'lucide-react';
+import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
 import { STATE_OPTIONS } from '../data/stateGraduationRequirements';
 
@@ -39,6 +39,20 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       guardianName: studentData?.guardianName || '',
       guardianPhone: studentData?.guardianPhone || '',
       iepDueDate: studentData?.iepDueDate || '',
+      // New fields
+      healthInsurance: studentData?.healthInsurance || '',
+      therapistName: studentData?.therapistName || '',
+      reasonForAdmit: studentData?.reasonForAdmit || '',
+      guardian1Name: studentData?.guardian1Name || '',
+      guardian1Address: studentData?.guardian1Address || '',
+      guardian1Phone: studentData?.guardian1Phone || '',
+      guardian1Email: studentData?.guardian1Email || '',
+      guardian2Name: studentData?.guardian2Name || '',
+      guardian2Address: studentData?.guardian2Address || '',
+      guardian2Phone: studentData?.guardian2Phone || '',
+      guardian2Email: studentData?.guardian2Email || '',
+      homeSchoolName: studentData?.homeSchoolName || '',
+      homeSchoolAddress: studentData?.homeSchoolAddress || '',
     },
   });
 
@@ -49,6 +63,9 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   const [newMtpNote, setNewMtpNote] = useState('');
   const [showMtpInput, setShowMtpInput] = useState(false);
   const [detailTab, setDetailTab] = useState('profile');
+  const [uploadedDocuments, setUploadedDocuments] = useState(studentData?.uploadedDocuments || []);
+  const [uploadPasscode, setUploadPasscode] = useState(studentData?.uploadPasscode || '');
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const watchedUnit = watch('unitName');
   const watchedIep = watch('iepStatus');
@@ -107,7 +124,23 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         guardianName: formData.guardianName || '',
         guardianPhone: formData.guardianPhone || '',
         iepDueDate: formData.iepStatus === 'yes' ? (formData.iepDueDate || '') : '',
+        // New fields
+        healthInsurance: formData.healthInsurance || '',
+        therapistName: formData.therapistName || '',
+        reasonForAdmit: formData.reasonForAdmit || '',
+        guardian1Name: formData.guardian1Name || '',
+        guardian1Address: formData.guardian1Address || '',
+        guardian1Phone: formData.guardian1Phone || '',
+        guardian1Email: formData.guardian1Email || '',
+        guardian2Name: formData.guardian2Name || '',
+        guardian2Address: formData.guardian2Address || '',
+        guardian2Phone: formData.guardian2Phone || '',
+        guardian2Email: formData.guardian2Email || '',
+        homeSchoolName: formData.homeSchoolName || '',
+        homeSchoolAddress: formData.homeSchoolAddress || '',
         mtpNotes: mtpNotes,
+        uploadPasscode: uploadPasscode,
+        uploadedDocuments: uploadedDocuments,
         lastModified: new Date().toISOString(),
       };
       await databaseService.upsertStudent(updatePayload);
@@ -220,19 +253,125 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
       </div>
 
-      {/* Row 4: Guardian Info */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Row 4: Health & Admission */}
+      <div className="pt-2 border-t border-slate-100">
+        <p className="flex items-center gap-1.5 text-xs font-bold text-rose-600 uppercase tracking-wide mb-2">
+          <Heart className="w-3.5 h-3.5" /> Health & Admission
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={LABEL_CLASS}>
+              <Heart className="w-3.5 h-3.5" />Insurance
+            </label>
+            <input type="text" {...register('healthInsurance')} disabled={isSaving} placeholder="e.g., Medicaid" className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}>
+              <UserCheck className="w-3.5 h-3.5" />Therapist
+            </label>
+            <input type="text" {...register('therapistName')} disabled={isSaving} placeholder="e.g., Dr. Johnson" className={INPUT_CLASS} />
+          </div>
+          <div className="col-span-2">
+            <label className={LABEL_CLASS}>
+              <FileCheck className="w-3.5 h-3.5" />Reason for Admit
+            </label>
+            <textarea {...register('reasonForAdmit')} disabled={isSaving} placeholder="Describe reason for admission..." className={INPUT_CLASS + ' resize-vertical min-h-[50px]'} rows={2} />
+          </div>
+        </div>
+      </div>
+
+      {/* Row 5: Guardian 1 */}
+      <div className="pt-2 border-t border-slate-100">
+        <p className="flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wide mb-2">
+          <Users className="w-3.5 h-3.5" /> Guardian 1
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={LABEL_CLASS}><UserCheck className="w-3.5 h-3.5" />Name</label>
+            <input type="text" {...register('guardian1Name')} disabled={isSaving} placeholder="Full name" className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}><Phone className="w-3.5 h-3.5" />Phone</label>
+            <input type="tel" {...register('guardian1Phone')} disabled={isSaving} placeholder="(555) 123-4567" className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}><Mail className="w-3.5 h-3.5" />Email</label>
+            <input type="email" {...register('guardian1Email')} disabled={isSaving} placeholder="guardian@email.com" className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}><MapPin className="w-3.5 h-3.5" />Address</label>
+            <input type="text" {...register('guardian1Address')} disabled={isSaving} placeholder="123 Main St, City, ST ZIP" className={INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+
+      {/* Row 6: Guardian 2 */}
+      <div className="pt-2 border-t border-slate-100">
+        <p className="flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wide mb-2">
+          <Users className="w-3.5 h-3.5" /> Guardian 2
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={LABEL_CLASS}><UserCheck className="w-3.5 h-3.5" />Name</label>
+            <input type="text" {...register('guardian2Name')} disabled={isSaving} placeholder="Full name" className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}><Phone className="w-3.5 h-3.5" />Phone</label>
+            <input type="tel" {...register('guardian2Phone')} disabled={isSaving} placeholder="(555) 123-4567" className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}><Mail className="w-3.5 h-3.5" />Email</label>
+            <input type="email" {...register('guardian2Email')} disabled={isSaving} placeholder="guardian@email.com" className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}><MapPin className="w-3.5 h-3.5" />Address</label>
+            <input type="text" {...register('guardian2Address')} disabled={isSaving} placeholder="123 Main St, City, ST ZIP" className={INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+
+      {/* Row 7: Home School (expanded) */}
+      <div className="pt-2 border-t border-slate-100">
+        <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 uppercase tracking-wide mb-2">
+          <School className="w-3.5 h-3.5" /> Home School
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={LABEL_CLASS}><School className="w-3.5 h-3.5" />School Name</label>
+            <input type="text" {...register('homeSchoolName')} disabled={isSaving} placeholder="e.g., Lincoln High School" className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}><MapPin className="w-3.5 h-3.5" />School Address</label>
+            <input type="text" {...register('homeSchoolAddress')} disabled={isSaving} placeholder="123 School Rd, City, ST ZIP" className={INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+
+      {/* Row 8: Home School Contact */}
+      <div className="grid grid-cols-4 gap-3">
         <div>
           <label className={LABEL_CLASS}>
-            <Phone className="w-3.5 h-3.5" />Guardian Name
+            <UserCheck className="w-3.5 h-3.5" />Contact Name
           </label>
-          <input type="text" {...register('guardianName')} disabled={isSaving} placeholder="Parent/Guardian" className={INPUT_CLASS} />
+          <input type="text" {...register('homeSchoolContactName')} disabled={isSaving} placeholder="e.g., Jane Smith" className={INPUT_CLASS} />
         </div>
         <div>
           <label className={LABEL_CLASS}>
-            <Phone className="w-3.5 h-3.5" />Guardian Phone
+            <UserCheck className="w-3.5 h-3.5" />Position
           </label>
-          <input type="tel" {...register('guardianPhone')} disabled={isSaving} placeholder="(555) 123-4567" className={INPUT_CLASS} />
+          <input type="text" {...register('homeSchoolContactPosition')} disabled={isSaving} placeholder="e.g., Guidance Counselor" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Phone className="w-3.5 h-3.5" />Contact Number
+          </label>
+          <input type="tel" {...register('homeSchoolContactNumber')} disabled={isSaving} placeholder="(555) 123-4567" className={INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={LABEL_CLASS}>
+            <Mail className="w-3.5 h-3.5" />Email
+          </label>
+          <input type="email" {...register('homeSchoolContactEmail')} disabled={isSaving} placeholder="contact@email.com" className={INPUT_CLASS} />
         </div>
       </div>
 
@@ -355,29 +494,102 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
       </div>
 
-      {/* Row 2: Contact + Guardian + Phone */}
-      <div className="grid grid-cols-3 gap-2">
-        <div>
-          <label className={COMPACT_LABEL_CLASS}>
-            <UserCheck className="w-3 h-3" />Contact
-          </label>
-          <input type="text" {...register('homeSchoolContact')} disabled={isSaving} placeholder="Home school contact" className={COMPACT_INPUT_CLASS} />
-        </div>
-        <div>
-          <label className={COMPACT_LABEL_CLASS}>
-            <Phone className="w-3 h-3" />Guardian
-          </label>
-          <input type="text" {...register('guardianName')} disabled={isSaving} placeholder="Parent/Guardian" className={COMPACT_INPUT_CLASS} />
-        </div>
-        <div>
-          <label className={COMPACT_LABEL_CLASS}>
-            <Phone className="w-3 h-3" />Phone
-          </label>
-          <input type="tel" {...register('guardianPhone')} disabled={isSaving} placeholder="(555) 123-4567" className={COMPACT_INPUT_CLASS} />
+      {/* Row 2: Health & Admission */}
+      <div className="pt-1.5 border-t border-slate-100">
+        <p className="flex items-center gap-1 text-[10px] font-bold text-rose-600 uppercase tracking-wide mb-1">
+          <Heart className="w-3 h-3" /> Health & Admission
+        </p>
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
+          <div>
+            <label className={COMPACT_LABEL_CLASS}><Heart className="w-3 h-3" />Insurance</label>
+            <input type="text" {...register('healthInsurance')} disabled={isSaving} placeholder="e.g., Medicaid" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}><UserCheck className="w-3 h-3" />Therapist</label>
+            <input type="text" {...register('therapistName')} disabled={isSaving} placeholder="Therapist name" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div className="col-span-2 xl:col-span-1">
+            <label className={COMPACT_LABEL_CLASS}><FileCheck className="w-3 h-3" />Reason for Admit</label>
+            <input type="text" {...register('reasonForAdmit')} disabled={isSaving} placeholder="Reason for admission" className={COMPACT_INPUT_CLASS} />
+          </div>
         </div>
       </div>
 
-      {/* Row 3: Unit chips */}
+      {/* Row 3: Guardians */}
+      <div className="pt-1.5 border-t border-slate-100">
+        <p className="flex items-center gap-1 text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-1">
+          <Users className="w-3 h-3" /> Guardians
+        </p>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>Guardian 1 Name</label>
+            <input type="text" {...register('guardian1Name')} disabled={isSaving} placeholder="Full name" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>G1 Phone</label>
+            <input type="tel" {...register('guardian1Phone')} disabled={isSaving} placeholder="(555) 123-4567" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>G1 Email</label>
+            <input type="email" {...register('guardian1Email')} disabled={isSaving} placeholder="email@example.com" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>G1 Address</label>
+            <input type="text" {...register('guardian1Address')} disabled={isSaving} placeholder="Address" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>Guardian 2 Name</label>
+            <input type="text" {...register('guardian2Name')} disabled={isSaving} placeholder="Full name" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>G2 Phone</label>
+            <input type="tel" {...register('guardian2Phone')} disabled={isSaving} placeholder="(555) 123-4567" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>G2 Email</label>
+            <input type="email" {...register('guardian2Email')} disabled={isSaving} placeholder="email@example.com" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>G2 Address</label>
+            <input type="text" {...register('guardian2Address')} disabled={isSaving} placeholder="Address" className={COMPACT_INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+
+      {/* Row 4: Home School */}
+      <div className="pt-1.5 border-t border-slate-100">
+        <p className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 uppercase tracking-wide mb-1">
+          <School className="w-3 h-3" /> Home School
+        </p>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>School Name</label>
+            <input type="text" {...register('homeSchoolName')} disabled={isSaving} placeholder="School name" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>School Address</label>
+            <input type="text" {...register('homeSchoolAddress')} disabled={isSaving} placeholder="School address" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>Contact Name</label>
+            <input type="text" {...register('homeSchoolContactName')} disabled={isSaving} placeholder="Contact person" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>Position</label>
+            <input type="text" {...register('homeSchoolContactPosition')} disabled={isSaving} placeholder="e.g., Counselor" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>Contact Phone</label>
+            <input type="tel" {...register('homeSchoolContactNumber')} disabled={isSaving} placeholder="(555) 123-4567" className={COMPACT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={COMPACT_LABEL_CLASS}>Contact Email</label>
+            <input type="email" {...register('homeSchoolContactEmail')} disabled={isSaving} placeholder="contact@school.edu" className={COMPACT_INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+
+      {/* Row 5: Unit chips */}
       <div>
         <label className={COMPACT_LABEL_CLASS}>
           <Building2 className="w-3 h-3" />Unit
@@ -506,6 +718,175 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           ))}
         </div>
       )}
+    </div>
+  );
+
+  // --- Document Upload Helpers ---
+  const generatePasscode = async () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    setUploadPasscode(code);
+    // Save immediately so the passcode is available for the upload portal
+    try {
+      await databaseService.upsertStudent({
+        ...studentData,
+        uploadPasscode: code,
+        uploadedDocuments,
+        lastModified: new Date().toISOString(),
+      });
+      if (user) {
+        await databaseService.logAudit(user, 'GenerateUploadPasscode', `Generated upload passcode for ${studentData.studentName}`);
+      }
+    } catch (err) {
+      console.error('Failed to save passcode:', err);
+    }
+  };
+
+  const copyUploadLink = () => {
+    const link = `${window.location.origin}/upload/${studentData.id}`;
+    navigator.clipboard.writeText(`Upload Link: ${link}\nPasscode: ${uploadPasscode}`);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`File "${file.name}" exceeds the 5MB limit.`);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setUploadedDocuments(prev => [...prev, {
+          id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          fileName: file.name,
+          fileSize: file.size,
+          uploadedBy: user?.name || 'Lakeland Staff',
+          uploadedAt: new Date().toISOString(),
+          dataUrl: reader.result,
+        }]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const removeDocument = (docId) => {
+    setUploadedDocuments(prev => prev.filter(d => d.id !== docId));
+  };
+
+  const downloadDocument = (doc) => {
+    const a = document.createElement('a');
+    a.href = doc.dataUrl;
+    a.download = doc.fileName;
+    a.click();
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  // --- Documents Tab Content ---
+  const documentsContent = (
+    <div className="space-y-4">
+      {/* Secure Upload Link Section */}
+      <div className="bg-indigo-50/50 border border-indigo-200/60 rounded-xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link2 className="w-4 h-4 text-indigo-600" />
+            <span className="text-xs font-bold text-indigo-800 uppercase tracking-wide">Secure Upload Link</span>
+          </div>
+          {!uploadPasscode ? (
+            <button type="button" onClick={generatePasscode}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition shadow-sm">
+              <Link2 className="w-3.5 h-3.5" />
+              Generate Upload Link
+            </button>
+          ) : (
+            <button type="button" onClick={generatePasscode}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-100 hover:bg-indigo-200 px-3 py-1.5 rounded-lg transition">
+              Regenerate
+            </button>
+          )}
+        </div>
+        {uploadPasscode && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 bg-white rounded-lg px-3 py-2.5 border border-indigo-200/60">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Passcode</p>
+                <p className="text-lg font-mono font-extrabold text-indigo-700 tracking-[0.2em]">{uploadPasscode}</p>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Upload URL</p>
+                <p className="text-xs text-slate-600 font-medium truncate">{window.location.origin}/upload/{studentData.id}</p>
+              </div>
+              <button type="button" onClick={copyUploadLink}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition ${
+                  copiedLink ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}>
+                <Copy className="w-3.5 h-3.5" />
+                {copiedLink ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <p className="text-[10px] text-indigo-600/70 font-medium">
+              Share this link and passcode with the home school contact so they can upload educational records.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Upload Area (for Lakeland staff) */}
+      <div className="border-2 border-dashed border-slate-200 hover:border-indigo-300 rounded-xl p-6 text-center transition-colors">
+        <Upload className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+        <p className="text-sm font-medium text-slate-500 mb-2">Drop files here or click to upload</p>
+        <p className="text-xs text-slate-400 mb-3">PDF, images, Word documents (max 5MB each)</p>
+        <label className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold cursor-pointer hover:bg-indigo-700 transition shadow-sm">
+          <Upload className="w-3.5 h-3.5" />
+          Choose Files
+          <input type="file" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" onChange={handleFileUpload} className="sr-only" />
+        </label>
+      </div>
+
+      {/* Uploaded Documents List */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <FileText className="w-4 h-4 text-slate-500" />
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Uploaded Records</span>
+          <span className="text-xs text-slate-400 font-medium">{uploadedDocuments.length} file{uploadedDocuments.length !== 1 ? 's' : ''}</span>
+        </div>
+        {uploadedDocuments.length === 0 ? (
+          <div className="text-center py-6">
+            <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-sm text-slate-400 font-medium">No documents uploaded yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {uploadedDocuments.map(doc => (
+              <div key={doc.id} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2.5 border border-slate-200/60 group/doc">
+                <FileText className="w-5 h-5 text-indigo-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-700 truncate">{doc.fileName}</p>
+                  <p className="text-xs text-slate-400">
+                    {formatFileSize(doc.fileSize)} &middot; {doc.uploadedBy} &middot; {new Date(doc.uploadedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <button type="button" onClick={() => downloadDocument(doc)}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                  <Download className="w-4 h-4" />
+                </button>
+                <button type="button" onClick={() => removeDocument(doc.id)}
+                  className="opacity-0 group-hover/doc:opacity-100 p-1.5 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -648,6 +1029,25 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           </span>
         )}
       </button>
+      <button type="button"
+        onClick={() => setDetailTab('documents')}
+        className={`px-5 py-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+          detailTab === 'documents'
+            ? 'border-indigo-600 text-indigo-600'
+            : 'border-transparent text-slate-400 hover:text-slate-600'
+        }`}
+      >
+        Documents
+        {uploadedDocuments.length > 0 && (
+          <span className={`text-xs min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-full font-bold ${
+            detailTab === 'documents'
+              ? 'bg-indigo-100 text-indigo-700'
+              : 'bg-slate-100 text-slate-500'
+          }`}>
+            {uploadedDocuments.length}
+          </span>
+        )}
+      </button>
     </div>
   );
 
@@ -750,6 +1150,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           {statusMessages}
           {detailTab === 'profile' && profileContent}
           {detailTab === 'notes' && notesContent}
+          {detailTab === 'documents' && documentsContent}
         </div>
         {footer}
       </form>
@@ -769,6 +1170,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           {statusMessages}
           {profileContent}
           {notesContent}
+          {documentsContent}
 
           {/* Action Buttons */}
           <div className="flex gap-2.5 pt-1">

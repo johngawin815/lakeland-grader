@@ -121,10 +121,10 @@ const UnitRoster = ({ defaultUnit, user }) => {
             const counts = {};
             UNIT_CONFIG.forEach(u => { counts[u.key] = 0; });
             all.forEach(s => {
-                if (s.active !== false && counts[s.unitName] !== undefined) {
+                if (s.active === false) {
+                    counts["Discharged"] = (counts["Discharged"] || 0) + 1;
+                } else if (counts[s.unitName] !== undefined) {
                     counts[s.unitName]++;
-                } else if (s.active === false) {
-                    counts["Discharged"]++;
                 }
             });
             setUnitCounts(counts);
@@ -139,7 +139,12 @@ const UnitRoster = ({ defaultUnit, user }) => {
     const fetchRoster = async () => {
         setLoading(true);
         try {
-            const students = await databaseService.getStudentsByUnit(selectedUnit);
+            let students;
+            if (selectedUnit === 'Discharged') {
+                students = await databaseService.getDischargedStudents();
+            } else {
+                students = await databaseService.getStudentsByUnit(selectedUnit);
+            }
             if (students && students.length > 0) {
                 setRoster(students);
             } else {
@@ -184,14 +189,39 @@ const UnitRoster = ({ defaultUnit, user }) => {
                 admitDate: formData.admitDate || new Date().toISOString().split('T')[0],
                 expectedDischargeDate: formData.expectedDischargeDate || null,
                 district: formData.district || '',
+                homeState: formData.homeState || '',
                 iep: formData.iepStatus === 'Yes' ? 'Yes' : 'No',
                 active: true,
                 lastModified: new Date().toISOString(),
+                // Health & Admission
+                healthInsurance: formData.healthInsurance || '',
+                therapistName: formData.therapistName || '',
+                reasonForAdmit: formData.reasonForAdmit || '',
+                // Guardian 1
+                guardian1Name: formData.guardian1Name || '',
+                guardian1Address: formData.guardian1Address || '',
+                guardian1Phone: formData.guardian1Phone || '',
+                guardian1Email: formData.guardian1Email || '',
+                // Guardian 2
+                guardian2Name: formData.guardian2Name || '',
+                guardian2Address: formData.guardian2Address || '',
+                guardian2Phone: formData.guardian2Phone || '',
+                guardian2Email: formData.guardian2Email || '',
+                // Home School
+                homeSchoolName: formData.homeSchoolName || '',
+                homeSchoolAddress: formData.homeSchoolAddress || '',
+                homeSchoolContactName: formData.homeSchoolContactName || '',
+                homeSchoolContactPosition: formData.homeSchoolContactPosition || '',
+                homeSchoolContactNumber: formData.homeSchoolContactPhone || '',
+                homeSchoolContactEmail: formData.homeSchoolContactEmail || '',
+                // Legacy fields
                 homeSchoolContact: '',
-                guardianName: '',
-                guardianPhone: '',
+                guardianName: formData.guardian1Name || '',
+                guardianPhone: formData.guardian1Phone || '',
                 iepDueDate: '',
                 mtpNotes: [],
+                uploadPasscode: '',
+                uploadedDocuments: [],
             };
             await databaseService.upsertStudent(newStudent);
             if (user) {

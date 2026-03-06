@@ -242,6 +242,9 @@ export const mockDatabaseService = {
   getStudentsByUnit: async (unitName) =>
     [...students.values()].filter(s => s.unitName === unitName),
 
+  getDischargedStudents: async () =>
+    [...students.values()].filter(s => s.active === false),
+
   // === KTEA REPORTS ===
   addKteaReport: async (item) => {
     const id = `ktea-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;

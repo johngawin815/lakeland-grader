@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
   Calendar, ScrollText,
-  FileCheck, NotebookPen
+  FileCheck, NotebookPen, Upload
 } from 'lucide-react';
 
 // --- MODULE IMPORTS ---
@@ -21,6 +21,8 @@ import WorkbookGenerator from '../workbook/WorkbookGenerator';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 
 // --- HELPER FUNCTIONS ---
+
+import DocumentUploadPortal from '../upload/DocumentUploadPortal';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -141,6 +143,7 @@ const HubShell = () => {
   const [currentView, setCurrentView] = useState("home");
   const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
   const [dashboardInitialTab, setDashboardInitialTab] = useState(null);
+  const [showUploadPortal, setShowUploadPortal] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -163,7 +166,10 @@ const HubShell = () => {
   };
 
   if (!user) {
-    return <LoginScreen onLogin={handleLogin} />;
+    if (showUploadPortal) {
+      return <DocumentUploadPortal onBack={() => setShowUploadPortal(false)} />;
+    }
+    return <LoginScreen onLogin={handleLogin} onUploadPortal={() => setShowUploadPortal(true)} />;
   }
 
   const visibleModules = modules.filter(m => !m.adminOnly || user.role === 'admin');
@@ -335,7 +341,7 @@ const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay }) => (
   </div>
 );
 
-const LoginScreen = ({ onLogin }) => (
+const LoginScreen = ({ onLogin, onUploadPortal }) => (
   <div className="w-full h-screen flex items-center justify-center bg-slate-900">
     <div className="bg-white/10 backdrop-blur-lg shadow-2xl shadow-black/20 border border-white/20 rounded-2xl p-8 w-full max-w-sm text-center">
       <School size={48} className="text-indigo-400 mx-auto mb-4" />
@@ -347,6 +353,17 @@ const LoginScreen = ({ onLogin }) => (
       >
         Sign in with Microsoft
       </button>
+
+      <div className="border-t border-white/10 mt-6 pt-5">
+        <button
+          onClick={onUploadPortal}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-indigo-400 transition-colors"
+        >
+          <Upload size={14} />
+          Upload Educational Records
+        </button>
+        <p className="text-[11px] text-slate-500 mt-1.5">For home school contacts with a passcode</p>
+      </div>
     </div>
   </div>
 );

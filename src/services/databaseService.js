@@ -52,6 +52,12 @@ function buildRealService() {
         .fetchAll();
       return resources;
     },
+    getDischargedStudents: async () => {
+      const { resources } = await studentsContainer.items
+        .query("SELECT * FROM c WHERE c.active = false")
+        .fetchAll();
+      return resources;
+    },
     addKteaReport: async (item) => {
       const { resource } = await kteaContainer.items.create({ ...item, id: undefined, timestamp: new Date().toISOString() });
       return resource;
