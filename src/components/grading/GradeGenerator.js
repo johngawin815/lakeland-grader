@@ -424,9 +424,12 @@ const GradeGenerator = ({ user, activeStudent }) => {
         const row = {
           name, gradeLevel: student.gradeLevel ? String(student.gradeLevel) : '',
           unitName: student.unitName || '',
-          socClass: '', socGrade: '', sciClass: '', sciGrade: '',
-          mathClass: '', mathGrade: '', engClass: '', engGrade: '',
-          elec1Grade: '', elec2Grade: '',
+          socClass: '', socGrade: '', socPct: '',
+          sciClass: '', sciGrade: '', sciPct: '',
+          mathClass: '', mathGrade: '', mathPct: '',
+          engClass: '', engGrade: '', engPct: '',
+          elec1Grade: '', elec1Pct: '',
+          elec2Grade: '', elec2Pct: '',
         };
         try {
           const enrollments = await databaseService.getStudentEnrollments(student.id);
@@ -436,10 +439,16 @@ const GradeGenerator = ({ user, activeStudent }) => {
             if (mapping) {
               row[mapping.classField] = e.courseName || '';
               row[mapping.gradeField] = e.letterGrade || '';
+              row[mapping.pctField] = e.percentage != null ? String(e.percentage) : '';
             } else {
               elecCount++;
-              if (elecCount === 1) row.elec1Grade = e.letterGrade || '';
-              else if (elecCount === 2) row.elec2Grade = e.letterGrade || '';
+              if (elecCount === 1) {
+                row.elec1Grade = e.letterGrade || '';
+                row.elec1Pct = e.percentage != null ? String(e.percentage) : '';
+              } else if (elecCount === 2) {
+                row.elec2Grade = e.letterGrade || '';
+                row.elec2Pct = e.percentage != null ? String(e.percentage) : '';
+              }
             }
           });
         } catch { /* skip */ }
@@ -469,7 +478,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
         // Unit header row
         const headerRow = sheet.getRow(currentRow);
-        sheet.mergeCells(currentRow, 1, currentRow, 14);
+        sheet.mergeCells(currentRow, 1, currentRow, 20);
         headerRow.getCell(1).value = `${unitName} (${students.length})`;
         headerRow.getCell(1).fill = unitHeaderFill;
         headerRow.getCell(1).font = unitHeaderFont;
@@ -485,15 +494,21 @@ const GradeGenerator = ({ user, activeStudent }) => {
           row.getCell(3).value = s.gradeLevel;
           row.getCell(4).value = s.socClass;
           row.getCell(5).value = s.socGrade;
-          row.getCell(6).value = s.sciClass;
-          row.getCell(7).value = s.sciGrade;
-          row.getCell(8).value = s.mathClass;
-          row.getCell(9).value = s.mathGrade;
-          row.getCell(10).value = s.engClass;
-          row.getCell(11).value = s.engGrade;
-          row.getCell(12).value = s.elec1Grade;
-          row.getCell(13).value = s.elec2Grade;
-          row.getCell(14).value = s.name;
+          row.getCell(6).value = s.socPct ? `${s.socPct}%` : '';
+          row.getCell(7).value = s.sciClass;
+          row.getCell(8).value = s.sciGrade;
+          row.getCell(9).value = s.sciPct ? `${s.sciPct}%` : '';
+          row.getCell(10).value = s.mathClass;
+          row.getCell(11).value = s.mathGrade;
+          row.getCell(12).value = s.mathPct ? `${s.mathPct}%` : '';
+          row.getCell(13).value = s.engClass;
+          row.getCell(14).value = s.engGrade;
+          row.getCell(15).value = s.engPct ? `${s.engPct}%` : '';
+          row.getCell(16).value = s.elec1Grade;
+          row.getCell(17).value = s.elec1Pct ? `${s.elec1Pct}%` : '';
+          row.getCell(18).value = s.elec2Grade;
+          row.getCell(19).value = s.elec2Pct ? `${s.elec2Pct}%` : '';
+          row.getCell(20).value = s.name;
           row.commit();
           currentRow++;
         });
@@ -519,6 +534,52 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
     setSaving(true);
     try {
+      // --- Persist to Enrollments (same pattern as ClassGradebook) ---
+      if (mode === 'full') {
+        const students = await databaseService.findStudentByName(nameToSave.trim());
+        if (!students || students.length === 0) {
+          alert('Student not found in database. Please check the name and try again.');
+          setSaving(false);
+          return;
+        }
+        const student = students[0];
+
+        const ENROLLMENT_SUBJECTS = [
+          { prefix: 'eng', subjectArea: 'English' },
+          { prefix: 'math', subjectArea: 'Math' },
+          { prefix: 'sci', subjectArea: 'Science' },
+          { prefix: 'soc', subjectArea: 'Social Studies' },
+          { prefix: 'elec1', subjectArea: 'Elective' },
+          { prefix: 'elec2', subjectArea: 'Elective' },
+        ];
+
+        const enrollmentPromises = ENROLLMENT_SUBJECTS
+          .filter(({ prefix }) => formData[`${prefix}Grade`] || formData[`${prefix}Class`])
+          .map(({ prefix, subjectArea }) => {
+            const courseId = `manual-${prefix}`;
+            return databaseService.saveCourseGrade({
+              id: `${student.id}-${courseId}`,
+              studentId: student.id,
+              courseId,
+              courseName: formData[`${prefix}Class`] || '',
+              subjectArea,
+              teacherName: formData[`${prefix}Instructor`] || user?.name || '',
+              letterGrade: formData[`${prefix}Grade`] || '',
+              percentage: formData[`${prefix}Pct`] ? parseFloat(formData[`${prefix}Pct`]) : null,
+              credits: formData[`${prefix}Credits`] ? parseFloat(formData[`${prefix}Credits`]) : null,
+              term: formData.schoolYear || '',
+              status: 'Active',
+            });
+          });
+
+        try {
+          await Promise.all(enrollmentPromises);
+        } catch (enrollErr) {
+          console.error('Error saving enrollments:', enrollErr);
+        }
+      }
+
+      // --- Also save to KTEA_Reports as audit trail ---
       const record = mode === 'quick'
         ? {
             ...quickData,
