@@ -711,9 +711,9 @@ const GradeGenerator = ({ user, activeStudent }) => {
           {showPreview && (
             <div className="lg:sticky lg:top-6 lg:self-start">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Eye className="w-4 h-4" /> Live Preview
+                <Eye className="w-4 h-4" /> Spreadsheet Preview
               </div>
-              <GradeCardPreview formData={formData} templateConfig={currentConfig} />
+              <GradeCardPreview formData={formData} />
             </div>
           )}
         </div>

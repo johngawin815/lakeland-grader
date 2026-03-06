@@ -1,123 +1,117 @@
 import React from 'react';
 
-const GradeCardPreview = ({ formData, templateConfig }) => {
+const GradeCardPreview = ({ formData }) => {
   const getGradeColor = (grade) => {
-    if (!grade) return 'text-slate-400';
+    if (!grade) return '';
     const g = grade.toUpperCase().charAt(0);
-    if (g === 'A') return 'text-emerald-600';
-    if (g === 'B') return 'text-blue-600';
-    if (g === 'C') return 'text-amber-600';
-    if (g === 'D') return 'text-orange-600';
-    if (g === 'F') return 'text-rose-600';
-    return 'text-slate-600';
+    if (g === 'A') return 'text-emerald-700 bg-emerald-50';
+    if (g === 'B') return 'text-blue-700 bg-blue-50';
+    if (g === 'C') return 'text-amber-700 bg-amber-50';
+    if (g === 'D') return 'text-orange-700 bg-orange-50';
+    if (g === 'F') return 'text-rose-700 bg-rose-50';
+    if (g === 'P') return 'text-emerald-700 bg-emerald-50';
+    return '';
   };
 
-  const getGradeBg = (grade) => {
-    if (!grade) return 'bg-slate-50';
-    const g = grade.toUpperCase().charAt(0);
-    if (g === 'A') return 'bg-emerald-50';
-    if (g === 'B') return 'bg-blue-50';
-    if (g === 'C') return 'bg-amber-50';
-    if (g === 'D') return 'bg-orange-50';
-    if (g === 'F') return 'bg-rose-50';
-    return 'bg-slate-50';
-  };
+  const title = `${formData.quarterName} Grade Spreadsheet ${formData.schoolYear}`;
 
-  const showCredits = templateConfig?.hasCredits;
-
-  const coreClasses = [
-    { label: formData.engClass || 'English', grade: formData.engGrade, pct: formData.engPct, credits: formData.engCredits },
-    { label: formData.mathClass || 'Math', grade: formData.mathGrade, pct: formData.mathPct, credits: formData.mathCredits },
-    { label: formData.sciClass || 'Science', grade: formData.sciGrade, pct: formData.sciPct, credits: formData.sciCredits },
-    { label: formData.socClass || 'Social Studies', grade: formData.socGrade, pct: formData.socPct, credits: formData.socCredits },
+  const rows = [
+    {
+      name: formData.studentName,
+      grade: formData.gradeLevel,
+      socCourse: formData.socClass,
+      socGrade: formData.socGrade,
+      sciCourse: formData.sciClass,
+      sciGrade: formData.sciGrade,
+      mathCourse: formData.mathClass,
+      mathGrade: formData.mathGrade,
+      engCourse: formData.engClass,
+      engGrade: formData.engGrade,
+      pe: formData.elec1Grade || '',
+      ap: formData.elec2Grade || '',
+    },
   ];
 
-  const electives = templateConfig?.hasElectives ? [
-    { label: formData.elec1Class, grade: formData.elec1Grade, pct: formData.elec1Pct, credits: formData.elec1Credits },
-    { label: formData.elec2Class, grade: formData.elec2Grade, pct: formData.elec2Pct, credits: formData.elec2Credits },
-  ].filter(e => e.label || e.grade) : [];
+  const Cell = ({ children, className = '', header = false }) => (
+    <td className={`border border-slate-300 px-1.5 py-1 ${header ? 'font-bold text-[10px] uppercase tracking-wide text-slate-500 bg-slate-100' : 'text-xs text-slate-700'} ${className}`}>
+      {children || <span className="text-slate-300">&mdash;</span>}
+    </td>
+  );
 
-  const allClasses = [...coreClasses, ...electives];
+  const GradeCell = ({ value }) => (
+    <td className={`border border-slate-300 px-1.5 py-1 text-xs text-center font-bold ${getGradeColor(value)}`}>
+      {value || <span className="text-slate-300">&mdash;</span>}
+    </td>
+  );
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-lg overflow-hidden text-sm">
-      {/* Header Band */}
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-6">
-        <div className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-200 mb-1">
-          {templateConfig?.label || 'Grade Report'}
-        </div>
-        <h2 className="text-2xl font-black tracking-tight">
-          {formData.studentName || 'Student Name'}
-        </h2>
-        <div className="flex flex-wrap gap-x-6 gap-y-1 mt-3 text-xs text-indigo-200">
-          {formData.quarterName && <span><strong className="text-white">{formData.quarterName}</strong></span>}
-          {templateConfig?.hasSchoolYear && formData.schoolYear && <span>{formData.schoolYear}</span>}
-          {templateConfig?.hasGradeLevel && formData.gradeLevel && <span>Grade {formData.gradeLevel}</span>}
-          {formData.reportDate && <span>{formData.reportDate}</span>}
-        </div>
-      </div>
-
-      {/* Info Grid */}
-      <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-200/60 flex flex-wrap gap-x-8 gap-y-2 text-xs">
-        {templateConfig?.hasTeacher && formData.teacherName && (
-          <div><span className="text-slate-400 font-semibold">Teacher:</span> <span className="text-slate-700 font-bold">{formData.teacherName}</span></div>
-        )}
-        {templateConfig?.hasCredits && formData.totalCredits && (
-          <div><span className="text-slate-400 font-semibold">Credits:</span> <span className="text-slate-700 font-bold">{formData.totalCredits}</span></div>
-        )}
-      </div>
-
-      {/* Grades Table */}
-      <div className="p-6">
-        <table className="w-full">
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-xs" style={{ minWidth: 520 }}>
+          {/* Title row */}
           <thead>
-            <tr className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              <th className="text-left pb-3 pl-3">Class</th>
-              <th className="text-center pb-3 w-20">Grade</th>
-              <th className="text-center pb-3 w-20">%</th>
-              {showCredits && <th className="text-center pb-3 w-16">Cr</th>}
+            <tr>
+              <th colSpan={14} className="bg-slate-800 text-white text-xs font-bold py-2 px-3 text-left tracking-wide">
+                {title}
+              </th>
+            </tr>
+            {/* Empty spacer row */}
+            <tr>
+              <td colSpan={14} className="border border-slate-300 bg-white h-3"></td>
+            </tr>
+            {/* Column headers */}
+            <tr className="bg-slate-100">
+              <Cell header className="w-2"></Cell>
+              <Cell header>Name</Cell>
+              <Cell header className="text-center">Gr</Cell>
+              <Cell header>Soc Studies</Cell>
+              <Cell header className="text-center">Grade</Cell>
+              <Cell header>Science</Cell>
+              <Cell header className="text-center">Grade</Cell>
+              <Cell header>Mathematics</Cell>
+              <Cell header className="text-center">Grade</Cell>
+              <Cell header>English</Cell>
+              <Cell header className="text-center">Grade</Cell>
+              <Cell header className="text-center">PE</Cell>
+              <Cell header className="text-center">AP</Cell>
+              <Cell header>Name</Cell>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            {allClasses.map((cls, i) => (
-              <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                <td className="py-3 pl-3 font-bold text-slate-700">{cls.label || '—'}</td>
-                <td className="py-3 text-center">
-                  {cls.grade ? (
-                    <span className={`inline-block px-3 py-1 rounded-lg font-black text-xs ${getGradeBg(cls.grade)} ${getGradeColor(cls.grade)}`}>
-                      {cls.grade}
-                    </span>
-                  ) : (
-                    <span className="text-slate-300">—</span>
-                  )}
-                </td>
-                <td className="py-3 text-center font-mono font-bold text-slate-500">
-                  {cls.pct ? `${cls.pct}%` : '—'}
-                </td>
-                {showCredits && (
-                  <td className="py-3 text-center font-mono font-bold text-slate-500">
-                    {cls.credits || '—'}
-                  </td>
-                )}
+          <tbody>
+            {rows.map((r, i) => {
+              const hasData = r.name || r.socGrade || r.sciGrade || r.mathGrade || r.engGrade;
+              return (
+                <tr key={i} className={hasData ? 'bg-white' : 'bg-slate-50/50'}>
+                  <Cell className="w-2"></Cell>
+                  <Cell className="font-semibold whitespace-nowrap">{r.name}</Cell>
+                  <Cell className="text-center font-mono">{r.grade}</Cell>
+                  <Cell className="whitespace-nowrap">{r.socCourse}</Cell>
+                  <GradeCell value={r.socGrade} />
+                  <Cell className="whitespace-nowrap">{r.sciCourse}</Cell>
+                  <GradeCell value={r.sciGrade} />
+                  <Cell className="whitespace-nowrap">{r.mathCourse}</Cell>
+                  <GradeCell value={r.mathGrade} />
+                  <Cell className="whitespace-nowrap">{r.engCourse}</Cell>
+                  <GradeCell value={r.engGrade} />
+                  <GradeCell value={r.pe} />
+                  <GradeCell value={r.ap} />
+                  <Cell className="font-semibold whitespace-nowrap">{r.name}</Cell>
+                </tr>
+              );
+            })}
+            {/* Empty placeholder rows to look like a real spreadsheet */}
+            {[...Array(4)].map((_, i) => (
+              <tr key={`empty-${i}`} className="bg-white">
+                {[...Array(14)].map((_, j) => (
+                  <td key={j} className="border border-slate-200 px-1.5 py-1.5 text-xs text-slate-300">&nbsp;</td>
+                ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Comments */}
-      {formData.comments && (
-        <div className="px-6 pb-6">
-          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/60">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Comments</div>
-            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{formData.comments}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="px-6 py-3 bg-slate-50/70 border-t border-slate-200/60 text-center text-xs text-slate-400 font-medium">
-        Lakeland Regional School &middot; Generated {new Date().toLocaleDateString()}
+      <div className="px-3 py-2 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-400 font-medium">
+        Preview of grade_spreadsheet.xlsx export
       </div>
     </div>
   );
