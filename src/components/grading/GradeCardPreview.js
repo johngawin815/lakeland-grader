@@ -23,16 +23,18 @@ const GradeCardPreview = ({ formData, templateConfig }) => {
     return 'bg-slate-50';
   };
 
+  const showCredits = templateConfig?.hasCredits;
+
   const coreClasses = [
-    { label: formData.engClass || 'English', grade: formData.engGrade, pct: formData.engPct },
-    { label: formData.mathClass || 'Math', grade: formData.mathGrade, pct: formData.mathPct },
-    { label: formData.sciClass || 'Science', grade: formData.sciGrade, pct: formData.sciPct },
-    { label: formData.socClass || 'Social Studies', grade: formData.socGrade, pct: formData.socPct },
+    { label: formData.engClass || 'English', grade: formData.engGrade, pct: formData.engPct, credits: formData.engCredits },
+    { label: formData.mathClass || 'Math', grade: formData.mathGrade, pct: formData.mathPct, credits: formData.mathCredits },
+    { label: formData.sciClass || 'Science', grade: formData.sciGrade, pct: formData.sciPct, credits: formData.sciCredits },
+    { label: formData.socClass || 'Social Studies', grade: formData.socGrade, pct: formData.socPct, credits: formData.socCredits },
   ];
 
   const electives = templateConfig?.hasElectives ? [
-    { label: formData.elec1Class, grade: formData.elec1Grade, pct: formData.elec1Pct },
-    { label: formData.elec2Class, grade: formData.elec2Grade, pct: formData.elec2Pct },
+    { label: formData.elec1Class, grade: formData.elec1Grade, pct: formData.elec1Pct, credits: formData.elec1Credits },
+    { label: formData.elec2Class, grade: formData.elec2Grade, pct: formData.elec2Pct, credits: formData.elec2Credits },
   ].filter(e => e.label || e.grade) : [];
 
   const allClasses = [...coreClasses, ...electives];
@@ -73,6 +75,7 @@ const GradeCardPreview = ({ formData, templateConfig }) => {
               <th className="text-left pb-3 pl-3">Class</th>
               <th className="text-center pb-3 w-20">Grade</th>
               <th className="text-center pb-3 w-20">%</th>
+              {showCredits && <th className="text-center pb-3 w-16">Cr</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -91,6 +94,11 @@ const GradeCardPreview = ({ formData, templateConfig }) => {
                 <td className="py-3 text-center font-mono font-bold text-slate-500">
                   {cls.pct ? `${cls.pct}%` : '—'}
                 </td>
+                {showCredits && (
+                  <td className="py-3 text-center font-mono font-bold text-slate-500">
+                    {cls.credits || '—'}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

@@ -10,10 +10,10 @@ import BatchExportModal from './BatchExportModal';
 
 // --- SUBJECT AREA → FORM FIELD MAPPING ---
 const SUBJECT_FIELD_MAP = {
-  'English': { classField: 'engClass', gradeField: 'engGrade', pctField: 'engPct' },
-  'Math': { classField: 'mathClass', gradeField: 'mathGrade', pctField: 'mathPct' },
-  'Science': { classField: 'sciClass', gradeField: 'sciGrade', pctField: 'sciPct' },
-  'Social Studies': { classField: 'socClass', gradeField: 'socGrade', pctField: 'socPct' },
+  'English': { classField: 'engClass', gradeField: 'engGrade', pctField: 'engPct', creditsField: 'engCredits' },
+  'Math': { classField: 'mathClass', gradeField: 'mathGrade', pctField: 'mathPct', creditsField: 'mathCredits' },
+  'Science': { classField: 'sciClass', gradeField: 'sciGrade', pctField: 'sciPct', creditsField: 'sciCredits' },
+  'Social Studies': { classField: 'socClass', gradeField: 'socGrade', pctField: 'socPct', creditsField: 'socCredits' },
 };
 
 // --- COURSE OPTIONS BY CATEGORY ---
@@ -122,14 +122,14 @@ const GradeGenerator = ({ user, activeStudent }) => {
     comments: '',
 
     // Core Classes
-    engClass: 'English', engGrade: '', engPct: '',
-    mathClass: 'Math', mathGrade: '', mathPct: '',
-    sciClass: 'Science', sciGrade: '', sciPct: '',
-    socClass: 'Social Studies', socGrade: '', socPct: '',
+    engClass: 'English', engGrade: '', engPct: '', engCredits: '',
+    mathClass: 'Math', mathGrade: '', mathPct: '', mathCredits: '',
+    sciClass: 'Science', sciGrade: '', sciPct: '', sciCredits: '',
+    socClass: 'Social Studies', socGrade: '', socPct: '', socCredits: '',
 
     // Electives
-    elec1Class: '', elec1Grade: '', elec1Pct: '',
-    elec2Class: '', elec2Grade: '', elec2Pct: '',
+    elec1Class: '', elec1Grade: '', elec1Pct: '', elec1Credits: '',
+    elec2Class: '', elec2Grade: '', elec2Pct: '', elec2Credits: '',
   });
 
   // Quick mode state
@@ -207,7 +207,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
       };
 
       let electiveCount = 0;
-      let totalCredits = 0;
 
       enrollments.forEach(enrollment => {
         const subjectArea = enrollment.subjectArea || '';
@@ -216,28 +215,28 @@ const GradeGenerator = ({ user, activeStudent }) => {
         const courseName = enrollment.courseName || '';
         const letterGrade = enrollment.letterGrade || '';
         const pct = enrollment.percentage != null ? String(enrollment.percentage) : '';
+        const credits = enrollment.credits != null ? String(enrollment.credits) : '';
 
         if (mapping) {
           updates[mapping.classField] = courseName;
           updates[mapping.gradeField] = letterGrade;
           updates[mapping.pctField] = pct;
+          updates[mapping.creditsField] = credits;
         } else if (subjectArea === 'Elective' || !mapping) {
           electiveCount++;
           if (electiveCount === 1) {
             updates.elec1Class = courseName;
             updates.elec1Grade = letterGrade;
             updates.elec1Pct = pct;
+            updates.elec1Credits = credits;
           } else if (electiveCount === 2) {
             updates.elec2Class = courseName;
             updates.elec2Grade = letterGrade;
             updates.elec2Pct = pct;
+            updates.elec2Credits = credits;
           }
         }
-
-        if (enrollment.credits) totalCredits += enrollment.credits;
       });
-
-      if (totalCredits > 0) updates.totalCredits = String(totalCredits);
 
       setFormData(prev => ({ ...prev, ...updates }));
       setAggregationBanner(`Aggregated grades from ${enrollments.length} course${enrollments.length !== 1 ? 's' : ''}.`);
@@ -257,6 +256,17 @@ const GradeGenerator = ({ user, activeStudent }) => {
       setQuickData(prev => ({ ...prev, studentName: activeStudent }));
     }
   }, [activeStudent]);
+
+  // Auto-sum per-course credits into totalCredits
+  useEffect(() => {
+    const fields = ['engCredits', 'mathCredits', 'sciCredits', 'socCredits', 'elec1Credits', 'elec2Credits'];
+    const sum = fields.reduce((acc, f) => acc + (parseFloat(formData[f]) || 0), 0);
+    const rounded = sum > 0 ? sum.toFixed(2).replace(/\.?0+$/, '') : '';
+    if (rounded !== formData.totalCredits) {
+      setFormData(prev => ({ ...prev, totalCredits: rounded }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.engCredits, formData.mathCredits, formData.sciCredits, formData.socCredits, formData.elec1Credits, formData.elec2Credits]);
 
   // --- HANDLERS ---
 
@@ -281,13 +291,13 @@ const GradeGenerator = ({ user, activeStudent }) => {
       total_credits: formData.totalCredits,
       comments: formData.comments,
 
-      eng_class: formData.engClass, eng_grade: formData.engGrade, eng_pct: formData.engPct,
-      math_class: formData.mathClass, math_grade: formData.mathGrade, math_pct: formData.mathPct,
-      sci_class: formData.sciClass, sci_grade: formData.sciGrade, sci_pct: formData.sciPct,
-      soc_class: formData.socClass, soc_grade: formData.socGrade, soc_pct: formData.socPct,
+      eng_class: formData.engClass, eng_grade: formData.engGrade, eng_pct: formData.engPct, eng_credits: formData.engCredits,
+      math_class: formData.mathClass, math_grade: formData.mathGrade, math_pct: formData.mathPct, math_credits: formData.mathCredits,
+      sci_class: formData.sciClass, sci_grade: formData.sciGrade, sci_pct: formData.sciPct, sci_credits: formData.sciCredits,
+      soc_class: formData.socClass, soc_grade: formData.socGrade, soc_pct: formData.socPct, soc_credits: formData.socCredits,
 
-      elec1_class: formData.elec1Class, elec1_grade: formData.elec1Grade, elec1_pct: formData.elec1Pct,
-      elec2_class: formData.elec2Class, elec2_grade: formData.elec2Grade, elec2_pct: formData.elec2Pct,
+      elec1_class: formData.elec1Class, elec1_grade: formData.elec1Grade, elec1_pct: formData.elec1Pct, elec1_credits: formData.elec1Credits,
+      elec2_class: formData.elec2Class, elec2_grade: formData.elec2Grade, elec2_pct: formData.elec2Pct, elec2_credits: formData.elec2Credits,
     };
   };
 
@@ -586,27 +596,54 @@ const GradeGenerator = ({ user, activeStudent }) => {
                   {currentConfig.hasGradeLevel && <Input label="Grade Level" name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} placeholder="9" />}
                   {currentConfig.hasSchoolYear && <Input label="School Year" name="schoolYear" value={formData.schoolYear} onChange={handleChange} placeholder="2025-2026" />}
                   {currentConfig.hasTeacher && <Input label="Teacher Name" name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Mr. Smith" />}
-                  {currentConfig.hasCredits && <Input label="Total Credits" name="totalCredits" value={formData.totalCredits} onChange={handleChange} placeholder="3.5" />}
+                  {currentConfig.hasCredits && formData.totalCredits && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Credits</label>
+                      <div className="p-2.5 rounded border border-slate-200 text-sm bg-slate-50 text-slate-700 font-bold">{formData.totalCredits}</div>
+                    </div>
+                  )}
                 </div>
               </section>
 
               <section>
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><BookOpen className="w-5 h-5 text-emerald-500" /> Core Classes</h3>
-                <div className="space-y-3">
-                  <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} category="English" />
-                  <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} category="Math" />
-                  <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} category="Science" />
-                  <ClassRow icon={<Globe className="w-4 h-4" />} label="Social Studies" prefix="soc" data={formData} onChange={handleChange} category="Social Studies" />
-                </div>
+                {(() => {
+                  const gl = parseInt(formData.gradeLevel, 10);
+                  const isHS = gl >= 9 && gl <= 12;
+                  return (
+                    <>
+                      {isHS && (
+                        <div className="flex items-center gap-2 px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          <span className="flex-1 pl-6">Course</span>
+                          <span className="w-16 text-center">Grade</span>
+                          <span className="w-14 text-center">%</span>
+                          <span className="w-16 text-center">Credits</span>
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} category="English" showCredits={isHS} />
+                        <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} category="Math" showCredits={isHS} />
+                        <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} category="Science" showCredits={isHS} />
+                        <ClassRow icon={<Globe className="w-4 h-4" />} label="Social Studies" prefix="soc" data={formData} onChange={handleChange} category="Social Studies" showCredits={isHS} />
+                      </div>
+                    </>
+                  );
+                })()}
               </section>
 
               {currentConfig.hasElectives && (
                 <section>
                   <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><Music className="w-5 h-5 text-purple-500" /> Electives</h3>
-                  <div className="space-y-3">
-                    <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective category="Electives" />
-                    <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective category="Electives" />
-                  </div>
+                  {(() => {
+                    const gl = parseInt(formData.gradeLevel, 10);
+                    const isHS = gl >= 9 && gl <= 12;
+                    return (
+                      <div className="space-y-1.5">
+                        <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective category="Electives" showCredits={isHS} />
+                        <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective category="Electives" showCredits={isHS} />
+                      </div>
+                    );
+                  })()}
                 </section>
               )}
 
@@ -633,7 +670,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
       <div className="hidden print:block p-8 bg-white">
         <div className="text-center mb-8 border-b-2 border-black pb-4"><h1 className="text-4xl font-bold uppercase tracking-widest mb-2">{currentConfig.label}</h1><p className="text-xl">{formData.studentName} | {formData.quarterName} | {formData.schoolYear}</p></div>
         <div className="grid grid-cols-2 gap-8 mb-8 text-sm"><div><p><strong>Report Date:</strong> {formData.reportDate}</p>{currentConfig.hasTeacher && <p><strong>Teacher:</strong> {formData.teacherName}</p>}{currentConfig.hasGradeLevel && <p><strong>Grade Level:</strong> {formData.gradeLevel}</p>}</div><div className="text-right">{currentConfig.hasCredits && <p><strong>Total Credits:</strong> {formData.totalCredits}</p>}</div></div>
-        <table className="w-full border-collapse border border-black mb-8 text-sm"><thead><tr className="bg-gray-200"><th className="border border-black p-2 text-left">Class</th><th className="border border-black p-2 text-center w-24">Grade</th><th className="border border-black p-2 text-center w-24">%</th></tr></thead><tbody><PrintRow label={formData.engClass} grade={formData.engGrade} pct={formData.engPct} /><PrintRow label={formData.mathClass} grade={formData.mathGrade} pct={formData.mathPct} /><PrintRow label={formData.sciClass} grade={formData.sciGrade} pct={formData.sciPct} /><PrintRow label={formData.socClass} grade={formData.socGrade} pct={formData.socPct} />{currentConfig.hasElectives && <><PrintRow label={formData.elec1Class} grade={formData.elec1Grade} pct={formData.elec1Pct} /><PrintRow label={formData.elec2Class} grade={formData.elec2Grade} pct={formData.elec2Pct} /></>}</tbody></table>
+        <table className="w-full border-collapse border border-black mb-8 text-sm"><thead><tr className="bg-gray-200"><th className="border border-black p-2 text-left">Class</th><th className="border border-black p-2 text-center w-24">Grade</th><th className="border border-black p-2 text-center w-24">%</th>{currentConfig.hasCredits && <th className="border border-black p-2 text-center w-24">Credits</th>}</tr></thead><tbody><PrintRow label={formData.engClass} grade={formData.engGrade} pct={formData.engPct} credits={formData.engCredits} showCredits={currentConfig.hasCredits} /><PrintRow label={formData.mathClass} grade={formData.mathGrade} pct={formData.mathPct} credits={formData.mathCredits} showCredits={currentConfig.hasCredits} /><PrintRow label={formData.sciClass} grade={formData.sciGrade} pct={formData.sciPct} credits={formData.sciCredits} showCredits={currentConfig.hasCredits} /><PrintRow label={formData.socClass} grade={formData.socGrade} pct={formData.socPct} credits={formData.socCredits} showCredits={currentConfig.hasCredits} />{currentConfig.hasElectives && <><PrintRow label={formData.elec1Class} grade={formData.elec1Grade} pct={formData.elec1Pct} credits={formData.elec1Credits} showCredits={currentConfig.hasCredits} /><PrintRow label={formData.elec2Class} grade={formData.elec2Grade} pct={formData.elec2Pct} credits={formData.elec2Credits} showCredits={currentConfig.hasCredits} /></>}</tbody></table>
         <div className="border border-black p-4 min-h-[150px]"><h4 className="font-bold uppercase text-xs mb-2 text-gray-500">Teacher Comments</h4><p className="whitespace-pre-wrap">{formData.comments}</p></div>
       </div>
 
@@ -651,36 +688,32 @@ const GradeGenerator = ({ user, activeStudent }) => {
 };
 
 const Input = ({ label, name, value, onChange, type = "text", placeholder }) => (<div className="flex flex-col gap-1"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label><input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="p-2.5 rounded border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" /></div>);
-const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, category }) => {
+const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, category, showCredits }) => {
   const options = category ? COURSE_OPTIONS[category] || [] : [];
   const classFieldName = `${prefix}Class`;
+  const creditsFieldName = `${prefix}Credits`;
   const currentValue = data[classFieldName] || '';
 
   return (
-    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-2">
-      <div className="flex items-center gap-2">
-        <div className="text-slate-400 shrink-0">{icon}</div>
-        <select
-          name={classFieldName}
-          value={options.includes(currentValue) ? currentValue : ''}
-          onChange={onChange}
-          className="w-full bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-700 p-1.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-        >
-          <option value="">{`-- ${label} --`}</option>
-          {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="flex gap-2 pl-6">
-        <div className="flex-1">
-          <input name={`${prefix}Grade`} value={data[`${prefix}Grade`]} onChange={onChange} placeholder="Letter Grade" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
-        </div>
-        <div className="flex-1">
-          <input name={`${prefix}Pct`} value={data[`${prefix}Pct`]} onChange={onChange} placeholder="Percentage" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
-        </div>
-      </div>
+    <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+      <div className="text-slate-400 shrink-0">{icon}</div>
+      <select
+        name={classFieldName}
+        value={options.includes(currentValue) ? currentValue : ''}
+        onChange={onChange}
+        className="min-w-0 flex-1 bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-700 p-1.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none truncate"
+      >
+        <option value="">{`-- ${label} --`}</option>
+        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+      </select>
+      <input name={`${prefix}Grade`} value={data[`${prefix}Grade`]} onChange={onChange} placeholder="Grade" className="w-16 p-1.5 rounded border border-slate-200 text-xs text-center font-bold focus:border-indigo-500 outline-none" />
+      <input name={`${prefix}Pct`} value={data[`${prefix}Pct`]} onChange={onChange} placeholder="%" className="w-14 p-1.5 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
+      {showCredits && (
+        <input name={creditsFieldName} value={data[creditsFieldName] || ''} onChange={onChange} placeholder="Cr" type="number" step="0.05" min="0" max="0.99" className="w-16 p-1.5 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
+      )}
     </div>
   );
 };
-const PrintRow = ({ label, grade, pct }) => { if (!label && !grade) return null; return (<tr><td className="border border-black p-2">{label}</td><td className="border border-black p-2 text-center font-bold">{grade}</td><td className="border border-black p-2 text-center text-gray-600">{pct}</td></tr>); };
+const PrintRow = ({ label, grade, pct, credits, showCredits }) => { if (!label && !grade) return null; return (<tr><td className="border border-black p-2">{label}</td><td className="border border-black p-2 text-center font-bold">{grade}</td><td className="border border-black p-2 text-center text-gray-600">{pct}</td>{showCredits && <td className="border border-black p-2 text-center text-gray-600">{credits}</td>}</tr>); };
 
 export default GradeGenerator;
