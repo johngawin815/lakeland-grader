@@ -199,6 +199,18 @@ if (!hasPersistedData) {
   localStorage.setItem(STORAGE_PREFIX + 'initialized', 'true');
   console.info('[mockDB] First launch — initialized and saved to localStorage.');
 } else {
+  // Ensure seed students from MOCK_STUDENTS are always present (merges new additions)
+  let merged = 0;
+  for (const s of MOCK_STUDENTS) {
+    if (!students.has(s.id)) {
+      students.set(s.id, { ...s });
+      merged++;
+    }
+  }
+  if (merged > 0) {
+    saveMap('students', students);
+    console.info(`[mockDB] Merged ${merged} new seed student(s) into localStorage.`);
+  }
   console.info('[mockDB] Restored data from localStorage.');
 }
 

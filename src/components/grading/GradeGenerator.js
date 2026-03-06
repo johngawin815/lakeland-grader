@@ -16,6 +16,50 @@ const SUBJECT_FIELD_MAP = {
   'Social Studies': { classField: 'socClass', gradeField: 'socGrade', pctField: 'socPct' },
 };
 
+// --- COURSE OPTIONS BY CATEGORY ---
+const COURSE_OPTIONS = {
+  English: [
+    'English 6', 'English 7', 'English 8',
+    'English 9', 'English 10', 'English 11', 'English 12',
+    'Honors English 9', 'Honors English 10', 'AP English Language', 'AP English Literature',
+    'Creative Writing', 'Journalism', 'Speech & Debate',
+    'Reading Foundations', 'English Language Development',
+  ],
+  Math: [
+    'Math 6', 'Math 7', 'Math 8', 'Pre-Algebra',
+    'Algebra I', 'Geometry', 'Algebra II', 'Pre-Calculus',
+    'Honors Algebra II', 'Honors Geometry',
+    'AP Calculus AB', 'AP Calculus BC', 'AP Statistics',
+    'Integrated Math I', 'Integrated Math II', 'Integrated Math III',
+    'Consumer Math', 'Financial Literacy',
+  ],
+  Science: [
+    'General Science 6', 'Life Science 7', 'Physical Science 8',
+    'Earth Science', 'Biology', 'Chemistry', 'Physics',
+    'Honors Biology', 'Honors Chemistry',
+    'AP Biology', 'AP Chemistry', 'AP Physics',
+    'Environmental Science', 'AP Environmental Science',
+    'Anatomy & Physiology', 'Forensic Science',
+  ],
+  'Social Studies': [
+    'Social Studies 6', 'Social Studies 7', 'Civics 8',
+    'World Geography', 'World History', 'US History', 'US Government', 'Economics',
+    'Honors World History', 'Honors US History',
+    'AP World History', 'AP US History', 'AP US Government', 'AP Economics',
+    'Psychology', 'AP Psychology', 'Sociology', 'Current Events',
+  ],
+  Electives: [
+    'Art I', 'Art II', 'Art III', 'Ceramics', 'Digital Art',
+    'Band', 'Choir', 'Orchestra', 'Music Theory', 'Guitar',
+    'Physical Education', 'Health', 'Weightlifting',
+    'Spanish I', 'Spanish II', 'French I', 'French II',
+    'Computer Science', 'Web Design', 'Digital Media',
+    'Family & Consumer Science', 'Wood Shop', 'STEM Lab',
+    'Study Skills', 'Career Exploration', 'Leadership',
+    'Drama', 'Yearbook', 'Library Aide',
+  ],
+};
+
 // --- CONFIGURATION ---
 const TEMPLATES = {
   quarter: {
@@ -549,10 +593,10 @@ const GradeGenerator = ({ user, activeStudent }) => {
               <section>
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><BookOpen className="w-5 h-5 text-emerald-500" /> Core Classes</h3>
                 <div className="space-y-3">
-                  <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} />
-                  <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} />
-                  <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} />
-                  <ClassRow icon={<Globe className="w-4 h-4" />} label="Social Studies" prefix="soc" data={formData} onChange={handleChange} />
+                  <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} category="English" />
+                  <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} category="Math" />
+                  <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} category="Science" />
+                  <ClassRow icon={<Globe className="w-4 h-4" />} label="Social Studies" prefix="soc" data={formData} onChange={handleChange} category="Social Studies" />
                 </div>
               </section>
 
@@ -560,8 +604,8 @@ const GradeGenerator = ({ user, activeStudent }) => {
                 <section>
                   <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 pb-2 border-b border-slate-100"><Music className="w-5 h-5 text-purple-500" /> Electives</h3>
                   <div className="space-y-3">
-                    <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective />
-                    <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective />
+                    <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective category="Electives" />
+                    <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective category="Electives" />
                   </div>
                 </section>
               )}
@@ -607,7 +651,36 @@ const GradeGenerator = ({ user, activeStudent }) => {
 };
 
 const Input = ({ label, name, value, onChange, type = "text", placeholder }) => (<div className="flex flex-col gap-1"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label><input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className="p-2.5 rounded border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all" /></div>);
-const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false }) => (<div className="flex flex-col md:flex-row gap-3 items-end md:items-center bg-slate-50 p-3 rounded-lg border border-slate-100"><div className="flex items-center gap-2 w-full md:w-48"><div className="text-slate-400">{icon}</div>{isElective ? <input name={`${prefix}Class`} value={data[`${prefix}Class`]} onChange={onChange} placeholder="Elective Name" className="w-full bg-transparent border-b border-slate-300 focus:border-indigo-500 outline-none text-sm font-bold text-slate-700 pb-1" /> : <span className="text-sm font-bold text-slate-700">{label}</span>}</div><div className="flex gap-2 flex-1 w-full"><div className="flex-1"><input name={`${prefix}Grade`} value={data[`${prefix}Grade`]} onChange={onChange} placeholder="Letter Grade" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" /></div><div className="flex-1"><input name={`${prefix}Pct`} value={data[`${prefix}Pct`]} onChange={onChange} placeholder="Percentage" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" /></div></div></div>);
+const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, category }) => {
+  const options = category ? COURSE_OPTIONS[category] || [] : [];
+  const classFieldName = `${prefix}Class`;
+  const currentValue = data[classFieldName] || '';
+
+  return (
+    <div className="flex flex-col md:flex-row gap-3 items-end md:items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+      <div className="flex items-center gap-2 w-full md:w-56">
+        <div className="text-slate-400">{icon}</div>
+        <select
+          name={classFieldName}
+          value={options.includes(currentValue) ? currentValue : ''}
+          onChange={onChange}
+          className="w-full bg-white border border-slate-200 rounded-md text-sm font-bold text-slate-700 p-1.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+        >
+          <option value="">{`-- ${label} --`}</option>
+          {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="flex gap-2 flex-1 w-full">
+        <div className="flex-1">
+          <input name={`${prefix}Grade`} value={data[`${prefix}Grade`]} onChange={onChange} placeholder="Letter Grade" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
+        </div>
+        <div className="flex-1">
+          <input name={`${prefix}Pct`} value={data[`${prefix}Pct`]} onChange={onChange} placeholder="Percentage" className="w-full p-2 rounded border border-slate-200 text-xs text-center focus:border-indigo-500 outline-none" />
+        </div>
+      </div>
+    </div>
+  );
+};
 const PrintRow = ({ label, grade, pct }) => { if (!label && !grade) return null; return (<tr><td className="border border-black p-2">{label}</td><td className="border border-black p-2 text-center font-bold">{grade}</td><td className="border border-black p-2 text-center text-gray-600">{pct}</td></tr>); };
 
 export default GradeGenerator;
