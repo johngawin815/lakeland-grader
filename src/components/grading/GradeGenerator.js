@@ -375,7 +375,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const currentConfig = TEMPLATES[selectedTemplate];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 font-sans text-slate-800">
+    <div className="bg-slate-50 p-8 font-sans text-slate-800">
 
       {/* HEADER & ACTIONS */}
       <div className="max-w-6xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
