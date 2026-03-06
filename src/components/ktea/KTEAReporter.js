@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2 } from 'lucide-react';
+import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers } from 'lucide-react';
 
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", icon: Target },
@@ -13,6 +13,15 @@ const UNIT_CONFIG = [
   { key: "Integrity", label: "Integrity", icon: Flame },
   { key: "Serenity", label: "Serenity", icon: Droplets }
 ];
+
+const UNIT_COLORS = {
+  Determination: { bg: 'bg-amber-600', text: 'text-amber-900', light: 'bg-amber-50' },
+  Discovery: { bg: 'bg-sky-600', text: 'text-sky-900', light: 'bg-sky-50' },
+  Freedom: { bg: 'bg-emerald-600', text: 'text-emerald-900', light: 'bg-emerald-50' },
+  Harmony: { bg: 'bg-violet-600', text: 'text-violet-900', light: 'bg-violet-50' },
+  Integrity: { bg: 'bg-rose-600', text: 'text-rose-900', light: 'bg-rose-50' },
+  Serenity: { bg: 'bg-cyan-600', text: 'text-cyan-900', light: 'bg-cyan-50' },
+};
 
 const QUARTERS = [
   { value: 1, label: 'Q1', months: 'Jul – Sep', range: [7, 8, 9] },
@@ -53,6 +62,13 @@ function KTEAReporter({ user, activeStudent }) {
   const [searchResults, setSearchResults] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [currentDoc, setCurrentDoc] = useState(null);
+
+  // Close spreadsheet modal on Escape key
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape' && showSpreadsheet) setShowSpreadsheet(false); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [showSpreadsheet]);
 
   // --- 1. CONNECTIVITY ---
   useEffect(() => {
@@ -227,6 +243,26 @@ function KTEAReporter({ user, activeStudent }) {
     }
   };
 
+  const handleSpreadsheetDelete = async (id, name) => {
+    if (!window.confirm(`Delete KTEA record for "${name}"?`)) return;
+    try {
+      await databaseService.deleteKteaReport(id);
+      // Remove from local spreadsheet state
+      setSpreadsheetData(prev => {
+        const updated = {};
+        Object.keys(prev).forEach(unit => {
+          const filtered = prev[unit].filter(s => s.id !== id);
+          if (filtered.length > 0) updated[unit] = filtered;
+        });
+        return updated;
+      });
+      setMsg(`Deleted: ${name}`);
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e) {
+      alert("Could not delete record.");
+    }
+  };
+
   // --- 4. EXPORT ---
   const downloadReport = async () => {
     try {
@@ -388,172 +424,198 @@ function KTEAReporter({ user, activeStudent }) {
 
       {msg && <div className="absolute top-5 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-emerald-600 text-white rounded-full text-sm font-bold shadow-2xl z-50 flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300"><CheckCircle className="w-5 h-5" /> {msg}</div>}
 
-      {/* SPREADSHEET VIEW (inline toggle) */}
+      {/* SPREADSHEET VIEW - Full Screen Modal */}
       {showSpreadsheet && (
-        <div className="mb-6 bg-white rounded-2xl border border-slate-200/50 shadow-2xl shadow-slate-200/60 overflow-hidden">
-          {/* Spreadsheet Toolbar */}
-          <div className="px-6 py-4 bg-gradient-to-r from-slate-800 to-slate-900 flex items-center gap-4 print:bg-black">
-            <div className="flex items-center gap-2">
-              <Table className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-white font-extrabold text-sm tracking-wide m-0">
-                {spreadsheetMode === 'discharged' ? 'Quarterly Discharge Report' : 'Master KTEA Spreadsheet'}
-              </h3>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowSpreadsheet(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-[97vw] h-[93vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
 
-            <div className="flex items-center gap-2 ml-6">
-              <div className="flex items-center gap-1.5">
-                <Filter className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Quarter:</span>
+            {/* Modal Header / Toolbar */}
+            <div className="px-6 py-4 bg-gradient-to-r from-slate-800 to-slate-900 flex items-center gap-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-white font-extrabold text-sm tracking-wide m-0">
+                  {spreadsheetMode === 'discharged' ? 'Quarterly Discharge Report' : 'Master KTEA Spreadsheet'}
+                </h3>
               </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => handleQuarterFilter('', filterYear)}
-                  className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                    !filterQuarter ? 'bg-indigo-500 text-white' : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
-                  }`}
-                >
-                  All
-                </button>
-                {QUARTERS.map(q => (
+
+              <div className="flex items-center gap-2 ml-6">
+                <div className="flex items-center gap-1.5">
+                  <Filter className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Quarter:</span>
+                </div>
+                <div className="flex gap-1">
                   <button
-                    key={q.value}
-                    onClick={() => handleQuarterFilter(q.value, filterYear)}
+                    onClick={() => handleQuarterFilter('', filterYear)}
                     className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                      parseInt(filterQuarter) === q.value ? 'bg-indigo-500 text-white' : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
+                      !filterQuarter ? 'bg-indigo-500 text-white' : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
                     }`}
-                    title={q.months}
                   >
-                    {q.label}
+                    All
                   </button>
-                ))}
+                  {QUARTERS.map(q => (
+                    <button
+                      key={q.value}
+                      onClick={() => handleQuarterFilter(q.value, filterYear)}
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                        parseInt(filterQuarter) === q.value ? 'bg-indigo-500 text-white' : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
+                      }`}
+                      title={q.months}
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-1.5 ml-3">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Year:</span>
+                  <select
+                    value={filterYear}
+                    onChange={e => handleQuarterFilter(filterQuarter, e.target.value)}
+                    className="bg-white/10 text-white text-xs font-bold px-2 py-1.5 rounded-lg border border-white/20 outline-none cursor-pointer"
+                  >
+                    {[2023, 2024, 2025, 2026].map(y => <option key={y} value={y} className="text-slate-800">{y}</option>)}
+                  </select>
+                </div>
               </div>
 
-              <div className="flex items-center gap-1.5 ml-3">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Year:</span>
-                <select
-                  value={filterYear}
-                  onChange={e => handleQuarterFilter(filterQuarter, e.target.value)}
-                  className="bg-white/10 text-white text-xs font-bold px-2 py-1.5 rounded-lg border border-white/20 outline-none cursor-pointer"
-                >
-                  {[2023, 2024, 2025, 2026].map(y => <option key={y} value={y} className="text-slate-800">{y}</option>)}
-                </select>
+              <div className="ml-auto flex items-center gap-3">
+                <span className="text-xs text-white/50 font-medium">
+                  {totalSpreadsheetStudents} student{totalSpreadsheetStudents !== 1 ? 's' : ''}
+                  {filterQuarter && ` discharged in ${QUARTERS.find(q => q.value === parseInt(filterQuarter))?.label} ${filterYear}`}
+                </span>
+                <button onClick={() => window.print()} className="bg-white/10 text-white/70 hover:text-white hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                  <Printer className="w-3.5 h-3.5" /> Print
+                </button>
+                <button onClick={() => setShowSpreadsheet(false)} className="p-2 rounded-lg hover:bg-white/20 transition-colors text-white/70 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
 
-            <div className="ml-auto flex items-center gap-3">
-              <span className="text-xs text-white/50 font-medium">
-                {totalSpreadsheetStudents} student{totalSpreadsheetStudents !== 1 ? 's' : ''}
-                {filterQuarter && ` discharged in ${QUARTERS.find(q => q.value === parseInt(filterQuarter))?.label} ${filterYear}`}
-              </span>
-              <button onClick={() => window.print()} className="bg-white/10 text-white/70 hover:text-white hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-                <Printer className="w-3.5 h-3.5" /> Print
-              </button>
-            </div>
-          </div>
-
-          {/* Spreadsheet Content */}
-          <div className="overflow-auto max-h-[60vh] print:max-h-none print:overflow-visible">
-            {loadingSpreadsheet ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-5 h-5 animate-spin text-indigo-500 mr-3" />
-                <span className="text-sm font-medium text-slate-400">Loading spreadsheet data...</span>
-              </div>
-            ) : totalSpreadsheetStudents === 0 ? (
-              <div className="text-center py-16">
-                <Table className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-400 text-sm font-medium">
-                  {filterQuarter
-                    ? `No students discharged in ${QUARTERS.find(q => q.value === parseInt(filterQuarter))?.label} ${filterYear}.`
-                    : 'No KTEA records found.'}
-                </p>
-                {filterQuarter && (
-                  <button onClick={() => handleQuarterFilter('', filterYear)} className="mt-3 text-indigo-600 text-xs font-bold hover:underline">
-                    Show all records instead
-                  </button>
-                )}
-              </div>
-            ) : (
-              Object.keys(spreadsheetData).map(unit => {
-                const UnitIcon = UNIT_CONFIG.find(u => u.key === unit)?.icon;
-                return (
-                  <div key={unit} className="border-b border-slate-200/80 last:border-b-0">
-                    <div className="bg-slate-50 px-6 py-2.5 border-b border-slate-200/60 flex items-center justify-between sticky top-0 z-10">
-                      <div className="flex items-center gap-2">
-                        {UnitIcon && <UnitIcon className="w-4 h-4 text-slate-500" />}
-                        <span className="font-extrabold text-sm text-slate-700 uppercase tracking-wider">{unit}</span>
-                      </div>
-                      <span className="text-[11px] bg-white border border-slate-200 px-2.5 py-0.5 rounded-full text-slate-500 font-bold">{spreadsheetData[unit].length} Students</span>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse text-xs font-sans">
-                        <thead>
-                          <tr className="bg-slate-800 text-white print:bg-black">
-                            <th colSpan="2" className="border border-slate-600 p-2 text-[10px] font-bold">Student</th>
-                            <th colSpan="9" className="border border-slate-600 p-2 bg-blue-900/50 text-blue-100 text-[10px] font-bold">PRE-TEST (Entry)</th>
-                            <th colSpan="9" className="border border-slate-600 p-2 bg-emerald-900/50 text-emerald-100 text-[10px] font-bold">POST-TEST (Exit)</th>
-                            <th colSpan="3" className="border border-slate-600 p-2 text-[10px] font-bold">Admin</th>
-                          </tr>
-                          <tr className="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-                            <th className="border border-slate-200 p-1.5 w-40 text-left">Name</th>
-                            <th className="border border-slate-200 p-1.5 w-8">Gr</th>
-                            <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">R.Raw</th>
-                            <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">R.Std</th>
-                            <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">R.GE</th>
-                            <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">M.Raw</th>
-                            <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">M.Std</th>
-                            <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">M.GE</th>
-                            <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">W.Raw</th>
-                            <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">W.Std</th>
-                            <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">W.GE</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">R.Raw</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">R.Std</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">R.GE</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">M.Raw</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">M.Std</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">M.GE</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">W.Raw</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">W.Std</th>
-                            <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">W.GE</th>
-                            <th className="border border-slate-200 p-1.5 w-20">Admit</th>
-                            <th className="border border-slate-200 p-1.5 w-20">Disch</th>
-                            <th className="border border-slate-200 p-1.5 w-20">Teacher</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {spreadsheetData[unit].map((s, idx) => (
-                            <tr key={idx} className="hover:bg-indigo-50/30 text-center border-b border-slate-100 text-[11px] transition-colors">
-                              <td className="border-r border-slate-200/50 p-1.5 text-left font-bold text-slate-700 truncate max-w-[160px]">{s.studentName}</td>
-                              <td className="border-r border-slate-200/50 p-1.5 font-medium">{s.gradeLevel}</td>
-                              <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preReadingRaw || '-'}</td>
-                              <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preReadingStd || '-'}</td>
-                              <td className="p-1 bg-blue-100/40 border-r border-blue-200/40 font-bold text-blue-900">{s.preReadingGE || '-'}</td>
-                              <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preMathRaw || '-'}</td>
-                              <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preMathStd || '-'}</td>
-                              <td className="p-1 bg-blue-100/40 border-r border-blue-200/40 font-bold text-blue-900">{s.preMathGE || '-'}</td>
-                              <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preWritingRaw || '-'}</td>
-                              <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preWritingStd || '-'}</td>
-                              <td className="p-1 bg-blue-100/40 border-r border-slate-200/50 font-bold text-blue-900">{s.preWritingGE || '-'}</td>
-                              <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postReadingRaw || '-'}</td>
-                              <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postReadingStd || '-'}</td>
-                              <td className="p-1 bg-emerald-100/40 border-r border-emerald-200/40 font-bold text-emerald-900">{s.postReadingGE || '-'}</td>
-                              <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postMathRaw || '-'}</td>
-                              <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postMathStd || '-'}</td>
-                              <td className="p-1 bg-emerald-100/40 border-r border-emerald-200/40 font-bold text-emerald-900">{s.postMathGE || '-'}</td>
-                              <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postWritingRaw || '-'}</td>
-                              <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postWritingStd || '-'}</td>
-                              <td className="p-1 bg-emerald-100/40 border-r border-slate-200/50 font-bold text-emerald-900">{s.postWritingGE || '-'}</td>
-                              <td className="p-1.5 text-slate-500 border-r border-slate-200/50 whitespace-nowrap">{s.admitDate || '-'}</td>
-                              <td className={`p-1.5 border-r border-slate-200/50 whitespace-nowrap ${s.dischargeDate ? 'text-slate-700 font-semibold' : 'text-slate-300'}`}>{s.dischargeDate || '-'}</td>
-                              <td className="p-1.5 text-slate-500 truncate max-w-[80px]">{s.teacherName || '-'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+            {/* Stacked Card Content */}
+            <div className="flex-1 overflow-auto p-6 bg-slate-100">
+              {loadingSpreadsheet ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                  <p className="text-sm font-medium text-slate-500">Loading spreadsheet data...</p>
+                </div>
+              ) : totalSpreadsheetStudents === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <Table className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-400 text-sm font-medium">
+                    {filterQuarter
+                      ? `No students discharged in ${QUARTERS.find(q => q.value === parseInt(filterQuarter))?.label} ${filterYear}.`
+                      : 'No KTEA records found.'}
+                  </p>
+                  {filterQuarter && (
+                    <button onClick={() => handleQuarterFilter('', filterYear)} className="mt-3 text-indigo-600 text-xs font-bold hover:underline">
+                      Show all records instead
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                    <span>{totalSpreadsheetStudents} students across {Object.keys(spreadsheetData).length} units</span>
                   </div>
-                );
-              })
-            )}
+
+                  {Object.keys(spreadsheetData).map(unit => {
+                    const students = spreadsheetData[unit];
+                    const colors = UNIT_COLORS[unit] || { bg: 'bg-slate-600', text: 'text-slate-900', light: 'bg-slate-50' };
+
+                    return (
+                      <div key={unit} className="bg-white rounded-xl border border-slate-200/80 shadow-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse text-sm">
+                            <thead>
+                              <tr>
+                                <th colSpan="24" className={`${colors.bg} text-white text-sm font-bold py-3 px-4 text-left tracking-wide`}>
+                                  {unit}
+                                  <span className="ml-3 text-white/70 font-medium text-xs">({students.length} student{students.length !== 1 ? 's' : ''})</span>
+                                </th>
+                              </tr>
+                              <tr>
+                                <td colSpan="24" className="border border-slate-300 bg-white h-2"></td>
+                              </tr>
+                              <tr className="bg-slate-800 text-white">
+                                <th colSpan="2" className="border border-slate-600 p-2 text-[10px] font-bold">Student</th>
+                                <th colSpan="9" className="border border-slate-600 p-2 bg-blue-900/50 text-blue-100 text-[10px] font-bold">PRE-TEST (Entry)</th>
+                                <th colSpan="9" className="border border-slate-600 p-2 bg-emerald-900/50 text-emerald-100 text-[10px] font-bold">POST-TEST (Exit)</th>
+                                <th colSpan="4" className="border border-slate-600 p-2 text-[10px] font-bold">Admin</th>
+                              </tr>
+                              <tr className="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                                <th className="border border-slate-200 p-1.5 w-40 text-left">Name</th>
+                                <th className="border border-slate-200 p-1.5 w-8">Gr</th>
+                                <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">R.Raw</th>
+                                <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">R.Std</th>
+                                <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">R.GE</th>
+                                <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">M.Raw</th>
+                                <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">M.Std</th>
+                                <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">M.GE</th>
+                                <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">W.Raw</th>
+                                <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">W.Std</th>
+                                <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">W.GE</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">R.Raw</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">R.Std</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">R.GE</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">M.Raw</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">M.Std</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">M.GE</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">W.Raw</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">W.Std</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">W.GE</th>
+                                <th className="border border-slate-200 p-1.5 w-20">Admit</th>
+                                <th className="border border-slate-200 p-1.5 w-20">Disch</th>
+                                <th className="border border-slate-200 p-1.5 w-20">Teacher</th>
+                                <th className="border border-slate-200 p-1.5 w-8"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {students.map((s, idx) => (
+                                <tr key={s.id || idx} className="hover:bg-indigo-50/30 text-center border-b border-slate-100 text-[11px] transition-colors group">
+                                  <td className="border-r border-slate-200/50 p-1.5 text-left font-bold text-slate-700 truncate max-w-[160px]">{s.studentName}</td>
+                                  <td className="border-r border-slate-200/50 p-1.5 font-medium">{s.gradeLevel}</td>
+                                  <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preReadingRaw || '-'}</td>
+                                  <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preReadingStd || '-'}</td>
+                                  <td className="p-1 bg-blue-100/40 border-r border-blue-200/40 font-bold text-blue-900">{s.preReadingGE || '-'}</td>
+                                  <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preMathRaw || '-'}</td>
+                                  <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preMathStd || '-'}</td>
+                                  <td className="p-1 bg-blue-100/40 border-r border-blue-200/40 font-bold text-blue-900">{s.preMathGE || '-'}</td>
+                                  <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preWritingRaw || '-'}</td>
+                                  <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preWritingStd || '-'}</td>
+                                  <td className="p-1 bg-blue-100/40 border-r border-slate-200/50 font-bold text-blue-900">{s.preWritingGE || '-'}</td>
+                                  <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postReadingRaw || '-'}</td>
+                                  <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postReadingStd || '-'}</td>
+                                  <td className="p-1 bg-emerald-100/40 border-r border-emerald-200/40 font-bold text-emerald-900">{s.postReadingGE || '-'}</td>
+                                  <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postMathRaw || '-'}</td>
+                                  <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postMathStd || '-'}</td>
+                                  <td className="p-1 bg-emerald-100/40 border-r border-emerald-200/40 font-bold text-emerald-900">{s.postMathGE || '-'}</td>
+                                  <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postWritingRaw || '-'}</td>
+                                  <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postWritingStd || '-'}</td>
+                                  <td className="p-1 bg-emerald-100/40 border-r border-slate-200/50 font-bold text-emerald-900">{s.postWritingGE || '-'}</td>
+                                  <td className="p-1.5 text-slate-500 border-r border-slate-200/50 whitespace-nowrap">{s.admitDate || '-'}</td>
+                                  <td className={`p-1.5 border-r border-slate-200/50 whitespace-nowrap ${s.dischargeDate ? 'text-slate-700 font-semibold' : 'text-slate-300'}`}>{s.dischargeDate || '-'}</td>
+                                  <td className="p-1.5 text-slate-500 border-r border-slate-200/50 truncate max-w-[80px]">{s.teacherName || '-'}</td>
+                                  <td className="p-1">
+                                    <button
+                                      onClick={() => handleSpreadsheetDelete(s.id, s.studentName)}
+                                      className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-all opacity-0 group-hover:opacity-100"
+                                      title="Delete record"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -562,12 +624,13 @@ function KTEAReporter({ user, activeStudent }) {
         {/* MAIN FORM AREA */}
         <div className="flex-1 bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-2xl shadow-slate-200/60 flex flex-col border border-slate-200/50 overflow-y-auto">
             <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col">
-                <div className="grid grid-cols-6 gap-4 mb-6 items-end">
+                <div className="grid grid-cols-7 gap-4 mb-6 items-end">
                     <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Teacher</label> <input {...register("teacherName")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" /> </div>
                     <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Unit</label> <select {...register("unitName")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"><option value="">Select...</option>{UNIT_CONFIG.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}</select> </div>
                     <div className="col-span-2"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Student Name</label> <input {...register("studentName")} className="w-full p-3 rounded-xl border border-indigo-300/80 bg-indigo-50/50 text-base focus:ring-4 focus:ring-indigo-500/30 outline-none font-bold transition-all" /> </div>
                     <div className="w-[80px]"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Grade</label> <select {...register("gradeLevel")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"><option value="K">K</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select> </div>
                     <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Admit</label> <input type="date" {...register("admitDate")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" /> </div>
+                    <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Discharge</label> <input type="date" {...register("dischargeDate")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" /> </div>
                 </div>
 
                 <div className="flex gap-6 flex-1 mb-6">
