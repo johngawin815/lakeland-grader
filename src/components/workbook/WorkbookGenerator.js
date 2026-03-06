@@ -20,10 +20,19 @@ import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../../services/goo
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const READING_LEVELS = [
-  { value: '3rd-5th Grade Reading Level', label: '3rd–5th Grade Reading Level' },
-  { value: '6th-8th Grade Reading Level', label: '6th–8th Grade Reading Level' },
-  { value: '9th-10th Grade Reading Level', label: '9th–10th Grade Reading Level' },
-  { value: '11th-12th Grade Reading Level', label: '11th–12th Grade Reading Level' },
+  { value: 'Kindergarten (Lexile BR–100L)', label: 'Kindergarten (BR–100L)' },
+  { value: '1st Grade (Lexile 100L–200L)', label: '1st Grade (100L–200L)' },
+  { value: '2nd Grade (Lexile 200L–400L)', label: '2nd Grade (200L–400L)' },
+  { value: '3rd Grade (Lexile 400L–500L)', label: '3rd Grade (400L–500L)' },
+  { value: '4th Grade (Lexile 500L–700L)', label: '4th Grade (500L–700L)' },
+  { value: '5th Grade (Lexile 700L–800L)', label: '5th Grade (700L–800L)' },
+  { value: '6th Grade (Lexile 800L–900L)', label: '6th Grade (800L–900L)' },
+  { value: '7th Grade (Lexile 900L–1000L)', label: '7th Grade (900L–1000L)' },
+  { value: '8th Grade (Lexile 1000L–1050L)', label: '8th Grade (1000L–1050L)' },
+  { value: '9th Grade (Lexile 1050L–1100L)', label: '9th Grade (1050L–1100L)' },
+  { value: '10th Grade (Lexile 1100L–1200L)', label: '10th Grade (1100L–1200L)' },
+  { value: '11th Grade (Lexile 1200L–1300L)', label: '11th Grade (1200L–1300L)' },
+  { value: '12th Grade (Lexile 1300L–1400L)', label: '12th Grade (1300L–1400L)' },
 ];
 
 const DAY_SCOPE_SEQUENCE = [
@@ -135,6 +144,30 @@ const ACTIVITY_OPTIONS = {
     { id: 'album-cover', label: 'Album Cover Design' },
     { id: 'photo-essay', label: 'Photo Essay Storyboard' },
   ],
+  spelling: [
+    { id: 'auto', label: 'Auto (AI Chooses)' },
+    { id: 'word-scramble', label: 'Word Scramble' },
+    { id: 'spelling-bee', label: 'Spelling Bee Challenge' },
+    { id: 'word-search', label: 'Word Search Puzzle' },
+    { id: 'fill-in-blanks', label: 'Fill in the Blanks' },
+    { id: 'dictation-prep', label: 'Dictation Prep Sentences' },
+    { id: 'word-building', label: 'Word Building (Roots/Affixes)' },
+    { id: 'look-say-cover', label: 'Look-Say-Cover-Write' },
+    { id: 'spelling-patterns', label: 'Spelling Pattern Sort' },
+    { id: 'proofreading', label: 'Proofreading Detective' },
+  ],
+  grammar: [
+    { id: 'auto', label: 'Auto (AI Chooses)' },
+    { id: 'sentence-combining', label: 'Sentence Combining' },
+    { id: 'error-hunt', label: 'Grammar Error Hunt' },
+    { id: 'parts-of-speech', label: 'Parts of Speech Sort' },
+    { id: 'sentence-diagramming', label: 'Sentence Diagramming' },
+    { id: 'punctuation-clinic', label: 'Punctuation Clinic' },
+    { id: 'mentor-sentences', label: 'Mentor Sentences' },
+    { id: 'rewrite-expand', label: 'Rewrite & Expand' },
+    { id: 'parallel-structure', label: 'Parallel Structure Practice' },
+    { id: 'syntax-remix', label: 'Syntax Remix' },
+  ],
 };
 
 const ACTIVITY_SECTION_LABELS = {
@@ -142,6 +175,8 @@ const ACTIVITY_SECTION_LABELS = {
   synthesis: { title: 'Synthesis Framework', pages: 'Page 9' },
   scenario: { title: 'Scenario Type', pages: 'Page 10' },
   creative: { title: 'Creative Canvas', pages: 'Page 11' },
+  spelling: { title: 'Spelling Activity', pages: 'Embedded' },
+  grammar: { title: 'Grammar Activity', pages: 'Embedded' },
 };
 
 const AUDIENCE_DIRECTIVE = `CRITICAL AUDIENCE CONSTRAINT: All students are HIGH SCHOOL TEENAGERS (ages 14-18), regardless of the reading level selected. The reading level controls ONLY vocabulary complexity, sentence length, and syntactic sophistication. It does NOT change the target age group. Even at a 3rd-5th grade reading level, content must use age-appropriate themes, scenarios, and emotional hooks that resonate with teenagers — not elementary-age children. References, examples, and narrative protagonists should reflect teenage life, concerns, and cultural awareness. Never "talk down" to the student; simplify the language, not the maturity of the ideas.`;
@@ -170,6 +205,16 @@ const FRAMEWORK_KEYWORDS = {
     'Spoken Word', 'Rap Lyrics', 'Vision Board', 'Graphic Novel',
     'Album Cover', 'Photo Essay', 'Storyboard'
   ],
+  spelling: [
+    'Word Scramble', 'Spelling Bee', 'Word Search', 'Fill in the Blank',
+    'Dictation Prep', 'Word Building', 'Roots', 'Affixes',
+    'Look-Say-Cover', 'Spelling Pattern', 'Proofreading Detective'
+  ],
+  grammar: [
+    'Sentence Combining', 'Grammar Error Hunt', 'Parts of Speech',
+    'Sentence Diagramming', 'Punctuation Clinic', 'Mentor Sentence',
+    'Rewrite & Expand', 'Parallel Structure', 'Syntax Remix'
+  ],
 };
 
 function extractFrameworks(html) {
@@ -191,6 +236,8 @@ function buildPreviousDaysContext(savedWorkbooks) {
     if (fw.analysis) parts.push(`Page 9 used '${fw.analysis}'`);
     if (fw.scenario) parts.push(`Page 10 used '${fw.scenario}'`);
     if (fw.creative) parts.push(`Page 11 used '${fw.creative}'`);
+    if (fw.spelling) parts.push(`Spelling used '${fw.spelling}'`);
+    if (fw.grammar) parts.push(`Grammar used '${fw.grammar}'`);
     return `- Day ${w.dayNumber}: ${parts.length ? parts.join(', ') : 'frameworks unknown'}`;
   }).join('\n');
 }
@@ -225,13 +272,14 @@ const WorkbookGenerator = ({ user }) => {
   const [unitTopic, setUnitTopic] = useState('');
   const [dayNumber, setDayNumber] = useState(1);
   const [dayFocus, setDayFocus] = useState('');
-  const [readingLevel, setReadingLevel] = useState(READING_LEVELS[1].value);
+  const [readingLevel, setReadingLevel] = useState(READING_LEVELS[6].value);
   const [unitWorkbooks, setUnitWorkbooks] = useState([]);
   const suggestTimeoutRef = useRef(null);
 
   // Activity selections
   const [activityChoices, setActivityChoices] = useState({
     vocabulary: 'auto', synthesis: 'auto', scenario: 'auto', creative: 'auto',
+    spelling: 'auto', grammar: 'auto',
   });
   const [showActivities, setShowActivities] = useState(false);
   const setActivity = (section, id) => setActivityChoices(prev => ({ ...prev, [section]: id }));
@@ -887,7 +935,7 @@ const WorkbookGenerator = ({ user }) => {
                     ))}
                     {Object.values(activityChoices).some(v => v !== 'auto') && (
                       <button type="button"
-                        onClick={() => setActivityChoices({ vocabulary: 'auto', synthesis: 'auto', scenario: 'auto', creative: 'auto' })}
+                        onClick={() => setActivityChoices({ vocabulary: 'auto', synthesis: 'auto', scenario: 'auto', creative: 'auto', spelling: 'auto', grammar: 'auto' })}
                         className="text-[10px] text-slate-400 hover:text-slate-600 underline transition">
                         Reset all to Auto
                       </button>
