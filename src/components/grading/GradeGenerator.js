@@ -57,7 +57,7 @@ const COURSE_OPTIONS = {
     'Computer Science', 'Web Design', 'Digital Media',
     'Family & Consumer Science', 'Wood Shop', 'STEM Lab',
     'Study Skills', 'Career Exploration', 'Leadership',
-    'Drama', 'Yearbook', 'Library Aide',
+    'Drama', 'Yearbook', 'Library Aide', 'Psychology',
   ],
 };
 
