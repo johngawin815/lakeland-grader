@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, StickyNote, Search } from 'lucide-react';
+import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, StickyNote, Search, FileCheck } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook';
 import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
@@ -13,20 +13,16 @@ import { getCurrentSchoolYear } from '../../utils/smartUtils';
 // Mock user, as requested. In a real app, this would come from an auth context.
 const MOCK_USER = { name: "John Gawin", units: ["Harmony"], email: "john.gawin@lakeland.edu" };
 
-// Mock data import disabled for real/fake student testing
-
 // --- Main Dashboard Component ---
 const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'roster');
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [managingCourse, setManagingCourse] = useState(null);
 
-  // Sync tab when initialTab prop changes (e.g., from HubShell gradebook nav)
   useEffect(() => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
 
-  // If managing enrollment for a course, show EnrollmentManager
   if (managingCourse) {
     return (
       <div className="w-full min-h-full p-8 box-border font-sans max-w-7xl mx-auto">
@@ -39,28 +35,27 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
     );
   }
 
-  // If a course is selected, render its gradebook
   if (selectedCourse) {
     return <ClassGradebook course={selectedCourse} onExit={() => setSelectedCourse(null)} user={user} onNavigateToGradeCards={() => { setSelectedCourse(null); if (setView) setView('gradecards'); }} />;
   }
 
   return (
     <div className="w-full h-full box-border flex flex-col font-sans max-w-7xl mx-auto relative">
-      <div className="flex justify-between items-center px-6 pt-4 pb-3 shrink-0">
+      <div className="flex justify-between items-center px-6 pt-5 pb-2 shrink-0">
         <div>
-          <h2 className="text-slate-900 text-xl font-extrabold tracking-tight">
+          <h2 className="text-slate-800 text-lg font-bold tracking-tight">
             Teacher Dashboard
           </h2>
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-400 text-xs mt-0.5">
             {user.units?.join(', ')} &middot; {user.name}
           </p>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 mb-0 border-b border-slate-200 px-6 shrink-0">
+      <div className="flex gap-1 mb-0 border-b border-slate-200/80 px-6 shrink-0">
         <TabButton
-          label="My Unit Roster"
+          label="Unit Roster"
           icon={<UserCheck />}
           isActive={activeTab === 'roster'}
           onClick={() => setActiveTab('roster')}
@@ -74,7 +69,7 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 flex-1 flex flex-col overflow-hidden relative z-0">
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200/40 rounded-b-2xl rounded-tr-2xl shadow-xl shadow-slate-200/40 flex-1 flex flex-col overflow-hidden relative z-0">
         {activeTab === 'roster' && <UnitRoster defaultUnit={user.units?.[0]} user={user} />}
         {activeTab === 'classes' && (
           <div className="flex-1 overflow-y-auto p-6">
@@ -96,13 +91,13 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
 const TabButton = ({ label, icon, isActive, onClick }) => (
   <button
     onClick={onClick}
-    className={`px-6 py-3 rounded-t-lg font-bold text-sm transition-all flex items-center gap-2.5 border-b-2 ${
+    className={`px-5 py-2.5 rounded-t-lg font-semibold text-sm transition-all flex items-center gap-2 border-b-2 ${
       isActive
-        ? 'border-indigo-600 text-indigo-600'
-        : 'border-transparent text-slate-500 hover:text-slate-800'
+        ? 'border-indigo-500 text-indigo-600 bg-white/50'
+        : 'border-transparent text-slate-400 hover:text-slate-600'
     }`}
   >
-    {React.cloneElement(icon, { className: 'w-5 h-5' })}
+    {React.cloneElement(icon, { className: 'w-4 h-4' })}
     {label}
   </button>
 );
@@ -134,7 +129,6 @@ const UnitRoster = ({ defaultUnit, user }) => {
         } catch (err) { console.error('Failed to load unit counts:', err); }
     };
 
-    // Load unit counts on mount
     useEffect(() => {
         loadCounts();
     }, []);
@@ -148,11 +142,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
             } else {
                 students = await databaseService.getStudentsByUnit(selectedUnit);
             }
-            if (students && students.length > 0) {
-                setRoster(students);
-            } else {
-                setRoster([]);
-            }
+            setRoster(students?.length > 0 ? students : []);
         } catch (error) {
             console.error("Failed to fetch unit roster:", error);
             setRoster([]);
@@ -166,7 +156,6 @@ const UnitRoster = ({ defaultUnit, user }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedUnit]);
 
-    // Sync selectedStudentProfile with roster after refresh
     useEffect(() => {
         if (selectedStudentProfile) {
             const updated = roster.find(s => s.id === selectedStudentProfile.id);
@@ -196,28 +185,19 @@ const UnitRoster = ({ defaultUnit, user }) => {
                 iep: formData.iepStatus === 'Yes' ? 'Yes' : 'No',
                 active: true,
                 lastModified: new Date().toISOString(),
-                // Health & Admission
                 healthInsurance: formData.healthInsurance || '',
                 therapistName: formData.therapistName || '',
                 reasonForAdmit: formData.reasonForAdmit || '',
-                // Guardian 1
                 guardian1Name: formData.guardian1Name || '',
                 guardian1Address: formData.guardian1Address || '',
                 guardian1Phone: formData.guardian1Phone || '',
                 guardian1Email: formData.guardian1Email || '',
-                // Guardian 2
-                guardian2Name: formData.guardian2Name || '',
-                guardian2Address: formData.guardian2Address || '',
-                guardian2Phone: formData.guardian2Phone || '',
-                guardian2Email: formData.guardian2Email || '',
-                // Home School
                 homeSchoolName: formData.homeSchoolName || '',
                 homeSchoolAddress: formData.homeSchoolAddress || '',
                 homeSchoolContactName: formData.homeSchoolContactName || '',
                 homeSchoolContactPosition: formData.homeSchoolContactPosition || '',
                 homeSchoolContactNumber: formData.homeSchoolContactPhone || '',
                 homeSchoolContactEmail: formData.homeSchoolContactEmail || '',
-                // Legacy fields
                 homeSchoolContact: '',
                 guardianName: formData.guardian1Name || '',
                 guardianPhone: formData.guardian1Phone || '',
@@ -230,7 +210,6 @@ const UnitRoster = ({ defaultUnit, user }) => {
             if (user) {
                 await databaseService.logAudit(user, 'CreateStudent', `Created new student: ${newStudent.studentName} (ID: ${newStudent.id})`);
             }
-            // Auto-enroll in default courses if checkbox was checked
             if (formData.autoEnrollDefaults !== false) {
                 try {
                     const result = await autoEnrollStudent(newStudent, user.name, getCurrentSchoolYear());
@@ -252,7 +231,6 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
     const isDetailOpen = !!selectedStudentProfile;
 
-    // Filter roster by search query and sort alphabetically by first name
     const filteredRoster = roster.filter(s => {
         if (!searchQuery.trim()) return true;
         const q = searchQuery.toLowerCase();
@@ -261,10 +239,12 @@ const UnitRoster = ({ defaultUnit, user }) => {
                s.guardianName?.toLowerCase().includes(q);
     }).sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
 
+    const iepCount = filteredRoster.filter(s => s.iep === 'Yes').length;
+
     return (
         <div className="flex-1 flex flex-col overflow-hidden h-full">
             {/* Unit Selector + Search + Add Student */}
-            <div className="flex flex-wrap items-center gap-2 px-6 py-3 shrink-0 border-b border-slate-100">
+            <div className="flex flex-wrap items-center gap-1.5 px-5 py-3 shrink-0 border-b border-slate-100 bg-slate-50/50">
                 {UNIT_CONFIG.map(unit => {
                     const Icon = unit.icon;
                     const isActive = selectedUnit === unit.key;
@@ -277,17 +257,17 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                 setSelectedStudentProfile(null);
                                 setSearchQuery('');
                             }}
-                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                                 isActive
-                                    ? `${unit.badge} border-current shadow-md ring-1 ring-current/20`
-                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                                    ? `${unit.badge} shadow-sm`
+                                    : 'bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                             }`}
                         >
-                            <Icon className="w-4 h-4" />
+                            <Icon className="w-3.5 h-3.5" />
                             <span>{unit.label}</span>
                             {count !== undefined && (
-                                <span className={`text-[10px] font-extrabold min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-full ${
-                                    isActive ? 'bg-white/30' : 'bg-slate-100 text-slate-400'
+                                <span className={`text-[10px] font-bold min-w-[16px] h-[16px] inline-flex items-center justify-center rounded-full ${
+                                    isActive ? 'bg-white/40' : 'bg-slate-100 text-slate-400'
                                 }`}>
                                     {count}
                                 </span>
@@ -296,26 +276,32 @@ const UnitRoster = ({ defaultUnit, user }) => {
                     );
                 })}
                 {!isDetailOpen && (
-                <div className="ml-auto flex items-center gap-3">
+                <div className="ml-auto flex items-center gap-2">
+                    {iepCount > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200/60">
+                            <FileCheck className="w-3 h-3" />
+                            {iepCount} IEP
+                        </span>
+                    )}
                     <div className="relative">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search students..."
-                            className="pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 outline-none transition-all w-48 focus:w-64"
+                            placeholder="Search..."
+                            className="pl-8 pr-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 outline-none transition-all w-40 focus:w-56"
                         />
                     </div>
                     <button
                         onClick={() => setShowIntakeForm(prev => !prev)}
-                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg ${
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                             showIntakeForm
-                                ? 'bg-slate-200 text-slate-600 shadow-none'
-                                : 'bg-indigo-600 text-white shadow-indigo-500/10 hover:bg-indigo-700'
+                                ? 'bg-slate-200 text-slate-600'
+                                : 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700'
                         }`}
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3.5 h-3.5" />
                         {showIntakeForm ? 'Cancel' : 'Add Student'}
                     </button>
                 </div>
@@ -332,15 +318,16 @@ const UnitRoster = ({ defaultUnit, user }) => {
             {/* Main content area */}
             {loading ? (
                 <div className="flex items-center justify-center flex-1">
-                    <Loader2 className="w-5 h-5 animate-spin text-indigo-500 mr-3" />
+                    <Loader2 className="w-5 h-5 animate-spin text-indigo-400 mr-3" />
                     <span className="text-sm font-medium text-slate-400">Loading roster...</span>
                 </div>
             ) : filteredRoster.length === 0 ? (
-                <div className="text-center flex-1 flex items-center justify-center text-slate-400">
+                <div className="text-center flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <Users className="w-10 h-10 text-slate-200" />
                     {searchQuery.trim() ? (
                         <p className="text-sm font-medium">No students matching "{searchQuery}"</p>
                     ) : (
-                        <p className="text-sm font-medium italic">No students assigned to the {selectedUnit} unit.</p>
+                        <p className="text-sm font-medium">No students in {selectedUnit}</p>
                     )}
                 </div>
             ) : (
@@ -350,11 +337,10 @@ const UnitRoster = ({ defaultUnit, user }) => {
                         overflow-y-auto transition-all duration-300 ease-in-out
                         ${isDetailOpen
                             ? 'hidden lg:block w-72 xl:w-80 shrink-0 border-r border-slate-200/80 bg-white'
-                            : 'flex-1 p-6'
+                            : 'flex-1 p-5'
                         }
                     `}>
                         {isDetailOpen ? (
-                            /* Compact list rows for master-detail mode */
                             <div className="divide-y divide-slate-100">
                                 {filteredRoster.map(student => (
                                     <StudentListItem
@@ -366,8 +352,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                 ))}
                             </div>
                         ) : (
-                            /* Full-width card grid (original layout, no student selected) */
-                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {filteredRoster.map(student => (
                                     <StudentCard
                                         key={student.id}
@@ -384,11 +369,10 @@ const UnitRoster = ({ defaultUnit, user }) => {
                     {/* ====== RIGHT PANEL: Detail ====== */}
                     {isDetailOpen && (
                         <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/30 animate-detail-enter">
-                            {/* Mobile back button -- visible below lg */}
                             <div className="lg:hidden shrink-0 bg-white border-b border-slate-200 px-4 py-2.5">
                                 <button
                                     onClick={() => setSelectedStudentProfile(null)}
-                                    className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                     Back to roster
@@ -431,13 +415,13 @@ const StudentListItem = ({ student, onSelect, isSelected }) => {
                 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500
                 ${isSelected
                     ? `${unitStyle?.tagBg || 'bg-indigo-50'} border-l-[3px] ${unitStyle?.accentBorder || 'border-l-indigo-500'}`
-                    : 'hover:bg-slate-50 border-l-[3px] border-l-transparent'
+                    : 'hover:bg-slate-50/80 border-l-[3px] border-l-transparent'
                 }
             `}
         >
             <div className={`
-                w-8 h-8 rounded-lg ${unitStyle?.avatarBg || 'bg-slate-400'}
-                flex items-center justify-center text-white text-xs font-bold shrink-0
+                w-8 h-8 rounded-full ${unitStyle?.avatarBg || 'bg-slate-400'}
+                flex items-center justify-center text-white text-[10px] font-bold shrink-0
             `}>
                 {initials}
             </div>
@@ -446,11 +430,12 @@ const StudentListItem = ({ student, onSelect, isSelected }) => {
                     {student.studentName}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs text-slate-400">Gr {student.gradeLevel}</span>
+                    <span className="text-[11px] text-slate-400">Gr {student.gradeLevel}</span>
                     {student.iep === 'Yes' && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                            iepDueUrgent ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
+                        <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                            iepDueUrgent ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-700'
                         }`}>
+                            <FileCheck className="w-2.5 h-2.5" />
                             IEP{iepDueUrgent ? ' !' : ''}
                         </span>
                     )}
@@ -504,26 +489,26 @@ const StudentCard = ({ student, onSelect, isSelected, user }) => {
     return (
         <div
             onClick={onSelect}
-            className={`relative rounded-xl border-l-[3px] ${unitStyle?.accentBorder || 'border-l-slate-300'} border border-slate-200/60 bg-white cursor-pointer transition-all duration-200 group hover:shadow-lg hover:-translate-y-0.5 ${
+            className={`relative rounded-xl border ${unitStyle?.accentBorder ? `border-l-[3px] ${unitStyle.accentBorder}` : 'border-l-[3px] border-l-slate-300'} border-slate-200/60 bg-white cursor-pointer transition-all duration-200 group hover:shadow-md hover:-translate-y-px ${
                 isSelected
-                    ? 'ring-2 ring-indigo-500/30 border-indigo-200 shadow-md'
-                    : 'hover:border-slate-300'
+                    ? 'ring-2 ring-indigo-400/30 border-indigo-200 shadow-sm'
+                    : 'shadow-sm hover:border-slate-300'
             }`}
         >
             <div className="px-4 py-3.5">
                 {/* Row 1: Avatar + Name + Grade + Days */}
-                <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-10 h-10 rounded-lg ${unitStyle?.avatarBg || 'bg-slate-400'} ring-2 ${unitStyle?.avatarRing || 'ring-slate-200'} ring-offset-1 flex items-center justify-center text-white font-bold text-xs tracking-wide shrink-0`}>
+                <div className="flex items-center gap-3 mb-2.5">
+                    <div className={`w-9 h-9 rounded-full ${unitStyle?.avatarBg || 'bg-slate-400'} flex items-center justify-center text-white font-bold text-[10px] tracking-wide shrink-0`}>
                         {initials}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-sm text-slate-900 leading-tight truncate group-hover:text-indigo-600 transition-colors">
+                        <h3 className="font-semibold text-sm text-slate-800 leading-tight truncate group-hover:text-indigo-600 transition-colors">
                             {student.studentName}
                         </h3>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-xs text-slate-500 font-semibold">Grade {student.gradeLevel}</span>
-                            <span className="w-1 h-1 rounded-full bg-slate-300" />
-                            <span className="text-xs text-slate-400 font-medium">{daysIn}d</span>
+                            <span className="text-[11px] text-slate-500 font-medium">Gr {student.gradeLevel}</span>
+                            <span className="w-0.5 h-0.5 rounded-full bg-slate-300" />
+                            <span className="text-[11px] text-slate-400">{daysIn}d</span>
                         </div>
                     </div>
                     <ChevronRight className={`w-4 h-4 text-slate-300 shrink-0 transition-all ${
@@ -533,38 +518,39 @@ const StudentCard = ({ student, onSelect, isSelected, user }) => {
 
                 {/* Row 2: Badges */}
                 <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${unitStyle?.tagBg || 'bg-slate-100 text-slate-600'}`}>
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${unitStyle?.tagBg || 'bg-slate-100 text-slate-600'}`}>
                         <Icon className="w-3 h-3" />
                         {student.unitName}
                     </span>
                     {student.iep === "Yes" && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold border ${
+                        <span className={`inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full font-bold ${
                             iepDueUrgent
-                                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                : 'bg-amber-50 text-amber-700 border-amber-200/60'
+                                ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                                : 'bg-amber-50 text-amber-600 border border-amber-200/60'
                         }`}>
+                            <FileCheck className="w-3 h-3" />
                             IEP{iepDueUrgent ? ' \u2013 Due Soon' : ''}
                         </span>
                     )}
                     {student.district && (
-                        <span className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">
+                        <span className="text-[10px] text-slate-400 font-medium truncate max-w-[100px]">
                             {student.district}
                         </span>
                     )}
                     {noteCount > 0 && (
-                        <span className="ml-auto inline-flex items-center gap-0.5 text-[10px] text-amber-600 font-bold">
+                        <span className="ml-auto inline-flex items-center gap-0.5 text-[10px] text-amber-500 font-semibold">
                             <StickyNote className="w-3 h-3" />
                             {noteCount}
                         </span>
                     )}
                 </div>
 
-                {/* Auto-Enroll Button */}
-                <div className="mt-2 flex items-center gap-2">
+                {/* Auto-Enroll (compact, only visible on hover) */}
+                <div className="mt-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                         onClick={handleAutoEnroll}
                         disabled={enrolling}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-slate-50 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors disabled:opacity-50"
                         title="Auto-enroll in default courses"
                     >
                         {enrolling ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookOpen className="w-3 h-3" />}
@@ -638,7 +624,7 @@ const MyClasses = ({ teacherName, user, onCourseSelect, onManageEnrollment }) =>
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-5 h-5 animate-spin text-indigo-500 mr-3" />
+                <Loader2 className="w-5 h-5 animate-spin text-indigo-400 mr-3" />
                 <span className="text-sm font-medium text-slate-400">Loading classes...</span>
             </div>
         );
@@ -646,28 +632,27 @@ const MyClasses = ({ teacherName, user, onCourseSelect, onManageEnrollment }) =>
 
     return (
         <>
-            {/* Create Course Button */}
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">
+            <div className="flex justify-between items-center mb-5">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     {courses.length} Course{courses.length !== 1 ? 's' : ''}
                 </h3>
                 <button
                     onClick={handleCreateCourse}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/10"
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white rounded-lg font-semibold text-xs hover:bg-indigo-700 transition-colors shadow-sm"
                 >
-                    <Plus className="w-4 h-4" /> Create Course
+                    <Plus className="w-3.5 h-3.5" /> Create Course
                 </button>
             </div>
 
             {courses.length === 0 ? (
                 <div className="text-center py-16">
-                    <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-400 italic mb-4">No courses yet. Create your first course to get started.</p>
+                    <BookOpen className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                    <p className="text-slate-400 text-sm mb-4">No courses yet. Create your first course to get started.</p>
                     <button
                         onClick={handleCreateCourse}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/10"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold text-xs hover:bg-indigo-700 transition-colors shadow-sm"
                     >
-                        <Plus className="w-4 h-4" /> Create Course
+                        <Plus className="w-3.5 h-3.5" /> Create Course
                     </button>
                 </div>
             ) : (
@@ -685,7 +670,6 @@ const MyClasses = ({ teacherName, user, onCourseSelect, onManageEnrollment }) =>
                 </div>
             )}
 
-            {/* Course Form Modal */}
             <CourseFormModal
                 isOpen={isCourseModalOpen}
                 onClose={() => { setIsCourseModalOpen(false); setEditingCourse(null); }}
@@ -699,32 +683,31 @@ const MyClasses = ({ teacherName, user, onCourseSelect, onManageEnrollment }) =>
 
 
 const CourseCard = ({ course, onOpen, onManage, onEdit, onDelete }) => (
-    <div className="p-6 border border-slate-200/80 rounded-xl shadow-lg bg-white/80 transition-all group hover:shadow-2xl hover:bg-white flex flex-col gap-3">
+    <div className="p-5 border border-slate-200/60 rounded-xl shadow-sm bg-white transition-all group hover:shadow-md hover:border-slate-300 flex flex-col gap-3">
         <div className="flex justify-between items-start">
-            <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600 border border-white">
-                <BookOpen className="w-7 h-7" />
+            <div className="bg-indigo-50 p-2.5 rounded-lg text-indigo-500">
+                <BookOpen className="w-6 h-6" />
             </div>
             <div className="flex items-center gap-1.5">
                 {course.subjectArea && (
-                    <span className="text-[10px] px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 font-bold">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-semibold">
                         {course.subjectArea}
                     </span>
                 )}
-                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold">
-                    {parseFloat(course.credits)} Credits
+                <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-semibold">
+                    {parseFloat(course.credits)} cr
                 </span>
             </div>
         </div>
         <div>
-            <h3 className="font-bold text-xl text-slate-800">{course.courseName}</h3>
-            <p className="text-sm text-slate-500">
-                {course.term && <span className="font-medium">{course.term}</span>}
-            </p>
+            <h3 className="font-semibold text-base text-slate-800">{course.courseName}</h3>
+            {course.term && (
+                <p className="text-xs text-slate-400 mt-0.5">{course.term}</p>
+            )}
         </div>
 
-        {/* Action Buttons */}
         <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-            <div className="flex gap-1">
+            <div className="flex gap-0.5">
                 <button
                     onClick={(e) => { e.stopPropagation(); onManage(); }}
                     className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
@@ -749,16 +732,12 @@ const CourseCard = ({ course, onOpen, onManage, onEdit, onDelete }) => (
             </div>
             <button
                 onClick={onOpen}
-                className="flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline"
+                className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
             >
-                Open Gradebook <ChevronRight className="w-4 h-4" />
+                Gradebook <ChevronRight className="w-3.5 h-3.5" />
             </button>
         </div>
     </div>
 );
-
-
-// --- CONFIGS ---
-// UNIT_CONFIG is imported from src/config/unitConfig.js
 
 export default StudentMasterDashboard;

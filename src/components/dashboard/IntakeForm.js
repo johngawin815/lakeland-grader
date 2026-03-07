@@ -14,7 +14,6 @@ const IntakeForm = ({ onSave, units, defaultUnit }) => {
     student: true,
     health: false,
     guardian1: false,
-    guardian2: false,
     homeSchool: false,
   });
 
@@ -139,29 +138,6 @@ const IntakeForm = ({ onSave, units, defaultUnit }) => {
                 <div>
                     <label className={labelClasses}>Address</label>
                     <input {...register("guardian1Address")} className={inputClasses} placeholder="123 Main St, City, State ZIP" />
-                </div>
-              </div>
-            )}
-
-            {/* === GUARDIAN 2 === */}
-            <SectionHeader sectionKey="guardian2" icon={Users} label="Guardian 2" color="bg-blue-50 text-blue-700" />
-            {openSections.guardian2 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-1">
-                <div>
-                    <label className={labelClasses}>Name</label>
-                    <input {...register("guardian2Name")} className={inputClasses} placeholder="Full name" />
-                </div>
-                <div>
-                    <label className={labelClasses}>Phone</label>
-                    <input type="tel" {...register("guardian2Phone")} className={inputClasses} placeholder="(555) 123-4567" />
-                </div>
-                <div>
-                    <label className={labelClasses}>Email</label>
-                    <input type="email" {...register("guardian2Email")} className={inputClasses} placeholder="guardian@email.com" />
-                </div>
-                <div>
-                    <label className={labelClasses}>Address</label>
-                    <input {...register("guardian2Address")} className={inputClasses} placeholder="123 Main St, City, State ZIP" />
                 </div>
               </div>
             )}

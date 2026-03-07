@@ -48,10 +48,6 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       guardian1Address: studentData?.guardian1Address || '',
       guardian1Phone: studentData?.guardian1Phone || '',
       guardian1Email: studentData?.guardian1Email || '',
-      guardian2Name: studentData?.guardian2Name || '',
-      guardian2Address: studentData?.guardian2Address || '',
-      guardian2Phone: studentData?.guardian2Phone || '',
-      guardian2Email: studentData?.guardian2Email || '',
       homeSchoolName: studentData?.homeSchoolName || '',
       homeSchoolAddress: studentData?.homeSchoolAddress || '',
     },
@@ -133,10 +129,6 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         guardian1Address: formData.guardian1Address || '',
         guardian1Phone: formData.guardian1Phone || '',
         guardian1Email: formData.guardian1Email || '',
-        guardian2Name: formData.guardian2Name || '',
-        guardian2Address: formData.guardian2Address || '',
-        guardian2Phone: formData.guardian2Phone || '',
-        guardian2Email: formData.guardian2Email || '',
         homeSchoolName: formData.homeSchoolName || '',
         homeSchoolAddress: formData.homeSchoolAddress || '',
         mtpNotes: mtpNotes,
@@ -302,31 +294,6 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           <div>
             <label className={LABEL_CLASS}><MapPin className="w-3.5 h-3.5" />Address</label>
             <input type="text" {...register('guardian1Address')} disabled={isSaving} placeholder="123 Main St, City, ST ZIP" className={INPUT_CLASS} />
-          </div>
-        </div>
-      </div>
-
-      {/* Row 6: Guardian 2 */}
-      <div className="pt-2 border-t border-slate-100">
-        <p className="flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wide mb-2">
-          <Users className="w-3.5 h-3.5" /> Guardian 2
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={LABEL_CLASS}><UserCheck className="w-3.5 h-3.5" />Name</label>
-            <input type="text" {...register('guardian2Name')} disabled={isSaving} placeholder="Full name" className={INPUT_CLASS} />
-          </div>
-          <div>
-            <label className={LABEL_CLASS}><Phone className="w-3.5 h-3.5" />Phone</label>
-            <input type="tel" {...register('guardian2Phone')} disabled={isSaving} placeholder="(555) 123-4567" className={INPUT_CLASS} />
-          </div>
-          <div>
-            <label className={LABEL_CLASS}><Mail className="w-3.5 h-3.5" />Email</label>
-            <input type="email" {...register('guardian2Email')} disabled={isSaving} placeholder="guardian@email.com" className={INPUT_CLASS} />
-          </div>
-          <div>
-            <label className={LABEL_CLASS}><MapPin className="w-3.5 h-3.5" />Address</label>
-            <input type="text" {...register('guardian2Address')} disabled={isSaving} placeholder="123 Main St, City, ST ZIP" className={INPUT_CLASS} />
           </div>
         </div>
       </div>
@@ -516,43 +483,27 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
       </div>
 
-      {/* Row 3: Guardians */}
+      {/* Row 3: Guardian */}
       <div className="pt-1.5 border-t border-slate-100">
         <p className="flex items-center gap-1 text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-1">
-          <Users className="w-3 h-3" /> Guardians
+          <Users className="w-3 h-3" /> Guardian
         </p>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
           <div>
-            <label className={COMPACT_LABEL_CLASS}>Guardian 1 Name</label>
+            <label className={COMPACT_LABEL_CLASS}>Name</label>
             <input type="text" {...register('guardian1Name')} disabled={isSaving} placeholder="Full name" className={COMPACT_INPUT_CLASS} />
           </div>
           <div>
-            <label className={COMPACT_LABEL_CLASS}>G1 Phone</label>
+            <label className={COMPACT_LABEL_CLASS}>Phone</label>
             <input type="tel" {...register('guardian1Phone')} disabled={isSaving} placeholder="(555) 123-4567" className={COMPACT_INPUT_CLASS} />
           </div>
           <div>
-            <label className={COMPACT_LABEL_CLASS}>G1 Email</label>
+            <label className={COMPACT_LABEL_CLASS}>Email</label>
             <input type="email" {...register('guardian1Email')} disabled={isSaving} placeholder="email@example.com" className={COMPACT_INPUT_CLASS} />
           </div>
           <div>
-            <label className={COMPACT_LABEL_CLASS}>G1 Address</label>
+            <label className={COMPACT_LABEL_CLASS}>Address</label>
             <input type="text" {...register('guardian1Address')} disabled={isSaving} placeholder="Address" className={COMPACT_INPUT_CLASS} />
-          </div>
-          <div>
-            <label className={COMPACT_LABEL_CLASS}>Guardian 2 Name</label>
-            <input type="text" {...register('guardian2Name')} disabled={isSaving} placeholder="Full name" className={COMPACT_INPUT_CLASS} />
-          </div>
-          <div>
-            <label className={COMPACT_LABEL_CLASS}>G2 Phone</label>
-            <input type="tel" {...register('guardian2Phone')} disabled={isSaving} placeholder="(555) 123-4567" className={COMPACT_INPUT_CLASS} />
-          </div>
-          <div>
-            <label className={COMPACT_LABEL_CLASS}>G2 Email</label>
-            <input type="email" {...register('guardian2Email')} disabled={isSaving} placeholder="email@example.com" className={COMPACT_INPUT_CLASS} />
-          </div>
-          <div>
-            <label className={COMPACT_LABEL_CLASS}>G2 Address</label>
-            <input type="text" {...register('guardian2Address')} disabled={isSaving} placeholder="Address" className={COMPACT_INPUT_CLASS} />
           </div>
         </div>
       </div>
