@@ -4,7 +4,7 @@ import Docxtemplater from 'docxtemplater';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { FileDown, FileSpreadsheet, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2, Eye, EyeOff, Zap, Users, Info, RefreshCw } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2, Eye, EyeOff, Users, Info, RefreshCw } from 'lucide-react';
 import { useGrading } from '../../context/GradingContext';
 import GradeCardPreview from './GradeCardPreview';
 import BatchExportModal from './BatchExportModal';
@@ -115,7 +115,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  const [mode, setMode] = useState('full'); // 'full' | 'quick'
   const [showPreview, setShowPreview] = useState(false);
   const [autoFillBanner, setAutoFillBanner] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
@@ -153,14 +152,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
     elec1Instructor: '', elec2Instructor: '',
   });
 
-  // Quick mode state
-  const [quickData, setQuickData] = useState({
-    studentName: activeStudent || '',
-    subject: '',
-    grade: '',
-    comments: '',
-  });
-
   // Auto-populate from gradebook context (uses subjectArea for proper slot mapping)
   useEffect(() => {
     if (gradeCardPayload) {
@@ -189,7 +180,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
       }
 
       setFormData(prev => ({ ...prev, ...updates }));
-      setMode('full');
       setAutoFillBanner(true);
       clearGradeCardPayload();
       setTimeout(() => setAutoFillBanner(false), 5000);
@@ -274,7 +264,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
   useEffect(() => {
     if (activeStudent) {
       setFormData(prev => ({ ...prev, studentName: activeStudent }));
-      setQuickData(prev => ({ ...prev, studentName: activeStudent }));
     }
   }, [activeStudent]);
 
@@ -304,11 +293,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleQuickChange = (e) => {
-    const { name, value } = e.target;
-    setQuickData(prev => ({ ...prev, [name]: value }));
   };
 
   const getMappedData = () => {
@@ -529,72 +513,62 @@ const GradeGenerator = ({ user, activeStudent }) => {
   };
 
   const saveToCloud = async () => {
-    const nameToSave = mode === 'quick' ? quickData.studentName : formData.studentName;
+    const nameToSave = formData.studentName;
     if (!nameToSave) return alert("Please enter a student name.");
 
     setSaving(true);
     try {
       // --- Persist to Enrollments (same pattern as ClassGradebook) ---
-      if (mode === 'full') {
-        const students = await databaseService.findStudentByName(nameToSave.trim());
-        if (!students || students.length === 0) {
-          alert('Student not found in database. Please check the name and try again.');
-          setSaving(false);
-          return;
-        }
-        const student = students[0];
+      const students = await databaseService.findStudentByName(nameToSave.trim());
+      if (!students || students.length === 0) {
+        alert('Student not found in database. Please check the name and try again.');
+        setSaving(false);
+        return;
+      }
+      const student = students[0];
 
-        const ENROLLMENT_SUBJECTS = [
-          { prefix: 'eng', subjectArea: 'English' },
-          { prefix: 'math', subjectArea: 'Math' },
-          { prefix: 'sci', subjectArea: 'Science' },
-          { prefix: 'soc', subjectArea: 'Social Studies' },
-          { prefix: 'elec1', subjectArea: 'Elective' },
-          { prefix: 'elec2', subjectArea: 'Elective' },
-        ];
+      const ENROLLMENT_SUBJECTS = [
+        { prefix: 'eng', subjectArea: 'English' },
+        { prefix: 'math', subjectArea: 'Math' },
+        { prefix: 'sci', subjectArea: 'Science' },
+        { prefix: 'soc', subjectArea: 'Social Studies' },
+        { prefix: 'elec1', subjectArea: 'Elective' },
+        { prefix: 'elec2', subjectArea: 'Elective' },
+      ];
 
-        const enrollmentPromises = ENROLLMENT_SUBJECTS
-          .filter(({ prefix }) => formData[`${prefix}Grade`] || formData[`${prefix}Class`])
-          .map(({ prefix, subjectArea }) => {
-            const courseId = `manual-${prefix}`;
-            return databaseService.saveCourseGrade({
-              id: `${student.id}-${courseId}`,
-              studentId: student.id,
-              courseId,
-              courseName: formData[`${prefix}Class`] || '',
-              subjectArea,
-              teacherName: formData[`${prefix}Instructor`] || user?.name || '',
-              letterGrade: formData[`${prefix}Grade`] || '',
-              percentage: formData[`${prefix}Pct`] ? parseFloat(formData[`${prefix}Pct`]) : null,
-              credits: formData[`${prefix}Credits`] ? parseFloat(formData[`${prefix}Credits`]) : null,
-              term: formData.schoolYear || '',
-              status: 'Active',
-            });
+      const enrollmentPromises = ENROLLMENT_SUBJECTS
+        .filter(({ prefix }) => formData[`${prefix}Grade`] || formData[`${prefix}Class`])
+        .map(({ prefix, subjectArea }) => {
+          const courseId = `manual-${prefix}`;
+          return databaseService.saveCourseGrade({
+            id: `${student.id}-${courseId}`,
+            studentId: student.id,
+            courseId,
+            courseName: formData[`${prefix}Class`] || '',
+            subjectArea,
+            teacherName: formData[`${prefix}Instructor`] || user?.name || '',
+            letterGrade: formData[`${prefix}Grade`] || '',
+            percentage: formData[`${prefix}Pct`] ? parseFloat(formData[`${prefix}Pct`]) : null,
+            credits: formData[`${prefix}Credits`] ? parseFloat(formData[`${prefix}Credits`]) : null,
+            term: formData.schoolYear || '',
+            status: 'Active',
           });
+        });
 
-        try {
-          await Promise.all(enrollmentPromises);
-        } catch (enrollErr) {
-          console.error('Error saving enrollments:', enrollErr);
-        }
+      try {
+        await Promise.all(enrollmentPromises);
+      } catch (enrollErr) {
+        console.error('Error saving enrollments:', enrollErr);
       }
 
       // --- Also save to KTEA_Reports as audit trail ---
-      const record = mode === 'quick'
-        ? {
-            ...quickData,
-            type: 'grade_report',
-            templateType: 'quick',
-            submittedBy: user?.email || 'unknown',
-            createdAt: new Date().toISOString(),
-          }
-        : {
-            ...formData,
-            type: 'grade_report',
-            templateType: selectedTemplate,
-            submittedBy: user?.email || 'unknown',
-            createdAt: new Date().toISOString(),
-          };
+      const record = {
+        ...formData,
+        type: 'grade_report',
+        templateType: selectedTemplate,
+        submittedBy: user?.email || 'unknown',
+        createdAt: new Date().toISOString(),
+      };
 
       await databaseService.addKteaReport(record);
 
@@ -608,267 +582,127 @@ const GradeGenerator = ({ user, activeStudent }) => {
     }
   };
 
-  const handleQuickSave = (e) => {
-    e.preventDefault();
-    saveToCloud();
-  };
-
   const handlePrint = () => {
     window.print();
   };
 
   const currentConfig = TEMPLATES[selectedTemplate];
 
-  return (
-    <div className="bg-slate-50 p-4 font-sans text-slate-800">
+  const handleOpenBatch = async () => {
+    setIsBatchLoading(true);
+    try {
+      const allStudents = await databaseService.getAllStudents();
+      const active = allStudents.filter(s => s.active !== false);
+      const studentsForBatch = active.map(s => ({
+        id: s.id,
+        name: s.studentName || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+      }));
+      const gradesMap = {};
+      for (const student of studentsForBatch) {
+        try {
+          const enrollments = await databaseService.getStudentEnrollments(student.id);
+          if (enrollments.length > 0) {
+            const grades = enrollments.filter(e => e.percentage != null);
+            if (grades.length > 0) {
+              const avg = grades.reduce((sum, e) => sum + e.percentage, 0) / grades.length;
+              gradesMap[student.id] = avg;
+            }
+          }
+        } catch { /* skip */ }
+      }
+      setBatchStudents(studentsForBatch);
+      setBatchGrades(gradesMap);
+    } catch (err) {
+      console.error('Failed to load batch data:', err);
+    } finally {
+      setIsBatchLoading(false);
+    }
+    setIsBatchModalOpen(true);
+  };
 
-      {/* HEADER & ACTIONS */}
-      <div className="max-w-6xl mx-auto mb-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 print:hidden">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-indigo-600" />
+  return (
+    <div className="flex flex-col h-full bg-slate-50 font-sans text-slate-800">
+
+      {/* ZONE 1: SLIM HEADER */}
+      <div className="shrink-0 bg-white border-b border-slate-200 px-6 py-3 print:hidden">
+        <div className="max-w-6xl mx-auto flex items-center gap-3">
+          <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-indigo-600" />
             Grade Cards
           </h1>
-          {mode === 'full' && (
-            <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
-              {Object.values(TEMPLATES).map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-            </select>
-          )}
-        </div>
-
-        <div className="flex gap-2 items-center flex-wrap">
-          {successMsg && <span className="text-emerald-600 font-bold text-sm flex items-center gap-1 animate-in fade-in"><CheckCircle className="w-4 h-4" /> {successMsg}</span>}
-
-          {/* Mode Toggle */}
-          <div className="flex bg-slate-100 rounded-lg p-0.5 border border-slate-200/80">
-            <button
-              onClick={() => setMode('full')}
-              className={`px-4 py-1.5 rounded-md text-sm font-bold transition-colors ${mode === 'full' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <BookOpen className="w-4 h-4 inline mr-1.5" />Full
-            </button>
-            <button
-              onClick={() => setMode('quick')}
-              className={`px-4 py-1.5 rounded-md text-sm font-bold transition-colors ${mode === 'quick' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <Zap className="w-4 h-4 inline mr-1.5" />Quick
-            </button>
-          </div>
-
-          {mode === 'full' && (
-            <>
-              <button
-                onClick={() => fetchAllGrades(formData.studentName)}
-                disabled={isFetchingGrades || !formData.studentName.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
-                title="Fetch grades from all enrolled courses"
-              >
-                {isFetchingGrades ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                Fetch All Grades
-              </button>
-
-              <button onClick={() => setShowPreview(!showPreview)} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all border ${showPreview ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showPreview ? 'Hide Preview' : 'Preview'}
-              </button>
-
-              <button onClick={async () => {
-                setIsBatchLoading(true);
-                try {
-                  const allStudents = await databaseService.getAllStudents();
-                  const active = allStudents.filter(s => s.active !== false);
-                  const studentsForBatch = active.map(s => ({
-                    id: s.id,
-                    name: s.studentName || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
-                  }));
-                  const gradesMap = {};
-                  for (const student of studentsForBatch) {
-                    try {
-                      const enrollments = await databaseService.getStudentEnrollments(student.id);
-                      if (enrollments.length > 0) {
-                        const grades = enrollments.filter(e => e.percentage != null);
-                        if (grades.length > 0) {
-                          const avg = grades.reduce((sum, e) => sum + e.percentage, 0) / grades.length;
-                          gradesMap[student.id] = avg;
-                        }
-                      }
-                    } catch { /* skip */ }
-                  }
-                  setBatchStudents(studentsForBatch);
-                  setBatchGrades(gradesMap);
-                } catch (err) {
-                  console.error('Failed to load batch data:', err);
-                } finally {
-                  setIsBatchLoading(false);
-                }
-                setIsBatchModalOpen(true);
-              }} disabled={isBatchLoading} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50">
-                {isBatchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />} Batch
-              </button>
-
-              <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-                <Printer className="w-4 h-4" /> Print
-              </button>
-            </>
-          )}
-
-          <button onClick={saveToCloud} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 transition-colors shadow-md disabled:opacity-50">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />} Save
-          </button>
-
-          {mode === 'full' && (
-            <button onClick={generateDocx} disabled={loading} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors shadow-md disabled:opacity-50">
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-              {loading ? 'Generating...' : 'Download .DOCX'}
-            </button>
-          )}
-
-          {mode === 'full' && (
-            <button onClick={exportToSpreadsheet} disabled={xlsxLoading} className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg font-bold text-sm hover:bg-teal-700 transition-colors shadow-md disabled:opacity-50">
-              {xlsxLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
-              {xlsxLoading ? 'Exporting...' : 'Export .XLSX'}
-            </button>
-          )}
+          <select
+            value={selectedTemplate}
+            onChange={(e) => setSelectedTemplate(e.target.value)}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+          >
+            {Object.values(TEMPLATES).map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+          </select>
         </div>
       </div>
 
-      {/* AUTO-FILL BANNER */}
-      {autoFillBanner && (
-        <div className="max-w-6xl mx-auto mb-4 print:hidden">
-          <div className="bg-indigo-50 border border-indigo-200/80 rounded-xl px-5 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-            <Info className="w-5 h-5 text-indigo-500 shrink-0" />
-            <p className="text-sm font-medium text-indigo-800">Auto-filled from gradebook data. Review and edit before exporting.</p>
-          </div>
-        </div>
-      )}
+      {/* ZONE 2: SCROLLABLE FORM BODY */}
+      <div className="flex-1 overflow-y-auto px-4 py-5 pb-28 print:hidden">
+        <div className="max-w-6xl mx-auto space-y-4">
 
-      {/* AGGREGATION BANNER */}
-      {aggregationBanner && (
-        <div className="max-w-6xl mx-auto mb-4 print:hidden">
-          <div className={`rounded-xl px-5 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
-            aggregationBanner.startsWith('Aggregated')
-              ? 'bg-emerald-50 border border-emerald-200/80'
-              : 'bg-amber-50 border border-amber-200/80'
-          }`}>
-            <Info className={`w-5 h-5 shrink-0 ${aggregationBanner.startsWith('Aggregated') ? 'text-emerald-500' : 'text-amber-500'}`} />
-            <p className={`text-sm font-medium ${aggregationBanner.startsWith('Aggregated') ? 'text-emerald-800' : 'text-amber-800'}`}>{aggregationBanner}</p>
-          </div>
-        </div>
-      )}
+          {/* AUTO-FILL BANNER */}
+          {autoFillBanner && (
+            <div className="bg-indigo-50 border border-indigo-200/80 rounded-xl px-5 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <Info className="w-5 h-5 text-indigo-500 shrink-0" />
+              <p className="text-sm font-medium text-indigo-800">Auto-filled from gradebook data. Review and edit before exporting.</p>
+            </div>
+          )}
 
-      {/* QUICK MODE */}
-      {mode === 'quick' && (
-        <div className="max-w-lg mx-auto print:hidden">
-          <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 p-8 rounded-2xl shadow-2xl shadow-slate-200/60">
-            <h2 className="text-xl font-extrabold text-slate-800 mb-1 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-indigo-500" /> Quick Grade Entry
-            </h2>
-            <p className="text-sm text-slate-500 mb-6">Fast grade reporting for a single student and subject.</p>
+          {/* AGGREGATION BANNER */}
+          {aggregationBanner && (
+            <div className={`rounded-xl px-5 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
+              aggregationBanner.startsWith('Aggregated')
+                ? 'bg-emerald-50 border border-emerald-200/80'
+                : 'bg-amber-50 border border-amber-200/80'
+            }`}>
+              <Info className={`w-5 h-5 shrink-0 ${aggregationBanner.startsWith('Aggregated') ? 'text-emerald-500' : 'text-amber-500'}`} />
+              <p className={`text-sm font-medium ${aggregationBanner.startsWith('Aggregated') ? 'text-emerald-800' : 'text-amber-800'}`}>{aggregationBanner}</p>
+            </div>
+          )}
 
-            <form onSubmit={handleQuickSave} className="space-y-5">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Student Name</label>
-                <input
-                  type="text"
-                  name="studentName"
-                  required
-                  value={quickData.studentName}
-                  onChange={handleQuickChange}
-                  className="p-3 rounded-xl border border-slate-300/80 text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
-                  placeholder="e.g. Jane Doe"
-                />
-              </div>
+          {/* UNIFIED FORM CARD */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 divide-y divide-slate-100">
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Subject</label>
-                <select
-                  name="subject"
-                  required
-                  value={quickData.subject}
-                  onChange={handleQuickChange}
-                  className="p-3 rounded-xl border border-slate-300/80 text-sm bg-white focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
-                >
-                  <option value="">-- Select a Subject --</option>
-                  <option value="Math">Math</option>
-                  <option value="English">English / Language Arts</option>
-                  <option value="Science">Science</option>
-                  <option value="Social Studies">Social Studies</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Grade (% or Letter)</label>
-                <input
-                  type="text"
-                  name="grade"
-                  required
-                  value={quickData.grade}
-                  onChange={handleQuickChange}
-                  className="p-3 rounded-xl border border-slate-300/80 text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
-                  placeholder="e.g. 85% or B+"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Teacher Comments</label>
-                <textarea
-                  name="comments"
-                  value={quickData.comments}
-                  onChange={handleQuickChange}
-                  className="p-3 rounded-xl border border-slate-300/80 text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none h-28 resize-y transition-all"
-                  placeholder="Notes on student progress..."
-                />
-              </div>
-
-              <button type="submit" disabled={saving} className="w-full bg-indigo-600 text-white p-3 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/10 disabled:opacity-50">
-                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CloudUpload className="w-5 h-5" />}
-                {saving ? 'Saving...' : 'Save Grade'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* FULL MODE */}
-      {mode === 'full' && (
-        <div className="max-w-6xl mx-auto print:hidden">
-
-          {/* FORM */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-4 space-y-3">
-              <section>
-                <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><User className="w-4 h-4 text-indigo-500" /> Student Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Jane Doe" />
-                  <Input label="Report Date" name="reportDate" type="date" value={formData.reportDate} onChange={handleChange} />
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quarter</label>
-                    <select name="quarterName" value={formData.quarterName} onChange={handleChange} className="p-2.5 rounded border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
-                      <option value="Q1">Q1</option>
-                      <option value="Q2">Q2</option>
-                      <option value="Q3">Q3</option>
-                      <option value="Q4">Q4</option>
-                      {currentConfig.hasSummerQuarter && <option value="Summer">Summer Credit Recovery</option>}
-                    </select>
-                  </div>
-                  {currentConfig.hasGradeLevel && <Input label="Grade Level" name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} placeholder="9" />}
-                  {currentConfig.hasSchoolYear && <Input label="School Year" name="schoolYear" value={formData.schoolYear} onChange={handleChange} placeholder="2025-2026" />}
-                  {currentConfig.hasTeacher && <Input label="Teacher Name" name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Mr. Smith" />}
-                  {currentConfig.hasAdmitDischarge && <Input label="Admit Date" name="admitDate" type="date" value={formData.admitDate} onChange={handleChange} />}
-                  {currentConfig.hasAdmitDischarge && <Input label="Discharge Date" name="dischargeDate" type="date" value={formData.dischargeDate} onChange={handleChange} />}
-                  {currentConfig.hasCredits && formData.totalCredits && (
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Credits</label>
-                      <div className="p-2.5 rounded border border-slate-200 text-sm bg-slate-50 text-slate-700 font-bold">{formData.totalCredits}</div>
-                    </div>
-                  )}
+            {/* Student Information */}
+            <div className="p-5">
+              <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><User className="w-4 h-4 text-indigo-500" /> Student Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Jane Doe" />
+                <Input label="Report Date" name="reportDate" type="date" value={formData.reportDate} onChange={handleChange} />
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quarter</label>
+                  <select name="quarterName" value={formData.quarterName} onChange={handleChange} className="p-2.5 rounded border border-slate-200 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all">
+                    <option value="Q1">Q1</option>
+                    <option value="Q2">Q2</option>
+                    <option value="Q3">Q3</option>
+                    <option value="Q4">Q4</option>
+                    {currentConfig.hasSummerQuarter && <option value="Summer">Summer Credit Recovery</option>}
+                  </select>
                 </div>
-              </section>
+                {currentConfig.hasGradeLevel && <Input label="Grade Level" name="gradeLevel" value={formData.gradeLevel} onChange={handleChange} placeholder="9" />}
+                {currentConfig.hasSchoolYear && <Input label="School Year" name="schoolYear" value={formData.schoolYear} onChange={handleChange} placeholder="2025-2026" />}
+                {currentConfig.hasTeacher && <Input label="Teacher Name" name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Mr. Smith" />}
+                {currentConfig.hasAdmitDischarge && <Input label="Admit Date" name="admitDate" type="date" value={formData.admitDate} onChange={handleChange} />}
+                {currentConfig.hasAdmitDischarge && <Input label="Discharge Date" name="dischargeDate" type="date" value={formData.dischargeDate} onChange={handleChange} />}
+                {currentConfig.hasCredits && formData.totalCredits && (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Credits</label>
+                    <div className="p-2.5 rounded border border-slate-200 text-sm bg-slate-50 text-slate-700 font-bold">{formData.totalCredits}</div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Core Classes + Electives + Comments */}
+            <div className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* LEFT COLUMN: Core Classes */}
                 <section>
-                  <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><BookOpen className="w-4 h-4 text-emerald-500" /> Core Classes</h3>
+                  <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><BookOpen className="w-4 h-4 text-emerald-500" /> Core Classes</h3>
                   {(() => {
                     const showCr = currentConfig.hasCredits;
                     const showInstr = currentConfig.hasInstructors;
@@ -883,7 +717,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
                             {showInstr && <span className="w-24 text-center">Instructor</span>}
                           </div>
                         )}
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           <ClassRow icon={<BookOpen className="w-4 h-4" />} label="English" prefix="eng" data={formData} onChange={handleChange} category="English" showCredits={showCr} showInstructor={showInstr} />
                           <ClassRow icon={<Calculator className="w-4 h-4" />} label="Math" prefix="math" data={formData} onChange={handleChange} category="Math" showCredits={showCr} showInstructor={showInstr} />
                           <ClassRow icon={<FlaskConical className="w-4 h-4" />} label="Science" prefix="sci" data={formData} onChange={handleChange} category="Science" showCredits={showCr} showInstructor={showInstr} />
@@ -895,15 +729,15 @@ const GradeGenerator = ({ user, activeStudent }) => {
                 </section>
 
                 {/* RIGHT COLUMN: Electives + Comments */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {currentConfig.hasElectives && (
                     <section>
-                      <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><Music className="w-4 h-4 text-purple-500" /> Electives</h3>
+                      <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><Music className="w-4 h-4 text-purple-500" /> Electives</h3>
                       {(() => {
                         const showCr = currentConfig.hasCredits;
                         const showInstr = currentConfig.hasInstructors;
                         return (
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 1" prefix="elec1" data={formData} onChange={handleChange} isElective category="Electives" showCredits={showCr} showInstructor={showInstr} />
                             <ClassRow icon={<Hash className="w-4 h-4" />} label="Elective 2" prefix="elec2" data={formData} onChange={handleChange} isElective category="Electives" showCredits={showCr} showInstructor={showInstr} />
                           </div>
@@ -913,15 +747,80 @@ const GradeGenerator = ({ user, activeStudent }) => {
                   )}
 
                   <section>
-                    <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><FileText className="w-4 h-4 text-orange-500" /> Comments</h3>
-                    <textarea name="comments" value={formData.comments} onChange={handleChange} className="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none h-20 resize-y text-sm" placeholder="Enter overall comments..." />
+                    <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-orange-500" /> Comments</h3>
+                    <textarea name="comments" value={formData.comments} onChange={handleChange} className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-y text-sm" placeholder="Enter overall comments..." />
                   </section>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* ZONE 3: STICKY ACTION FOOTER */}
+      <div className="shrink-0 sticky bottom-0 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] px-6 py-3 z-10 print:hidden">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+
+          {/* Left: Secondary Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchAllGrades(formData.studentName)}
+              disabled={isFetchingGrades || !formData.studentName.trim()}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-40"
+              title="Fetch grades from all enrolled courses"
+            >
+              {isFetchingGrades ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              Fetch Grades
+            </button>
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+            >
+              {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              Preview
+            </button>
+            <button
+              onClick={handleOpenBatch}
+              disabled={isBatchLoading}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-40"
+            >
+              {isBatchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+              Batch
+            </button>
+          </div>
+
+          {/* Center: Status */}
+          <div className="flex-1 flex justify-center">
+            {successMsg && (
+              <span className="text-emerald-600 font-bold text-sm flex items-center gap-1.5 animate-in fade-in">
+                <CheckCircle className="w-4 h-4" /> {successMsg}
+              </span>
+            )}
+          </div>
+
+          {/* Right: Primary Actions */}
+          <div className="flex items-center gap-2">
+            <button onClick={exportToSpreadsheet} disabled={xlsxLoading} className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50">
+              {xlsxLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+              .xlsx
+            </button>
+            <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+              <Printer className="w-4 h-4" /> Print
+            </button>
+
+            <div className="w-px h-6 bg-slate-200 mx-1" />
+
+            <button onClick={generateDocx} disabled={loading} className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+              {loading ? 'Generating...' : 'Word'}
+            </button>
+            <button onClick={saveToCloud} disabled={saving} className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CloudUpload className="w-4 h-4" />}
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* PREVIEW MODAL */}
       {showPreview && (
