@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Target, Telescope, Bird, Leaf, Flame, Droplets, ChevronRight, ChevronLeft, Archive, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, StickyNote, Search } from 'lucide-react';
+import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, StickyNote, Search } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook';
 import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
 import IntakeForm from './IntakeForm';
 import { databaseService } from '../../services/databaseService';
 import EditableStudentProfileModal from '../EditableStudentProfileModal';
+import { UNIT_CONFIG } from '../../config/unitConfig';
+import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
+import { getCurrentSchoolYear } from '../../utils/smartUtils';
 
 // Mock user, as requested. In a real app, this would come from an auth context.
-const MOCK_USER = { name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu" };
+const MOCK_USER = { name: "John Gawin", units: ["Harmony"], email: "john.gawin@lakeland.edu" };
 
 // Mock data import disabled for real/fake student testing
 
@@ -49,7 +52,7 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
             Teacher Dashboard
           </h2>
           <p className="text-slate-500 text-sm">
-            {user.unit} Unit &middot; {user.name}
+            {user.units?.join(', ')} &middot; {user.name}
           </p>
         </div>
       </div>
@@ -72,7 +75,7 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
 
       {/* Tab Content */}
       <div className="bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 flex-1 flex flex-col overflow-hidden relative z-0">
-        {activeTab === 'roster' && <UnitRoster defaultUnit={user.unit} user={user} />}
+        {activeTab === 'roster' && <UnitRoster defaultUnit={user.units?.[0]} user={user} />}
         {activeTab === 'classes' && (
           <div className="flex-1 overflow-y-auto p-6">
             <MyClasses
@@ -227,6 +230,17 @@ const UnitRoster = ({ defaultUnit, user }) => {
             if (user) {
                 await databaseService.logAudit(user, 'CreateStudent', `Created new student: ${newStudent.studentName} (ID: ${newStudent.id})`);
             }
+            // Auto-enroll in default courses if checkbox was checked
+            if (formData.autoEnrollDefaults !== false) {
+                try {
+                    const result = await autoEnrollStudent(newStudent, user.name, getCurrentSchoolYear());
+                    if (result.enrolled.length > 0) {
+                        console.info(`Auto-enrolled ${newStudent.studentName} in: ${result.enrolled.join(', ')}`);
+                    }
+                } catch (enrollErr) {
+                    console.error('Auto-enrollment failed:', enrollErr);
+                }
+            }
             setShowIntakeForm(false);
             fetchRoster();
             loadCounts();
@@ -360,6 +374,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                         student={student}
                                         isSelected={selectedStudentProfile?.id === student.id}
                                         onSelect={() => setSelectedStudentProfile(student)}
+                                        user={user}
                                     />
                                 ))}
                             </div>
@@ -451,10 +466,12 @@ const StudentListItem = ({ student, onSelect, isSelected }) => {
     );
 };
 
-const StudentCard = ({ student, onSelect, isSelected }) => {
+const StudentCard = ({ student, onSelect, isSelected, user }) => {
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
     const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
     const Icon = unitStyle?.icon || UserCheck;
+    const [enrolling, setEnrolling] = useState(false);
+    const [enrollResult, setEnrollResult] = useState(null);
 
     const admitDate = new Date(student.admitDate);
     const today = new Date();
@@ -467,6 +484,22 @@ const StudentCard = ({ student, onSelect, isSelected }) => {
     }
 
     const noteCount = student.mtpNotes?.length || 0;
+
+    const handleAutoEnroll = async (e) => {
+        e.stopPropagation();
+        setEnrolling(true);
+        setEnrollResult(null);
+        try {
+            const result = await autoEnrollStudent(student, user?.name || 'Unknown', getCurrentSchoolYear());
+            setEnrollResult(result);
+            setTimeout(() => setEnrollResult(null), 4000);
+        } catch (err) {
+            console.error('Auto-enroll failed:', err);
+            setEnrollResult({ error: true });
+            setTimeout(() => setEnrollResult(null), 3000);
+        }
+        setEnrolling(false);
+    };
 
     return (
         <div
@@ -523,6 +556,29 @@ const StudentCard = ({ student, onSelect, isSelected }) => {
                             <StickyNote className="w-3 h-3" />
                             {noteCount}
                         </span>
+                    )}
+                </div>
+
+                {/* Auto-Enroll Button */}
+                <div className="mt-2 flex items-center gap-2">
+                    <button
+                        onClick={handleAutoEnroll}
+                        disabled={enrolling}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                        title="Auto-enroll in default courses"
+                    >
+                        {enrolling ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookOpen className="w-3 h-3" />}
+                        Default Enroll
+                    </button>
+                    {enrollResult && !enrollResult.error && (
+                        <span className="text-[10px] text-emerald-600 font-medium">
+                            {enrollResult.enrolled.length > 0
+                                ? `+${enrollResult.enrolled.length} courses`
+                                : 'Already enrolled'}
+                        </span>
+                    )}
+                    {enrollResult?.error && (
+                        <span className="text-[10px] text-rose-600 font-medium">Failed</span>
                     )}
                 </div>
             </div>
@@ -703,15 +759,6 @@ const CourseCard = ({ course, onOpen, onManage, onEdit, onDelete }) => (
 
 
 // --- CONFIGS ---
-
-const UNIT_CONFIG = [
-  { key: "Determination", label: "Determination", icon: Target, color: "text-purple-600", badge: "bg-purple-100 text-purple-800", border: "border-purple-200 hover:border-purple-400", avatarBg: "bg-purple-600", avatarRing: "ring-purple-200", accentBorder: "border-l-purple-600", tagBg: "bg-purple-50 text-purple-700" },
-  { key: "Discovery", label: "Discovery", icon: Telescope, color: "text-amber-600", badge: "bg-amber-100 text-amber-800", border: "border-amber-200 hover:border-amber-400", avatarBg: "bg-amber-600", avatarRing: "ring-amber-200", accentBorder: "border-l-amber-600", tagBg: "bg-amber-50 text-amber-700" },
-  { key: "Freedom", label: "Freedom", icon: Bird, color: "text-sky-500", badge: "bg-sky-100 text-sky-800", border: "border-sky-200 hover:border-sky-400", avatarBg: "bg-sky-500", avatarRing: "ring-sky-200", accentBorder: "border-l-sky-500", tagBg: "bg-sky-50 text-sky-700" },
-  { key: "Harmony", label: "Harmony", icon: Leaf, color: "text-green-500", badge: "bg-green-100 text-green-800", border: "border-green-200 hover:border-green-400", avatarBg: "bg-emerald-500", avatarRing: "ring-emerald-200", accentBorder: "border-l-emerald-500", tagBg: "bg-emerald-50 text-emerald-700" },
-  { key: "Integrity", label: "Integrity", icon: Flame, color: "text-orange-600", badge: "bg-orange-100 text-orange-800", border: "border-orange-200 hover:border-orange-400", avatarBg: "bg-orange-600", avatarRing: "ring-orange-200", accentBorder: "border-l-orange-600", tagBg: "bg-orange-50 text-orange-700" },
-  { key: "Serenity", label: "Serenity", icon: Droplets, color: "text-blue-500", badge: "bg-blue-100 text-blue-800", border: "border-blue-200 hover:border-blue-400", avatarBg: "bg-blue-500", avatarRing: "ring-blue-200", accentBorder: "border-l-blue-500", tagBg: "bg-blue-50 text-blue-700" },
-  { key: "Discharged", label: "Discharged Residents", icon: Archive, color: "text-slate-500", badge: "bg-slate-100 text-slate-600", border: "border-slate-200 hover:border-slate-400", avatarBg: "bg-slate-400", avatarRing: "ring-slate-200", accentBorder: "border-l-slate-400", tagBg: "bg-slate-100 text-slate-600" }
-];
+// UNIT_CONFIG is imported from src/config/unitConfig.js
 
 export default StudentMasterDashboard;

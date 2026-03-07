@@ -3,15 +3,16 @@ import { useForm } from 'react-hook-form';
 import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
 import { STATE_OPTIONS } from '../data/stateGraduationRequirements';
+import { UNIT_CONFIG } from '../config/unitConfig';
 
-const UNIT_OPTIONS = [
-  { key: 'Determination', label: 'Determination', bg: 'bg-purple-600', text: 'text-purple-700', light: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' },
-  { key: 'Discovery', label: 'Discovery', bg: 'bg-amber-600', text: 'text-amber-700', light: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' },
-  { key: 'Freedom', label: 'Freedom', bg: 'bg-sky-500', text: 'text-sky-700', light: 'bg-sky-50', badge: 'bg-sky-100 text-sky-800' },
-  { key: 'Harmony', label: 'Harmony', bg: 'bg-emerald-500', text: 'text-emerald-700', light: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800' },
-  { key: 'Integrity', label: 'Integrity', bg: 'bg-orange-600', text: 'text-orange-700', light: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800' },
-  { key: 'Serenity', label: 'Serenity', bg: 'bg-blue-500', text: 'text-blue-700', light: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' },
-];
+const UNIT_OPTIONS = UNIT_CONFIG.filter(u => u.key !== 'Discharged').map(u => ({
+  key: u.key,
+  label: u.label,
+  bg: u.avatarBg,
+  text: u.color,
+  light: u.tagBg.split(' ')[0],
+  badge: u.badge,
+}));
 
 const INPUT_CLASS = 'w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white outline-none transition-all disabled:opacity-50 placeholder:text-slate-400';
 

@@ -32,7 +32,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     handleAddAssignment, handleBulkFill,
     handleAttendanceUpdate, handleUpdateCategories,
     markClean,
-  } = useGradebook(course?.id);
+  } = useGradebook(course?.id, user?.units);
 
   // --- LOCAL UI STATE ---
   const [activeTab, setActiveTab] = useState('grades');

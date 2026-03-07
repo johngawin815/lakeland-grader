@@ -1,6 +1,7 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { GraduationCap, FileDown, TrendingUp, ArrowDown } from 'lucide-react';
 import { useGridKeyboard } from '../../hooks/useGridKeyboard';
+import { UNIT_CONFIG } from '../../config/unitConfig';
 
 const GradebookTable = ({
   students,
@@ -46,6 +47,22 @@ const GradebookTable = ({
     onGradeChange(studentId, assignmentId, String(clamped));
   }, [onGradeChange]);
 
+  // Group students by unit for section headers
+  const unitGroups = useMemo(() => {
+    const groups = [];
+    let currentUnit = null;
+    students.forEach((student, idx) => {
+      if (student.unitName !== currentUnit) {
+        currentUnit = student.unitName;
+        groups.push({ type: 'header', unitName: currentUnit });
+      }
+      groups.push({ type: 'student', student, originalIndex: idx });
+    });
+    return groups;
+  }, [students]);
+
+  const totalColumns = assignments.length + 2; // student col + assignments + overall col
+
   if (students.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -88,7 +105,24 @@ const GradebookTable = ({
           </tr>
         </thead>
         <tbody className="text-sm text-slate-800 divide-y divide-slate-100/50">
-          {students.map((student, rowIndex) => {
+          {unitGroups.map((item, idx) => {
+            if (item.type === 'header') {
+              const unitStyle = UNIT_CONFIG.find(u => u.key === item.unitName);
+              const hasMultipleUnits = unitGroups.filter(g => g.type === 'header').length > 1;
+              if (!hasMultipleUnits) return null;
+              return (
+                <tr key={`unit-header-${item.unitName}`} className="bg-slate-50/80">
+                  <td colSpan={totalColumns} className="px-4 py-2 border-b border-slate-200/60">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${unitStyle?.tagBg || 'bg-slate-100 text-slate-600'} px-2.5 py-1 rounded-md`}>
+                      {unitStyle?.icon && <unitStyle.icon className="w-3.5 h-3.5" />}
+                      {item.unitName}
+                    </span>
+                  </td>
+                </tr>
+              );
+            }
+
+            const { student, originalIndex: rowIndex } = item;
             const finalGrade = finalGrades[student.id];
             const isPassing = finalGrade === null || finalGrade >= 60;
             return (

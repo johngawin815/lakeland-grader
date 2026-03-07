@@ -9,7 +9,7 @@ const DEFAULT_CATEGORIES = [
   { id: 'test', name: 'Tests', weight: 50 },
 ];
 
-export function useGradebook(courseId) {
+export function useGradebook(courseId, userUnits) {
   const [students, setStudents] = useState([]);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [assignments, setAssignments] = useState([]);
@@ -31,23 +31,73 @@ export function useGradebook(courseId) {
       try {
         // 1. Fetch enrolled students for this course
         const enrollments = await databaseService.getEnrollmentsByCourse(courseId);
+        const allStudents = await databaseService.getAllStudents();
+        const studentMap = {};
+        allStudents.forEach(s => { studentMap[s.id] = s; });
 
+        const enrolledStudentIds = new Set(enrollments.map(e => e.studentId));
+
+        // 2. Auto-populate from teacher's assigned units
+        if (userUnits && userUnits.length > 0) {
+          const course = enrollments[0] || {};
+          const currentTerm = getCurrentSchoolYear();
+
+          for (const unitName of userUnits) {
+            const unitStudents = allStudents.filter(
+              s => s.unitName === unitName && s.active !== false
+            );
+
+            for (const student of unitStudents) {
+              if (enrolledStudentIds.has(student.id)) continue;
+
+              // Auto-enroll this student
+              const enrollmentData = {
+                id: `${student.id}-${courseId}`,
+                studentId: student.id,
+                courseId,
+                courseName: course.courseName || '',
+                subjectArea: course.subjectArea || '',
+                teacherName: course.teacherName || '',
+                percentage: null,
+                letterGrade: null,
+                term: currentTerm,
+                enrollmentDate: new Date().toISOString().split('T')[0],
+                status: 'Active',
+              };
+
+              try {
+                await databaseService.enrollStudent(enrollmentData);
+                enrollments.push(enrollmentData);
+                enrolledStudentIds.add(student.id);
+              } catch (err) {
+                console.warn(`Auto-enroll failed for ${student.studentName}:`, err);
+              }
+            }
+          }
+        }
+
+        // 3. Build student list with unitName, sorted by unit then name
         if (enrollments.length > 0) {
-          const allStudents = await databaseService.getAllStudents();
-          const studentMap = {};
-          allStudents.forEach(s => { studentMap[s.id] = s; });
-
           const enrolledStudents = enrollments.map(e => {
             const studentRecord = studentMap[e.studentId];
             return {
               id: e.studentId,
               name: studentRecord?.studentName || (studentRecord ? `${studentRecord.firstName || ''} ${studentRecord.lastName || ''}`.trim() : e.studentId),
               gradeLevel: studentRecord?.gradeLevel || '',
+              unitName: studentRecord?.unitName || '',
               enrollmentId: e.id,
               iep: studentRecord?.iep || 'No',
               iepGoalAreas: studentRecord?.iepGoalAreas || [],
             };
           });
+
+          // Sort by unitName first, then by name
+          enrolledStudents.sort((a, b) => {
+            const unitCmp = (a.unitName || '').localeCompare(b.unitName || '');
+            if (unitCmp !== 0) return unitCmp;
+            return (a.name || '').localeCompare(b.name || '');
+          });
+
           setStudents(enrolledStudents);
 
           // Fetch previous-term grades for trend detection
@@ -71,7 +121,7 @@ export function useGradebook(courseId) {
           setStudents([]);
         }
 
-        // 2. Load saved gradebook data
+        // 4. Load saved gradebook data
         const savedGradebook = await databaseService.getGradebook(courseId);
         if (savedGradebook) {
           if (savedGradebook.assignments?.length > 0) setAssignments(savedGradebook.assignments);
@@ -87,6 +137,7 @@ export function useGradebook(courseId) {
     };
 
     loadGradebookData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   // --- DERIVED STATE ---

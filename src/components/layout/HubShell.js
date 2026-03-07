@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
   Calendar, ScrollText,
-  FileCheck, NotebookPen, Upload
+  FileCheck, NotebookPen, Upload, Settings
 } from 'lucide-react';
 
 // --- MODULE IMPORTS ---
@@ -17,8 +17,10 @@ import AuditLog from './AuditLog';
 import IEPGenerator from '../iep/IEPGenerator';
 import TranscriptGenerator from '../transcript/TranscriptGenerator';
 import WorkbookGenerator from '../workbook/WorkbookGenerator';
+import TeacherSettings from '../settings/TeacherSettings';
 
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
+import { databaseService } from '../../services/databaseService';
 
 // --- HELPER FUNCTIONS ---
 
@@ -147,8 +149,34 @@ const HubShell = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    setUser({ name: "John Gawin", unit: "Harmony", email: "john.gawin@lakeland.edu", role: "admin" });
+    setUser({ name: "John Gawin", units: ["Harmony"], email: "john.gawin@lakeland.edu", role: "admin" });
   };
+
+  // Load persisted teacher record after login
+  useEffect(() => {
+    if (!user) return;
+    const teacherId = `teacher_${user.email.split('@')[0].replace(/\./g, '-')}`;
+    (async () => {
+      try {
+        const saved = await databaseService.getTeacher(teacherId);
+        if (saved && saved.units) {
+          setUser(prev => ({ ...prev, units: saved.units }));
+        } else {
+          // First login: persist defaults
+          await databaseService.upsertTeacher({
+            id: teacherId,
+            name: user.name,
+            email: user.email,
+            units: user.units || ['Harmony'],
+            role: user.role || 'teacher',
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to load teacher record:', err);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email]);
 
   const handleLogout = () => {
     setUser(null);
@@ -218,6 +246,14 @@ const HubShell = () => {
           onClick={() => setIsSpreadsheetModalOpen(true)}
         />
 
+        {/* Settings */}
+        <SidebarButton
+          label="Settings"
+          icon={Settings}
+          active={currentView === 'settings'}
+          onClick={() => { setDashboardInitialTab(null); setCurrentView('settings'); }}
+        />
+
         <div className="w-8 h-px bg-slate-700/50 my-1" />
 
         {/* User */}
@@ -254,7 +290,7 @@ const HubShell = () => {
                   </span>
                 </h1>
                 <p className="text-lg text-slate-500 mt-3 max-w-lg mx-auto">
-                  Manage your {user.unit} unit roster, gradebooks, and student assessments.
+                  Manage your {user.units?.join(' & ')} unit roster, gradebooks, and student assessments.
                 </p>
               </div>
 
@@ -290,6 +326,7 @@ const HubShell = () => {
             {currentView === 'transcript' && <TranscriptGenerator user={user} />}
             {currentView === 'workbook' && <WorkbookGenerator user={user} />}
             {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
+            {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
           </div>
         )}
       </main>

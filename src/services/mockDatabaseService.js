@@ -120,6 +120,7 @@ const gradebooks  = loadMap('gradebooks')  || new Map();
 const iepDrafts   = loadMap('iepDrafts')   || new Map();
 const transcriptPlans = loadMap('transcriptPlans') || new Map();
 const workbooks = loadMap('workbooks') || new Map();
+const teachers = loadMap('teachers') || new Map();
 const auditLogs   = loadArray('auditLogs') || [];
 
 // ─── AUTO-POPULATE GRADEBOOKS & ENROLLMENTS (first launch only) ──────────────
@@ -412,6 +413,16 @@ export const mockDatabaseService = {
     saveMap('workbooks', workbooks);
   },
 
+  // === TEACHERS ===
+  upsertTeacher: async (teacher) => {
+    const record = { ...teacher, updatedAt: new Date().toISOString() };
+    teachers.set(record.id, record);
+    saveMap('teachers', teachers);
+    return record;
+  },
+
+  getTeacher: async (id) => teachers.get(id) || null,
+
   // === DATA MANAGEMENT ===
   resetAllData: async () => {
     students.clear();
@@ -422,6 +433,7 @@ export const mockDatabaseService = {
     iepDrafts.clear();
     transcriptPlans.clear();
     workbooks.clear();
+    teachers.clear();
     auditLogs.length = 0;
     Object.keys(localStorage)
       .filter(k => k.startsWith(STORAGE_PREFIX))

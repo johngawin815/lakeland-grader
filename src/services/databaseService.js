@@ -29,6 +29,7 @@ function buildRealService() {
   const iepContainer = database.container("IEP_Drafts");
   const transcriptPlanContainer = database.container("Transcript_Plans");
   const workbookContainer = database.container("Workbooks");
+  const teachersContainer = database.container("Teachers");
 
   return {
     getAllStudents: async () => {
@@ -196,6 +197,21 @@ function buildRealService() {
       return resources;
     },
     deleteWorkbook: async (id) => { await workbookContainer.item(id, id).delete(); },
+
+    // === TEACHERS ===
+    upsertTeacher: async (teacher) => {
+      const { resource } = await teachersContainer.items.upsert({ ...teacher, updatedAt: new Date().toISOString() });
+      return resource;
+    },
+    getTeacher: async (id) => {
+      try {
+        const { resource } = await teachersContainer.item(id, id).read();
+        return resource || null;
+      } catch (e) {
+        if (e.code === 404) return null;
+        throw e;
+      }
+    },
 
     logAudit: async (user, action, details) => {
       if (!user) return;
