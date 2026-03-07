@@ -635,7 +635,15 @@ const GradeGenerator = ({ user, activeStudent }) => {
             onChange={(e) => setSelectedTemplate(e.target.value)}
             className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
           >
-            {Object.values(TEMPLATES).map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+            {Object.values(TEMPLATES)
+              .filter(t => {
+                if (t.id === 'upper_level') {
+                  const gl = parseInt(formData.gradeLevel, 10);
+                  return gl >= 9 && gl <= 12;
+                }
+                return true;
+              })
+              .map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
           </select>
         </div>
       </div>
