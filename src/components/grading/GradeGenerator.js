@@ -462,7 +462,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
         // Unit header row
         const headerRow = sheet.getRow(currentRow);
-        sheet.mergeCells(currentRow, 1, currentRow, 20);
+        sheet.mergeCells(currentRow, 1, currentRow, 19);
         headerRow.getCell(1).value = `${unitName} (${students.length})`;
         headerRow.getCell(1).fill = unitHeaderFill;
         headerRow.getCell(1).font = unitHeaderFont;
@@ -474,25 +474,25 @@ const GradeGenerator = ({ user, activeStudent }) => {
         // Student rows
         students.forEach(s => {
           const row = sheet.getRow(currentRow);
-          row.getCell(2).value = s.name;
-          row.getCell(3).value = s.gradeLevel;
-          row.getCell(4).value = s.socClass;
-          row.getCell(5).value = s.socGrade;
-          row.getCell(6).value = s.socPct ? `${s.socPct}%` : '';
-          row.getCell(7).value = s.sciClass;
-          row.getCell(8).value = s.sciGrade;
-          row.getCell(9).value = s.sciPct ? `${s.sciPct}%` : '';
-          row.getCell(10).value = s.mathClass;
-          row.getCell(11).value = s.mathGrade;
-          row.getCell(12).value = s.mathPct ? `${s.mathPct}%` : '';
-          row.getCell(13).value = s.engClass;
-          row.getCell(14).value = s.engGrade;
-          row.getCell(15).value = s.engPct ? `${s.engPct}%` : '';
-          row.getCell(16).value = s.elec1Grade;
-          row.getCell(17).value = s.elec1Pct ? `${s.elec1Pct}%` : '';
-          row.getCell(18).value = s.elec2Grade;
-          row.getCell(19).value = s.elec2Pct ? `${s.elec2Pct}%` : '';
-          row.getCell(20).value = s.name;
+          row.getCell(1).value = s.name;
+          row.getCell(2).value = s.gradeLevel;
+          row.getCell(3).value = s.socClass;
+          row.getCell(4).value = s.socGrade;
+          row.getCell(5).value = s.socPct ? `${s.socPct}%` : '';
+          row.getCell(6).value = s.sciClass;
+          row.getCell(7).value = s.sciGrade;
+          row.getCell(8).value = s.sciPct ? `${s.sciPct}%` : '';
+          row.getCell(9).value = s.mathClass;
+          row.getCell(10).value = s.mathGrade;
+          row.getCell(11).value = s.mathPct ? `${s.mathPct}%` : '';
+          row.getCell(12).value = s.engClass;
+          row.getCell(13).value = s.engGrade;
+          row.getCell(14).value = s.engPct ? `${s.engPct}%` : '';
+          row.getCell(15).value = s.elec1Grade;
+          row.getCell(16).value = s.elec1Pct ? `${s.elec1Pct}%` : '';
+          row.getCell(17).value = s.elec2Grade;
+          row.getCell(18).value = s.elec2Pct ? `${s.elec2Pct}%` : '';
+          row.getCell(19).value = s.name;
           row.commit();
           currentRow++;
         });
