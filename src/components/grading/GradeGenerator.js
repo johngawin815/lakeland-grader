@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
-import ExcelJS from 'exceljs';
+
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { FileDown, FileSpreadsheet, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2, Eye, EyeOff, Users, Info, RefreshCw } from 'lucide-react';
+import { FileDown, Printer, FileText, User, BookOpen, Calculator, FlaskConical, Globe, Music, Hash, CloudUpload, CheckCircle, Loader2, Eye, EyeOff, Users, Info, RefreshCw } from 'lucide-react';
 import { useGrading } from '../../context/GradingContext';
 import GradeCardPreview from './GradeCardPreview';
 import BatchExportModal from './BatchExportModal';
@@ -123,7 +123,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const [batchStudents, setBatchStudents] = useState([]);
   const [batchGrades, setBatchGrades] = useState({});
   const [isBatchLoading, setIsBatchLoading] = useState(false);
-  const [xlsxLoading, setXlsxLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     studentName: activeStudent || '',
@@ -379,136 +378,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
       alert("Error generating document. Ensure template files exist in public/templates/.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const XLSX_UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
-
-  const exportToSpreadsheet = async () => {
-    setXlsxLoading(true);
-    try {
-      const response = await fetch('/templates/grade_spreadsheet.xlsx');
-      if (!response.ok) throw new Error('Could not find template: grade_spreadsheet.xlsx');
-
-      const templateBuffer = await response.arrayBuffer();
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(templateBuffer);
-
-      const sheet = workbook.worksheets[0];
-
-      // Update title row with current quarter/year
-      sheet.getCell('A1').value = `${formData.quarterName} Grade Spreadsheet ${formData.schoolYear}`;
-
-      // Fetch all active students + their enrollments
-      const allStudents = await databaseService.getAllStudents();
-      const active = allStudents.filter(s => s.active !== false && s.unitName && s.unitName !== 'Discharged');
-
-      const studentRows = await Promise.all(active.map(async (student) => {
-        const name = student.studentName || `${student.firstName || ''} ${student.lastName || ''}`.trim();
-        const row = {
-          name, gradeLevel: student.gradeLevel ? String(student.gradeLevel) : '',
-          unitName: student.unitName || '',
-          socClass: '', socGrade: '', socPct: '',
-          sciClass: '', sciGrade: '', sciPct: '',
-          mathClass: '', mathGrade: '', mathPct: '',
-          engClass: '', engGrade: '', engPct: '',
-          elec1Grade: '', elec1Pct: '',
-          elec2Grade: '', elec2Pct: '',
-        };
-        try {
-          const enrollments = await databaseService.getStudentEnrollments(student.id);
-          let elecCount = 0;
-          enrollments.forEach(e => {
-            const mapping = SUBJECT_FIELD_MAP[e.subjectArea];
-            if (mapping) {
-              row[mapping.classField] = e.courseName || '';
-              row[mapping.gradeField] = e.letterGrade || '';
-              row[mapping.pctField] = e.percentage != null ? String(e.percentage) : '';
-            } else {
-              elecCount++;
-              if (elecCount === 1) {
-                row.elec1Grade = e.letterGrade || '';
-                row.elec1Pct = e.percentage != null ? String(e.percentage) : '';
-              } else if (elecCount === 2) {
-                row.elec2Grade = e.letterGrade || '';
-                row.elec2Pct = e.percentage != null ? String(e.percentage) : '';
-              }
-            }
-          });
-        } catch { /* skip */ }
-        return row;
-      }));
-
-      // Group by unit
-      const grouped = {};
-      studentRows.forEach(r => {
-        if (!grouped[r.unitName]) grouped[r.unitName] = [];
-        grouped[r.unitName].push(r);
-      });
-      Object.values(grouped).forEach(rows => rows.sort((a, b) => a.name.localeCompare(b.name)));
-
-      // Determine unit order (known units first, then any extras)
-      const unitKeys = XLSX_UNIT_ORDER.filter(u => grouped[u] && grouped[u].length > 0);
-      Object.keys(grouped).forEach(u => { if (!unitKeys.includes(u) && grouped[u].length > 0) unitKeys.push(u); });
-
-      // Write stacked data starting at row 4
-      let currentRow = 4;
-
-      const unitHeaderFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
-      const unitHeaderFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
-
-      unitKeys.forEach(unitName => {
-        const students = grouped[unitName];
-
-        // Unit header row
-        const headerRow = sheet.getRow(currentRow);
-        sheet.mergeCells(currentRow, 1, currentRow, 19);
-        headerRow.getCell(1).value = `${unitName} (${students.length})`;
-        headerRow.getCell(1).fill = unitHeaderFill;
-        headerRow.getCell(1).font = unitHeaderFont;
-        headerRow.getCell(1).alignment = { vertical: 'middle' };
-        headerRow.height = 24;
-        headerRow.commit();
-        currentRow++;
-
-        // Student rows
-        students.forEach(s => {
-          const row = sheet.getRow(currentRow);
-          row.getCell(1).value = s.name;
-          row.getCell(2).value = s.gradeLevel;
-          row.getCell(3).value = s.socClass;
-          row.getCell(4).value = s.socGrade;
-          row.getCell(5).value = s.socPct ? `${s.socPct}%` : '';
-          row.getCell(6).value = s.sciClass;
-          row.getCell(7).value = s.sciGrade;
-          row.getCell(8).value = s.sciPct ? `${s.sciPct}%` : '';
-          row.getCell(9).value = s.mathClass;
-          row.getCell(10).value = s.mathGrade;
-          row.getCell(11).value = s.mathPct ? `${s.mathPct}%` : '';
-          row.getCell(12).value = s.engClass;
-          row.getCell(13).value = s.engGrade;
-          row.getCell(14).value = s.engPct ? `${s.engPct}%` : '';
-          row.getCell(15).value = s.elec1Grade;
-          row.getCell(16).value = s.elec1Pct ? `${s.elec1Pct}%` : '';
-          row.getCell(17).value = s.elec2Grade;
-          row.getCell(18).value = s.elec2Pct ? `${s.elec2Pct}%` : '';
-          row.getCell(19).value = s.name;
-          row.commit();
-          currentRow++;
-        });
-
-        // Empty spacer row between units
-        currentRow++;
-      });
-
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      saveAs(blob, `${formData.quarterName}_GradeSpreadsheet_${formData.schoolYear}.xlsx`);
-    } catch (error) {
-      console.error('Error exporting spreadsheet:', error);
-      alert('Error exporting spreadsheet. Ensure grade_spreadsheet.xlsx exists in public/templates/.');
-    } finally {
-      setXlsxLoading(false);
     }
   };
 
@@ -808,10 +677,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
           {/* Right: Primary Actions */}
           <div className="flex items-center gap-2">
-            <button onClick={exportToSpreadsheet} disabled={xlsxLoading} className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50">
-              {xlsxLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
-              .xlsx
-            </button>
             <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
               <Printer className="w-4 h-4" /> Print
             </button>
