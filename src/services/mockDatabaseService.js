@@ -200,17 +200,96 @@ if (!hasPersistedData) {
   localStorage.setItem(STORAGE_PREFIX + 'initialized', 'true');
   console.info('[mockDB] First launch — initialized and saved to localStorage.');
 } else {
-  // Ensure seed students from MOCK_STUDENTS are always present (merges new additions)
-  let merged = 0;
+  // Merge seed data changes into localStorage on every launch:
+  // 1) Students — add new, update grade level/unit/active for existing
+  let mergedStudents = 0;
   for (const s of MOCK_STUDENTS) {
-    if (!students.has(s.id)) {
+    const existing = students.get(s.id);
+    if (!existing) {
       students.set(s.id, { ...s });
-      merged++;
+      mergedStudents++;
+    } else {
+      // Update seed fields that may have changed (grade level, unit, active, name)
+      let changed = false;
+      for (const key of ['gradeLevel', 'unitName', 'active', 'studentName', 'firstName', 'lastName']) {
+        if (s[key] !== undefined && s[key] !== existing[key]) {
+          existing[key] = s[key];
+          changed = true;
+        }
+      }
+      if (changed) {
+        students.set(s.id, existing);
+        mergedStudents++;
+      }
     }
   }
-  if (merged > 0) {
-    saveMap('students', students);
-    console.info(`[mockDB] Merged ${merged} new seed student(s) into localStorage.`);
+  if (mergedStudents > 0) saveMap('students', students);
+
+  // 2) Courses — add new, update existing course details
+  let mergedCourses = 0;
+  for (const c of MOCK_COURSES) {
+    if (!courses.has(c.id)) {
+      courses.set(c.id, { ...c });
+      mergedCourses++;
+    } else {
+      const ex = courses.get(c.id);
+      let changed = false;
+      for (const key of ['courseName', 'subjectArea', 'credits', 'term', 'teacherName']) {
+        if (c[key] !== undefined && c[key] !== ex[key]) {
+          ex[key] = c[key];
+          changed = true;
+        }
+      }
+      if (changed) {
+        courses.set(c.id, ex);
+        mergedCourses++;
+      }
+    }
+  }
+  if (mergedCourses > 0) saveMap('courses', courses);
+
+  // 3) Enrollments — add missing enrollment records from COURSE_STUDENTS
+  let mergedEnrollments = 0;
+  for (const courseId of Object.keys(COURSE_STUDENTS)) {
+    const course = courses.get(courseId);
+    if (!course) continue;
+    const studentIds = COURSE_STUDENTS[courseId];
+    for (const sid of studentIds) {
+      const enrollId = `mock-e-${courseId.replace('mock-', '')}-${sid.replace('mock-', '')}`;
+      if (!enrollments.has(enrollId)) {
+        const student = students.get(sid);
+        const assignments = COURSE_ASSIGNMENTS[courseId] || [];
+        const profile = STUDENT_PROFILES[sid] || { level: 0.75, variance: 0.10, attendance: 0.85 };
+        const grades = {};
+        for (const a of assignments) {
+          grades[sid] = grades[sid] || {};
+          grades[sid][a.id] = generateScore(sid, a.id, a.maxScore, profile);
+        }
+        const pct = assignments.length > 0
+          ? calculateWeightedPct(sid, assignments, grades, GRADEBOOK_CATEGORIES)
+          : 0;
+        enrollments.set(enrollId, {
+          id: enrollId,
+          studentId: sid,
+          courseId,
+          courseName: course.courseName,
+          subjectArea: course.subjectArea,
+          teacherName: course.teacherName,
+          letterGrade: calculateLetterGrade(pct),
+          percentage: pct,
+          enrollmentDate: student?.admitDate || '2024-09-01',
+          term: course.term,
+          status: 'Active',
+        });
+        mergedEnrollments++;
+      }
+    }
+  }
+  if (mergedEnrollments > 0) saveMap('enrollments', enrollments);
+
+  const total = mergedStudents + mergedCourses + mergedEnrollments;
+  if (total > 0) {
+    console.info(`[mockDB] Merged seed data: ${mergedStudents} student(s), ${mergedCourses} course(s), ${mergedEnrollments} enrollment(s).`);
   }
   console.info('[mockDB] Restored data from localStorage.');
 }
