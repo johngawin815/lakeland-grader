@@ -23,7 +23,7 @@ const COMPACT_INPUT_CLASS = 'w-full px-2 py-1.5 rounded-md border border-slate-2
 const COMPACT_LABEL_CLASS = 'flex items-center gap-1 text-[10px] font-semibold text-slate-500 mb-0.5 uppercase tracking-wide';
 
 const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode = 'modal' }) => {
-  const { register, handleSubmit, formState: { errors }, watch } = useForm({
+  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm({
     defaultValues: {
       gradeLevel: String(studentData?.gradeLevel || ''),
       unitName: studentData?.unitName || '',
@@ -140,6 +140,33 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       if (user) {
         await databaseService.logAudit(user, 'UpdateStudent', `Updated profile for ${studentData.studentName} (ID: ${studentData.id})`);
       }
+      // Reset form defaults to the saved data so the form stays in sync
+      reset({
+        gradeLevel: String(updatePayload.gradeLevel || ''),
+        unitName: updatePayload.unitName || '',
+        admitDate: updatePayload.admitDate || '',
+        expectedDischargeDate: updatePayload.expectedDischargeDate || '',
+        district: updatePayload.district || '',
+        homeState: updatePayload.homeState || '',
+        iepStatus: updatePayload.iep === 'Yes' ? 'yes' : 'no',
+        homeSchoolContact: updatePayload.homeSchoolContact || '',
+        homeSchoolContactName: updatePayload.homeSchoolContactName || '',
+        homeSchoolContactPosition: updatePayload.homeSchoolContactPosition || '',
+        homeSchoolContactNumber: updatePayload.homeSchoolContactNumber || '',
+        homeSchoolContactEmail: updatePayload.homeSchoolContactEmail || '',
+        guardianName: updatePayload.guardianName || '',
+        guardianPhone: updatePayload.guardianPhone || '',
+        iepDueDate: updatePayload.iepDueDate || '',
+        healthInsurance: updatePayload.healthInsurance || '',
+        therapistName: updatePayload.therapistName || '',
+        reasonForAdmit: updatePayload.reasonForAdmit || '',
+        guardian1Name: updatePayload.guardian1Name || '',
+        guardian1Address: updatePayload.guardian1Address || '',
+        guardian1Phone: updatePayload.guardian1Phone || '',
+        guardian1Email: updatePayload.guardian1Email || '',
+        homeSchoolName: updatePayload.homeSchoolName || '',
+        homeSchoolAddress: updatePayload.homeSchoolAddress || '',
+      });
       setSaveSuccess(true);
       if (mode === 'modal') {
         setTimeout(() => { if (onSaved) onSaved(); onClose(); }, 800);
