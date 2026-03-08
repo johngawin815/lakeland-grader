@@ -21,22 +21,24 @@ const SUBJECT_FIELD_MAP = {
 const COURSE_OPTIONS = {
   English: [
     'English 6', 'English 7', 'English 8',
+    'ELA 9', 'ELA 10', 'ELA 11', 'ELA 12',
     'English 9', 'English 10', 'English 11', 'English 12',
     'Honors English 9', 'Honors English 10', 'AP English Language', 'AP English Literature',
-    'Creative Writing', 'Journalism', 'Speech & Debate',
+    'Creative Writing', 'Writing', 'Journalism', 'Speech & Debate',
     'Reading Foundations', 'English Language Development',
   ],
   Math: [
     'Math 6', 'Math 7', 'Math 8', 'Pre-Algebra',
-    'Algebra I', 'Geometry', 'Algebra II', 'Pre-Calculus',
+    'Integrated Math', 'Algebra 1', 'Algebra I', 'Geometry', 'Algebra 2', 'Algebra II', 'Pre-Calculus',
     'Honors Algebra II', 'Honors Geometry',
     'AP Calculus AB', 'AP Calculus BC', 'AP Statistics',
     'Integrated Math I', 'Integrated Math II', 'Integrated Math III',
-    'Consumer Math', 'Financial Literacy',
+    'Consumer Math', 'Financial Literacy', 'Financial Lit',
   ],
   Science: [
     'General Science 6', 'Life Science 7', 'Physical Science 8',
-    'Earth Science', 'Biology', 'Chemistry', 'Physics',
+    'Integrated Science', 'Physical Science', 'Earth Science', 'Biology', 'Chemistry', 'Physics',
+    'Space Science', 'Ecology',
     'Honors Biology', 'Honors Chemistry',
     'AP Biology', 'AP Chemistry', 'AP Physics',
     'Environmental Science', 'AP Environmental Science',
@@ -44,7 +46,7 @@ const COURSE_OPTIONS = {
   ],
   'Social Studies': [
     'Social Studies 6', 'Social Studies 7', 'Civics 8',
-    'World Geography', 'World History', 'US History', 'US Government', 'Economics',
+    'American History', 'World Geography', 'World History', 'US History', 'Civics', 'US Government', 'Economics',
     'Honors World History', 'Honors US History',
     'AP World History', 'AP US History', 'AP US Government', 'AP Economics',
     'Psychology', 'AP Psychology', 'Sociology', 'Current Events',
@@ -57,7 +59,7 @@ const COURSE_OPTIONS = {
     'Computer Science', 'Web Design', 'Digital Media',
     'Family & Consumer Science', 'Wood Shop', 'STEM Lab',
     'Study Skills', 'Career Exploration', 'Leadership',
-    'Drama', 'Yearbook', 'Library Aide', 'Psychology',
+    'Drama', 'Yearbook', 'Library Aide', 'Psychology', 'Novels',
   ],
 };
 

@@ -31,32 +31,28 @@ const MIDDLE_COURSES = [
 
 const HIGH_COURSES_BY_GRADE = {
   9: [
-    { courseName: 'English 9', subjectArea: 'English', credits: 5 },
-    { courseName: 'Algebra I', subjectArea: 'Math', credits: 5 },
+    { courseName: 'ELA 9', subjectArea: 'English', credits: 5 },
+    { courseName: 'Algebra 1', subjectArea: 'Math', credits: 5 },
     { courseName: 'Earth Science', subjectArea: 'Science', credits: 5 },
-    { courseName: 'World History', subjectArea: 'Social Studies', credits: 5 },
-    { courseName: 'Elective', subjectArea: 'Elective', credits: 2.5 },
+    { courseName: 'American History', subjectArea: 'Social Studies', credits: 5 },
   ],
   10: [
-    { courseName: 'English 10', subjectArea: 'English', credits: 5 },
+    { courseName: 'ELA 10', subjectArea: 'English', credits: 5 },
     { courseName: 'Geometry', subjectArea: 'Math', credits: 5 },
     { courseName: 'Biology', subjectArea: 'Science', credits: 5 },
-    { courseName: 'US History', subjectArea: 'Social Studies', credits: 5 },
-    { courseName: 'Elective', subjectArea: 'Elective', credits: 2.5 },
+    { courseName: 'World History', subjectArea: 'Social Studies', credits: 5 },
   ],
   11: [
-    { courseName: 'English 11', subjectArea: 'English', credits: 5 },
-    { courseName: 'Algebra II', subjectArea: 'Math', credits: 5 },
+    { courseName: 'ELA 11', subjectArea: 'English', credits: 5 },
+    { courseName: 'Algebra 2', subjectArea: 'Math', credits: 5 },
     { courseName: 'Chemistry', subjectArea: 'Science', credits: 5 },
-    { courseName: 'US Government', subjectArea: 'Social Studies', credits: 5 },
-    { courseName: 'Elective', subjectArea: 'Elective', credits: 2.5 },
+    { courseName: 'Civics', subjectArea: 'Social Studies', credits: 5 },
   ],
   12: [
-    { courseName: 'English 12', subjectArea: 'English', credits: 5 },
-    { courseName: 'Pre-Calculus', subjectArea: 'Math', credits: 5 },
+    { courseName: 'ELA 12', subjectArea: 'English', credits: 5 },
+    { courseName: 'Integrated Math', subjectArea: 'Math', credits: 5 },
     { courseName: 'Physics', subjectArea: 'Science', credits: 5 },
-    { courseName: 'Economics', subjectArea: 'Social Studies', credits: 5 },
-    { courseName: 'Elective', subjectArea: 'Elective', credits: 2.5 },
+    { courseName: 'Civics', subjectArea: 'Social Studies', credits: 5 },
   ],
 };
 
