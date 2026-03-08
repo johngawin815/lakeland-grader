@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, FileSpreadsheet, Download, Filter, Loader2 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 
@@ -95,10 +95,11 @@ const GradeSpreadsheetModal = ({ isOpen, onClose }) => {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const wb = XLSX.utils.book_new();
+      const workbook = new ExcelJS.Workbook();
+      const ws = workbook.addWorksheet('Grades');
 
       const headers = selectedColumns.map(id => COLUMNS.find(c => c.id === id)?.label || id);
-      const wsData = [headers];
+      ws.addRow(headers);
 
       filteredStudents.forEach(student => {
         const name = student.name || `${student.firstName || ''} ${student.lastName || ''}`.trim();
@@ -121,7 +122,7 @@ const GradeSpreadsheetModal = ({ isOpen, onClose }) => {
                 default: row.push('');
               }
             });
-            wsData.push(row);
+            ws.addRow(row);
           });
         } else {
           const row = [];
@@ -133,17 +134,14 @@ const GradeSpreadsheetModal = ({ isOpen, onClose }) => {
               default: row.push('');
             }
           });
-          wsData.push(row);
+          ws.addRow(row);
         }
       });
 
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      XLSX.utils.book_append_sheet(wb, ws, 'Grades');
-
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const buffer = await workbook.xlsx.writeBuffer();
       const quarterLabel = selectedQuarters.join('_') || 'All';
       saveAs(
-        new Blob([wbout], { type: 'application/octet-stream' }),
+        new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
         `Grade_Report_${quarterLabel}_${new Date().toISOString().split('T')[0]}.xlsx`
       );
     } catch (err) {

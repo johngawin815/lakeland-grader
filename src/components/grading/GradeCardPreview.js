@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { X, Loader2, Download, RotateCcw, FileDown, CloudUpload, ChevronDown, FileArchive } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 import { saveAs } from 'file-saver';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import JSZip from 'jszip';
@@ -397,7 +397,7 @@ const GradeCardPreview = ({ formData, onClose }) => {
   };
 
   // ---------- Download as XLSX ----------
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!data) return;
     setDownloading(true);
 
@@ -405,42 +405,38 @@ const GradeCardPreview = ({ formData, onClose }) => {
       const units = UNIT_ORDER.filter(u => data[u]?.length > 0);
       Object.keys(data).forEach(u => { if (!units.includes(u) && data[u]?.length > 0) units.push(u); });
 
-      const sheetRows = [];
+      const workbook = new ExcelJS.Workbook();
+      const ws = workbook.addWorksheet('Grades');
 
       // Title row
-      sheetRows.push([`${formData.quarterName} Grade Spreadsheet ${formData.schoolYear}`]);
-      sheetRows.push([]); // spacer
+      ws.addRow([`${formData.quarterName} Grade Spreadsheet ${formData.schoolYear}`]);
+      ws.addRow([]); // spacer
 
       // Column headers
-      sheetRows.push(COLUMNS.map(c => c.label));
+      ws.addRow(COLUMNS.map(c => c.label));
 
       units.forEach(unitName => {
         // Unit header
-        sheetRows.push([`${unitName} (${data[unitName].length})`]);
+        ws.addRow([`${unitName} (${data[unitName].length})`]);
 
         data[unitName].forEach(r => {
-          sheetRows.push(COLUMNS.map(c => {
+          ws.addRow(COLUMNS.map(c => {
             const val = r[c.key] || '';
             if (c.isPct && val) return `${val}%`;
             return val;
           }));
         });
 
-        sheetRows.push([]); // spacer between units
+        ws.addRow([]); // spacer between units
       });
 
-      const ws = XLSX.utils.aoa_to_sheet(sheetRows);
-
       // Basic column widths
-      ws['!cols'] = COLUMNS.map(c => ({ wch: c.label.length < 8 ? 8 : c.label.length + 4 }));
+      ws.columns = COLUMNS.map(c => ({ width: c.label.length < 8 ? 8 : c.label.length + 4 }));
       // Make first col (name) wider
-      ws['!cols'][0] = { wch: 24 };
+      ws.getColumn(1).width = 24;
 
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Grades');
-
-      const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       saveAs(blob, `${formData.quarterName}_GradeSpreadsheet_${formData.schoolYear}.xlsx`);
     } catch (err) {
       console.error('Download error:', err);

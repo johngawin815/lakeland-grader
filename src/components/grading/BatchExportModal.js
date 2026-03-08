@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Download, CheckSquare, Square, Loader2, FileDown, Users } from 'lucide-react';
+import { X, Download, CheckSquare, Square, Loader2, Users } from 'lucide-react';
 import JSZip from 'jszip';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';

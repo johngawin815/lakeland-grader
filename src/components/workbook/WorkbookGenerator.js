@@ -15,7 +15,6 @@ import { PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE } from '../../data/workbookCssTe
 import { generatePdfBlob } from '../../services/pdfService';
 import { uploadToOneDrive } from '../../services/oneDriveService';
 import { isMsalConfigured } from '../../config/msalInstance';
-import { uploadToGoogleDrive, isGoogleDriveConfigured } from '../../services/googleDriveService';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -317,7 +316,6 @@ const WorkbookGenerator = ({ user }) => {
 
   // Google Drive save
   const [gDriveStatus, setGDriveStatus] = useState(null); // null | 'generating' | 'uploading' | 'success' | 'error'
-  const [gDriveError, setGDriveError] = useState(null);
 
   useEffect(() => {
     if (gDriveStatus === 'success') {
@@ -325,7 +323,7 @@ const WorkbookGenerator = ({ user }) => {
       return () => clearTimeout(t);
     }
     if (gDriveStatus === 'error') {
-      const t = setTimeout(() => { setGDriveStatus(null); setGDriveError(null); }, 5000);
+      const t = setTimeout(() => { setGDriveStatus(null); }, 5000);
       return () => clearTimeout(t);
     }
   }, [gDriveStatus]);
