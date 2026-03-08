@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { X, Loader2, Download, RotateCcw } from 'lucide-react';
+import { X, Loader2, Download, RotateCcw, FileDown, CloudUpload } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
 
 const UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
 
@@ -16,10 +18,10 @@ const UNIT_COLORS = {
 };
 
 const SUBJECT_FIELD_MAP = {
-  'English':        { classKey: 'engCourse',  gradeKey: 'engGrade',  pctKey: 'engPct' },
-  'Math':           { classKey: 'mathCourse', gradeKey: 'mathGrade', pctKey: 'mathPct' },
-  'Science':        { classKey: 'sciCourse',  gradeKey: 'sciGrade',  pctKey: 'sciPct' },
-  'Social Studies': { classKey: 'socCourse',  gradeKey: 'socGrade',  pctKey: 'socPct' },
+  'English':        { classKey: 'engCourse',  gradeKey: 'engGrade',  pctKey: 'engPct',  credKey: 'engCred' },
+  'Math':           { classKey: 'mathCourse', gradeKey: 'mathGrade', pctKey: 'mathPct', credKey: 'mathCred' },
+  'Science':        { classKey: 'sciCourse',  gradeKey: 'sciGrade',  pctKey: 'sciPct',  credKey: 'sciCred' },
+  'Social Studies': { classKey: 'socCourse',  gradeKey: 'socGrade',  pctKey: 'socPct',  credKey: 'socCred' },
 };
 
 // Column definitions — single source of truth for headers, keys, and widths
@@ -61,6 +63,10 @@ const GradeCardPreview = ({ formData, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [downloading, setDownloading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('');
+  const [refreshMsg, setRefreshMsg] = useState('');
+  const [generatingId, setGeneratingId] = useState(null);
 
   // Close on Escape
   useEffect(() => {
@@ -80,15 +86,16 @@ const GradeCardPreview = ({ formData, onClose }) => {
       const rows = await Promise.all(active.map(async (student) => {
         const name = student.studentName || `${student.firstName || ''} ${student.lastName || ''}`.trim();
         const row = {
+          studentId: student.id,
           name,
           grade: student.gradeLevel ? String(student.gradeLevel) : '',
           unitName: student.unitName || '',
-          socCourse: '', socGrade: '', socPct: '',
-          sciCourse: '', sciGrade: '', sciPct: '',
-          mathCourse: '', mathGrade: '', mathPct: '',
-          engCourse: '', engGrade: '', engPct: '',
-          elec1Course: '', elec1Grade: '',
-          elec2Course: '', elec2Grade: '',
+          socCourse: '', socGrade: '', socPct: '', socCred: '',
+          sciCourse: '', sciGrade: '', sciPct: '', sciCred: '',
+          mathCourse: '', mathGrade: '', mathPct: '', mathCred: '',
+          engCourse: '', engGrade: '', engPct: '', engCred: '',
+          elec1Course: '', elec1Grade: '', elec1Cred: '',
+          elec2Course: '', elec2Grade: '', elec2Cred: '',
         };
 
         try {
@@ -101,14 +108,17 @@ const GradeCardPreview = ({ formData, onClose }) => {
               row[mapping.classKey] = e.courseName || '';
               row[mapping.gradeKey] = e.letterGrade || '';
               row[mapping.pctKey] = e.percentage != null ? String(e.percentage) : '';
+              row[mapping.credKey] = e.credits != null ? String(e.credits) : '';
             } else {
               electiveCount++;
               if (electiveCount === 1) {
                 row.elec1Course = e.courseName || '';
                 row.elec1Grade = e.letterGrade || '';
+                row.elec1Cred = e.credits != null ? String(e.credits) : '';
               } else if (electiveCount === 2) {
                 row.elec2Course = e.courseName || '';
                 row.elec2Grade = e.letterGrade || '';
+                row.elec2Cred = e.credits != null ? String(e.credits) : '';
               }
             }
           });
@@ -142,6 +152,142 @@ const GradeCardPreview = ({ formData, onClose }) => {
       next[unitName][rowIdx] = { ...next[unitName][rowIdx], [key]: value };
       return next;
     });
+  };
+
+  // ---------- Generate grade card for a single row ----------
+  const generateRowDocx = async (row) => {
+    const rowKey = `${row.studentId}-${row.name}`;
+    setGeneratingId(rowKey);
+    try {
+      const gl = parseInt(row.grade, 10);
+      const useUpperLevel = gl >= 9 && gl <= 12;
+      const templateFile = useUpperLevel ? 'Upper Level Grade Card.docx' : 'quarter_card_template.docx';
+
+      const response = await fetch(`/templates/${templateFile}`);
+      if (!response.ok) throw new Error(`Template not found: ${templateFile}`);
+
+      const arrayBuffer = await response.arrayBuffer();
+      const zip = new PizZip(arrayBuffer);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        nullGetter: () => '',
+      });
+
+      let templateData;
+      if (useUpperLevel) {
+        const qMap = { Q1: 'q1', Q2: 'q2', Q3: 'q3', Q4: 'q4', Summer: 'q5' };
+        const qPrefix = qMap[formData.quarterName] || 'q1';
+        templateData = {
+          student_name: row.name,
+          school_year: formData.schoolYear || '',
+          grade: row.grade,
+          admit_date: '',
+          discharge_date: '',
+        };
+        const subjects = [
+          { course: row.engCourse, grade: row.engGrade, cred: row.engCred, row: 1 },
+          { course: row.mathCourse, grade: row.mathGrade, cred: row.mathCred, row: 2 },
+          { course: row.sciCourse, grade: row.sciGrade, cred: row.sciCred, row: 3 },
+          { course: row.socCourse, grade: row.socGrade, cred: row.socCred, row: 4 },
+          { course: row.elec1Course, grade: row.elec1Grade, cred: row.elec1Cred, row: 5 },
+          { course: row.elec2Course, grade: row.elec2Grade, cred: row.elec2Cred, row: 6 },
+        ];
+        subjects.forEach(s => {
+          templateData[`${qPrefix}_r${s.row}_course`] = s.course || '';
+          templateData[`${qPrefix}_r${s.row}_grade`] = s.grade || '';
+          templateData[`${qPrefix}_r${s.row}_credits`] = s.cred || '';
+          templateData[`${qPrefix}_r${s.row}_instructor`] = '';
+        });
+      } else {
+        templateData = {
+          student_name: row.name,
+          grade_level: row.grade,
+          school_year: formData.schoolYear || '',
+          quarter_name: formData.quarterName || '',
+          report_date: formData.reportDate || new Date().toISOString().split('T')[0],
+          teacher_name: '',
+          total_credits: '',
+          comments: '',
+          eng_class: row.engCourse, eng_grade: row.engGrade, eng_pct: row.engPct, eng_cred: row.engCred,
+          math_class: row.mathCourse, math_grade: row.mathGrade, math_pct: row.mathPct, math_cred: row.mathCred,
+          sci_class: row.sciCourse, sci_grade: row.sciGrade, sci_pct: row.sciPct, sci_cred: row.sciCred,
+          soc_class: row.socCourse, soc_grade: row.socGrade, soc_pct: row.socPct, soc_cred: row.socCred,
+          elec1_class: row.elec1Course, elec1_grade: row.elec1Grade, elec1_pct: '', elec1_cred: row.elec1Cred,
+          elec2_class: row.elec2Course, elec2_grade: row.elec2Grade, elec2_pct: '', elec2_cred: row.elec2Cred,
+        };
+      }
+
+      doc.render(templateData);
+      const out = doc.getZip().generate({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+      saveAs(out, `${row.name}_GradeCard_${formData.quarterName}.docx`);
+    } catch (err) {
+      console.error('Error generating grade card:', err);
+      alert('Error generating grade card. Ensure template files exist in public/templates/.');
+    } finally {
+      setGeneratingId(null);
+    }
+  };
+
+  // ---------- Save all rows to DB ----------
+  const handleSave = async () => {
+    if (!data) return;
+    setSaving(true);
+    setSaveStatus('');
+    try {
+      const allRows = Object.values(data).flat();
+      const promises = [];
+
+      allRows.forEach(row => {
+        if (!row.studentId) return;
+
+        const subjects = [
+          { prefix: 'eng', subjectArea: 'English', course: row.engCourse, grade: row.engGrade, pct: row.engPct, cred: row.engCred },
+          { prefix: 'math', subjectArea: 'Math', course: row.mathCourse, grade: row.mathGrade, pct: row.mathPct, cred: row.mathCred },
+          { prefix: 'sci', subjectArea: 'Science', course: row.sciCourse, grade: row.sciGrade, pct: row.sciPct, cred: row.sciCred },
+          { prefix: 'soc', subjectArea: 'Social Studies', course: row.socCourse, grade: row.socGrade, pct: row.socPct, cred: row.socCred },
+          { prefix: 'elec1', subjectArea: 'Elective', course: row.elec1Course, grade: row.elec1Grade, pct: '', cred: row.elec1Cred },
+          { prefix: 'elec2', subjectArea: 'Elective', course: row.elec2Course, grade: row.elec2Grade, pct: '', cred: row.elec2Cred },
+        ];
+
+        subjects.forEach(s => {
+          if (!s.course && !s.grade) return;
+          promises.push(databaseService.saveCourseGrade({
+            id: `${row.studentId}-manual-${s.prefix}`,
+            studentId: row.studentId,
+            courseId: `manual-${s.prefix}`,
+            courseName: s.course || '',
+            subjectArea: s.subjectArea,
+            teacherName: '',
+            letterGrade: s.grade || '',
+            percentage: s.pct ? parseFloat(s.pct) : null,
+            credits: s.cred ? parseFloat(s.cred) : null,
+            term: formData.schoolYear || '',
+            status: 'Active',
+          }));
+        });
+      });
+
+      await Promise.all(promises);
+      setSaveStatus('Saved!');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (err) {
+      console.error('Error saving spreadsheet:', err);
+      setSaveStatus('Error!');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ---------- Refresh with feedback ----------
+  const handleRefresh = async () => {
+    await loadData();
+    setRefreshMsg('Refreshed!');
+    setTimeout(() => setRefreshMsg(''), 2000);
   };
 
   // ---------- Download as XLSX ----------
@@ -199,7 +345,7 @@ const GradeCardPreview = ({ formData, onClose }) => {
   };
 
   // ---------- Render helpers ----------
-  const gridTemplate = COLUMNS.map(c => c.width).join(' ');
+  const gridTemplate = COLUMNS.map(c => c.width).join(' ') + ' 40px';
 
   const totalStudents = data ? Object.values(data).reduce((s, arr) => s + arr.length, 0) : 0;
   const unitList = data
@@ -226,13 +372,22 @@ const GradeCardPreview = ({ formData, onClose }) => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={loadData}
+              onClick={handleRefresh}
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-40"
-              title="Reload data"
+              title="Reload data from database"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              {refreshMsg || (loading ? 'Refreshing...' : 'Refresh')}
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!data || saving}
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition-colors shadow-sm disabled:opacity-50"
+              title="Save all changes to database"
+            >
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudUpload className="w-3.5 h-3.5" />}
+              {saving ? 'Saving...' : saveStatus || 'Save to DB'}
             </button>
             <button
               onClick={handleDownload}
@@ -295,11 +450,12 @@ const GradeCardPreview = ({ formData, onClose }) => {
                         {COLUMNS.map((col, ci) => (
                           <div
                             key={ci}
-                            className={`px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-r border-slate-100 last:border-r-0 ${col.center ? 'text-center' : ''}`}
+                            className={`px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-r border-slate-100 ${col.center ? 'text-center' : ''}`}
                           >
                             {col.label}
                           </div>
                         ))}
+                        <div className="px-1 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400" />
                       </div>
 
                       {/* Data rows */}
@@ -316,7 +472,7 @@ const GradeCardPreview = ({ formData, onClose }) => {
                             return (
                               <div
                                 key={ci}
-                                className={`border-r border-slate-100 last:border-r-0 flex items-center ${col.center ? 'justify-center' : ''}`}
+                                className={`border-r border-slate-100 flex items-center ${col.center ? 'justify-center' : ''}`}
                               >
                                 <input
                                   type="text"
@@ -339,6 +495,19 @@ const GradeCardPreview = ({ formData, onClose }) => {
                               </div>
                             );
                           })}
+                          <div className="flex items-center justify-center">
+                            <button
+                              onClick={() => generateRowDocx(row)}
+                              disabled={generatingId === `${row.studentId}-${row.name}`}
+                              className="p-1 rounded hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 transition-colors disabled:opacity-50"
+                              title="Generate grade card"
+                            >
+                              {generatingId === `${row.studentId}-${row.name}`
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <FileDown className="w-3.5 h-3.5" />
+                              }
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -351,8 +520,8 @@ const GradeCardPreview = ({ formData, onClose }) => {
 
         {/* ========== FOOTER ========== */}
         <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-2 flex items-center justify-between text-xs text-slate-400">
-          <span>Click any cell to edit &middot; Changes are reflected in the downloaded file</span>
-          <span>Tip: Edit grades here, then click <strong className="text-emerald-600">Download .xlsx</strong> to save</span>
+          <span>Click any cell to edit &middot; <strong className="text-amber-500">Save to DB</strong> to persist or <strong className="text-emerald-600">Download .xlsx</strong> to export</span>
+          <span>Tip: Click <FileDown className="w-3 h-3 inline" /> on any row to generate a grade card</span>
         </div>
       </div>
     </div>
