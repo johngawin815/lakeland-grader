@@ -11,10 +11,27 @@ import BatchExportModal from './BatchExportModal';
 
 // --- SUBJECT AREA → FORM FIELD MAPPING ---
 const SUBJECT_FIELD_MAP = {
-  'English': { classField: 'engClass', gradeField: 'engGrade', pctField: 'engPct', creditsField: 'engCredits' },
-  'Math': { classField: 'mathClass', gradeField: 'mathGrade', pctField: 'mathPct', creditsField: 'mathCredits' },
-  'Science': { classField: 'sciClass', gradeField: 'sciGrade', pctField: 'sciPct', creditsField: 'sciCredits' },
-  'Social Studies': { classField: 'socClass', gradeField: 'socGrade', pctField: 'socPct', creditsField: 'socCredits' },
+  'English': { classField: 'engClass', gradeField: 'engGrade', pctField: 'engPct', creditsField: 'engCredits', instructorField: 'engInstructor' },
+  'Math': { classField: 'mathClass', gradeField: 'mathGrade', pctField: 'mathPct', creditsField: 'mathCredits', instructorField: 'mathInstructor' },
+  'Science': { classField: 'sciClass', gradeField: 'sciGrade', pctField: 'sciPct', creditsField: 'sciCredits', instructorField: 'sciInstructor' },
+  'Social Studies': { classField: 'socClass', gradeField: 'socGrade', pctField: 'socPct', creditsField: 'socCredits', instructorField: 'socInstructor' },
+};
+
+// Instructor lookup: maps (unitName, subjectArea) → instructor name
+const INSTRUCTOR_MAP = {
+  Harmony:   { Science: 'Ms. Lee', Math: 'Ms. Lee', English: 'Mr. John', 'Social Studies': 'Mr. John' },
+  Integrity: { Science: 'Ms. Lee', Math: 'Ms. Lee', English: 'Mr. John', 'Social Studies': 'Mr. John' },
+};
+
+const getInstructor = (unitName, subjectArea) =>
+  (INSTRUCTOR_MAP[unitName] && INSTRUCTOR_MAP[unitName][subjectArea]) || '';
+
+// A grade of D or higher earns 0.5 credits per course
+const PASSING_GRADES = ['A', 'B', 'C', 'D'];
+const getAutoCredits = (letterGrade) => {
+  if (!letterGrade) return '';
+  const first = letterGrade.trim().toUpperCase().charAt(0);
+  return PASSING_GRADES.includes(first) ? '0.5' : '';
 };
 
 // --- COURSE OPTIONS BY CATEGORY ---
@@ -214,6 +231,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
       }
 
       // Map enrollments to grade card fields
+      const unitName = student.unitName || '';
       const updates = {
         gradeLevel: student.gradeLevel ? String(student.gradeLevel) : formData.gradeLevel,
       };
@@ -227,13 +245,14 @@ const GradeGenerator = ({ user, activeStudent }) => {
         const courseName = enrollment.courseName || '';
         const letterGrade = enrollment.letterGrade || '';
         const pct = enrollment.percentage != null ? String(enrollment.percentage) : '';
-        const credits = enrollment.credits != null ? String(enrollment.credits) : '';
+        const credits = enrollment.credits != null ? String(enrollment.credits) : getAutoCredits(letterGrade);
 
         if (mapping) {
           updates[mapping.classField] = courseName;
           updates[mapping.gradeField] = letterGrade;
           updates[mapping.pctField] = pct;
           updates[mapping.creditsField] = credits;
+          updates[mapping.instructorField] = getInstructor(unitName, subjectArea);
         } else if (subjectArea === 'Elective' || !mapping) {
           electiveCount++;
           if (electiveCount === 1) {
@@ -241,11 +260,13 @@ const GradeGenerator = ({ user, activeStudent }) => {
             updates.elec1Grade = letterGrade;
             updates.elec1Pct = pct;
             updates.elec1Credits = credits;
+            updates.elec1Instructor = getInstructor(unitName, subjectArea);
           } else if (electiveCount === 2) {
             updates.elec2Class = courseName;
             updates.elec2Grade = letterGrade;
             updates.elec2Pct = pct;
             updates.elec2Credits = credits;
+            updates.elec2Instructor = getInstructor(unitName, subjectArea);
           }
         }
       });

@@ -9,6 +9,23 @@ import JSZip from 'jszip';
 
 const UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
 
+// Instructor lookup: maps (unitName, subjectArea) → instructor name
+const INSTRUCTOR_MAP = {
+  Harmony:   { Science: 'Ms. Lee', Math: 'Ms. Lee', English: 'Mr. John', 'Social Studies': 'Mr. John' },
+  Integrity: { Science: 'Ms. Lee', Math: 'Ms. Lee', English: 'Mr. John', 'Social Studies': 'Mr. John' },
+};
+
+const getInstructor = (unitName, subjectArea) =>
+  (INSTRUCTOR_MAP[unitName] && INSTRUCTOR_MAP[unitName][subjectArea]) || '';
+
+// A grade of D or higher earns 0.5 credits per course
+const PASSING_GRADES = ['A', 'B', 'C', 'D'];
+const getAutoCredits = (letterGrade) => {
+  if (!letterGrade) return '';
+  const first = letterGrade.trim().toUpperCase().charAt(0);
+  return PASSING_GRADES.includes(first) ? '0.5' : '';
+};
+
 const UNIT_COLORS = {
   Determination: { bg: '#d97706', header: '#78350f' },
   Discovery:     { bg: '#0284c7', header: '#0c4a6e' },
@@ -185,19 +202,20 @@ const GradeCardPreview = ({ formData, onClose }) => {
         admit_date: '',
         discharge_date: '',
       };
+      const unit = row.unitName || '';
       const subjects = [
-        { course: row.engCourse, grade: row.engGrade, cred: row.engCred, row: 1 },
-        { course: row.mathCourse, grade: row.mathGrade, cred: row.mathCred, row: 2 },
-        { course: row.sciCourse, grade: row.sciGrade, cred: row.sciCred, row: 3 },
-        { course: row.socCourse, grade: row.socGrade, cred: row.socCred, row: 4 },
-        { course: row.elec1Course, grade: row.elec1Grade, cred: row.elec1Cred, row: 5 },
-        { course: row.elec2Course, grade: row.elec2Grade, cred: row.elec2Cred, row: 6 },
+        { course: row.engCourse, grade: row.engGrade, cred: row.engCred, area: 'English', row: 1 },
+        { course: row.mathCourse, grade: row.mathGrade, cred: row.mathCred, area: 'Math', row: 2 },
+        { course: row.sciCourse, grade: row.sciGrade, cred: row.sciCred, area: 'Science', row: 3 },
+        { course: row.socCourse, grade: row.socGrade, cred: row.socCred, area: 'Social Studies', row: 4 },
+        { course: row.elec1Course, grade: row.elec1Grade, cred: row.elec1Cred, area: 'Elective', row: 5 },
+        { course: row.elec2Course, grade: row.elec2Grade, cred: row.elec2Cred, area: 'Elective', row: 6 },
       ];
       subjects.forEach(s => {
         templateData[`${qPrefix}_r${s.row}_course`] = s.course || '';
         templateData[`${qPrefix}_r${s.row}_grade`] = s.grade || '';
-        templateData[`${qPrefix}_r${s.row}_credits`] = s.cred || '';
-        templateData[`${qPrefix}_r${s.row}_instructor`] = '';
+        templateData[`${qPrefix}_r${s.row}_credits`] = s.cred || getAutoCredits(s.grade);
+        templateData[`${qPrefix}_r${s.row}_instructor`] = getInstructor(unit, s.area);
       });
       return { templateData, useUpperLevel };
     } else {
@@ -210,12 +228,12 @@ const GradeCardPreview = ({ formData, onClose }) => {
         teacher_name: '',
         total_credits: '',
         comments: '',
-        eng_class: row.engCourse, eng_grade: row.engGrade, eng_pct: row.engPct, eng_cred: row.engCred,
-        math_class: row.mathCourse, math_grade: row.mathGrade, math_pct: row.mathPct, math_cred: row.mathCred,
-        sci_class: row.sciCourse, sci_grade: row.sciGrade, sci_pct: row.sciPct, sci_cred: row.sciCred,
-        soc_class: row.socCourse, soc_grade: row.socGrade, soc_pct: row.socPct, soc_cred: row.socCred,
-        elec1_class: row.elec1Course, elec1_grade: row.elec1Grade, elec1_pct: '', elec1_cred: row.elec1Cred,
-        elec2_class: row.elec2Course, elec2_grade: row.elec2Grade, elec2_pct: '', elec2_cred: row.elec2Cred,
+        eng_class: row.engCourse, eng_grade: row.engGrade, eng_pct: row.engPct, eng_cred: row.engCred || getAutoCredits(row.engGrade),
+        math_class: row.mathCourse, math_grade: row.mathGrade, math_pct: row.mathPct, math_cred: row.mathCred || getAutoCredits(row.mathGrade),
+        sci_class: row.sciCourse, sci_grade: row.sciGrade, sci_pct: row.sciPct, sci_cred: row.sciCred || getAutoCredits(row.sciGrade),
+        soc_class: row.socCourse, soc_grade: row.socGrade, soc_pct: row.socPct, soc_cred: row.socCred || getAutoCredits(row.socGrade),
+        elec1_class: row.elec1Course, elec1_grade: row.elec1Grade, elec1_pct: '', elec1_cred: row.elec1Cred || getAutoCredits(row.elec1Grade),
+        elec2_class: row.elec2Course, elec2_grade: row.elec2Grade, elec2_pct: '', elec2_cred: row.elec2Cred || getAutoCredits(row.elec2Grade),
       };
       return { templateData, useUpperLevel };
     }
