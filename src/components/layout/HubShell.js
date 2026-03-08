@@ -1,30 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
   Calendar, ScrollText,
-  FileCheck, NotebookPen, Upload, Settings
+  FileCheck, NotebookPen, Upload, Settings, Loader2
 } from 'lucide-react';
-
-// --- MODULE IMPORTS ---
-import KTEAReporter from '../ktea/KTEAReporter';
-import DischargeNarrativeBuilder from '../discharge/DischargeNarrativeBuilder';
-import CurriculumMaps from '../curriculum/CurriculumMaps';
-import StudentMasterDashboard from '../dashboard/StudentMasterDashboard';
-import GradeGenerator from '../grading/GradeGenerator';
-import GradeSpreadsheetModal from '../grading/GradeSpreadsheetModal';
-import AuditLog from './AuditLog';
-import IEPGenerator from '../iep/IEPGenerator';
-import TranscriptGenerator from '../transcript/TranscriptGenerator';
-import WorkbookGenerator from '../workbook/WorkbookGenerator';
-import TeacherSettings from '../settings/TeacherSettings';
-
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 import { databaseService } from '../../services/databaseService';
 
-// --- HELPER FUNCTIONS ---
-
-import DocumentUploadPortal from '../upload/DocumentUploadPortal';
+// --- LAZY-LOADED MODULE IMPORTS ---
+const KTEAReporter = lazy(() => import('../ktea/KTEAReporter'));
+const DischargeNarrativeBuilder = lazy(() => import('../discharge/DischargeNarrativeBuilder'));
+const CurriculumMaps = lazy(() => import('../curriculum/CurriculumMaps'));
+const StudentMasterDashboard = lazy(() => import('../dashboard/StudentMasterDashboard'));
+const GradeGenerator = lazy(() => import('../grading/GradeGenerator'));
+const GradeSpreadsheetModal = lazy(() => import('../grading/GradeSpreadsheetModal'));
+const AuditLog = lazy(() => import('./AuditLog'));
+const IEPGenerator = lazy(() => import('../iep/IEPGenerator'));
+const TranscriptGenerator = lazy(() => import('../transcript/TranscriptGenerator'));
+const WorkbookGenerator = lazy(() => import('../workbook/WorkbookGenerator'));
+const TeacherSettings = lazy(() => import('../settings/TeacherSettings'));
+const DocumentUploadPortal = lazy(() => import('../upload/DocumentUploadPortal'));
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -195,7 +191,11 @@ const HubShell = () => {
 
   if (!user) {
     if (showUploadPortal) {
-      return <DocumentUploadPortal onBack={() => setShowUploadPortal(false)} />;
+      return (
+        <Suspense fallback={<LoadingFallback />}>
+          <DocumentUploadPortal onBack={() => setShowUploadPortal(false)} />
+        </Suspense>
+      );
     }
     return <LoginScreen onLogin={handleLogin} onUploadPortal={() => setShowUploadPortal(true)} />;
   }
@@ -316,29 +316,39 @@ const HubShell = () => {
         )}
 
         {currentView !== 'home' && (
-          <div className="h-full overflow-y-auto">
-            {currentView === 'dashboard' && <StudentMasterDashboard setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
-            {currentView === 'gradecards' && <GradeGenerator user={user} />}
-            {currentView === 'ktea' && <KTEAReporter user={user} />}
-            {currentView === 'discharge' && <DischargeNarrativeBuilder user={user} />}
-            {currentView === 'curriculum' && <CurriculumMaps />}
-            {currentView === 'iep' && <IEPGenerator user={user} />}
-            {currentView === 'transcript' && <TranscriptGenerator user={user} />}
-            {currentView === 'workbook' && <WorkbookGenerator user={user} />}
-            {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
-            {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
-          </div>
+          <Suspense fallback={<LoadingFallback />}>
+            <div className="h-full overflow-y-auto">
+              {currentView === 'dashboard' && <StudentMasterDashboard setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
+              {currentView === 'gradecards' && <GradeGenerator user={user} />}
+              {currentView === 'ktea' && <KTEAReporter user={user} />}
+              {currentView === 'discharge' && <DischargeNarrativeBuilder user={user} />}
+              {currentView === 'curriculum' && <CurriculumMaps />}
+              {currentView === 'iep' && <IEPGenerator user={user} />}
+              {currentView === 'transcript' && <TranscriptGenerator user={user} />}
+              {currentView === 'workbook' && <WorkbookGenerator user={user} />}
+              {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
+              {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
+            </div>
+          </Suspense>
         )}
       </main>
-      <GradeSpreadsheetModal
-        isOpen={isSpreadsheetModalOpen}
-        onClose={() => setIsSpreadsheetModalOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <GradeSpreadsheetModal
+          isOpen={isSpreadsheetModalOpen}
+          onClose={() => setIsSpreadsheetModalOpen(false)}
+        />
+      </Suspense>
     </div>
   );
 };
 
 // --- HELPER COMPONENTS ---
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-full w-full">
+    <Loader2 size={32} className="animate-spin text-indigo-500" />
+  </div>
+);
 
 const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
   <button

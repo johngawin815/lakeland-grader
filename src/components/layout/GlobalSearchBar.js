@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Search, X, CheckCircle, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+
 import { databaseService } from '../../services/databaseService';
 import { useStudent } from '../../context/StudentContext';
 
 const GlobalSearchBar = () => {
   const { activeStudent, selectStudent, clearStudent } = useStudent();
-  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -47,9 +46,8 @@ const GlobalSearchBar = () => {
       <div className="bg-white/80 backdrop-blur-lg border-b border-slate-200/50 p-3 relative z-50">
         <form onSubmit={handleSearch} className="flex gap-3 max-w-4xl mx-auto relative">
           
-          <button 
+          <button
              type="button"
-             onClick={() => navigate('/')} 
              className="font-extrabold text-slate-700 tracking-tight flex items-center px-4 hover:bg-slate-100 rounded-xl transition-colors duration-300"
              title="Return to Dashboard"
           >
