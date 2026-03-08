@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { X, Loader2, Download, RotateCcw, FileDown, CloudUpload } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { X, Loader2, Download, RotateCcw, FileDown, CloudUpload, ChevronDown, FileArchive } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import JSZip from 'jszip';
 
 const UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
 
@@ -67,6 +68,10 @@ const GradeCardPreview = ({ formData, onClose }) => {
   const [saveStatus, setSaveStatus] = useState('');
   const [refreshMsg, setRefreshMsg] = useState('');
   const [generatingId, setGeneratingId] = useState(null);
+  const [bulkExporting, setBulkExporting] = useState(null);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef(null);
 
   // Close on Escape
   useEffect(() => {
@@ -74,6 +79,17 @@ const GradeCardPreview = ({ formData, onClose }) => {
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
   }, [onClose]);
+
+  // Close export menu on outside click
+  useEffect(() => {
+    const h = (e) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+        setExportMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
 
   // ---------- Data loading ----------
   const loadData = useCallback(async () => {
@@ -155,12 +171,61 @@ const GradeCardPreview = ({ formData, onClose }) => {
   };
 
   // ---------- Generate grade card for a single row ----------
+  const buildRowTemplateData = (row) => {
+    const gl = parseInt(row.grade, 10);
+    const useUpperLevel = gl >= 9 && gl <= 12;
+    const qMap = { Q1: 'q1', Q2: 'q2', Q3: 'q3', Q4: 'q4', Summer: 'q5' };
+    const qPrefix = qMap[formData.quarterName] || 'q1';
+
+    if (useUpperLevel) {
+      const templateData = {
+        student_name: row.name,
+        school_year: formData.schoolYear || '',
+        grade: row.grade,
+        admit_date: '',
+        discharge_date: '',
+      };
+      const subjects = [
+        { course: row.engCourse, grade: row.engGrade, cred: row.engCred, row: 1 },
+        { course: row.mathCourse, grade: row.mathGrade, cred: row.mathCred, row: 2 },
+        { course: row.sciCourse, grade: row.sciGrade, cred: row.sciCred, row: 3 },
+        { course: row.socCourse, grade: row.socGrade, cred: row.socCred, row: 4 },
+        { course: row.elec1Course, grade: row.elec1Grade, cred: row.elec1Cred, row: 5 },
+        { course: row.elec2Course, grade: row.elec2Grade, cred: row.elec2Cred, row: 6 },
+      ];
+      subjects.forEach(s => {
+        templateData[`${qPrefix}_r${s.row}_course`] = s.course || '';
+        templateData[`${qPrefix}_r${s.row}_grade`] = s.grade || '';
+        templateData[`${qPrefix}_r${s.row}_credits`] = s.cred || '';
+        templateData[`${qPrefix}_r${s.row}_instructor`] = '';
+      });
+      return { templateData, useUpperLevel };
+    } else {
+      const templateData = {
+        student_name: row.name,
+        grade_level: row.grade,
+        school_year: formData.schoolYear || '',
+        quarter_name: formData.quarterName || '',
+        report_date: formData.reportDate || new Date().toISOString().split('T')[0],
+        teacher_name: '',
+        total_credits: '',
+        comments: '',
+        eng_class: row.engCourse, eng_grade: row.engGrade, eng_pct: row.engPct, eng_cred: row.engCred,
+        math_class: row.mathCourse, math_grade: row.mathGrade, math_pct: row.mathPct, math_cred: row.mathCred,
+        sci_class: row.sciCourse, sci_grade: row.sciGrade, sci_pct: row.sciPct, sci_cred: row.sciCred,
+        soc_class: row.socCourse, soc_grade: row.socGrade, soc_pct: row.socPct, soc_cred: row.socCred,
+        elec1_class: row.elec1Course, elec1_grade: row.elec1Grade, elec1_pct: '', elec1_cred: row.elec1Cred,
+        elec2_class: row.elec2Course, elec2_grade: row.elec2Grade, elec2_pct: '', elec2_cred: row.elec2Cred,
+      };
+      return { templateData, useUpperLevel };
+    }
+  };
+
   const generateRowDocx = async (row) => {
     const rowKey = `${row.studentId}-${row.name}`;
     setGeneratingId(rowKey);
     try {
-      const gl = parseInt(row.grade, 10);
-      const useUpperLevel = gl >= 9 && gl <= 12;
+      const { templateData, useUpperLevel } = buildRowTemplateData(row);
       const templateFile = useUpperLevel ? 'Upper Level Grade Card.docx' : 'quarter_card_template.docx';
 
       const response = await fetch(`/templates/${templateFile}`);
@@ -174,50 +239,6 @@ const GradeCardPreview = ({ formData, onClose }) => {
         nullGetter: () => '',
       });
 
-      let templateData;
-      if (useUpperLevel) {
-        const qMap = { Q1: 'q1', Q2: 'q2', Q3: 'q3', Q4: 'q4', Summer: 'q5' };
-        const qPrefix = qMap[formData.quarterName] || 'q1';
-        templateData = {
-          student_name: row.name,
-          school_year: formData.schoolYear || '',
-          grade: row.grade,
-          admit_date: '',
-          discharge_date: '',
-        };
-        const subjects = [
-          { course: row.engCourse, grade: row.engGrade, cred: row.engCred, row: 1 },
-          { course: row.mathCourse, grade: row.mathGrade, cred: row.mathCred, row: 2 },
-          { course: row.sciCourse, grade: row.sciGrade, cred: row.sciCred, row: 3 },
-          { course: row.socCourse, grade: row.socGrade, cred: row.socCred, row: 4 },
-          { course: row.elec1Course, grade: row.elec1Grade, cred: row.elec1Cred, row: 5 },
-          { course: row.elec2Course, grade: row.elec2Grade, cred: row.elec2Cred, row: 6 },
-        ];
-        subjects.forEach(s => {
-          templateData[`${qPrefix}_r${s.row}_course`] = s.course || '';
-          templateData[`${qPrefix}_r${s.row}_grade`] = s.grade || '';
-          templateData[`${qPrefix}_r${s.row}_credits`] = s.cred || '';
-          templateData[`${qPrefix}_r${s.row}_instructor`] = '';
-        });
-      } else {
-        templateData = {
-          student_name: row.name,
-          grade_level: row.grade,
-          school_year: formData.schoolYear || '',
-          quarter_name: formData.quarterName || '',
-          report_date: formData.reportDate || new Date().toISOString().split('T')[0],
-          teacher_name: '',
-          total_credits: '',
-          comments: '',
-          eng_class: row.engCourse, eng_grade: row.engGrade, eng_pct: row.engPct, eng_cred: row.engCred,
-          math_class: row.mathCourse, math_grade: row.mathGrade, math_pct: row.mathPct, math_cred: row.mathCred,
-          sci_class: row.sciCourse, sci_grade: row.sciGrade, sci_pct: row.sciPct, sci_cred: row.sciCred,
-          soc_class: row.socCourse, soc_grade: row.socGrade, soc_pct: row.socPct, soc_cred: row.socCred,
-          elec1_class: row.elec1Course, elec1_grade: row.elec1Grade, elec1_pct: '', elec1_cred: row.elec1Cred,
-          elec2_class: row.elec2Course, elec2_grade: row.elec2Grade, elec2_pct: '', elec2_cred: row.elec2Cred,
-        };
-      }
-
       doc.render(templateData);
       const out = doc.getZip().generate({
         type: 'blob',
@@ -230,6 +251,91 @@ const GradeCardPreview = ({ formData, onClose }) => {
     } finally {
       setGeneratingId(null);
     }
+  };
+
+  // ---------- Bulk export grade cards as ZIP ----------
+  const generateBulkDocx = async (filterFn, zipFilename, label) => {
+    if (!data) return;
+    setBulkExporting(label);
+    setBulkProgress(0);
+
+    try {
+      const allRows = Object.values(data).flat();
+      const filtered = allRows.filter(filterFn);
+
+      if (filtered.length === 0) {
+        alert(`No students match the "${label}" filter.`);
+        return;
+      }
+
+      // Pre-fetch both templates
+      const [upperResp, quarterResp] = await Promise.all([
+        fetch('/templates/Upper Level Grade Card.docx'),
+        fetch('/templates/quarter_card_template.docx'),
+      ]);
+
+      const upperBuffer = upperResp.ok ? await upperResp.arrayBuffer() : null;
+      const quarterBuffer = quarterResp.ok ? await quarterResp.arrayBuffer() : null;
+
+      if (!quarterBuffer) throw new Error('quarter_card_template.docx not found');
+
+      const archive = new JSZip();
+
+      for (let i = 0; i < filtered.length; i++) {
+        const row = filtered[i];
+        const { templateData, useUpperLevel } = buildRowTemplateData(row);
+        const templateBuffer = useUpperLevel && upperBuffer ? upperBuffer : quarterBuffer;
+
+        const docZip = new PizZip(templateBuffer);
+        const doc = new Docxtemplater(docZip, {
+          paragraphLoop: true,
+          linebreaks: true,
+          nullGetter: () => '',
+        });
+
+        doc.render(templateData);
+        const docBuffer = doc.getZip().generate({ type: 'arraybuffer' });
+        archive.file(`${row.name}_GradeCard_${formData.quarterName}.docx`, docBuffer);
+
+        setBulkProgress(((i + 1) / filtered.length) * 100);
+      }
+
+      const zipBlob = await archive.generateAsync({ type: 'blob' });
+      saveAs(zipBlob, zipFilename);
+    } catch (err) {
+      console.error('Bulk export error:', err);
+      alert('Error during bulk export. Ensure template files exist in public/templates/.');
+    } finally {
+      setBulkExporting(null);
+      setBulkProgress(0);
+    }
+  };
+
+  const handleBulkUpperLevel = () => {
+    setExportMenuOpen(false);
+    generateBulkDocx(
+      (row) => { const gl = parseInt(row.grade, 10); return gl >= 9 && gl <= 12; },
+      `UpperLevel_GradeCards_${formData.quarterName}_${formData.schoolYear}.zip`,
+      'Upper Level (9-12)',
+    );
+  };
+
+  const handleBulkElementary = () => {
+    setExportMenuOpen(false);
+    generateBulkDocx(
+      (row) => { const gl = parseInt(row.grade, 10); return isNaN(gl) || gl < 9; },
+      `Elementary_GradeCards_${formData.quarterName}_${formData.schoolYear}.zip`,
+      'Elementary/MS (K-8)',
+    );
+  };
+
+  const handleBulkUnit = (unitName) => {
+    setExportMenuOpen(false);
+    generateBulkDocx(
+      (row) => row.unitName === unitName,
+      `${unitName}_GradeCards_${formData.quarterName}_${formData.schoolYear}.zip`,
+      unitName,
+    );
   };
 
   // ---------- Save all rows to DB ----------
@@ -389,6 +495,55 @@ const GradeCardPreview = ({ formData, onClose }) => {
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudUpload className="w-3.5 h-3.5" />}
               {saving ? 'Saving...' : saveStatus || 'Save to DB'}
             </button>
+
+            {/* Export Cards dropdown */}
+            <div className="relative" ref={exportMenuRef}>
+              <button
+                onClick={() => setExportMenuOpen(prev => !prev)}
+                disabled={!data || !!bulkExporting}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
+              >
+                {bulkExporting
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : <FileArchive className="w-3.5 h-3.5" />
+                }
+                {bulkExporting ? `Exporting...` : 'Export Cards'}
+                <ChevronDown className="w-3 h-3 ml-0.5" />
+              </button>
+              {exportMenuOpen && !bulkExporting && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50">
+                  <button
+                    onClick={handleBulkUpperLevel}
+                    className="w-full text-left px-4 py-2 text-sm font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                  >
+                    Upper Level (9-12)
+                  </button>
+                  <button
+                    onClick={handleBulkElementary}
+                    className="w-full text-left px-4 py-2 text-sm font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                  >
+                    Elementary / MS (K-8)
+                  </button>
+                  {unitList.length > 0 && (
+                    <>
+                      <div className="border-t border-slate-100 my-1" />
+                      <div className="px-4 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">By Unit</div>
+                      {unitList.map(u => (
+                        <button
+                          key={u}
+                          onClick={() => handleBulkUnit(u)}
+                          className="w-full text-left px-4 py-2 text-sm font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center gap-2"
+                        >
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: (UNIT_COLORS[u] || { bg: '#475569' }).bg }} />
+                          {u}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={handleDownload}
               disabled={!data || downloading}
@@ -402,6 +557,23 @@ const GradeCardPreview = ({ formData, onClose }) => {
             </button>
           </div>
         </div>
+
+        {/* ========== BULK EXPORT PROGRESS ========== */}
+        {bulkExporting && (
+          <div className="shrink-0 px-6 py-2 bg-indigo-50 border-b border-indigo-100">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-4 h-4 text-indigo-600 animate-spin shrink-0" />
+              <span className="text-xs font-bold text-indigo-700">Exporting {bulkExporting}...</span>
+              <div className="flex-1 h-2 bg-indigo-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                  style={{ width: `${bulkProgress}%` }}
+                />
+              </div>
+              <span className="text-xs font-bold text-indigo-600 w-10 text-right">{Math.round(bulkProgress)}%</span>
+            </div>
+          </div>
+        )}
 
         {/* ========== BODY ========== */}
         <div className="flex-1 overflow-auto bg-slate-50 px-5 py-4">
