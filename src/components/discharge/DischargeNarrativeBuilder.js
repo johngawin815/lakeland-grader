@@ -3,7 +3,7 @@ import {
   FileText, Search, Loader2, CheckCircle, AlertTriangle,
   Sparkles, Download, Printer, ChevronDown, ChevronUp,
   ArrowRight, TrendingUp, TrendingDown, ClipboardList,
-  MessageSquare, StickyNote, BookOpen, User, Calendar, GraduationCap,
+  MessageSquare, StickyNote, BookOpen, User, Calendar, GraduationCap, Save,
 } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 import { useAutoSave } from '../../hooks/useAutoSave';
@@ -465,7 +465,16 @@ const DischargeNarrativeBuilder = ({ user }) => {
             )}
           </div>
 
-          {/* Right: Export */}
+          {/* Right: Save + Export */}
+          <button
+            type="button"
+            onClick={forceSave}
+            disabled={!isDirty && saveStatus !== 'error'}
+            className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-bold text-xs border border-slate-300 shadow-sm transition-all disabled:opacity-40 flex items-center gap-1.5 shrink-0"
+          >
+            {saveStatus === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            Save
+          </button>
           <button
             type="button"
             onClick={handleExport}
