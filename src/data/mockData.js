@@ -118,6 +118,35 @@ export const COURSE_ASSIGNMENTS = {
   'mock-c08': [],
 };
 
+// ─── Q3 MID-TERM GRADES (from Mid_Term_Quarter 3_2026.xlsx) ─────────────────
+// Maps studentId → courseId → percentage (number).
+// Letter grades are derived via calculateLetterGrade().
+
+export const Q3_MIDTERM_GRADES = {
+  // --- Harmony Unit ---
+  'student-harmony-01': { 'mock-amhist': 85, 'mock-earthsci': 75, 'mock-intmath': 75, 'mock-ela9': 85 },      // Nyla O.
+  'student-harmony-02': { 'mock-amhist': 99, 'mock-envsci': 101, 'mock-geom': 99, 'mock-ela11': 99 },          // Hailey K.
+  'student-harmony-03': { 'mock-wldhist': 99, 'mock-earthsci': 75, 'mock-geom': 75, 'mock-ela10': 99 },        // Bella U.
+  'student-harmony-04': { 'mock-civics': 85, 'mock-earthsci': 75, 'mock-intmath': 100, 'mock-c07': 85 },       // Kendra B.
+  'student-harmony-05': { 'mock-amhist': 85, 'mock-earthsci': 75, 'mock-intmath': 75, 'mock-ela9': 87 },       // Nicole W.
+  'student-harmony-06': { 'mock-amhist': 86, 'mock-earthsci': 75, 'mock-intmath': 75, 'mock-ela9': 85 },       // Sheila
+  'student-harmony-07': { 'mock-amhist': 83, 'mock-earthsci': 75, 'mock-geom': 75, 'mock-ela9': 83 },          // Halo R.
+  'student-harmony-08': { 'mock-civics': 85, 'mock-earthsci': 75, 'mock-geom': 63, 'mock-ela11': 85 },         // Baleigh
+  'student-harmony-09': { 'mock-wldhist': 85, 'mock-earthsci': 85, 'mock-intmath': 85, 'mock-ela10': 85 },     // Genesis
+  'student-harmony-10': { 'mock-amhist': 99, 'mock-earthsci': 75, 'mock-intmath': 75, 'mock-ela10': 99 },      // Zoe G.
+  'student-harmony-11': { 'mock-ms-hist': 98, 'mock-ms-sci': 78, 'mock-ms-math': 98, 'mock-ms-eng': 98 },      // Sydney P.
+
+  // --- Integrity Unit ---
+  'student-integrity-02': { 'mock-civics': 99, 'mock-earthsci': 96, 'mock-intmath': 98, 'mock-ela12': 99 },    // Daniel C.
+  'student-integrity-03': { 'mock-wldhist': 85, 'mock-earthsci': 73, 'mock-intmath': 75, 'mock-ela10': 85 },   // Elliot K.
+  'student-integrity-05': { 'mock-civics': 85, 'mock-intmath': 89, 'mock-ela12': 85 },                          // Jahiem P. (no Science)
+  'student-integrity-06': { 'mock-amhist': 85, 'mock-bio': 21, 'mock-intmath': 76, 'mock-ela10': 85 },         // Noah C.
+  'student-integrity-07': { 'mock-amhist': 85, 'mock-earthsci': 85, 'mock-geom': 85, 'mock-ela9': 85 },        // Marshall H.
+  'student-integrity-09': { 'mock-amhist': 85, 'mock-earthsci': 21, 'mock-intmath': 75, 'mock-ela12': 85 },    // George F.
+  'student-integrity-10': { 'mock-amhist': 99, 'mock-earthsci': 96, 'mock-alg1': 85, 'mock-ela9': 99 },        // Matthew B.
+  'student-integrity-11': { 'mock-ms-hist': 75, 'mock-ms-sci': 75, 'mock-ms-math': 73, 'mock-ms-eng': 75 },    // John St. J.
+};
+
 // ─── STANDARD CATEGORIES ───────────────────────────────────────────────────────
 
 export const GRADEBOOK_CATEGORIES = [

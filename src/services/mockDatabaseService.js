@@ -6,6 +6,7 @@
 import {
   MOCK_STUDENTS, MOCK_COURSES, COURSE_STUDENTS, COURSE_ASSIGNMENTS,
   GRADEBOOK_CATEGORIES, STUDENT_PROFILES, MOCK_KTEA_REPORTS, ATTENDANCE_DATES,
+  Q3_MIDTERM_GRADES,
 } from '../data/mockData';
 
 // ─── localStorage HELPERS ────────────────────────────────────────────────────
@@ -187,6 +188,19 @@ if (!hasPersistedData) {
     }
   })();
 
+  // Apply Q3 mid-term grades to enrollments
+  for (const [studentId, courseGrades] of Object.entries(Q3_MIDTERM_GRADES)) {
+    for (const [courseId, pct] of Object.entries(courseGrades)) {
+      const enrollId = `mock-e-${courseId.replace('mock-', '')}-${studentId.replace('mock-', '')}`;
+      const existing = enrollments.get(enrollId);
+      if (existing) {
+        existing.percentage = pct;
+        existing.letterGrade = calculateLetterGrade(pct);
+        enrollments.set(enrollId, existing);
+      }
+    }
+  }
+
   // Save initial state and mark as initialized
   saveMap('students', students);
   saveMap('courses', courses);
@@ -224,6 +238,37 @@ if (!hasPersistedData) {
     }
   }
   if (mergedStudents > 0) saveMap('students', students);
+
+  // 1b) Remove duplicate students by name (keep seed-data IDs, remove UI-added clones)
+  const seedIds = new Set(MOCK_STUDENTS.map(s => s.id));
+  const seenNames = new Map(); // lowercase name → first id seen
+  let removedDuplicates = 0;
+  for (const [id, s] of students.entries()) {
+    const key = (s.studentName || '').toLowerCase().trim();
+    if (!key) continue;
+    if (!seenNames.has(key)) {
+      seenNames.set(key, id);
+    } else {
+      // Duplicate name — remove the non-seed version
+      const keepId = seenNames.get(key);
+      const removeId = seedIds.has(keepId) ? id : keepId;
+      if (removeId !== keepId && !seedIds.has(keepId)) {
+        // First seen was not a seed; swap
+        seenNames.set(key, id);
+      }
+      students.delete(removeId);
+      // Also remove orphaned enrollments for the removed student
+      for (const [enrollId, e] of enrollments.entries()) {
+        if (e.studentId === removeId) enrollments.delete(enrollId);
+      }
+      removedDuplicates++;
+    }
+  }
+  if (removedDuplicates > 0) {
+    saveMap('students', students);
+    saveMap('enrollments', enrollments);
+    console.info(`[mockDB] Removed ${removedDuplicates} duplicate student(s).`);
+  }
 
   // 2) Courses — add new, update existing course details
   let mergedCourses = 0;
@@ -287,9 +332,25 @@ if (!hasPersistedData) {
   }
   if (mergedEnrollments > 0) saveMap('enrollments', enrollments);
 
-  const total = mergedStudents + mergedCourses + mergedEnrollments;
+  // 4) Apply Q3 mid-term grades — update percentages and letter grades
+  let mergedGrades = 0;
+  for (const [studentId, courseGrades] of Object.entries(Q3_MIDTERM_GRADES)) {
+    for (const [courseId, pct] of Object.entries(courseGrades)) {
+      const enrollId = `mock-e-${courseId.replace('mock-', '')}-${studentId.replace('mock-', '')}`;
+      const existing = enrollments.get(enrollId);
+      if (existing && (existing.percentage !== pct || existing.letterGrade !== calculateLetterGrade(pct))) {
+        existing.percentage = pct;
+        existing.letterGrade = calculateLetterGrade(pct);
+        enrollments.set(enrollId, existing);
+        mergedGrades++;
+      }
+    }
+  }
+  if (mergedGrades > 0) saveMap('enrollments', enrollments);
+
+  const total = mergedStudents + mergedCourses + mergedEnrollments + mergedGrades;
   if (total > 0) {
-    console.info(`[mockDB] Merged seed data: ${mergedStudents} student(s), ${mergedCourses} course(s), ${mergedEnrollments} enrollment(s).`);
+    console.info(`[mockDB] Merged seed data: ${mergedStudents} student(s), ${mergedCourses} course(s), ${mergedEnrollments} enrollment(s), ${mergedGrades} grade(s).`);
   }
   console.info('[mockDB] Restored data from localStorage.');
 }
