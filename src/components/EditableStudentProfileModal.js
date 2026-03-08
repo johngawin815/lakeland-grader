@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
@@ -63,6 +63,38 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   const [uploadedDocuments, setUploadedDocuments] = useState(studentData?.uploadedDocuments || []);
   const [uploadPasscode, setUploadPasscode] = useState(studentData?.uploadPasscode || '');
   const [copiedLink, setCopiedLink] = useState(false);
+
+  // Sync form with studentData prop changes (e.g., after parent re-fetches roster)
+  useEffect(() => {
+    if (studentData) {
+      reset({
+        gradeLevel: String(studentData.gradeLevel || ''),
+        unitName: studentData.unitName || '',
+        admitDate: studentData.admitDate || '',
+        expectedDischargeDate: studentData.expectedDischargeDate || '',
+        district: studentData.district || '',
+        homeState: studentData.homeState || '',
+        iepStatus: studentData.iep === 'Yes' ? 'yes' : 'no',
+        homeSchoolContact: studentData.homeSchoolContact || '',
+        homeSchoolContactName: studentData.homeSchoolContactName || '',
+        homeSchoolContactPosition: studentData.homeSchoolContactPosition || '',
+        homeSchoolContactNumber: studentData.homeSchoolContactNumber || '',
+        homeSchoolContactEmail: studentData.homeSchoolContactEmail || '',
+        guardianName: studentData.guardianName || '',
+        guardianPhone: studentData.guardianPhone || '',
+        iepDueDate: studentData.iepDueDate || '',
+        healthInsurance: studentData.healthInsurance || '',
+        therapistName: studentData.therapistName || '',
+        reasonForAdmit: studentData.reasonForAdmit || '',
+        guardian1Name: studentData.guardian1Name || '',
+        guardian1Address: studentData.guardian1Address || '',
+        guardian1Phone: studentData.guardian1Phone || '',
+        guardian1Email: studentData.guardian1Email || '',
+        homeSchoolName: studentData.homeSchoolName || '',
+        homeSchoolAddress: studentData.homeSchoolAddress || '',
+      });
+    }
+  }, [studentData, reset]);
 
   const watchedUnit = watch('unitName');
   const watchedIep = watch('iepStatus');

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search, BookOpen, Flag, TrendingUp, Lightbulb, AlertTriangle,
-  CheckCircle2, Download, Save, Loader2, UserPlus, GraduationCap, Info, Pencil
+  CheckCircle2, Download, Save, Loader2, UserPlus, GraduationCap, Info, Pencil, Trash2
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -149,6 +149,7 @@ const TranscriptGenerator = ({ user }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [, setStudentEnrollments] = useState([]);
   const [editedEnrollments, setEditedEnrollments] = useState([]);
+  const [removedEnrollmentIds, setRemovedEnrollmentIds] = useState([]);
   const [transcriptDirty, setTranscriptDirty] = useState(false);
   const [savingTranscript, setSavingTranscript] = useState(false);
   const [recommendedCourses, setRecommendedCourses] = useState([]);
@@ -181,6 +182,7 @@ const TranscriptGenerator = ({ user }) => {
     setSavedPlan(null);
     setSaveMsg('');
     setTranscriptDirty(false);
+    setRemovedEnrollmentIds([]);
     try {
       const [enrollments, masterGrades, plan] = await Promise.all([
         databaseService.getStudentEnrollments(student.id),
@@ -227,6 +229,13 @@ const TranscriptGenerator = ({ user }) => {
     setTranscriptDirty(true);
   };
 
+  const handleDeleteEnrollment = (enrollmentId, courseName) => {
+    if (!window.confirm(`Remove "${courseName}" from the transcript?`)) return;
+    setRemovedEnrollmentIds(prev => [...prev, enrollmentId]);
+    setEditedEnrollments(prev => prev.filter(e => e.id !== enrollmentId));
+    setTranscriptDirty(true);
+  };
+
   const handleSaveTranscript = async () => {
     setSavingTranscript(true);
     setSaveMsg('');
@@ -234,8 +243,12 @@ const TranscriptGenerator = ({ user }) => {
       for (const enrollment of editedEnrollments) {
         await databaseService.enrollStudent(enrollment);
       }
+      for (const id of removedEnrollmentIds) {
+        try { await databaseService.unenrollStudent(id); } catch (err) { console.warn('Delete enrollment failed:', id, err); }
+      }
       if (user) await databaseService.logAudit(user, 'SaveTranscript', `Saved transcript edits for ${selectedStudent.studentName}`);
       setStudentEnrollments(editedEnrollments.map(e => ({ ...e })));
+      setRemovedEnrollmentIds([]);
       setTranscriptDirty(false);
       setSaveMsg('Transcript saved');
       setTimeout(() => setSaveMsg(''), 3000);
@@ -484,6 +497,7 @@ const TranscriptGenerator = ({ user }) => {
     setSelectedStudent(null);
     setStudentEnrollments([]);
     setEditedEnrollments([]);
+    setRemovedEnrollmentIds([]);
     setTranscriptDirty(false);
     setRecommendedCourses([]);
     setPlanNotes('');
@@ -637,6 +651,7 @@ const TranscriptGenerator = ({ user }) => {
                         <th className="text-center px-2 py-1.5 font-semibold w-14">%</th>
                         <th className="text-center px-2 py-1.5 font-semibold w-14">Credits</th>
                         <th className="text-center px-2 py-1.5 font-semibold w-20">Status</th>
+                        <th className="w-8"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -646,7 +661,7 @@ const TranscriptGenerator = ({ user }) => {
                         return (
                           <React.Fragment key={area}>
                             <tr>
-                              <td colSpan={6} className="px-2 pt-2.5 pb-0.5">
+                              <td colSpan={7} className="px-2 pt-2.5 pb-0.5">
                                 <div className="flex items-center justify-between">
                                   <span className="text-[10px] font-bold text-orange-700 uppercase tracking-wider">{area}</span>
                                   <span className="text-[10px] font-semibold text-slate-400">{creditsEarned[area] || 0} cr</span>
@@ -702,6 +717,15 @@ const TranscriptGenerator = ({ user }) => {
                                       <option value="Withdrawn">Withdrawn</option>
                                     </select>
                                   </td>
+                                  <td className="px-1 py-1 text-center">
+                                    <button
+                                      onClick={() => handleDeleteEnrollment(e.id, e.courseName)}
+                                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all"
+                                      title="Remove from transcript"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </td>
                                 </tr>
                               );
                             })}
@@ -709,7 +733,7 @@ const TranscriptGenerator = ({ user }) => {
                         );
                       })}
                       {editedEnrollments.length === 0 && (
-                        <tr><td colSpan={6} className="text-center py-6 text-slate-400 text-xs">No courses on transcript yet.</td></tr>
+                        <tr><td colSpan={7} className="text-center py-6 text-slate-400 text-xs">No courses on transcript yet.</td></tr>
                       )}
                     </tbody>
                   </table>
