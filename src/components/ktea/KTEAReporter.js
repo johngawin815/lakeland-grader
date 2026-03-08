@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -48,7 +48,7 @@ function KTEAReporter({ user, activeStudent }) {
   const [queue, setQueue] = useState([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
-  const [submitMode, setSubmitMode] = useState('queue');
+  const submitModeRef = useRef('queue');
 
   // SPREADSHEET VIEW STATE
   const [showSpreadsheet, setShowSpreadsheet] = useState(false);
@@ -127,7 +127,7 @@ function KTEAReporter({ user, activeStudent }) {
     const fixedName = formatName(data.studentName);
     const newRecord = { ...data, studentName: fixedName, tempId: Date.now() };
 
-    if (submitMode === 'direct') {
+    if (submitModeRef.current === 'direct') {
         setSaving(true);
         try {
             await databaseService.addKteaReport({ ...newRecord, submittedBy: user.email, schoolYear: "2024-2025" });
@@ -298,6 +298,10 @@ function KTEAReporter({ user, activeStudent }) {
         // Fill header fields
         sheet.getCell('A1').value = unitName;
 
+        // Add Unit header in row 5, column AA
+        const headerRow = sheet.getRow(5);
+        headerRow.getCell(27).value = 'Unit';
+
         // Fill student data starting at row 6
         students.forEach((s, idx) => {
           const row = DATA_START_ROW + idx;
@@ -334,6 +338,7 @@ function KTEAReporter({ user, activeStudent }) {
           r.getCell(24).value = s.admitDate || '';           // X - Admit
           r.getCell(25).value = s.dischargeDate || '';       // Y - Discharge
           r.getCell(26).value = s.teacherName || '';         // Z - Teacher Name
+          r.getCell(27).value = unitName || '';               // AA - Unit Name
 
           r.commit();
         });
@@ -367,7 +372,7 @@ function KTEAReporter({ user, activeStudent }) {
           }
 
           // Copy column widths
-          for (let col = 1; col <= 26; col++) {
+          for (let col = 1; col <= 27; col++) {
             const srcCol = templateSheet.getColumn(col);
             const dstCol = newSheet.getColumn(col);
             if (srcCol.width) dstCol.width = srcCol.width;
@@ -529,16 +534,16 @@ function KTEAReporter({ user, activeStudent }) {
                           <table className="w-full border-collapse text-sm">
                             <thead>
                               <tr>
-                                <th colSpan="24" className={`${colors.bg} text-white text-sm font-bold py-3 px-4 text-left tracking-wide`}>
+                                <th colSpan="25" className={`${colors.bg} text-white text-sm font-bold py-3 px-4 text-left tracking-wide`}>
                                   {unit}
                                   <span className="ml-3 text-white/70 font-medium text-xs">({students.length} student{students.length !== 1 ? 's' : ''})</span>
                                 </th>
                               </tr>
                               <tr>
-                                <td colSpan="24" className="border border-slate-300 bg-white h-2"></td>
+                                <td colSpan="25" className="border border-slate-300 bg-white h-2"></td>
                               </tr>
                               <tr className="bg-slate-800 text-white">
-                                <th colSpan="2" className="border border-slate-600 p-2 text-[10px] font-bold">Student</th>
+                                <th colSpan="3" className="border border-slate-600 p-2 text-[10px] font-bold">Student</th>
                                 <th colSpan="9" className="border border-slate-600 p-2 bg-blue-900/50 text-blue-100 text-[10px] font-bold">PRE-TEST (Entry)</th>
                                 <th colSpan="9" className="border border-slate-600 p-2 bg-emerald-900/50 text-emerald-100 text-[10px] font-bold">POST-TEST (Exit)</th>
                                 <th colSpan="4" className="border border-slate-600 p-2 text-[10px] font-bold">Admin</th>
@@ -546,24 +551,25 @@ function KTEAReporter({ user, activeStudent }) {
                               <tr className="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
                                 <th className="border border-slate-200 p-1.5 w-40 text-left">Name</th>
                                 <th className="border border-slate-200 p-1.5 w-8">Gr</th>
+                                <th className="border border-slate-200 p-1.5 w-20 text-left">Unit</th>
                                 <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">R.Raw</th>
                                 <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">R.Std</th>
-                                <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">R.GE</th>
+                                <th className="border border-slate-200 p-1 bg-blue-200 text-blue-900 font-extrabold">R.GE</th>
                                 <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">M.Raw</th>
                                 <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">M.Std</th>
-                                <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">M.GE</th>
+                                <th className="border border-slate-200 p-1 bg-blue-200 text-blue-900 font-extrabold">M.GE</th>
                                 <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">W.Raw</th>
                                 <th className="border border-slate-200 p-1 bg-blue-50 text-blue-700">W.Std</th>
-                                <th className="border border-slate-200 p-1 bg-blue-100/70 text-blue-800">W.GE</th>
+                                <th className="border border-slate-200 p-1 bg-blue-200 text-blue-900 font-extrabold">W.GE</th>
                                 <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">R.Raw</th>
                                 <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">R.Std</th>
-                                <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">R.GE</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-200 text-emerald-900 font-extrabold">R.GE</th>
                                 <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">M.Raw</th>
                                 <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">M.Std</th>
-                                <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">M.GE</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-200 text-emerald-900 font-extrabold">M.GE</th>
                                 <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">W.Raw</th>
                                 <th className="border border-slate-200 p-1 bg-emerald-50 text-emerald-700">W.Std</th>
-                                <th className="border border-slate-200 p-1 bg-emerald-100/70 text-emerald-800">W.GE</th>
+                                <th className="border border-slate-200 p-1 bg-emerald-200 text-emerald-900 font-extrabold">W.GE</th>
                                 <th className="border border-slate-200 p-1.5 w-20">Admit</th>
                                 <th className="border border-slate-200 p-1.5 w-20">Disch</th>
                                 <th className="border border-slate-200 p-1.5 w-20">Teacher</th>
@@ -575,24 +581,25 @@ function KTEAReporter({ user, activeStudent }) {
                                 <tr key={s.id || idx} className="hover:bg-indigo-50/30 text-center border-b border-slate-100 text-[11px] transition-colors group">
                                   <td className="border-r border-slate-200/50 p-1.5 text-left font-bold text-slate-700 truncate max-w-[160px]">{s.studentName}</td>
                                   <td className="border-r border-slate-200/50 p-1.5 font-medium">{s.gradeLevel}</td>
+                                  <td className="border-r border-slate-200/50 p-1.5 text-left text-slate-500 truncate max-w-[80px]">{s.unitName || unit}</td>
                                   <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preReadingRaw || '-'}</td>
                                   <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preReadingStd || '-'}</td>
-                                  <td className="p-1 bg-blue-100/40 border-r border-blue-200/40 font-bold text-blue-900">{s.preReadingGE || '-'}</td>
+                                  <td className="p-1 bg-blue-200/60 border-r border-blue-300/50 font-extrabold text-blue-900 text-xs">{s.preReadingGE || '-'}</td>
                                   <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preMathRaw || '-'}</td>
                                   <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preMathStd || '-'}</td>
-                                  <td className="p-1 bg-blue-100/40 border-r border-blue-200/40 font-bold text-blue-900">{s.preMathGE || '-'}</td>
+                                  <td className="p-1 bg-blue-200/60 border-r border-blue-300/50 font-extrabold text-blue-900 text-xs">{s.preMathGE || '-'}</td>
                                   <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preWritingRaw || '-'}</td>
                                   <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preWritingStd || '-'}</td>
-                                  <td className="p-1 bg-blue-100/40 border-r border-slate-200/50 font-bold text-blue-900">{s.preWritingGE || '-'}</td>
+                                  <td className="p-1 bg-blue-200/60 border-r border-slate-200/50 font-extrabold text-blue-900 text-xs">{s.preWritingGE || '-'}</td>
                                   <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postReadingRaw || '-'}</td>
                                   <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postReadingStd || '-'}</td>
-                                  <td className="p-1 bg-emerald-100/40 border-r border-emerald-200/40 font-bold text-emerald-900">{s.postReadingGE || '-'}</td>
+                                  <td className="p-1 bg-emerald-200/60 border-r border-emerald-300/50 font-extrabold text-emerald-900 text-xs">{s.postReadingGE || '-'}</td>
                                   <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postMathRaw || '-'}</td>
                                   <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postMathStd || '-'}</td>
-                                  <td className="p-1 bg-emerald-100/40 border-r border-emerald-200/40 font-bold text-emerald-900">{s.postMathGE || '-'}</td>
+                                  <td className="p-1 bg-emerald-200/60 border-r border-emerald-300/50 font-extrabold text-emerald-900 text-xs">{s.postMathGE || '-'}</td>
                                   <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postWritingRaw || '-'}</td>
                                   <td className="p-1 bg-emerald-50/30 border-r border-emerald-100/30">{s.postWritingStd || '-'}</td>
-                                  <td className="p-1 bg-emerald-100/40 border-r border-slate-200/50 font-bold text-emerald-900">{s.postWritingGE || '-'}</td>
+                                  <td className="p-1 bg-emerald-200/60 border-r border-slate-200/50 font-extrabold text-emerald-900 text-xs">{s.postWritingGE || '-'}</td>
                                   <td className="p-1.5 text-slate-500 border-r border-slate-200/50 whitespace-nowrap">{s.admitDate || '-'}</td>
                                   <td className={`p-1.5 border-r border-slate-200/50 whitespace-nowrap ${s.dischargeDate ? 'text-slate-700 font-semibold' : 'text-slate-300'}`}>{s.dischargeDate || '-'}</td>
                                   <td className="p-1.5 text-slate-500 border-r border-slate-200/50 truncate max-w-[80px]">{s.teacherName || '-'}</td>
@@ -657,8 +664,8 @@ function KTEAReporter({ user, activeStudent }) {
                         <button type="submit" className="w-full p-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10"><Zap className="w-4 h-4" /> UPDATE RECORD</button>
                     ) : (
                         <>
-                            <button type="submit" onClick={() => setSubmitMode('queue')} className="flex-1 p-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-600 transition-colors shadow-lg shadow-slate-500/10 flex items-center justify-center gap-2"><ArrowDown className="w-4 h-4" /> ADD TO QUEUE</button>
-                            <button type="submit" onClick={() => setSubmitMode('direct')} className="flex-1 p-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-2"><Send className="w-4 h-4" /> SAVE & SUBMIT</button>
+                            <button type="submit" onClick={() => { submitModeRef.current = 'queue'; }} className="flex-1 p-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-600 transition-colors shadow-lg shadow-slate-500/10 flex items-center justify-center gap-2"><ArrowDown className="w-4 h-4" /> ADD TO QUEUE</button>
+                            <button type="submit" onClick={() => { submitModeRef.current = 'direct'; }} className="flex-1 p-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-2"><Send className="w-4 h-4" /> SAVE & SUBMIT</button>
                         </>
                     )}
                     <button type="button" onClick={() => reset()} className="px-6 py-3 bg-white border border-slate-300/80 rounded-xl text-slate-500 hover:bg-slate-100/80 font-bold transition-colors shadow-sm">Clear</button>
@@ -719,7 +726,7 @@ function ScoreRow({ label, type, register, errors }) {
                 <div className="w-full relative">
                     <input {...register(`${type}Std`, { min: { value: 40, message: "Min 40" }, max: { value: 160, message: "Max 160" } })} placeholder="Std" type="number" className={`w-full p-2.5 rounded-lg text-sm text-center outline-none transition-all ${stdError ? errorRing : defaultRing }`} />
                 </div>
-                <input {...register(`${type}GE`)} placeholder="GE" type="text" className={`w-full p-2.5 rounded-lg border text-sm text-center outline-none transition-all ${defaultRing}`} />
+                <input {...register(`${type}GE`)} placeholder="GE" type="text" className={`w-full p-2.5 rounded-lg border-2 border-amber-400 bg-amber-50 text-sm text-center font-bold outline-none transition-all focus:ring-4 focus:ring-amber-400/30`} />
             </div>
         </div>
     )
