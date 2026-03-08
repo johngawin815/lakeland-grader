@@ -253,7 +253,7 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
           </p>
           <div className="space-y-2">
             {absenceCorrelation.map(s => (
-              <div key={s.id} className="flex items-center justify-between bg-white/60 rounded-xl px-4 py-3 border border-amber-200/50">
+              <div key={s.id} className="flex items-center justify-between bg-slate-50/80 rounded-xl px-4 py-3 border border-amber-200/50">
                 <span className="text-sm font-bold text-slate-800">{s.name}</span>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="font-bold text-amber-700">{s.absences} absences</span>

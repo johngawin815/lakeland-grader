@@ -88,7 +88,7 @@ const AuditLog = () => {
       </div>
 
       {/* CONTROLS */}
-      <div className="bg-white/70 backdrop-blur-xl p-4 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 mb-6 flex flex-col lg:flex-row gap-4 items-center">
+      <div className="bg-slate-50/80 backdrop-blur-xl p-4 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/50 mb-6 flex flex-col lg:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input 
@@ -141,7 +141,7 @@ const AuditLog = () => {
       </div>
 
       {/* TABLE */}
-      <div className="flex-1 bg-white/70 backdrop-blur-xl rounded-2xl shadow-2xl shadow-slate-200/60 border border-slate-200/50 overflow-hidden flex flex-col">
+      <div className="flex-1 bg-slate-50/80 backdrop-blur-xl rounded-2xl shadow-2xl shadow-slate-200/60 border border-slate-200/50 overflow-hidden flex flex-col">
         <div className="overflow-y-auto flex-1">
             <table className="w-full text-left border-collapse">
                 <thead className="bg-slate-100/80 backdrop-blur-sm sticky top-0 z-10">

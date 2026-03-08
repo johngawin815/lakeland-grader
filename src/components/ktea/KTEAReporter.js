@@ -622,7 +622,7 @@ function KTEAReporter({ user, activeStudent }) {
 
       <div className="flex gap-6 flex-1 overflow-hidden">
         {/* MAIN FORM AREA */}
-        <div className="flex-1 bg-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-2xl shadow-slate-200/60 flex flex-col border border-slate-200/50 overflow-y-auto">
+        <div className="flex-1 bg-slate-50/80 backdrop-blur-xl rounded-2xl p-6 shadow-2xl shadow-slate-200/60 flex flex-col border border-slate-200/50 overflow-y-auto">
             <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col">
                 <div className="grid grid-cols-7 gap-4 mb-6 items-end">
                     <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Teacher</label> <input {...register("teacherName")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" /> </div>
@@ -667,7 +667,7 @@ function KTEAReporter({ user, activeStudent }) {
         </div>
 
         {/* QUEUE SIDEBAR */}
-        <div className="w-72 bg-white/70 backdrop-blur-xl rounded-2xl p-5 flex flex-col border border-slate-200/50 shadow-2xl shadow-slate-200/60">
+        <div className="w-72 bg-slate-50/80 backdrop-blur-xl rounded-2xl p-5 flex flex-col border border-slate-200/50 shadow-2xl shadow-slate-200/60">
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200/80 text-sm text-slate-700">
                 <strong className="flex items-center gap-2"><ClipboardList className="w-4 h-4 text-slate-400" /> Batch Queue</strong>
                 <span className="bg-indigo-600 text-white rounded-full px-2 py-0.5 text-[10px] font-bold">{queue.length}</span>

@@ -69,7 +69,7 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200/40 rounded-b-2xl rounded-tr-2xl shadow-xl shadow-slate-200/40 flex-1 flex flex-col overflow-hidden relative z-0">
+      <div className="bg-slate-50/80 backdrop-blur-xl border border-slate-200/40 rounded-b-2xl rounded-tr-2xl shadow-xl shadow-slate-200/40 flex-1 flex flex-col overflow-hidden relative z-0">
         {activeTab === 'roster' && <UnitRoster defaultUnit={user.units?.[0]} user={user} />}
         {activeTab === 'classes' && (
           <div className="flex-1 overflow-y-auto p-6">

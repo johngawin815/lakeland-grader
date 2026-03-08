@@ -203,7 +203,7 @@ const HubShell = () => {
   const visibleModules = modules.filter(m => !m.adminOnly || user.role === 'admin');
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+    <div className="flex h-screen bg-slate-200 font-sans overflow-hidden">
 
       {/* 1. SIDEBAR NAVIGATION */}
       <aside className="w-[140px] bg-slate-900 flex flex-col items-center py-3 shrink-0 border-r border-slate-700/50 z-20">
@@ -370,7 +370,7 @@ const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
 const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay }) => (
   <div
     onClick={onClick}
-    className={`animate-slide-up bg-white/60 backdrop-blur-lg shadow-lg shadow-slate-200/50 border ${color.border} rounded-2xl p-4 group cursor-pointer transition-all duration-300 hover:shadow-2xl ${color.hoverShadow} ${color.hoverBorder} hover:-translate-y-2 relative overflow-hidden`}
+    className={`animate-slide-up bg-slate-50/80 backdrop-blur-lg shadow-lg shadow-slate-200/50 border ${color.border} rounded-2xl p-4 group cursor-pointer transition-all duration-300 hover:shadow-2xl ${color.hoverShadow} ${color.hoverBorder} hover:-translate-y-2 relative overflow-hidden`}
     style={{ animationDelay: `${delay}ms` }}
   >
     <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${color.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />

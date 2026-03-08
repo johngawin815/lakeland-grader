@@ -357,7 +357,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         </div>
 
         {/* MAIN CONTENT CARD */}
-        <div className="max-w-7xl mx-auto bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-[70vh]">
+        <div className="max-w-7xl mx-auto bg-slate-50/80 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-[70vh]">
 
           {/* GRADEBOOK TABLE */}
           {activeTab === 'grades' && (

@@ -872,7 +872,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           </div>
         ) : (
           [...mtpNotes].reverse().map((note) => (
-            <div key={note.id} className="bg-white/60 rounded-lg p-2.5 border border-amber-200/40 group/note">
+            <div key={note.id} className="bg-slate-50/80 rounded-lg p-2.5 border border-amber-200/40 group/note">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-bold text-amber-800">
