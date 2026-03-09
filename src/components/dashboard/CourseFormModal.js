@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAutoSave } from '../../hooks/useAutoSave';
 import { X, BookOpen, Save, Loader2 } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
@@ -10,6 +11,8 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
+      // Track original data for dirtiness
+      const [originalData, setOriginalData] = useState(null);
     courseName: '',
     subjectArea: '',
     credits: 5,
@@ -18,26 +21,63 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
 
   useEffect(() => {
     if (course) {
-      setFormData({
+      const data = {
         courseName: course.courseName || '',
         subjectArea: course.subjectArea || '',
         credits: course.credits || 5,
         term: course.term || getCurrentSchoolYear(),
-      });
+      };
+      setFormData(data);
+      setOriginalData(data);
     } else {
-      setFormData({
+      const data = {
         courseName: '',
         subjectArea: '',
         credits: 5,
         term: getCurrentSchoolYear(),
-      });
+      };
+      setFormData(data);
+      setOriginalData(data);
     }
     setError('');
   }, [course, isOpen]);
+  // Auto-save integration
+  const isDirty = originalData && (
+    formData.courseName !== originalData.courseName ||
+    formData.subjectArea !== originalData.subjectArea ||
+    formData.credits !== originalData.credits ||
+    formData.term !== originalData.term
+  );
+
+  const autoSaveFn = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      await databaseService.upsertCourse(formData);
+      if (user) {
+        await databaseService.logAudit(user, 'UpdateCourse', `Updated course ${formData.courseName}`);
+      }
+      setOriginalData({ ...formData });
+    } catch (err) {
+      setError(err.message || 'Failed to auto-save.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
 
   if (!isOpen) return null;
 
   const handleChange = (e) => {
+      // Auto-save status feedback
+      const autoSaveStatus = (
+        <>
+          {saveStatus === 'saving' && <div className="p-2 bg-indigo-50 border border-indigo-200 rounded text-indigo-700 text-xs font-semibold flex items-center gap-1.5">Auto-saving...</div>}
+          {saveStatus === 'saved' && lastSavedAt && <div className="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-700 text-xs font-semibold flex items-center gap-1.5">Auto-saved {lastSavedAt.toLocaleTimeString()}</div>}
+          {saveStatus === 'error' && <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs font-semibold">Auto-save failed</div>}
+        </>
+      );
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: name === 'credits' ? parseFloat(value) || 0 : value }));
   };

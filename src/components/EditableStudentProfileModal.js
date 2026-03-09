@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAutoSave } from '../hooks/useAutoSave';
 import { useForm } from 'react-hook-form';
 import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
@@ -23,7 +24,19 @@ const COMPACT_INPUT_CLASS = 'w-full px-2 py-1.5 rounded-md border border-slate-2
 const COMPACT_LABEL_CLASS = 'flex items-center gap-1 text-[10px] font-semibold text-slate-500 mb-0.5 uppercase tracking-wide';
 
 const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode = 'modal' }) => {
-  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm({
+  const { register, handleSubmit, formState: { errors, dirtyFields }, watch, reset } = useForm({
+      // Auto-save integration
+      // Determine if form is dirty
+      const isDirty = Object.keys(dirtyFields).length > 0 || mtpNotes !== (studentData?.mtpNotes || []) || uploadedDocuments !== (studentData?.uploadedDocuments || []);
+
+      // Save function for auto-save
+      const autoSaveFn = async () => {
+        const formData = watch();
+        await onSubmit(formData);
+      };
+
+      // Use auto-save hook
+      const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
     defaultValues: {
       gradeLevel: String(studentData?.gradeLevel || ''),
       unitName: studentData?.unitName || '',
@@ -1067,6 +1080,8 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     <>
       {saveError && <div className="p-2.5 bg-red-50 border border-red-200/80 rounded-lg text-red-700 text-xs font-semibold">{saveError}</div>}
       {saveSuccess && <div className="p-2.5 bg-emerald-50 border border-emerald-200/80 rounded-lg text-emerald-700 text-xs font-semibold flex items-center gap-1.5"><Save className="w-3.5 h-3.5" />Saved!</div>}
+      {saveStatus === 'saving' && <div className="p-2.5 bg-indigo-50 border border-indigo-200/80 rounded-lg text-indigo-700 text-xs font-semibold flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" />Auto-saving...</div>}
+      {saveStatus === 'saved' && lastSavedAt && <div className="p-2.5 bg-emerald-50 border border-emerald-200/80 rounded-lg text-emerald-700 text-xs font-semibold flex items-center gap-1.5"><Save className="w-3.5 h-3.5" />Auto-saved {lastSavedAt.toLocaleTimeString()}</div>}
     </>
   );
 

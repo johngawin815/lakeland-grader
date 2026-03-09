@@ -1,8 +1,25 @@
 import React, { useState } from 'react';
+import { useAutoSave } from '../../../hooks/useAutoSave';
 import { X, ArrowDown } from 'lucide-react';
 
 const BulkFillModal = ({ isOpen, onClose, assignmentName, studentCount, onApply }) => {
   const [value, setValue] = useState('');
+  // Auto-save integration
+  const isDirty = value !== '';
+  const autoSaveFn = async () => {
+    // Optionally call onApply for auto-save
+    if (onApply) onApply(value);
+  };
+  const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
+
+  // Auto-save status feedback
+  const autoSaveStatus = (
+    <>
+      {saveStatus === 'saving' && <div className="p-2 bg-indigo-50 border border-indigo-200 rounded text-indigo-700 text-xs font-semibold flex items-center gap-1.5">Auto-saving...</div>}
+      {saveStatus === 'saved' && lastSavedAt && <div className="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-700 text-xs font-semibold flex items-center gap-1.5">Auto-saved {lastSavedAt.toLocaleTimeString()}</div>}
+      {saveStatus === 'error' && <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs font-semibold">Auto-save failed</div>}
+    </>
+  );
 
   if (!isOpen) return null;
 
