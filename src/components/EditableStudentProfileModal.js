@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAutoSave } from '../hooks/useAutoSave';
 import { useForm } from 'react-hook-form';
-import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users } from 'lucide-react';
+import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users, Check } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
 import { STATE_OPTIONS } from '../data/stateGraduationRequirements';
 import { UNIT_CONFIG } from '../config/unitConfig';
@@ -229,6 +229,25 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
 
   // Use auto-save hook
   const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
+
+  // Auto-save indicator
+  const AutoSaveStatus = () => {
+    if (saveStatus === 'saving') {
+      return (
+        <span className="text-xs font-medium text-indigo-600 flex items-center gap-1.5 animate-pulse">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
+        </span>
+      );
+    }
+    if (saveStatus === 'saved') {
+      return (
+        <span className="text-xs font-medium text-emerald-600 flex items-center gap-1.5 animate-in fade-in duration-300">
+          <Check className="w-3.5 h-3.5" /> Saved
+        </span>
+      );
+    }
+    return null;
+  };
 
   if (!studentData) return null;
 
@@ -1083,20 +1102,21 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     <>
       {saveError && <div className="p-2.5 bg-red-50 border border-red-200/80 rounded-lg text-red-700 text-xs font-semibold">{saveError}</div>}
       {saveSuccess && <div className="p-2.5 bg-emerald-50 border border-emerald-200/80 rounded-lg text-emerald-700 text-xs font-semibold flex items-center gap-1.5"><Save className="w-3.5 h-3.5" />Saved!</div>}
-      {saveStatus === 'saving' && <div className="p-2.5 bg-indigo-50 border border-indigo-200/80 rounded-lg text-indigo-700 text-xs font-semibold flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" />Auto-saving...</div>}
-      {saveStatus === 'saved' && lastSavedAt && <div className="p-2.5 bg-emerald-50 border border-emerald-200/80 rounded-lg text-emerald-700 text-xs font-semibold flex items-center gap-1.5"><Save className="w-3.5 h-3.5" />Auto-saved {lastSavedAt.toLocaleTimeString()}</div>}
     </>
   );
 
   // --- Sticky Footer ---
   const footer = (
-    <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 shrink-0 flex gap-2.5">
+    <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 shrink-0 flex items-center gap-3">
+      <div className="flex-1 flex items-center">
+        <AutoSaveStatus />
+      </div>
       <button type="button" onClick={onClose} disabled={isSaving}
-        className="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 px-4 rounded-xl hover:bg-slate-200/80 transition-all disabled:opacity-50 text-sm">
+        className="bg-slate-100 text-slate-600 font-bold py-2.5 px-4 rounded-xl hover:bg-slate-200/80 transition-all disabled:opacity-50 text-sm">
         {mode === 'panel' || mode === 'detail' ? 'Close' : 'Cancel'}
       </button>
       <button type="submit" disabled={isSaving}
-        className="flex-[1.5] bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
+        className="bg-indigo-600 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
         {isSaving ? (<><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>) : (<><Save className="w-4 h-4" /> Save Changes</>)}
       </button>
     </div>
@@ -1153,13 +1173,16 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
 
         {/* Compact Footer */}
-        <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 shrink-0 flex gap-2">
+        <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 shrink-0 flex items-center gap-2">
+          <div className="flex-1 flex items-center">
+            <AutoSaveStatus />
+          </div>
           <button type="button" onClick={onClose} disabled={isSaving}
             className="px-4 bg-slate-100 text-slate-600 font-bold py-1.5 rounded-lg hover:bg-slate-200/80 transition-all disabled:opacity-50 text-xs">
             Close
           </button>
           <button type="submit" disabled={isSaving}
-            className="flex-1 max-w-[200px] bg-indigo-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 text-xs">
+            className="bg-indigo-600 text-white font-bold py-1.5 px-4 rounded-lg shadow-md shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 text-xs">
             {isSaving ? (<><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>) : (<><Save className="w-3.5 h-3.5" /> Save</>)}
           </button>
         </div>
@@ -1202,13 +1225,16 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           {documentsContent}
 
           {/* Action Buttons */}
-          <div className="flex gap-2.5 pt-1">
+          <div className="flex items-center gap-2.5 pt-1">
+            <div className="flex-1 flex items-center">
+              <AutoSaveStatus />
+            </div>
             <button type="button" onClick={onClose} disabled={isSaving}
-              className="flex-1 bg-slate-100 text-slate-600 font-bold py-2.5 px-4 rounded-xl hover:bg-slate-200/80 transition-all disabled:opacity-50 text-sm">
+              className="bg-slate-100 text-slate-600 font-bold py-2.5 px-4 rounded-xl hover:bg-slate-200/80 transition-all disabled:opacity-50 text-sm">
               Cancel
             </button>
             <button type="submit" disabled={isSaving}
-              className="flex-[1.5] bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
+              className="bg-indigo-600 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
               {isSaving ? (<><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>) : (<><Save className="w-4 h-4" /> Save Changes</>)}
             </button>
           </div>
