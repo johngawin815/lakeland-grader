@@ -141,6 +141,7 @@ const DonutChart = ({ earned, total }) => {
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const TranscriptGenerator = ({ user }) => {
+
   // --- State ---
   const [allStudents, setAllStudents] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
@@ -160,6 +161,30 @@ const TranscriptGenerator = ({ user }) => {
   const [exporting, setExporting] = useState(false);
   const [enrolling, setEnrolling] = useState(null);
   const [saveMsg, setSaveMsg] = useState('');
+
+  // Auto-save integration
+  const saveFn = useCallback(async () => {
+    if (!selectedStudent) return;
+    for (const enrollment of editedEnrollments) {
+      await databaseService.enrollStudent(enrollment);
+    }
+    for (const id of removedEnrollmentIds) {
+      try { await databaseService.unenrollStudent(id); } catch (err) { console.warn('Delete enrollment failed:', id, err); }
+    }
+    if (user) await databaseService.logAudit(user, 'AutoSaveTranscript', `Auto-saved transcript edits for ${selectedStudent.studentName}`);
+    setStudentEnrollments(editedEnrollments.map(e => ({ ...e })));
+    setRemovedEnrollmentIds([]);
+    setTranscriptDirty(false);
+    setSaveMsg('Transcript auto-saved');
+    setTimeout(() => setSaveMsg(''), 2000);
+  }, [editedEnrollments, removedEnrollmentIds, selectedStudent, user]);
+
+  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
+
+  // Mark dirty on transcript edit
+  useEffect(() => {
+    if (selectedStudent) setTranscriptDirty(true);
+  }, [editedEnrollments, removedEnrollmentIds]);
 
   // --- Load students and courses on mount ---
   useEffect(() => {

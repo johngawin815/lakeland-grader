@@ -253,6 +253,7 @@ function combineUnitHtml(workbooks) {
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const WorkbookGenerator = ({ user }) => {
+
   // View: 'setup' | 'library' | 'form' | 'generating' | 'preview'
   const [view, setView] = useState(hasApiKey() ? 'library' : 'setup');
 
@@ -280,6 +281,29 @@ const WorkbookGenerator = ({ user }) => {
     vocabulary: 'auto', synthesis: 'auto', scenario: 'auto', creative: 'auto',
     spelling: 'auto', grammar: 'auto',
   });
+
+  // Auto-save integration
+  const [isDirty, setIsDirty] = useState(false);
+  const saveFn = useCallback(async () => {
+    // Example: Save workbook draft (adjust as needed for your save logic)
+    await databaseService.saveWorkbookDraft({
+      unitTopic,
+      dayNumber,
+      dayFocus,
+      readingLevel,
+      activityChoices,
+      lastModified: new Date().toISOString(),
+      modifiedBy: user?.name || 'Unknown',
+    });
+    setIsDirty(false);
+  }, [unitTopic, dayNumber, dayFocus, readingLevel, activityChoices, user]);
+
+  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!unitTopic });
+
+  // Mark dirty on relevant changes
+  useEffect(() => {
+    if (unitTopic) setIsDirty(true);
+  }, [unitTopic, dayNumber, dayFocus, readingLevel, activityChoices]);
   const [showActivities, setShowActivities] = useState(false);
   const setActivity = (section, id) => setActivityChoices(prev => ({ ...prev, [section]: id }));
 

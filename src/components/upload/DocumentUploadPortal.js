@@ -11,6 +11,25 @@ const DocumentUploadPortal = ({ onBack }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [dragOver, setDragOver] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Auto-save integration
+  const saveFn = useCallback(async () => {
+    if (!studentData) return;
+    await databaseService.upsertStudent({
+      ...studentData,
+      uploadedDocuments: studentData.uploadedDocuments || [],
+      lastModified: new Date().toISOString(),
+    });
+    setIsDirty(false);
+  }, [studentData]);
+
+  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!studentData });
+
+  // Mark dirty on uploaded documents change
+  useEffect(() => {
+    if (studentData) setIsDirty(true);
+  }, [studentData]);
 
   const verifyPasscode = async () => {
     setError('');
@@ -62,18 +81,9 @@ const DocumentUploadPortal = ({ onBack }) => {
 
     if (newDocs.length > 0) {
       const updatedDocs = [...(studentData.uploadedDocuments || []), ...newDocs];
-      try {
-        await databaseService.upsertStudent({
-          ...studentData,
-          uploadedDocuments: updatedDocs,
-          lastModified: new Date().toISOString(),
-        });
-        setStudentData(prev => ({ ...prev, uploadedDocuments: updatedDocs }));
-        setUploadedFiles(prev => [...prev, ...newDocs.map(d => d.fileName)]);
-      } catch (err) {
-        alert('Upload failed. Please try again.');
-        console.error('Upload failed:', err);
-      }
+      setStudentData(prev => ({ ...prev, uploadedDocuments: updatedDocs }));
+      setUploadedFiles(prev => [...prev, ...newDocs.map(d => d.fileName)]);
+      setIsDirty(true);
     }
     setUploading(false);
   }, [studentData]);

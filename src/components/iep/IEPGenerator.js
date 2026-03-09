@@ -270,6 +270,7 @@ const GoalBankItem = ({ goal, expanded, onExpand, onAdd, disabled, isAdded, stud
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const IEPGenerator = ({ user }) => {
+
   // --- State ---
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -284,6 +285,7 @@ const IEPGenerator = ({ user }) => {
 
   // IEP Draft
   const [draft, setDraft] = useState(createEmptyDraft());
+  const [isDirty, setIsDirty] = useState(false);
 
   // Goal bank modal
   const [showGoalBank, setShowGoalBank] = useState(false);
@@ -308,6 +310,20 @@ const IEPGenerator = ({ user }) => {
   const toggleSection = (key) => {
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
+
+  // Auto-save integration
+  const saveFn = useCallback(async () => {
+    if (!selectedStudent) return;
+    await databaseService.saveIepDraft({ ...draft, lastModified: new Date().toISOString(), modifiedBy: user?.name || 'Unknown' });
+    setIsDirty(false);
+  }, [draft, selectedStudent, user]);
+
+  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
+
+  // Mark dirty on draft change
+  useEffect(() => {
+    if (selectedStudent) setIsDirty(true);
+  }, [draft]);
 
   // Load students on mount
   useEffect(() => {
@@ -409,6 +425,7 @@ const IEPGenerator = ({ user }) => {
       targetDate: '',
     };
     setDraft(prev => ({ ...prev, goals: [...prev.goals, newGoal] }));
+    setIsDirty(true);
   }, [draft.goals, draft.studentName]);
 
   const handleRemoveGoal = useCallback((goalId) => {

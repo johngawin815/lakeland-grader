@@ -4,9 +4,35 @@ import { UNIT_CONFIG } from '../../config/unitConfig';
 import { databaseService } from '../../services/databaseService';
 
 const TeacherSettings = ({ user, onUpdateUser }) => {
+
   const [selectedUnits, setSelectedUnits] = useState(user?.units || []);
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Auto-save integration
+  const saveFn = useCallback(async () => {
+    if (selectedUnits.length === 0) return;
+    const teacherId = `teacher_${user.email.split('@')[0].replace(/\./g, '-')}`;
+    const teacherDoc = {
+      id: teacherId,
+      name: user.name,
+      email: user.email,
+      units: selectedUnits,
+      role: user.role || 'teacher',
+    };
+    await databaseService.upsertTeacher(teacherDoc);
+    onUpdateUser(prev => ({ ...prev, units: selectedUnits }));
+    setSavedMessage('Settings auto-saved.');
+    setIsDirty(false);
+  }, [selectedUnits, user, onUpdateUser]);
+
+  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: selectedUnits.length > 0 });
+
+  // Mark dirty on unit change
+  useEffect(() => {
+    setIsDirty(true);
+  }, [selectedUnits]);
 
   const assignableUnits = UNIT_CONFIG.filter(u => u.key !== 'Discharged');
 
@@ -17,6 +43,7 @@ const TeacherSettings = ({ user, onUpdateUser }) => {
         : [...prev, unitKey]
     );
     setSavedMessage('');
+    setIsDirty(true);
   };
 
   const handleSave = async () => {
