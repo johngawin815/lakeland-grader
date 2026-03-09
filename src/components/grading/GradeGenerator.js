@@ -1,3 +1,4 @@
+import HonorRollCard from './HonorRollCard';
 import React, { useState, useEffect } from 'react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';

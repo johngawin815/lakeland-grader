@@ -7,6 +7,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import stateGraduationRequirements, { SUBJECT_AREAS } from '../../data/stateGraduationRequirements';
+import { useAutoSave } from '../../hooks/useAutoSave';
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 

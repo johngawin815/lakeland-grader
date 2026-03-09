@@ -39,12 +39,6 @@ const GradeSpreadsheetModal = ({ isOpen, onClose, onAutoSave }) => {
       try {
         const allStudents = await databaseService.getAllStudents();
         setStudents(allStudents.filter(s => s.active !== false));
-        // Auto-save integration
-        const isDirty = students.length > 0; // Example: treat as dirty if students loaded
-        const autoSaveFn = async () => {
-          if (onAutoSave) await onAutoSave(students);
-        };
-        const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
 
         // Auto-save status feedback
         const autoSaveStatus = (
