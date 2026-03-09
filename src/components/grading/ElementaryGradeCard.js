@@ -123,6 +123,10 @@ const ElementaryGradeCard = ({ user }) => {
     setDirty(true);
   };
 
+    // Manual save handler for button
+    const saveToDatabase = async () => {
+      await saveFn();
+    };
   const copyQuarter = (from, to) => {
     setFormData(prev => {
       const updates = { ...prev };

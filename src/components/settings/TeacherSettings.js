@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useAutoSave } from '../../hooks/useAutoSave';
 import { Save, Loader2, Settings, CheckSquare, Square } from 'lucide-react';
 import { UNIT_CONFIG } from '../../config/unitConfig';
 import { databaseService } from '../../services/databaseService';

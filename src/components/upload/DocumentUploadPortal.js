@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useAutoSave } from '../../hooks/useAutoSave';
 import { Upload, FileText, CheckCircle, Lock, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 

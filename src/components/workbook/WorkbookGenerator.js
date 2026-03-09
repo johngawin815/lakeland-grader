@@ -5,6 +5,7 @@ import {
   BookOpen, AlertTriangle, X, Settings, Wrench, FileDown, CloudUpload,
   ChevronDown, ChevronRight
 } from 'lucide-react';
+import { useAutoSave } from '../../hooks/useAutoSave';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import {

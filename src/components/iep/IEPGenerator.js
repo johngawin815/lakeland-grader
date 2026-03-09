@@ -318,6 +318,7 @@ const IEPGenerator = ({ user }) => {
     setIsDirty(false);
   }, [draft, selectedStudent, user]);
 
+import { useAutoSave } from '../../hooks/useAutoSave';
   const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
 
   // Mark dirty on draft change
