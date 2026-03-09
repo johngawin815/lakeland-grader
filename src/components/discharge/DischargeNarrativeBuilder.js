@@ -201,10 +201,28 @@ const DischargeNarrativeBuilder = ({ user }) => {
     setSelectedStudent(student);
     setLoading(true);
     try {
-      const [kteaResults, studentEnrollments] = await Promise.all([
+      // Search by the student name as-is first
+      let kteaResults = [];
+      let studentEnrollments = [];
+      [kteaResults, studentEnrollments] = await Promise.all([
         databaseService.searchKteaReports(student.studentName),
         databaseService.getStudentEnrollments(student.id),
       ]);
+
+      // If no results, try "Last, First" format (KTEAReporter stores names that way)
+      if ((!kteaResults || kteaResults.length === 0) && student.studentName) {
+        const parts = student.studentName.trim().split(' ');
+        if (parts.length >= 2) {
+          const last = parts[parts.length - 1];
+          const first = parts.slice(0, -1).join(' ');
+          const reversed = `${last}, ${first}`;
+          kteaResults = await databaseService.searchKteaReports(reversed);
+        }
+        // Also try searching by first name only as a fallback
+        if ((!kteaResults || kteaResults.length === 0) && student.firstName) {
+          kteaResults = await databaseService.searchKteaReports(student.firstName);
+        }
+      }
 
       const ktea = kteaResults?.[0] || null;
       setKteaData(ktea);
