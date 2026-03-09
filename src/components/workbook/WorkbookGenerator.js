@@ -170,10 +170,10 @@ const ACTIVITY_OPTIONS = {
 };
 
 const ACTIVITY_SECTION_LABELS = {
-  vocabulary: { title: 'Vocabulary Activity', pages: 'Pages 1\u20132' },
-  synthesis: { title: 'Synthesis Framework', pages: 'Page 9' },
-  scenario: { title: 'Scenario Type', pages: 'Page 10' },
-  creative: { title: 'Creative Canvas', pages: 'Page 11' },
+  vocabulary: { title: 'Vocabulary Activity', pages: 'Page 1' },
+  synthesis: { title: 'Synthesis Framework', pages: 'Page 8' },
+  scenario: { title: 'Scenario Type', pages: 'Page 9' },
+  creative: { title: 'Creative Canvas', pages: 'Page 10' },
   spelling: { title: 'Spelling Activity', pages: 'Embedded' },
   grammar: { title: 'Grammar Activity', pages: 'Embedded' },
 };
@@ -231,10 +231,10 @@ function buildPreviousDaysContext(savedWorkbooks) {
   return savedWorkbooks.map(w => {
     const fw = w.frameworksUsed || {};
     const parts = [];
-    if (fw.vocab) parts.push(`Pages 1-2 used '${fw.vocab}'`);
-    if (fw.analysis) parts.push(`Page 9 used '${fw.analysis}'`);
-    if (fw.scenario) parts.push(`Page 10 used '${fw.scenario}'`);
-    if (fw.creative) parts.push(`Page 11 used '${fw.creative}'`);
+    if (fw.vocab) parts.push(`Page 1 used '${fw.vocab}'`);
+    if (fw.analysis) parts.push(`Page 8 used '${fw.analysis}'`);
+    if (fw.scenario) parts.push(`Page 9 used '${fw.scenario}'`);
+    if (fw.creative) parts.push(`Page 10 used '${fw.creative}'`);
     if (fw.spelling) parts.push(`Spelling used '${fw.spelling}'`);
     if (fw.grammar) parts.push(`Grammar used '${fw.grammar}'`);
     return `- Day ${w.dayNumber}: ${parts.length ? parts.join(', ') : 'frameworks unknown'}`;
@@ -763,7 +763,7 @@ const WorkbookGenerator = ({ user }) => {
                 <BookOpen className="w-8 h-8 text-lime-400" />
               </div>
               <h3 className="text-base font-bold text-slate-700 mb-1">No workbooks yet</h3>
-              <p className="text-sm text-slate-500 mb-4">Generate your first 11-page curriculum workbook.</p>
+              <p className="text-sm text-slate-500 mb-4">Generate your first 10-page curriculum workbook.</p>
               <button onClick={() => setView('form')}
                 className="px-5 py-2.5 rounded-lg bg-lime-600 text-white text-sm font-bold hover:bg-lime-700 transition flex items-center gap-2">
                 <Sparkles className="w-4 h-4" /> Create Workbook
@@ -1006,7 +1006,7 @@ const WorkbookGenerator = ({ user }) => {
 
   if (view === 'generating') {
     const chars = streamText.length;
-    const estPages = Math.min(11, Math.max(1, Math.round(chars / 3500)));
+    const estPages = Math.min(10, Math.max(1, Math.round(chars / 3500)));
     return (
       <div className="h-full flex flex-col bg-slate-50/30">
         <div className="shrink-0 px-6 py-4 bg-white border-b border-slate-200/60 flex items-center gap-3">
@@ -1016,7 +1016,7 @@ const WorkbookGenerator = ({ user }) => {
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-extrabold text-slate-900 leading-tight">Generating Workbook...</h1>
             <p className="text-xs text-slate-500">
-              {unitTopic} — Day {dayNumber} · ~{estPages} of 11 pages · {chars.toLocaleString()} chars
+              {unitTopic} — Day {dayNumber} · ~{estPages} of 10 pages · {chars.toLocaleString()} chars
             </p>
           </div>
           <button onClick={handleCancel}
@@ -1043,7 +1043,7 @@ const WorkbookGenerator = ({ user }) => {
             <div className="max-w-2xl mx-auto mb-4">
               <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-lime-400 to-lime-500 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (estPages / 11) * 100)}%` }} />
+                  style={{ width: `${Math.min(100, (estPages / 10) * 100)}%` }} />
               </div>
             </div>
             {/* Stream preview */}

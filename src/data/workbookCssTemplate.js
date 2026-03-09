@@ -1,7 +1,7 @@
 // MIT Print Engine V69 Platinum — extracted from the reference workbooks
 // (historyofmusic.html + the_labor_movement.html).
 // This CSS is injected into the Gemini system prompt so the AI produces
-// pixel-perfect, print-ready 11-page workbooks.
+// pixel-perfect, print-ready 10-page workbooks.
 
 export const PRINT_ENGINE_CSS = `/* =========================================
    THE MIT PRINT ENGINE (V69 PLATINUM)
@@ -101,15 +101,15 @@ EVERY PAGE starts with:
 <div class="print-page">
   <div class="header-row"><span>STUDENT: ______________________________</span><span>[PAGE LABEL]</span></div>
   ... page content ...
-  <div class="page-footer"><span>Unit: [UNIT NAME]</span><span>Day [N]</span><span>Page [X] of 11</span></div>
+  <div class="page-footer"><span>Unit: [UNIT NAME]</span><span>Day [N]</span><span>Page [X] of 10</span></div>
 </div>
 
-PAGE 1 (4 vocab terms, 76px textareas — BREVITY IS CRITICAL, definitions max 20 words, examples max 15 words, task prompts max 25 words):
+PAGE 1 (5 vocab terms, 58px textareas — BREVITY IS CRITICAL, definitions max 18 words, examples max 14 words, task prompts max 22 words):
 <h1>DAY [N]: [TITLE]</h1>
 <div style="border: 1px solid #000; padding: 8px; background: #eee; margin-bottom: 10px;">
   <strong>MISSION OBJECTIVE:</strong> [objective text]
 </div>
-<h2>I. THE VOCABULARY LAB (PART A)</h2>
+<h2>I. THE VOCABULARY LAB</h2>
 <p style="font-size: 10pt; margin-bottom: 6px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">
   <strong>INSTRUCTIONS:</strong> [instructions]
 </p>
@@ -122,32 +122,12 @@ PAGE 1 (4 vocab terms, 76px textareas — BREVITY IS CRITICAL, definitions max 2
       <div><strong>Example:</strong> [sentence with <strong>word</strong> bolded]</div>
     </div>
     <div class="vocab-task">[TASK/CONNECTION/IMAGINE IF]: [custom, varied prompt]</div>
-    <textarea class="ruled-input" style="height: 76px;">[MICRO-STEM or empty]</textarea>
+    <textarea class="ruled-input" style="height: 58px;">[MICRO-STEM or empty]</textarea>
   </div>
-  ... (4 total vocab-items) ...
+  ... (5 total vocab-items) ...
 </div>
 
-PAGE 2 (6 vocab terms, 38px textareas — THIS PAGE IS EXTREMELY TIGHT, definitions max 15 words, examples max 12 words, task prompts max 20 words):
-CRITICAL: Page 2 must NOT include an <h1> title or a mission objective box. Go straight from header-row to <h2>.
-<h2>II. VOCABULARY EXTENSION (PART B)</h2>
-<p style="font-size: 10pt; margin-bottom: 4px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">
-  <strong>INSTRUCTIONS:</strong> [instructions — keep SHORT, one sentence]
-</p>
-<div class="vocab-grid">
-  <div class="vocab-item">
-    <div class="vocab-top"><span class="term">[N]. [WORD]</span><span class="pos">([Part of Speech])</span></div>
-    <div class="vocab-details">
-      <div><strong>Definition:</strong> ...</div>
-      <div><strong>Forms:</strong> ...</div>
-      <div><strong>Example:</strong> [sentence with <strong>word</strong> bolded]</div>
-    </div>
-    <div class="vocab-task">[SHORT task prompt]</div>
-    <textarea class="ruled-input" style="height: 38px;">[MICRO-STEM]</textarea>
-  </div>
-  ... (6 total vocab-items, numbering continues from Page 1: 5-10) ...
-</div>
-
-PAGES 3-8 (Narrative chapters):
+PAGES 2-7 (Narrative chapters):
 <h3>CHAPTER [ROMAN NUMERAL]</h3><h1>[CHAPTER TITLE]</h1>
 <div class="narrative-container">
   <p>[150-200 words with exactly 3 <strong>Bolded Key Terms</strong> per chapter, punctuation OUTSIDE bold tags]</p>
@@ -174,7 +154,7 @@ PAGES 3-8 (Narrative chapters):
   <textarea class="ruled-input">[2-4 word MICRO-STEM]...</textarea>
 </div>
 
-PAGE 9 (Synthesis — 18-item job deck + 3 pillar columns):
+PAGE 8 (Synthesis — 18-item job deck + 3 pillar columns):
 <h2>[SECTION TITLE]</h2>
 <p><strong>INSTRUCTIONS:</strong> [categorization task]</p>
 <div class="job-deck-container">
@@ -188,7 +168,7 @@ PAGE 9 (Synthesis — 18-item job deck + 3 pillar columns):
 <p>[synthesis prompt requiring 2 specific words from the bank]</p>
 <textarea class="ruled-input" style="flex-grow: 1; border: 2px solid black; padding: 10px; margin-bottom: 5px; font-weight: 900; font-size: 13pt; color: #000;">[MICRO-STEM]...</textarea>
 
-PAGE 10 (Scenario — 3 law-blocks):
+PAGE 9 (Scenario — 3 law-blocks):
 <h2>[SECTION TITLE]</h2>
 <p><strong>SCENARIO:</strong> [scenario description]</p>
 <div class="law-block">
@@ -202,7 +182,7 @@ PAGE 10 (Scenario — 3 law-blocks):
 </div>
 ... (3 total law-blocks) ...
 
-PAGE 11 (Creative + Reflection):
+PAGE 10 (Creative + Reflection):
 <h2>[SECTION TITLE]</h2>
 <p><strong>TASK:</strong> [creative drawing/visual task with 2 required thematic symbols]</p>
 <div class="shield-canvas"></div>

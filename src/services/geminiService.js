@@ -132,7 +132,7 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
     if (!headerRow) {
       const hr = doc.createElement('div');
       hr.className = 'header-row';
-      hr.innerHTML = '<span>STUDENT: ______________________________</span><span>Page ' + (i + 1) + ' of 11</span>';
+      hr.innerHTML = '<span>STUDENT: ______________________________</span><span>Page ' + (i + 1) + ' of 10</span>';
       page.insertBefore(hr, page.firstChild);
       fixes.push('Page ' + (i + 1) + ': Added missing header-row');
     }
@@ -141,30 +141,13 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
     if (!footer) {
       const ft = doc.createElement('div');
       ft.className = 'page-footer';
-      ft.innerHTML = '<span></span><span></span><span>Page ' + (i + 1) + ' of 11</span>';
+      ft.innerHTML = '<span></span><span></span><span>Page ' + (i + 1) + ' of 10</span>';
       page.appendChild(ft);
       fixes.push('Page ' + (i + 1) + ': Added missing page-footer');
     }
   });
 
-  // ── 6. PAGE 2 — remove <h1> and mission objective box if present ──────────
-  const page2 = pages[1];
-  if (page2) {
-    const h1 = page2.querySelector('h1');
-    if (h1) {
-      h1.remove();
-      fixes.push('Page 2: Removed duplicate h1 title');
-    }
-    // Remove mission objective box (any div containing MISSION OBJECTIVE)
-    page2.querySelectorAll('div').forEach(div => {
-      if (div.classList.contains('header-row') || div.classList.contains('page-footer') ||
-          div.classList.contains('vocab-grid') || div.classList.contains('vocab-item')) return;
-      if (div.textContent.includes('MISSION OBJECTIVE')) {
-        div.remove();
-        fixes.push('Page 2: Removed duplicate mission objective box');
-      }
-    });
-  }
+  // ── 6. (Reserved — Page 2 vocab extension was removed; single vocab page now) ──
 
   // ── 7. SHIELD-CANVAS — clear any child content ────────────────────────────
   doc.querySelectorAll('.shield-canvas').forEach(canvas => {
@@ -192,11 +175,9 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
   pages.forEach((page, i) => {
     const textareas = page.querySelectorAll('textarea.ruled-input');
     if (i === 0) {
-      textareas.forEach(ta => { ta.style.height = '76px'; });
-    } else if (i === 1) {
-      textareas.forEach(ta => { ta.style.height = '38px'; });
+      textareas.forEach(ta => { ta.style.height = '58px'; });
     }
-    if (i === 10) {
+    if (i === 9) {
       textareas.forEach(ta => {
         if (!ta.style.height || parseInt(ta.style.height) > 128) {
           ta.style.height = '128px';
