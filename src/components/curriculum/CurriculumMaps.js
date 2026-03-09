@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import VocabActivitySelector from './VocabActivitySelector';
 import { Globe, BookOpen, Calculator, FlaskConical, Shapes, Layers, FileText, Video, Printer } from 'lucide-react';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
 
@@ -620,7 +621,10 @@ function EnglishContent() {
                         <td className={tdClass}><Topic name="Analogies" code="L.2.A" desc="Demonstrate understanding of word relationships and nuances in word meanings." /></td>
                         <td className={tdClass}><Topic name="Figures of Speech" code="L.2.A" desc="Interpret figures of speech (e.g., euphemism, oxymoron) in context." /></td>
                         <td className={tdClass}><Topic name="Idioms" code="L.2.A" desc="Interpret figures of speech (e.g., irony, puns) in context." /></td>
-                        <td className={tdClass}><Topic name="Doodle Vocab 3" slides={getGrammar('08_mar', 'slides')} keyPdf={getGrammar('08_mar', 'key')} code="L.2.B" desc="Acquire and use accurately grade-appropriate general academic words." /></td>
+                                                <td className={tdClass}>
+                                                    <Topic name="Doodle Vocab 3" slides={getGrammar('08_mar', 'slides')} keyPdf={getGrammar('08_mar', 'key')} code="L.2.B" desc="Acquire and use accurately grade-appropriate general academic words." />
+                                                    <VocabActivitySelector />
+                                                </td>
                         <td className={tdClass}><Topic name="Grammar Review" code="L.1.A" desc="Demonstrate command of the conventions of standard English grammar and usage." /></td>
                         <td className={tdClass}><Topic name="Mechanics Check" code="L.1.B" desc="Demonstrate command of the conventions of standard English capitalization and punctuation." /></td>
                         <td className={tdClass}><Topic name="Spelling Rules" code="L.1.B" desc="Spell correctly." /></td>
