@@ -26,20 +26,6 @@ const COMPACT_LABEL_CLASS = 'flex items-center gap-1 text-[10px] font-semibold t
 const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode = 'modal' }) => {
   const { register, handleSubmit, formState: { errors, dirtyFields }, watch, reset } = useForm({
     defaultValues: {
-        // Auto-save integration
-        // Determine if form is dirty
-        const [mtpNotes, setMtpNotes] = useState(studentData?.mtpNotes || []);
-        const [uploadedDocuments, setUploadedDocuments] = useState(studentData?.uploadedDocuments || []);
-        const isDirty = Object.keys(dirtyFields).length > 0 || mtpNotes !== (studentData?.mtpNotes || []) || uploadedDocuments !== (studentData?.uploadedDocuments || []);
-
-        // Save function for auto-save
-        const autoSaveFn = async () => {
-          const formData = watch();
-          await onSubmit(formData);
-        };
-
-        // Use auto-save hook
-        const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
       gradeLevel: String(studentData?.gradeLevel || ''),
       unitName: studentData?.unitName || '',
       admitDate: studentData?.admitDate || '',
@@ -228,6 +214,21 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       setIsSaving(false);
     }
   };
+
+  // Auto-save integration
+  // Determine if form is dirty
+  const isDirty = Object.keys(dirtyFields).length > 0 || 
+    JSON.stringify(mtpNotes) !== JSON.stringify(studentData?.mtpNotes || []) || 
+    JSON.stringify(uploadedDocuments) !== JSON.stringify(studentData?.uploadedDocuments || []);
+
+  // Save function for auto-save
+  const autoSaveFn = async () => {
+    const formData = watch();
+    await onSubmit(formData);
+  };
+
+  // Use auto-save hook
+  const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
 
   if (!studentData) return null;
 
