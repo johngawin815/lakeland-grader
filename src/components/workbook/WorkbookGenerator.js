@@ -292,6 +292,8 @@ const WorkbookGenerator = ({ user }) => {
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewMeta, setPreviewMeta] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [repairing, setRepairing] = useState(false);
   const iframeRef = useRef(null);
 
@@ -493,17 +495,41 @@ const WorkbookGenerator = ({ user }) => {
 
   const handleSave = async () => {
     if (!previewMeta || !previewHtml) return;
-    await databaseService.saveWorkbook({
-      ...previewMeta,
-      htmlContent: previewHtml,
-    });
-    setSaved(true);
-    await databaseService.logAudit(user, 'WORKBOOK_GENERATED', `${previewMeta.unitTopic} Day ${previewMeta.dayNumber}`);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const savedRecord = await databaseService.saveWorkbook({
+        ...previewMeta,
+        htmlContent: previewHtml,
+      });
+      setSaved(true);
+      // Update library state so the workbook appears without navigating away
+      if (savedRecord) {
+        setAllWorkbooks(prev => {
+          const exists = prev.some(w => w.id === savedRecord.id);
+          return exists
+            ? prev.map(w => w.id === savedRecord.id ? savedRecord : w)
+            : [...prev, savedRecord];
+        });
+      }
+      await databaseService.logAudit(user, 'WORKBOOK_GENERATED', `${previewMeta.unitTopic} Day ${previewMeta.dayNumber}`);
+    } catch (err) {
+      console.error('[WorkbookGenerator] Save failed:', err);
+      setSaveError(err.message || 'Failed to save workbook.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDownload = () => {
     if (!previewHtml || !previewMeta) return;
-    const blob = new Blob([previewHtml], { type: 'text/html;charset=utf-8' });
+    // Auto-repair before download so the exported file is always structurally sound
+    let html = previewHtml;
+    try {
+      const { html: repaired } = repairWorkbook(previewHtml, PRINT_ENGINE_CSS);
+      html = repaired;
+    } catch { /* fall back to unrepaired if repair somehow fails */ }
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const name = `${previewMeta.unitTopic.replace(/\s+/g, '_')}_Day${previewMeta.dayNumber}.html`;
     saveAs(blob, name);
   };
@@ -1052,14 +1078,20 @@ const WorkbookGenerator = ({ user }) => {
           </span>
 
           {!saved && (
-            <button onClick={handleSave}
-              className="px-3 py-1.5 rounded-lg bg-lime-600 text-white text-xs font-bold hover:bg-lime-700 transition flex items-center gap-1.5 shadow-sm">
-              <Save className="w-3.5 h-3.5" /> Save
+            <button onClick={handleSave} disabled={saving}
+              className="px-3 py-1.5 rounded-lg bg-lime-600 text-white text-xs font-bold hover:bg-lime-700 transition flex items-center gap-1.5 shadow-sm disabled:opacity-50">
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              {saving ? 'Saving...' : 'Save'}
             </button>
           )}
           {saved && (
             <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> Saved
+            </span>
+          )}
+          {saveError && (
+            <span className="text-xs font-bold text-red-500 flex items-center gap-1 max-w-[200px] truncate" title={saveError}>
+              <AlertTriangle className="w-3.5 h-3.5" /> {saveError}
             </span>
           )}
 
