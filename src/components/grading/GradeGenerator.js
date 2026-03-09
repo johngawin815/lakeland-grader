@@ -129,6 +129,8 @@ const TEMPLATES = {
 
 const GradeGenerator = ({ user, activeStudent }) => {
   // --- STATE ---
+  const [showHonorRoll, setShowHonorRoll] = useState(false);
+  const [honorRollStudents, setHonorRollStudents] = useState([]);
   const { gradeCardPayload, clearGradeCardPayload } = useGrading();
   const [selectedTemplate, setSelectedTemplate] = useState('quarter');
   const [loading, setLoading] = useState(false);
@@ -170,7 +172,34 @@ const GradeGenerator = ({ user, activeStudent }) => {
     elec1Instructor: '', elec2Instructor: '',
   });
 
-  // Auto-populate from gradebook context (uses subjectArea for proper slot mapping)
+  // Honor Roll logic: fetch students and filter for all As and/or Bs
+  const handleHonorRoll = async () => {
+    setShowHonorRoll(true);
+    setHonorRollStudents([]);
+    try {
+      const allStudents = await databaseService.getAllStudents();
+      const active = allStudents.filter(s => s.active !== false);
+      const honorRoll = [];
+      for (const student of active) {
+        const enrollments = await databaseService.getStudentEnrollments(student.id);
+        // Only consider enrollments for the selected quarter
+        const quarter = formData.quarterName;
+        const grades = enrollments.filter(e => e.term === formData.schoolYear && e.quarter === quarter && e.letterGrade);
+        if (grades.length === 0) continue;
+        // All As or Bs
+        const allAB = grades.every(e => {
+          const g = (e.letterGrade || '').toUpperCase();
+          return g.startsWith('A') || g.startsWith('B');
+        });
+        if (allAB) {
+          honorRoll.push({ name: student.studentName || `${student.firstName || ''} ${student.lastName || ''}`.trim(), status: 'All As/Bs' });
+        }
+      }
+      setHonorRollStudents(honorRoll);
+    } catch (err) {
+      setHonorRollStudents([]);
+    }
+  };
   useEffect(() => {
     if (gradeCardPayload) {
       const updates = {
@@ -673,6 +702,13 @@ const GradeGenerator = ({ user, activeStudent }) => {
               Fetch Grades
             </button>
             <button
+              onClick={handleHonorRoll}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="Show Honor Roll students"
+            >
+              <CheckCircle className="w-4 h-4" /> Honor Roll
+            </button>
+            <button
               onClick={() => setShowPreview(!showPreview)}
               className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
             >
@@ -721,6 +757,9 @@ const GradeGenerator = ({ user, activeStudent }) => {
       {/* PREVIEW MODAL */}
       {showPreview && (
         <GradeCardPreview formData={formData} onClose={() => setShowPreview(false)} />
+      )}
+      {showHonorRoll && (
+        <HonorRollCard students={honorRollStudents} onClose={() => setShowHonorRoll(false)} />
       )}
 
       {/* PRINT VIEW */}
@@ -778,3 +817,4 @@ const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, cat
 const PrintRow = ({ label, grade, pct, credits, showCredits }) => { if (!label && !grade) return null; return (<tr><td className="border border-black p-2">{label}</td><td className="border border-black p-2 text-center font-bold">{grade}</td><td className="border border-black p-2 text-center text-gray-600">{pct}</td>{showCredits && <td className="border border-black p-2 text-center text-gray-600">{credits}</td>}</tr>); };
 
 export default GradeGenerator;
+import HonorRollCard from './HonorRollCard';
