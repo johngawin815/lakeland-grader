@@ -21,6 +21,7 @@ const TranscriptGenerator = lazy(() => import('../transcript/TranscriptGenerator
 const WorkbookGenerator = lazy(() => import('../workbook/WorkbookGenerator'));
 const TeacherSettings = lazy(() => import('../settings/TeacherSettings'));
 const DocumentUploadPortal = lazy(() => import('../upload/DocumentUploadPortal'));
+const ElementaryGradeCard = lazy(() => import('../grading/ElementaryGradeCard'));
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -67,6 +68,15 @@ const modules = [
       icon: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100',
       hoverShadow: 'hover:shadow-violet-200/50', hoverBorder: 'hover:border-violet-300/60',
       accent: 'from-violet-500 to-violet-600', chevronHover: 'group-hover:text-violet-600',
+    }
+  },
+  {
+    id: 'elemgrades', title: 'Elem. Grade Card', desc: 'K\u20138 Full Year',
+    icon: FileSpreadsheet,
+    color: {
+      icon: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-100',
+      hoverShadow: 'hover:shadow-pink-200/50', hoverBorder: 'hover:border-pink-300/60',
+      accent: 'from-pink-500 to-pink-600', chevronHover: 'group-hover:text-pink-600',
     }
   },
   {
@@ -320,6 +330,7 @@ const HubShell = () => {
             <div className="h-full overflow-y-auto">
               {currentView === 'dashboard' && <StudentMasterDashboard setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
               {currentView === 'gradecards' && <GradeGenerator user={user} />}
+              {currentView === 'elemgrades' && <ElementaryGradeCard user={user} />}
               {currentView === 'ktea' && <KTEAReporter user={user} />}
               {currentView === 'discharge' && <DischargeNarrativeBuilder user={user} />}
               {currentView === 'curriculum' && <CurriculumMaps />}
