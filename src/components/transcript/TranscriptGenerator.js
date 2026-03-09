@@ -178,8 +178,6 @@ const TranscriptGenerator = ({ user }) => {
     setSaveMsg('Transcript auto-saved');
     setTimeout(() => setSaveMsg(''), 2000);
   }, [editedEnrollments, removedEnrollmentIds, selectedStudent, user]);
-
-import { useAutoSave } from '../../hooks/useAutoSave';
   const { saveStatus, lastSavedAt, forceSave } = useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
 
   // Mark dirty on transcript edit
