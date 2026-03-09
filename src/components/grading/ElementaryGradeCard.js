@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
+import { useAutoSave } from '../../hooks/useAutoSave';
 import {
   FileSpreadsheet, User, BookOpen, Heart, Wrench,
   FileDown, CloudUpload, RefreshCw, Loader2, CheckCircle,
@@ -35,6 +36,7 @@ const ElementaryGradeCard = ({ user }) => {
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [copyFrom, setCopyFrom] = useState(1);
   const [copyTo, setCopyTo] = useState(2);
+  const [dirty, setDirty] = useState(false);
 
   // --- Derived completion data ---
   const quarterCompletions = useMemo(() =>
@@ -46,11 +48,13 @@ const ElementaryGradeCard = ({ user }) => {
   // --- Handlers ---
   const handleChange = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }));
+    setDirty(true);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setDirty(true);
   };
 
   const fetchStudent = async () => {
@@ -102,6 +106,7 @@ const ElementaryGradeCard = ({ user }) => {
       }
       return updates;
     });
+    setDirty(true);
   };
 
   const clearQuarter = (quarter) => {
@@ -115,6 +120,7 @@ const ElementaryGradeCard = ({ user }) => {
       }
       return updates;
     });
+    setDirty(true);
   };
 
   const copyQuarter = (from, to) => {
@@ -128,6 +134,7 @@ const ElementaryGradeCard = ({ user }) => {
       }
       return updates;
     });
+    setDirty(true);
     setShowCopyModal(false);
   };
 
@@ -164,12 +171,8 @@ const ElementaryGradeCard = ({ user }) => {
   };
 
   // --- Save ---
-  const saveToDatabase = async () => {
-    if (!formData.studentName?.trim()) {
-      alert('Please enter a student name.');
-      return;
-    }
-
+  const saveFn = async () => {
+    if (!formData.studentName?.trim()) return;
     setSaving(true);
     try {
       const record = {
@@ -180,16 +183,23 @@ const ElementaryGradeCard = ({ user }) => {
         createdAt: new Date().toISOString(),
       };
       await databaseService.addKteaReport(record);
-
-      setSuccessMsg('Saved to Database!');
-      setTimeout(() => setSuccessMsg(''), 3000);
+      setSuccessMsg('Auto-saved to Database!');
+      setTimeout(() => setSuccessMsg(''), 2000);
+      setDirty(false);
     } catch (error) {
       console.error('Database Error:', error);
-      alert('Failed to save: ' + error.message);
+      setSuccessMsg('Auto-save failed!');
+      setTimeout(() => setSuccessMsg(''), 2000);
     } finally {
       setSaving(false);
     }
   };
+
+  // Auto-save hook
+  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(dirty, saveFn, {
+    delay: 2500,
+    enabled: !!formData.studentName?.trim(),
+  });
 
   // --- Render helpers ---
   const GradeSelect = ({ fieldKey, options, colorMap }) => {
