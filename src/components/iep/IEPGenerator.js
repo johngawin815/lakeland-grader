@@ -318,8 +318,6 @@ const IEPGenerator = ({ user }) => {
     await databaseService.saveIepDraft({ ...draft, lastModified: new Date().toISOString(), modifiedBy: user?.name || 'Unknown' });
     setIsDirty(false);
   }, [draft, selectedStudent, user]);
-
-import { useAutoSave } from '../../hooks/useAutoSave';
   const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
 
   // Mark dirty on draft change
