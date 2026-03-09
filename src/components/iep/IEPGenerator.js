@@ -15,6 +15,7 @@ import {
   ACCOMMODATIONS, MODIFICATIONS, TRANSITION_SKILL_AREAS,
 } from '../../data/iepServiceOptions';
 import { generatePresentLevels } from '../../utils/iepNarrativeGenerator';
+import { useAutoSave } from '../../hooks/useAutoSave';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
