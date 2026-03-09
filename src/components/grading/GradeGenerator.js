@@ -818,4 +818,3 @@ const ClassRow = ({ icon, label, prefix, data, onChange, isElective = false, cat
 const PrintRow = ({ label, grade, pct, credits, showCredits }) => { if (!label && !grade) return null; return (<tr><td className="border border-black p-2">{label}</td><td className="border border-black p-2 text-center font-bold">{grade}</td><td className="border border-black p-2 text-center text-gray-600">{pct}</td>{showCredits && <td className="border border-black p-2 text-center text-gray-600">{credits}</td>}</tr>); };
 
 export default GradeGenerator;
-import HonorRollCard from './HonorRollCard';
