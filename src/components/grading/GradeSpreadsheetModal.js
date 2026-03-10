@@ -278,8 +278,19 @@ const GradeSpreadsheetModal = ({ isOpen, onClose, onAutoSave }) => {
             </div>
           ) : previewData.length > 0 ? (
             <>
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                Preview (first 10 of {filteredStudents.length})
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Preview (first 10 of {filteredStudents.length})
+                </div>
+                <button
+                  onClick={handleClearAll}
+                  disabled={loading || filteredStudents.length === 0}
+                  className="bg-rose-600 text-white font-semibold py-1.5 px-4 rounded-lg shadow-lg shadow-rose-500/10 hover:bg-rose-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Clear all grades for shown students"
+                >
+                  <Eraser className="w-4 h-4" />
+                  {loading ? 'Clearing...' : 'Clear All'}
+                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
