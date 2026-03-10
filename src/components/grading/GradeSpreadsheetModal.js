@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAutoSave } from '../../hooks/useAutoSave';
-import { X, FileSpreadsheet, Download, Filter, Loader2 } from 'lucide-react';
+import { X, FileSpreadsheet, Download, Filter, Loader2, Eraser } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
@@ -155,6 +155,33 @@ const GradeSpreadsheetModal = ({ isOpen, onClose, onAutoSave }) => {
     }
   };
 
+
+  // Clear all grades for filtered students
+  const handleClearAll = async () => {
+    if (!window.confirm('Are you sure you want to clear all grades for the students currently shown? This cannot be undone.')) return;
+    setLoading(true);
+    try {
+      // For each filtered student, clear their grades array (if present)
+      const updated = await Promise.all(filteredStudents.map(async (student) => {
+        const cleared = { ...student };
+        if (Array.isArray(cleared.grades)) {
+          cleared.grades = cleared.grades.map(g => ({ ...g, Q1: '', Q2: '', Q3: '', Q4: '', percentage: '', letterGrade: '' }));
+        }
+        return await databaseService.upsertStudent(cleared);
+      }));
+      setStudents((prev) => prev.map(s => {
+        const found = updated.find(u => u.id === s.id);
+        return found ? found : s;
+      }));
+      if (onAutoSave) onAutoSave();
+    } catch (err) {
+      alert('Failed to clear grades.');
+      console.error('Clear all error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -287,14 +314,25 @@ const GradeSpreadsheetModal = ({ isOpen, onClose, onAutoSave }) => {
           <span className="text-sm font-bold text-slate-600">
             {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} to export
           </span>
-          <button
-            onClick={handleExport}
-            disabled={exporting || filteredStudents.length === 0}
-            className="bg-indigo-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {exporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-            {exporting ? 'Exporting...' : 'Export to .XLSX'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleClearAll}
+              disabled={loading || filteredStudents.length === 0}
+              className="bg-rose-600 text-white font-semibold py-2.5 px-5 rounded-xl shadow-lg shadow-rose-500/10 hover:bg-rose-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Clear all grades for shown students"
+            >
+              <Eraser className="w-5 h-5" />
+              {loading ? 'Clearing...' : 'Clear All'}
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={exporting || filteredStudents.length === 0}
+              className="bg-indigo-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg shadow-indigo-500/10 hover:bg-indigo-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+              {exporting ? 'Exporting...' : 'Export to .XLSX'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
