@@ -244,7 +244,16 @@ const GradeCardPreview = ({ formData, onClose }) => {
     setGeneratingId(rowKey);
     try {
       const { templateData, useUpperLevel } = buildRowTemplateData(row);
-      const templateFile = useUpperLevel ? 'Upper Level Grade Card.docx' : 'quarter_card_template.docx';
+      // Determine template file based on grade
+      let templateFile;
+      const gradeNum = parseInt(row.grade, 10);
+      if (useUpperLevel) {
+        templateFile = 'Upper Level Grade Card.docx';
+      } else if (gradeNum >= 1 && gradeNum <= 5) {
+        templateFile = 'grade_card_elementary_grand.docx';
+      } else {
+        templateFile = 'quarter_card_template.docx';
+      }
 
       const response = await fetch(`/templates/${templateFile}`);
       if (!response.ok) throw new Error(`Template not found: ${templateFile}`);
