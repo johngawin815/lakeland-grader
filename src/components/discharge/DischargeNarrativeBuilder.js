@@ -58,16 +58,20 @@ function SectionCard({ title, icon: Icon, isOpen, onToggle, isComplete, children
           </span>
           <span className="font-bold text-slate-800 text-sm">{title}</span>
           {isComplete && <CheckCircle className="w-4 h-4 text-emerald-500" />}
+      // Local storage key for discharge narrative
+      const LS_KEY = `dischargeNarrative_${props?.studentId || 'anon'}`;
+      const saved = props?.studentId ? localStorage.getItem(LS_KEY) : null;
         </div>
-        {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        if (saved) return JSON.parse(saved);
+        return createEmptyDraft();
       </button>
       {isOpen && (
         <div className="px-5 pb-5 pt-2 space-y-3 border-t border-slate-100 animate-[slide-up-fade_0.2s_ease-out]">
           {children}
-        </div>
-      )}
-    </div>
-  );
+        if (draft && props?.studentId) {
+          localStorage.setItem(LS_KEY, JSON.stringify(draft));
+        }
+      }, [draft, props?.studentId]);
 }
 
 // ─── SCORE CARD (inline) ────────────────────────────────────────────────────

@@ -13,15 +13,29 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
   // Track original data for dirtiness
   const [originalData, setOriginalData] = useState(null);
 
-  const [formData, setFormData] = useState({
-    courseName: '',
-    subjectArea: '',
-    credits: 5,
-    term: getCurrentSchoolYear(),
-  });
-
-  useEffect(() => {
+  // Local storage key for course form
+  const LS_KEY = `courseForm_${user?.email || 'anon'}`;
+  const saved = localStorage.getItem(LS_KEY);
+  const [formData, setFormData] = useState(() => {
+    if (saved) return JSON.parse(saved);
     if (course) {
+      return {
+        courseName: course.courseName || '',
+        subjectArea: course.subjectArea || '',
+        credits: course.credits || 5,
+        term: course.term || getCurrentSchoolYear(),
+      };
+    }
+    return {
+      courseName: '',
+      subjectArea: '',
+      credits: 5,
+      term: getCurrentSchoolYear(),
+    };
+  });
+  useEffect(() => {
+    if (saved) setFormData(JSON.parse(saved));
+    else if (course) {
       const data = {
         courseName: course.courseName || '',
         subjectArea: course.subjectArea || '',
@@ -41,7 +55,7 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
       setOriginalData(data);
     }
     setError('');
-  }, [course, isOpen]);
+  }, [course, isOpen, saved]);
   // Auto-save integration
   const isDirty = originalData && (
     formData.courseName !== originalData.courseName ||
@@ -49,15 +63,11 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
     formData.credits !== originalData.credits ||
     formData.term !== originalData.term
   );
-
-  const autoSaveFn = async () => {
-    setSaving(true);
-    setError('');
-    try {
-      await databaseService.upsertCourse(formData);
-      if (user) {
-        await databaseService.logAudit(user, 'UpdateCourse', `Updated course ${formData.courseName}`);
-      }
+  // Auto-save to localStorage after each edit
+  useEffect(() => {
+    localStorage.setItem(LS_KEY, JSON.stringify(formData));
+  }, [formData]);
+  // Only save to DB when user clicks Save
       setOriginalData({ ...formData });
     } catch (err) {
       setError(err.message || 'Failed to auto-save.');

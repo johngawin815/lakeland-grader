@@ -5,18 +5,26 @@ import { Save, ChevronDown, ChevronUp, Heart, Users, School, BookOpen } from 'lu
 import { STATE_OPTIONS } from '../../data/stateGraduationRequirements';
 
 const IntakeForm = ({ onSave, units, defaultUnit }) => {
-  const { register, handleSubmit, formState: { dirtyFields }, watch } = useForm({
-    defaultValues: {
+  // Local storage key for intake form
+  const LS_KEY = `intakeForm_${defaultUnit || units[0]?.key || 'default'}`;
+  const saved = localStorage.getItem(LS_KEY);
+  const { register, handleSubmit, formState: { dirtyFields }, watch, reset } = useForm({
+    defaultValues: saved ? JSON.parse(saved) : {
       unitName: defaultUnit || units[0]?.key || '',
     },
   });
+  // Restore from localStorage on mount
+  React.useEffect(() => {
+    if (saved) reset(JSON.parse(saved));
+  }, [saved, reset]);
   // Auto-save integration
   const isDirty = Object.keys(dirtyFields).length > 0;
-  const autoSaveFn = async () => {
+  // Auto-save to localStorage after each edit
+  React.useEffect(() => {
     const formData = watch();
-    await onSave(formData);
-  };
-  const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
+    localStorage.setItem(LS_KEY, JSON.stringify(formData));
+  }, [watch]);
+  // Only save to DB when user clicks Save
   // Auto-save status feedback
   const autoSaveStatus = (
     <>

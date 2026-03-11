@@ -25,7 +25,12 @@ import {
 } from './elementaryGradeCardData';
 
 const ElementaryGradeCard = ({ user }) => {
-  const [formData, setFormData] = useState(getElementaryGrandDefaults);
+  // Local storage key for elementary grade card
+  const LS_KEY = `elementaryGradeCard_${user?.email || 'anon'}`;
+  const [formData, setFormData] = useState(() => {
+    const saved = localStorage.getItem(LS_KEY);
+    return saved ? JSON.parse(saved) : getElementaryGrandDefaults;
+  });
   const [activeQuarter, setActiveQuarter] = useState(1);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -47,13 +52,21 @@ const ElementaryGradeCard = ({ user }) => {
 
   // --- Handlers ---
   const handleChange = (key, value) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [key]: value };
+      localStorage.setItem(LS_KEY, JSON.stringify(next));
+      return next;
+    });
     setDirty(true);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      localStorage.setItem(LS_KEY, JSON.stringify(next));
+      return next;
+    });
     setDirty(true);
   };
 
@@ -104,6 +117,7 @@ const ElementaryGradeCard = ({ user }) => {
           updates[`eg_q${quarter}_beh${b}`] = value;
         }
       }
+      localStorage.setItem(LS_KEY, JSON.stringify(updates));
       return updates;
     });
     setDirty(true);
@@ -118,6 +132,7 @@ const ElementaryGradeCard = ({ user }) => {
       for (let b = 1; b <= 22; b++) {
         updates[`eg_q${quarter}_beh${b}`] = '';
       }
+      localStorage.setItem(LS_KEY, JSON.stringify(updates));
       return updates;
     });
     setDirty(true);
@@ -136,6 +151,7 @@ const ElementaryGradeCard = ({ user }) => {
       for (let b = 1; b <= 22; b++) {
         updates[`eg_q${to}_beh${b}`] = prev[`eg_q${from}_beh${b}`];
       }
+      localStorage.setItem(LS_KEY, JSON.stringify(updates));
       return updates;
     });
     setDirty(true);
