@@ -650,7 +650,7 @@ const WorkbookGenerator = ({ user }) => {
               type={showKey ? 'text' : 'password'}
               value={keyInput}
               onChange={e => { setKeyInput(e.target.value); setTestResult(null); }}
-              placeholder="AIza..."
+              placeholder="Claude-API-Key..."
               className="w-full px-3 py-2.5 pr-10 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400 outline-none"
             />
             <button type="button" onClick={() => setShowKey(!showKey)}
