@@ -68,13 +68,8 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
     localStorage.setItem(LS_KEY, JSON.stringify(formData));
   }, [formData]);
   // Only save to DB when user clicks Save
-      setOriginalData({ ...formData });
-    } catch (err) {
-      setError(err.message || 'Failed to auto-save.');
-    } finally {
-      setSaving(false);
-    }
-  };
+  // Only save to DB when user clicks Save
+  // (No try/catch needed here, logic handled in handleSubmit)
 
   const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
 
