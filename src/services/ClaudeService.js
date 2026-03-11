@@ -11,6 +11,12 @@ export const setClaudeApiKey = (key) => localStorage.setItem(CLAUDE_API_KEY_STOR
 export const hasClaudeApiKey = () => !!localStorage.getItem(CLAUDE_API_KEY_STORAGE);
 export const clearClaudeApiKey = () => localStorage.removeItem(CLAUDE_API_KEY_STORAGE);
 
+// Aliases for generic usage (compatibility with WorkbookGenerator)
+export const getApiKey = getClaudeApiKey;
+export const setApiKey = setClaudeApiKey;
+export const hasApiKey = hasClaudeApiKey;
+export const clearApiKey = clearClaudeApiKey;
+
 export const getClaudeModel = () => localStorage.getItem(CLAUDE_MODEL_STORAGE) || DEFAULT_MODEL;
 export const setClaudeModel = (m) => localStorage.setItem(CLAUDE_MODEL_STORAGE, m);
 
