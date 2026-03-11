@@ -118,6 +118,7 @@ const DischargeNarrativeBuilder = ({ user }) => {
   // ── Student picker state
   const [allStudents, setAllStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -127,8 +128,22 @@ const DischargeNarrativeBuilder = ({ user }) => {
   const [dbRecord, setDbRecord] = useState(null);
 
   // ── Draft state
-  const [draft, setDraft] = useState(createEmptyDraft);
+  const [draft, setDraft] = useState(() => {
+    // Restore from localStorage if available
+    const LS_KEY = `dischargeNarrative_${selectedStudent?.id || 'anon'}`;
+    const saved = selectedStudent?.id ? localStorage.getItem(LS_KEY) : null;
+    if (saved) return JSON.parse(saved);
+    return createEmptyDraft();
+  });
   const [isDirty, setIsDirty] = useState(false);
+
+  // Auto-save draft to localStorage
+  useEffect(() => {
+    const LS_KEY = `dischargeNarrative_${selectedStudent?.id || 'anon'}`;
+    if (draft && selectedStudent?.id) {
+      localStorage.setItem(LS_KEY, JSON.stringify(draft));
+    }
+  }, [draft, selectedStudent]);
 
   // ── UI state
   const [openSections, setOpenSections] = useState({
