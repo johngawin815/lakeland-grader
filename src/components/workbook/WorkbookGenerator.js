@@ -11,7 +11,7 @@ import { databaseService } from '../../services/databaseService';
 import {
   hasApiKey, getApiKey, setApiKey,
   generateWorkbook, repairWorkbook, testConnection
-} from '../../services/ClaudeService';
+} from '../../services/geminiService';
 import { PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE } from '../../data/workbookCssTemplate';
 import { generatePdfBlob } from '../../services/pdfService';
 import { uploadToOneDrive } from '../../services/oneDriveService';
