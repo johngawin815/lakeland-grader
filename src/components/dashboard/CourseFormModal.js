@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAutoSave } from '../../hooks/useAutoSave';
 import { X, BookOpen, Save, Loader2 } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
@@ -9,9 +8,6 @@ const SUBJECT_AREAS = ['English', 'Math', 'Science', 'Social Studies', 'Elective
 const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-
-  // Track original data for dirtiness
-  const [originalData, setOriginalData] = useState(null);
 
   // Local storage key for course form
   const LS_KEY = `courseForm_${user?.email || 'anon'}`;
@@ -43,7 +39,6 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
         term: course.term || getCurrentSchoolYear(),
       };
       setFormData(data);
-      setOriginalData(data);
     } else {
       const data = {
         courseName: '',
@@ -52,26 +47,13 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
         term: getCurrentSchoolYear(),
       };
       setFormData(data);
-      setOriginalData(data);
     }
     setError('');
   }, [course, isOpen, saved]);
-  // Auto-save integration
-  const isDirty = originalData && (
-    formData.courseName !== originalData.courseName ||
-    formData.subjectArea !== originalData.subjectArea ||
-    formData.credits !== originalData.credits ||
-    formData.term !== originalData.term
-  );
   // Auto-save to localStorage after each edit
   useEffect(() => {
     localStorage.setItem(LS_KEY, JSON.stringify(formData));
   }, [formData]);
-  // Only save to DB when user clicks Save
-  // Only save to DB when user clicks Save
-  // (No try/catch needed here, logic handled in handleSubmit)
-
-  const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
 
   if (!isOpen) return null;
 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAutoSave } from '../../hooks/useAutoSave';
 import { X, FileSpreadsheet, Download, Filter, Loader2, Eraser } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';

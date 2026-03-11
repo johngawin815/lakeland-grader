@@ -273,7 +273,6 @@ const WorkbookGenerator = ({ user }) => {
   const [dayFocus, setDayFocus] = useState('');
   const [readingLevel, setReadingLevel] = useState(READING_LEVELS[6].value);
   const [unitWorkbooks, setUnitWorkbooks] = useState([]);
-  const suggestTimeoutRef = useRef(null);
 
   // Activity selections
   const [activityChoices, setActivityChoices] = useState({
@@ -297,7 +296,7 @@ const WorkbookGenerator = ({ user }) => {
     setIsDirty(false);
   }, [unitTopic, dayNumber, dayFocus, readingLevel, activityChoices, user]);
 
-  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!unitTopic });
+  useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!unitTopic });
 
   // Mark dirty on relevant changes
   useEffect(() => {
@@ -339,20 +338,6 @@ const WorkbookGenerator = ({ user }) => {
     }
   }, [oneDriveStatus]);
 
-  // Google Drive save
-  const [gDriveStatus, setGDriveStatus] = useState(null); // null | 'generating' | 'uploading' | 'success' | 'error'
-
-  useEffect(() => {
-    if (gDriveStatus === 'success') {
-      const t = setTimeout(() => setGDriveStatus(null), 3000);
-      return () => clearTimeout(t);
-    }
-    if (gDriveStatus === 'error') {
-      const t = setTimeout(() => { setGDriveStatus(null); }, 5000);
-      return () => clearTimeout(t);
-    }
-  }, [gDriveStatus]);
-
   // ─── LOAD LIBRARY ────────────────────────────────────────────────────────
 
   const loadLibrary = useCallback(async () => {
@@ -384,29 +369,6 @@ const WorkbookGenerator = ({ user }) => {
       setUnitWorkbooks([]);
     }
   }, [unitTopic]);
-
-  // ─── SMART DAY FOCUS SUGGESTION ───────────────────────────────────────────
-
-  useEffect(() => {
-    if (!unitTopic.trim() || !hasApiKey()) return;
-
-    clearTimeout(suggestTimeoutRef.current);
-    suggestTimeoutRef.current = setTimeout(async () => {
-      // Claude does not have suggestDayFocus. You may need to implement this or remove.
-      // const suggestion = await suggestDayFocus({
-      //   unitTopic: unitTopic.trim(),
-      //   dayNumber,
-      //   previousDays: unitWorkbooks,
-      //   dayDirective: getDayScope(dayNumber)?.directive || '',
-      // });
-      // if (suggestion) {
-      //   setDayFocus(suggestion);
-      // }
-    }, 800);
-
-    return () => clearTimeout(suggestTimeoutRef.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unitTopic, dayNumber, unitWorkbooks]);
 
   // ─── API KEY HANDLERS ────────────────────────────────────────────────────
 

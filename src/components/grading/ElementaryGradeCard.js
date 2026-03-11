@@ -216,7 +216,7 @@ const ElementaryGradeCard = ({ user }) => {
   };
 
   // Auto-save hook
-  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(dirty, saveFn, {
+  useAutoSave(dirty, saveFn, {
     delay: 2500,
     enabled: !!formData.studentName?.trim(),
   });

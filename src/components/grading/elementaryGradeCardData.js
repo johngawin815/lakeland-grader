@@ -36,8 +36,6 @@ export const WORK_HABITS_BEHAVIORS = [
   { id: 22, label: 'Organizes materials' },
 ];
 
-export const ALL_BEHAVIORS = [...PERSONAL_SOCIAL_BEHAVIORS, ...WORK_HABITS_BEHAVIORS];
-
 export const ACADEMIC_GRADE_OPTIONS = ['', 'A', 'B', 'C', 'D', 'F'];
 export const BEHAVIOR_GRADE_OPTIONS = ['', 'O', 'S', 'NI'];
 export const QUARTERS = [1, 2, 3, 4];

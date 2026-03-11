@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAutoSave } from '../../hooks/useAutoSave';
 import { useForm } from 'react-hook-form';
 import { Save, ChevronDown, ChevronUp, Heart, Users, School, BookOpen } from 'lucide-react';
 import { STATE_OPTIONS } from '../../data/stateGraduationRequirements';
@@ -8,7 +7,7 @@ const IntakeForm = ({ onSave, units, defaultUnit }) => {
   // Local storage key for intake form
   const LS_KEY = `intakeForm_${defaultUnit || units[0]?.key || 'default'}`;
   const saved = localStorage.getItem(LS_KEY);
-  const { register, handleSubmit, formState: { dirtyFields }, watch, reset } = useForm({
+  const { register, handleSubmit, watch, reset } = useForm({
     defaultValues: saved ? JSON.parse(saved) : {
       unitName: defaultUnit || units[0]?.key || '',
     },
@@ -17,22 +16,11 @@ const IntakeForm = ({ onSave, units, defaultUnit }) => {
   React.useEffect(() => {
     if (saved) reset(JSON.parse(saved));
   }, [saved, reset]);
-  // Auto-save integration
-  const isDirty = Object.keys(dirtyFields).length > 0;
   // Auto-save to localStorage after each edit
   React.useEffect(() => {
     const formData = watch();
     localStorage.setItem(LS_KEY, JSON.stringify(formData));
   }, [watch]);
-  // Only save to DB when user clicks Save
-  // Auto-save status feedback
-  const autoSaveStatus = (
-    <>
-      {saveStatus === 'saving' && <div className="p-2 bg-indigo-50 border border-indigo-200 rounded text-indigo-700 text-xs font-semibold flex items-center gap-1.5">Auto-saving...</div>}
-      {saveStatus === 'saved' && lastSavedAt && <div className="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-700 text-xs font-semibold flex items-center gap-1.5">Auto-saved {lastSavedAt.toLocaleTimeString()}</div>}
-      {saveStatus === 'error' && <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs font-semibold">Auto-save failed</div>}
-    </>
-  );
 
   const [openSections, setOpenSections] = useState({
     student: true,

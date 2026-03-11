@@ -21,7 +21,7 @@
  */
 
 import { SecretClient } from "@azure/keyvault-secrets";
-import { keyVaultConfig, keyVaultTokenRequest } from "../config/authConfig";
+import { keyVaultConfig } from "../config/authConfig";
 
 // ---------------------------------------------------------------------------
 // DEV-ONLY fallback key. Used ONLY when: (a) running on localhost AND
