@@ -44,7 +44,7 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onChunk, sign
 
   const body = JSON.stringify({
     model,
-    max_tokens: 65536,
+    max_tokens: 4096,
     temperature: 0.75,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],

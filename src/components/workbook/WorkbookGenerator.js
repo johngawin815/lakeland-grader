@@ -11,7 +11,7 @@ import { databaseService } from '../../services/databaseService';
 import {
   hasApiKey, getApiKey, setApiKey,
   generateWorkbook, repairWorkbook, testConnection
-} from '../../services/geminiService';
+} from '../../services/ClaudeService';
 import { PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE } from '../../data/workbookCssTemplate';
 import { generatePdfBlob } from '../../services/pdfService';
 import { uploadToOneDrive } from '../../services/oneDriveService';
@@ -638,13 +638,13 @@ const WorkbookGenerator = ({ user }) => {
             </div>
             <div>
               <h2 className="text-lg font-extrabold text-slate-900">
-                {showSettings ? 'API Key Settings' : 'Connect to Google Gemini'}
+                {showSettings ? 'API Key Settings' : 'Connect to Anthropic Claude'}
               </h2>
               <p className="text-xs text-slate-500">Your key is stored locally in this browser only.</p>
             </div>
           </div>
 
-          <label className="block text-xs font-bold text-slate-600 mb-1.5">Gemini API Key</label>
+          <label className="block text-xs font-bold text-slate-600 mb-1.5">Claude API Key</label>
           <div className="relative mb-4">
             <input
               type={showKey ? 'text' : 'password'}
@@ -689,7 +689,7 @@ const WorkbookGenerator = ({ user }) => {
           {!showSettings && (
             <p className="mt-4 text-[11px] text-slate-400 text-center">
               Get your key from{' '}
-              <span className="font-semibold text-lime-600">Google AI Studio</span>
+              <span className="font-semibold text-lime-600">Anthropic Console</span>
               {' '}→ API Keys
             </p>
           )}
@@ -976,7 +976,7 @@ const WorkbookGenerator = ({ user }) => {
                   ))}
                 </div>
                 <p className="text-[10px] text-lime-600 mt-2">
-                  Gemini will automatically use different pedagogical frameworks for the new day.
+                  Claude will automatically use different pedagogical frameworks for the new day.
                 </p>
               </div>
             )}
