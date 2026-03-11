@@ -197,16 +197,12 @@ const GradeCardPreview = ({ formData, onClose }) => {
       localStorage.setItem(LS_KEY, JSON.stringify(next));
       return next;
     });
-    // Restore from localStorage on mount
-    useEffect(() => {
-      if (!data) loadData();
-    }, [data, loadData]);
-
-    // Save to localStorage whenever data changes (for bulk edits)
-    useEffect(() => {
-      if (data) localStorage.setItem(LS_KEY, JSON.stringify(data));
-    }, [data, LS_KEY]);
   };
+
+  // Save to localStorage whenever data changes (for bulk edits)
+  useEffect(() => {
+    if (data) localStorage.setItem(LS_KEY, JSON.stringify(data));
+  }, [data, LS_KEY]);
 
   // ---------- Generate grade card for a single row ----------
   const buildRowTemplateData = (row) => {
@@ -444,6 +440,31 @@ const GradeCardPreview = ({ formData, onClose }) => {
     setTimeout(() => setRefreshMsg(''), 2000);
   };
 
+  // Clear all grades for all students shown
+  const handleClearAll = async () => {
+    if (!window.confirm('Are you sure you want to clear all grades for all students currently shown? This cannot be undone.')) return;
+    setLoading(true);
+    try {
+      const allRows = Object.values(data || {}).flat();
+      await Promise.all(allRows.map(async (row) => {
+        // Find the student by ID
+        const students = await databaseService.getAllStudents();
+        const student = students.find(s => s.id === row.studentId);
+        if (student && Array.isArray(student.grades)) {
+          student.grades = student.grades.map(g => ({ ...g, Q1: '', Q2: '', Q3: '', Q4: '', percentage: '', letterGrade: '' }));
+          await databaseService.upsertStudent(student);
+        }
+      }));
+      setSaveStatus('All grades cleared!');
+      setData(null); // reload
+    } catch (err) {
+      alert('Failed to clear grades.');
+      console.error('Clear all error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ---------- Download as XLSX ----------
   const handleDownload = async () => {
     if (!data) return;
@@ -548,30 +569,6 @@ const GradeCardPreview = ({ formData, onClose }) => {
               {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Eraser className="w-3.5 h-3.5" />}
               {loading ? 'Clearing...' : 'Clear All'}
             </button>
-  // Clear all grades for all students shown
-  const handleClearAll = async () => {
-    if (!window.confirm('Are you sure you want to clear all grades for all students currently shown? This cannot be undone.')) return;
-    setLoading(true);
-    try {
-      const allRows = Object.values(data || {}).flat();
-      await Promise.all(allRows.map(async (row) => {
-        // Find the student by ID
-        const students = await databaseService.getAllStudents();
-        const student = students.find(s => s.id === row.studentId);
-        if (student && Array.isArray(student.grades)) {
-          student.grades = student.grades.map(g => ({ ...g, Q1: '', Q2: '', Q3: '', Q4: '', percentage: '', letterGrade: '' }));
-          await databaseService.upsertStudent(student);
-        }
-      }));
-      setSaveStatus('All grades cleared!');
-      setData(null); // reload
-    } catch (err) {
-      alert('Failed to clear grades.');
-      console.error('Clear all error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
             {/* Export Cards dropdown */}
             <div className="relative" ref={exportMenuRef}>
