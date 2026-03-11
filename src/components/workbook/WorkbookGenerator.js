@@ -10,8 +10,8 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import {
   hasApiKey, getApiKey, setApiKey,
-  generateWorkbook, repairWorkbook, testConnection, suggestDayFocus
-} from '../../services/geminiService';
+  generateWorkbook, repairWorkbook, testConnection
+} from '../../services/ClaudeService';
 import { PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE } from '../../data/workbookCssTemplate';
 import { generatePdfBlob } from '../../services/pdfService';
 import { uploadToOneDrive } from '../../services/oneDriveService';
@@ -392,17 +392,16 @@ const WorkbookGenerator = ({ user }) => {
 
     clearTimeout(suggestTimeoutRef.current);
     suggestTimeoutRef.current = setTimeout(async () => {
-      try {
-        const suggestion = await suggestDayFocus({
-          unitTopic: unitTopic.trim(),
-          dayNumber,
-          previousDays: unitWorkbooks,
-          dayDirective: getDayScope(dayNumber)?.directive || '',
-        });
-        if (suggestion) {
-          setDayFocus(suggestion);
-        }
-      } catch { /* silent — suggestion is optional */ }
+      // Claude does not have suggestDayFocus. You may need to implement this or remove.
+      // const suggestion = await suggestDayFocus({
+      //   unitTopic: unitTopic.trim(),
+      //   dayNumber,
+      //   previousDays: unitWorkbooks,
+      //   dayDirective: getDayScope(dayNumber)?.directive || '',
+      // });
+      // if (suggestion) {
+      //   setDayFocus(suggestion);
+      // }
     }, 800);
 
     return () => clearTimeout(suggestTimeoutRef.current);
