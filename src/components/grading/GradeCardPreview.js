@@ -78,6 +78,8 @@ const gradeColor = (g) => {
 
 const GradeCardPreview = ({ formData, onClose }) => {
   const [data, setData] = useState(null);       // { unitName: [ row, ... ] }
+  // Local storage key for spreadsheet preview
+  const LS_KEY = `gradeSpreadsheetPreview_${formData.quarterName}_${formData.schoolYear}`;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [downloading, setDownloading] = useState(false);
@@ -113,6 +115,14 @@ const GradeCardPreview = ({ formData, onClose }) => {
     setLoading(true);
     setError('');
     try {
+      // Try to restore from localStorage first
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        setData(JSON.parse(saved));
+        setLoading(false);
+        return;
+      }
+      // Otherwise, load from DB
       const allStudents = await databaseService.getAllStudents();
       const active = allStudents.filter(s => s.active !== false && s.unitName && s.unitName !== 'Discharged');
 
@@ -173,7 +183,7 @@ const GradeCardPreview = ({ formData, onClose }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [LS_KEY]);
 
   useEffect(() => { if (!data) loadData(); }, [data, loadData]);
 
@@ -183,8 +193,19 @@ const GradeCardPreview = ({ formData, onClose }) => {
       const next = { ...prev };
       next[unitName] = [...prev[unitName]];
       next[unitName][rowIdx] = { ...next[unitName][rowIdx], [key]: value };
+      // Auto-save to localStorage
+      localStorage.setItem(LS_KEY, JSON.stringify(next));
       return next;
     });
+    // Restore from localStorage on mount
+    useEffect(() => {
+      if (!data) loadData();
+    }, [data, loadData]);
+
+    // Save to localStorage whenever data changes (for bulk edits)
+    useEffect(() => {
+      if (data) localStorage.setItem(LS_KEY, JSON.stringify(data));
+    }, [data, LS_KEY]);
   };
 
   // ---------- Generate grade card for a single row ----------
