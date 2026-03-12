@@ -18,7 +18,7 @@ import WeightSettingsModal from './modals/WeightSettingsModal';
 import BulkFillModal from './modals/BulkFillModal';
 import { useGradebook } from '../../hooks/useGradebook';
 import { useAutoSave } from '../../hooks/useAutoSave';
-import Q3GradeSpreadsheet from '../../public/templates/Q3_GradeSpreadsheet_2025-2026.json';
+import Q3GradeSpreadsheet from '../../data/Q3_GradeSpreadsheet_2025-2026.json';
 import { useUndoStack } from '../../hooks/useUndoStack';
 
 
