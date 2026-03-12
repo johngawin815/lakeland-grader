@@ -370,7 +370,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           {activeTab === 'grades' && (
               <>
                 <GradebookTable
-                  students={students.filter(s => s.unit === selectedUnit)}
+                  students={students.filter(s => s.unitName === selectedUnit)}
                   assignments={assignments}
                   categories={categories}
                   grades={grades}
@@ -393,7 +393,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
               </div>
               <div className="overflow-auto flex-1 p-6">
                 <div className="max-w-4xl mx-auto">
-                  {students.filter(s => s.unit === selectedUnit).length === 0 ? (
+                  {students.filter(s => s.unitName === selectedUnit).length === 0 ? (
                     <div className="text-center py-16 text-sm text-slate-400 italic">No students enrolled to track attendance.</div>
                   ) : (
                   <table className="w-full text-sm text-left">
@@ -405,7 +405,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/50">
-                      {students.filter(s => s.unit === selectedUnit).map(student => {
+                      {students.filter(s => s.unitName === selectedUnit).map(student => {
                         const status = attendance[currentDate]?.[student.id] || 'Present';
                         return (
                           <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200">
@@ -437,7 +437,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           {/* ANALYTICS TAB */}
           {activeTab === 'analytics' && (
             <ClassAnalytics
-              students={students.filter(s => s.unit === selectedUnit)}
+              students={students.filter(s => s.unitName === selectedUnit)}
               finalGrades={finalGrades}
               assignments={assignments}
               categories={categories}
