@@ -21,25 +21,6 @@ import { useUndoStack } from '../../hooks/useUndoStack';
 
 
 const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabel = "Back to Dashboard" }) => {
-    // Unit card config for floating card UI
-    const UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
-    // Group students by unit
-    const studentsByUnit = {};
-    students.forEach(student => {
-      const unit = student.unitName || 'Unknown';
-      if (!studentsByUnit[unit]) studentsByUnit[unit] = [];
-      studentsByUnit[unit].push(student);
-    });
-    // Floating card color config
-    const unitColors = {
-      Determination: 'text-amber-700',
-      Discovery: 'text-blue-700',
-      Freedom: 'text-green-700',
-      Harmony: 'text-purple-700',
-      Integrity: 'text-pink-700',
-      Serenity: 'text-cyan-700',
-      Unknown: 'text-slate-500',
-    };
   const { setGradeCardPayload, commentTone } = useGrading();
 
   // --- CENTRAL STATE via custom hook ---
@@ -393,13 +374,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                   onGradeCardClick={handleGenerateGradeCard}
                   onBulkFill={handleOpenBulkFill}
                 />
-                {openUnit && (
-                  <GradeSpreadsheetModal
-                    isOpen={true}
-                    onClose={() => setOpenUnit(null)}
-                    onAutoSave={null}
-                  />
-                )}
               </>
           )}
 
@@ -454,33 +428,33 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           )}
 
           {/* ANALYTICS TAB */}
-          {activeTab === 'grades' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-              {UNIT_ORDER.concat(Object.keys(studentsByUnit).filter(u => !UNIT_ORDER.includes(u))).map(unit => (
-                <FloatingSubjectCard
-                  key={unit}
-                  label={unit}
-                  colorClass={unitColors[unit] || 'text-slate-500'}
-                  active={false}
-                  onClick={() => {/* TODO: Show unit's grade spreadsheet modal or view */}}
-                >
-                  <ul className="text-left w-full">
-                    {studentsByUnit[unit]?.map(student => (
-                      <li key={student.id} className="py-1 border-b border-slate-100 flex justify-between items-center">
-                        <span className="font-bold text-slate-700">{student.name}</span>
-                        <span className="text-xs text-slate-500">Grade: {student.gradeLevel}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </FloatingSubjectCard>
-              ))}
-            </div>
+          {activeTab === 'analytics' && (
+            <ClassAnalytics
+              students={students}
+              finalGrades={finalGrades}
+              assignments={assignments}
+              categories={categories}
+              grades={grades}
+              attendance={attendance}
+            />
           )}
-          previousPercentage={previousGrades[selectedStudentForPanel.id] ?? null}
-          onClose={() => setSelectedStudentForPanel(null)}
-          onGenerateGradeCard={handleGenerateGradeCard}
-          onGradeChange={handleGradeChange}
-        />
+        </div>
+
+        {selectedStudentForPanel && (
+          <StudentSummaryPanel
+            student={selectedStudentForPanel}
+            grades={grades}
+            assignments={assignments}
+            categories={categories}
+            attendance={attendance}
+            finalGrade={finalGrades[selectedStudentForPanel.id]}
+            previousPercentage={previousGrades[selectedStudentForPanel.id] ?? null}
+            onClose={() => setSelectedStudentForPanel(null)}
+            onGenerateGradeCard={handleGenerateGradeCard}
+            onGradeChange={handleGradeChange}
+          />
+        )}
+      </>
       )}
 
       {/* EXTRACTED MODALS */}
