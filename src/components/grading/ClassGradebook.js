@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import UnitCardMenu from './UnitCardMenu';
 import { Plus, BookOpen, GraduationCap, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, TrendingUp, Undo2, Redo2 } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
@@ -42,6 +43,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
   const [bulkFillAssignmentId, setBulkFillAssignmentId] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [studentToExport, setStudentToExport] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState('Harmony');
 
   // --- UNDO/REDO ---
   const undoStack = useUndoStack(50);
@@ -343,6 +345,11 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           )}
         </div>
 
+        {/* UNIT CARD MENU */}
+        <div className="max-w-7xl mx-auto">
+          <UnitCardMenu selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
+        </div>
+
         {/* TAB NAVIGATION */}
         <div className="max-w-7xl mx-auto mb-0 flex gap-2 border-b border-slate-200/80">
           <button onClick={() => setActiveTab('grades')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'grades' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
@@ -363,7 +370,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           {activeTab === 'grades' && (
               <>
                 <GradebookTable
-                  students={students}
+                  students={students.filter(s => s.unit === selectedUnit)}
                   assignments={assignments}
                   categories={categories}
                   grades={grades}
@@ -386,7 +393,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
               </div>
               <div className="overflow-auto flex-1 p-6">
                 <div className="max-w-4xl mx-auto">
-                  {students.length === 0 ? (
+                  {students.filter(s => s.unit === selectedUnit).length === 0 ? (
                     <div className="text-center py-16 text-sm text-slate-400 italic">No students enrolled to track attendance.</div>
                   ) : (
                   <table className="w-full text-sm text-left">
@@ -398,7 +405,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/50">
-                      {students.map(student => {
+                      {students.filter(s => s.unit === selectedUnit).map(student => {
                         const status = attendance[currentDate]?.[student.id] || 'Present';
                         return (
                           <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200">
@@ -430,7 +437,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           {/* ANALYTICS TAB */}
           {activeTab === 'analytics' && (
             <ClassAnalytics
-              students={students}
+              students={students.filter(s => s.unit === selectedUnit)}
               finalGrades={finalGrades}
               assignments={assignments}
               categories={categories}
