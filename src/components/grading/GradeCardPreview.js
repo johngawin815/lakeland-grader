@@ -92,6 +92,43 @@ const GradeCardPreview = ({ formData, onClose }) => {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const exportMenuRef = useRef(null);
 
+  // ---------- Data loading ----------
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // Load from Q3_GradeSpreadsheet_2025-2026.json for Harmony and Integrity
+      const response = await fetch('/templates/Q3_GradeSpreadsheet_2025-2026.json');
+      if (!response.ok) throw new Error('Failed to load spreadsheet JSON');
+      const json = await response.json();
+      // Map spreadsheet rows to preview format
+      const units = ['Harmony', 'Integrity'];
+      const mapped = {};
+      units.forEach(unit => {
+        mapped[unit] = (json[unit] || []).map(row => ({
+          name: row[0] || '',
+          grade: row[1] || '',
+          unitName: unit,
+          socCourse: row[2] || '', socGrade: row[3] || '', socPct: row[4] ? row[4].replace('%','') : '', socCred: '',
+          sciCourse: row[5] || '', sciGrade: row[6] || '', sciPct: row[7] ? row[7].replace('%','') : '', sciCred: '',
+          mathCourse: row[8] || '', mathGrade: row[9] || '', mathPct: row[10] ? row[10].replace('%','') : '', mathCred: '',
+          engCourse: row[11] || '', engGrade: row[12] || '', engPct: row[13] ? row[13].replace('%','') : '', engCred: '',
+          elec1Course: row[14] || '', elec1Grade: row[15] || '', elec1Cred: '',
+          elec2Course: row[16] || '', elec2Grade: row[17] || '', elec2Cred: '',
+        }));
+      });
+      setData(mapped);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading spreadsheet data:', err);
+      setError('Failed to load student data.');
+    } finally {
+      setLoading(false);
+    }
+  }, [LS_KEY]);
+
+  useEffect(() => { if (!data) loadData(); }, [data, loadData]);
+
   // Close on Escape
   useEffect(() => {
     const h = (e) => { if (e.key === 'Escape') onClose(); };
@@ -111,79 +148,6 @@ const GradeCardPreview = ({ formData, onClose }) => {
   }, []);
 
   // ---------- Data loading ----------
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      // Try to restore from localStorage first
-      const saved = localStorage.getItem(LS_KEY);
-      if (saved) {
-        setData(JSON.parse(saved));
-        setLoading(false);
-        return;
-      }
-      // Otherwise, load from DB
-      const allStudents = await databaseService.getAllStudents();
-      const active = allStudents.filter(s => s.active !== false && s.unitName && s.unitName !== 'Discharged');
-
-      const rows = await Promise.all(active.map(async (student) => {
-        const name = student.studentName || `${student.firstName || ''} ${student.lastName || ''}`.trim();
-        const row = {
-          studentId: student.id,
-          name,
-          grade: student.gradeLevel ? String(student.gradeLevel) : '',
-          unitName: student.unitName || '',
-          socCourse: '', socGrade: '', socPct: '', socCred: '',
-          sciCourse: '', sciGrade: '', sciPct: '', sciCred: '',
-          mathCourse: '', mathGrade: '', mathPct: '', mathCred: '',
-          engCourse: '', engGrade: '', engPct: '', engCred: '',
-          elec1Course: '', elec1Grade: '', elec1Cred: '',
-          elec2Course: '', elec2Grade: '', elec2Cred: '',
-        };
-
-        try {
-          const enrollments = await databaseService.getStudentEnrollments(student.id);
-          let electiveCount = 0;
-          enrollments.forEach(e => {
-            const area = e.subjectArea || '';
-            const mapping = SUBJECT_FIELD_MAP[area];
-            if (mapping) {
-              row[mapping.classKey] = e.courseName || '';
-              row[mapping.gradeKey] = e.letterGrade || '';
-              row[mapping.pctKey] = e.percentage != null ? String(e.percentage) : '';
-              row[mapping.credKey] = e.credits != null ? String(e.credits) : '';
-            } else {
-              electiveCount++;
-              if (electiveCount === 1) {
-                row.elec1Course = e.courseName || '';
-                row.elec1Grade = e.letterGrade || '';
-                row.elec1Cred = e.credits != null ? String(e.credits) : '';
-              } else if (electiveCount === 2) {
-                row.elec2Course = e.courseName || '';
-                row.elec2Grade = e.letterGrade || '';
-                row.elec2Cred = e.credits != null ? String(e.credits) : '';
-              }
-            }
-          });
-        } catch { /* skip */ }
-        return row;
-      }));
-
-      const grouped = {};
-      rows.forEach(r => {
-        if (!grouped[r.unitName]) grouped[r.unitName] = [];
-        grouped[r.unitName].push(r);
-      });
-      Object.values(grouped).forEach(arr => arr.sort((a, b) => a.name.localeCompare(b.name)));
-
-      setData(grouped);
-    } catch (err) {
-      console.error('Error loading spreadsheet data:', err);
-      setError('Failed to load student data.');
-    } finally {
-      setLoading(false);
-    }
-  }, [LS_KEY]);
 
   useEffect(() => { if (!data) loadData(); }, [data, loadData]);
 
