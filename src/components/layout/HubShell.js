@@ -53,30 +53,12 @@ const modules = [
     }
   },
   {
-    id: 'gradebook', title: 'Class Gradebook', desc: 'Assignments & Attendance',
-    icon: BookOpen,
-    color: {
-      icon: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100',
-      hoverShadow: 'hover:shadow-emerald-200/50', hoverBorder: 'hover:border-emerald-300/60',
-      accent: 'from-emerald-500 to-emerald-600', chevronHover: 'group-hover:text-emerald-600',
-    }
-  },
-  {
-    id: 'gradecards', title: 'Grade Cards', desc: 'Generate & Export',
-    icon: GraduationCap,
-    color: {
-      icon: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100',
-      hoverShadow: 'hover:shadow-violet-200/50', hoverBorder: 'hover:border-violet-300/60',
-      accent: 'from-violet-500 to-violet-600', chevronHover: 'group-hover:text-violet-600',
-    }
-  },
-  {
-    id: 'elemgrades', title: 'Elem. Grade Card', desc: 'K\u20138 Full Year',
+    id: 'grades', title: 'Grades', desc: 'Unified Gradebook',
     icon: FileSpreadsheet,
     color: {
-      icon: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-100',
-      hoverShadow: 'hover:shadow-pink-200/50', hoverBorder: 'hover:border-pink-300/60',
-      accent: 'from-pink-500 to-pink-600', chevronHover: 'group-hover:text-pink-600',
+      icon: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100',
+      hoverShadow: 'hover:shadow-indigo-200/50', hoverBorder: 'hover:border-indigo-300/60',
+      accent: 'from-indigo-500 to-indigo-600', chevronHover: 'group-hover:text-indigo-600',
     }
   },
   {
@@ -190,9 +172,8 @@ const HubShell = () => {
   };
 
   const navigateTo = (moduleId) => {
-    if (moduleId === 'gradebook') {
-      setDashboardInitialTab('classes');
-      setCurrentView('dashboard');
+    if (moduleId === 'grades') {
+      setIsSpreadsheetModalOpen(true);
     } else {
       setDashboardInitialTab(null);
       setCurrentView(moduleId);
@@ -329,8 +310,6 @@ const HubShell = () => {
           <Suspense fallback={<LoadingFallback />}>
             <div className="h-full overflow-y-auto">
               {currentView === 'dashboard' && <StudentMasterDashboard setView={setCurrentView} user={user} initialTab={dashboardInitialTab} />}
-              {currentView === 'gradecards' && <GradeGenerator user={user} />}
-              {currentView === 'elemgrades' && <ElementaryGradeCard user={user} />}
               {currentView === 'ktea' && <KTEAReporter user={user} />}
               {currentView === 'discharge' && <DischargeNarrativeBuilder user={user} />}
               {currentView === 'curriculum' && <CurriculumMaps />}
@@ -339,6 +318,13 @@ const HubShell = () => {
               {currentView === 'workbook' && <WorkbookGenerator user={user} />}
               {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
               {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
+              {/* All grading entry points now redirect to unified Quarter Spreadsheet Preview */}
+              {currentView === 'grades' && (
+                <GradeSpreadsheetModal
+                  isOpen={true}
+                  onClose={() => setCurrentView('home')}
+                />
+              )}
             </div>
           </Suspense>
         )}
