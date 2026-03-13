@@ -407,6 +407,35 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
             </div>
           </div>
         )}
+          <button onClick={() => setActiveTab('attendance')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'attendance' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            <Calendar className="w-5 h-5" /> Attendance
+          </button>
+          <button onClick={() => setActiveTab('analytics')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'analytics' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            <TrendingUp className="w-5 h-5" /> Analytics
+          </button>
+        </div>
+
+        {/* MAIN CONTENT CARD */}
+        <div className="w-full h-[calc(100vh-220px)] bg-slate-50/80 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col">
+
+          {/* GRADEBOOK TABLE */}
+          {activeTab === 'grades' && (
+              <>
+                <GradebookTable
+                  students={students.filter(s => s.unitName === selectedUnit)}
+                  assignments={assignments}
+                  categories={categories}
+                  grades={grades}
+                  finalGrades={finalGrades}
+                  onGradeChange={handleGradeChange}
+                  onStudentClick={setSelectedStudentForPanel}
+                  onExportClick={handleOpenExport}
+                  onGradeCardClick={handleGenerateGradeCard}
+                  onBulkFill={handleOpenBulkFill}
+                />
+              </>
+          )}
+>>>>>>> de52bfb7d182eaba733a62334524b2aa2a669e01
 
           {/* ATTENDANCE TAB */}
           {activeTab === 'attendance' && (
