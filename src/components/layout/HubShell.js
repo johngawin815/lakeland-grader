@@ -134,6 +134,7 @@ const HubShell = () => {
   const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
   const [dashboardInitialTab, setDashboardInitialTab] = useState(null);
   const [showUploadPortal, setShowUploadPortal] = useState(false);
+  const [gradesStats, setGradesStats] = useState(null);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -165,6 +166,28 @@ const HubShell = () => {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email]);
+
+  // Load grades stats for the hub card widget
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const allStudents = await databaseService.getAllStudents();
+        const active = allStudents.filter(s => s.active !== false);
+        const currentQ = getAcademicQuarter();
+        const missingCount = active.filter(s => !s.grades || s.grades.length === 0).length;
+        const lastSaved = localStorage.getItem('gradebook_last_saved');
+        setGradesStats({
+          studentCount: active.length,
+          missingGrades: missingCount,
+          quarter: currentQ,
+          lastSaved: lastSaved || null,
+        });
+      } catch {
+        // non-fatal — card still works without stats
+      }
+    })();
+  }, [user]);
 
   const handleLogout = () => {
     setUser(null);
@@ -298,6 +321,7 @@ const HubShell = () => {
                     color={m.color}
                     delay={400 + (index * 80)}
                     onClick={() => navigateTo(m.id)}
+                    stats={m.id === 'grades' ? gradesStats : null}
                   />
                 ))}
               </div>
@@ -364,7 +388,7 @@ const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
   </button>
 );
 
-const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay }) => (
+const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay, stats }) => (
   <div
     onClick={onClick}
     className={`animate-slide-up bg-slate-50/80 backdrop-blur-lg shadow-lg shadow-slate-200/50 border ${color.border} rounded-2xl p-4 group cursor-pointer transition-all duration-300 hover:shadow-2xl ${color.hoverShadow} ${color.hoverBorder} hover:-translate-y-2 relative overflow-hidden`}
@@ -380,7 +404,30 @@ const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay }) => (
     </div>
     <div className="mt-2">
       <h3 className="text-lg font-bold text-slate-800 group-hover:text-slate-900 transition-colors">{title}</h3>
-      <p className="text-sm text-slate-500 mt-1">{desc}</p>
+      {stats ? (
+        <div className="mt-1.5 space-y-1">
+          <p className="text-xs font-medium text-slate-500">
+            {stats.quarter} &middot; {stats.studentCount} student{stats.studentCount !== 1 ? 's' : ''}
+          </p>
+          {stats.missingGrades > 0 && (
+            <p className="text-xs font-semibold text-amber-600 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+              {stats.missingGrades} missing grade{stats.missingGrades !== 1 ? 's' : ''}
+            </p>
+          )}
+          {stats.missingGrades === 0 && (
+            <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              All grades entered
+            </p>
+          )}
+          {stats.lastSaved && (
+            <p className="text-xs text-slate-400">Last saved {stats.lastSaved}</p>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500 mt-1">{desc}</p>
+      )}
     </div>
   </div>
 );
