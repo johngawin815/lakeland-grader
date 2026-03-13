@@ -18,6 +18,7 @@ import WeightSettingsModal from './modals/WeightSettingsModal';
 import BulkFillModal from './modals/BulkFillModal';
 import { useGradebook } from '../../hooks/useGradebook';
 import { useAutoSave } from '../../hooks/useAutoSave';
+import Q3GradeSpreadsheet from '../../data/Q3_GradeSpreadsheet_2025-2026.json';
 import { useUndoStack } from '../../hooks/useUndoStack';
 
 
@@ -26,7 +27,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
   // --- CENTRAL STATE via custom hook ---
   const {
-    students, assignments, categories, grades, attendance,
+    students: origStudents, assignments, categories, grades: origGrades, attendance,
     finalGrades, loading, dirty, previousGrades,
     getCategoryPercentage, getTotalAbsences,
     handleGradeChange: rawGradeChange,
@@ -34,6 +35,44 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     handleAttendanceUpdate, handleUpdateCategories,
     markClean,
   } = useGradebook(course?.id, user?.units);
+
+  // --- Q3 Spreadsheet override ---
+  const [spreadsheetStudents, setSpreadsheetStudents] = useState([]);
+  const [spreadsheetGrades, setSpreadsheetGrades] = useState({});
+
+  useEffect(() => {
+    if (!Q3GradeSpreadsheet) return;
+    const units = ['Harmony', 'Integrity'];
+    let studentsArr = [];
+    let gradesObj = {};
+    units.forEach(unit => {
+      const rows = Q3GradeSpreadsheet[unit] || [];
+      rows.forEach(row => {
+        const name = row[0];
+        const gradeLevel = row[1];
+        studentsArr.push({
+          id: `${unit}-${name.replace(/\s+/g, '-')}`,
+          studentName: name,
+          gradeLevel,
+          unitName: unit,
+          active: true,
+        });
+        gradesObj[`${unit}-${name.replace(/\s+/g, '-')}`] = {
+          // Example: English grade
+          english: row[11],
+          englishPct: row[12],
+          math: row[7],
+          mathPct: row[8],
+          science: row[5],
+          sciencePct: row[6],
+          history: row[3],
+          historyPct: row[4],
+        };
+      });
+    });
+    setSpreadsheetStudents(studentsArr);
+    setSpreadsheetGrades(gradesObj);
+  }, []);
 
   // --- LOCAL UI STATE ---
   const [activeTab, setActiveTab] = useState('grades');
@@ -267,8 +306,12 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
   const statusDisplay = getSaveStatusDisplay();
 
+  // Use spreadsheet data if available
+  const students = spreadsheetStudents.length > 0 ? spreadsheetStudents : origStudents;
+  const grades = spreadsheetStudents.length > 0 ? spreadsheetGrades : origGrades;
+
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 font-sans text-slate-800">
+    <div className="min-h-screen w-screen h-screen bg-slate-50 p-0 font-sans text-slate-800">
       {!course ? (
         <div className="flex flex-col items-center justify-center h-full text-center p-10">
           <BookOpen className="w-16 h-16 text-slate-300 mb-4" />
@@ -280,7 +323,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
       ) : (
       <>
         {/* HEADER */}
-        <div className="max-w-7xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="w-full mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-8">
           <div>
             {onExit && (
               <button onClick={onExit} className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors duration-300">
@@ -345,44 +388,25 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           )}
         </div>
 
-        {/* UNIT CARD MENU */}
-        <div className="max-w-7xl mx-auto">
-          <UnitCardMenu selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
-        </div>
-
-        {/* TAB NAVIGATION */}
-        <div className="max-w-7xl mx-auto mb-0 flex gap-2 border-b border-slate-200/80">
-          <button onClick={() => setActiveTab('grades')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'grades' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <BookOpen className="w-5 h-5" /> Gradebook
-          </button>
-          <button onClick={() => setActiveTab('attendance')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'attendance' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <Calendar className="w-5 h-5" /> Attendance
-          </button>
-          <button onClick={() => setActiveTab('analytics')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'analytics' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <TrendingUp className="w-5 h-5" /> Analytics
-          </button>
-        </div>
-
-        {/* MAIN CONTENT CARD */}
-        <div className="max-w-7xl mx-auto bg-slate-50/80 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-[70vh]">
-
-          {/* GRADEBOOK TABLE */}
-          {activeTab === 'grades' && (
-              <>
-                <GradebookTable
-                  students={students.filter(s => s.unit === selectedUnit)}
-                  assignments={assignments}
-                  categories={categories}
-                  grades={grades}
-                  finalGrades={finalGrades}
-                  onGradeChange={handleGradeChange}
-                  onStudentClick={setSelectedStudentForPanel}
-                  onExportClick={handleOpenExport}
-                  onGradeCardClick={handleGenerateGradeCard}
-                  onBulkFill={handleOpenBulkFill}
-                />
-              </>
-          )}
+        {/* UNIT CARD MENU + FULL SPREADSHEET PREVIEW */}
+        {activeTab === 'grades' && (
+          <div className="w-full h-full flex flex-col">
+            <div className="w-full px-8 pt-6">
+              <UnitCardMenu selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
+            </div>
+            <div className="w-full flex-1 flex items-center justify-center">
+              <GradeCardPreview
+                formData={{
+                  quarterName: 'Q3',
+                  schoolYear: '2025-2026',
+                  unitName: selectedUnit,
+                  reportDate: new Date().toISOString().split('T')[0],
+                }}
+                onClose={() => {}}
+              />
+            </div>
+          </div>
+        )}
 
           {/* ATTENDANCE TAB */}
           {activeTab === 'attendance' && (
@@ -393,7 +417,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
               </div>
               <div className="overflow-auto flex-1 p-6">
                 <div className="max-w-4xl mx-auto">
-                  {students.filter(s => s.unit === selectedUnit).length === 0 ? (
+                  {students.filter(s => s.unitName === selectedUnit).length === 0 ? (
                     <div className="text-center py-16 text-sm text-slate-400 italic">No students enrolled to track attendance.</div>
                   ) : (
                   <table className="w-full text-sm text-left">
@@ -405,7 +429,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200/50">
-                      {students.filter(s => s.unit === selectedUnit).map(student => {
+                      {students.filter(s => s.unitName === selectedUnit).map(student => {
                         const status = attendance[currentDate]?.[student.id] || 'Present';
                         return (
                           <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200">
@@ -437,7 +461,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           {/* ANALYTICS TAB */}
           {activeTab === 'analytics' && (
             <ClassAnalytics
-              students={students.filter(s => s.unit === selectedUnit)}
+              students={students.filter(s => s.unitName === selectedUnit)}
               finalGrades={finalGrades}
               assignments={assignments}
               categories={categories}
