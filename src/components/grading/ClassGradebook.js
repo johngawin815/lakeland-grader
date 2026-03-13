@@ -1,18 +1,14 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import UnitCardMenu from './UnitCardMenu';
 import { Plus, BookOpen, GraduationCap, Calendar, Check, XCircle, Clock, CloudUpload, Loader2, ArrowLeft, Percent, TrendingUp, Undo2, Redo2 } from 'lucide-react';
-import PizZip from 'pizzip';
-import Docxtemplater from 'docxtemplater';
-import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import ReportCardExportModal from './ReportCardExportModal';
 import { calculateLetterGrade } from '../../utils/gradeCalculator';
 import { useGrading } from '../../context/GradingContext';
 import { generateSmartComment } from '../../utils/commentGenerator';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 import StudentSummaryPanel from './StudentSummaryPanel';
 import ClassAnalytics from './ClassAnalytics';
-import GradebookTable from './GradebookTable';
+import GradeCardPreview from './GradeCardPreview';
 import NewAssignmentModal from './modals/NewAssignmentModal';
 import WeightSettingsModal from './modals/WeightSettingsModal';
 import BulkFillModal from './modals/BulkFillModal';
@@ -80,8 +76,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
   const [selectedStudentForPanel, setSelectedStudentForPanel] = useState(null);
   const [activeModal, setActiveModal] = useState(null); // 'assignment' | 'weights' | 'bulkFill' | 'export' | null
   const [bulkFillAssignmentId, setBulkFillAssignmentId] = useState(null);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [studentToExport, setStudentToExport] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState('Harmony');
 
   // --- UNDO/REDO ---
@@ -181,14 +175,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
   }, [dirty]);
 
   // --- HANDLERS ---
-  const handleOpenExport = (student) => {
-    setStudentToExport({
-      name: student.name,
-      finalPercentage: finalGrades[student.id] || 0,
-    });
-    setIsExportModalOpen(true);
-  };
-
   const handleGenerateGradeCard = useCallback((student) => {
     const percentage = finalGrades[student.id];
     if (percentage === null) return;
@@ -234,47 +220,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     setBulkFillAssignmentId(assignmentId);
     setActiveModal('bulkFill');
   }, []);
-
-  const generateReportCard = async () => {
-    if (!studentToExport) return;
-    try {
-      const response = await fetch('/templates/quarter_card_template.docx');
-      if (!response.ok) throw new Error("Could not find template");
-
-      const arrayBuffer = await response.arrayBuffer();
-      const zip = new PizZip(arrayBuffer);
-      const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
-
-      const grade = studentToExport.finalPercentage;
-      const letterGrade = calculateLetterGrade(grade);
-
-      doc.render({
-        student_name: studentToExport.name,
-        grade_level: '11',
-        school_year: getCurrentSchoolYear(),
-        quarter_name: getAcademicQuarter(),
-        report_date: new Date().toLocaleDateString(),
-        teacher_name: user?.name || 'Teacher',
-        total_credits: '3.5',
-        comments: `Current grade in ${course.courseName}: ${grade.toFixed(1)}%. ${grade >= 70 ? 'Keep up the good work!' : 'Please see me for extra help.'}`,
-        eng_class: 'English 11', eng_grade: 'B+', eng_pct: '88',
-        math_class: 'Algebra II', math_grade: 'A-', math_pct: '92',
-        sci_class: 'Chemistry', sci_grade: 'B', sci_pct: '85',
-        soc_class: 'US History', soc_grade: 'A', soc_pct: '95',
-        elec1_class: course.courseName, elec1_grade: letterGrade, elec1_pct: grade.toFixed(1),
-        elec2_class: 'Study Hall', elec2_grade: 'P', elec2_pct: '100',
-      });
-
-      const out = doc.getZip().generate({
-        type: 'blob',
-        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      });
-      saveAs(out, `${studentToExport.name}_ReportCard.docx`);
-    } catch (error) {
-      console.error("Error generating report:", error);
-      alert("Failed to generate report card. Please ensure templates are available.");
-    }
-  };
 
   // --- SAVE STATUS DISPLAY ---
   const getSaveStatusDisplay = () => {
@@ -388,25 +333,11 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
           )}
         </div>
 
-        {/* UNIT CARD MENU + FULL SPREADSHEET PREVIEW */}
-        {activeTab === 'grades' && (
-          <div className="w-full h-full flex flex-col">
-            <div className="w-full px-8 pt-6">
-              <UnitCardMenu selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
-            </div>
-            <div className="w-full flex-1 flex items-center justify-center">
-              <GradeCardPreview
-                formData={{
-                  quarterName: 'Q3',
-                  schoolYear: '2025-2026',
-                  unitName: selectedUnit,
-                  reportDate: new Date().toISOString().split('T')[0],
-                }}
-                onClose={() => {}}
-              />
-            </div>
-          </div>
-        )}
+        {/* TAB NAVIGATION */}
+        <div className="flex border-b border-slate-200/80 px-8">
+          <button onClick={() => setActiveTab('grades')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'grades' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            <GraduationCap className="w-5 h-5" /> Grades
+          </button>
           <button onClick={() => setActiveTab('attendance')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'attendance' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
             <Calendar className="w-5 h-5" /> Attendance
           </button>
@@ -418,24 +349,25 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         {/* MAIN CONTENT CARD */}
         <div className="w-full h-[calc(100vh-220px)] bg-slate-50/80 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col">
 
-          {/* GRADEBOOK TABLE */}
+          {/* GRADES TAB - UNIT CARD MENU + FULL SPREADSHEET PREVIEW */}
           {activeTab === 'grades' && (
-              <>
-                <GradebookTable
-                  students={students.filter(s => s.unitName === selectedUnit)}
-                  assignments={assignments}
-                  categories={categories}
-                  grades={grades}
-                  finalGrades={finalGrades}
-                  onGradeChange={handleGradeChange}
-                  onStudentClick={setSelectedStudentForPanel}
-                  onExportClick={handleOpenExport}
-                  onGradeCardClick={handleGenerateGradeCard}
-                  onBulkFill={handleOpenBulkFill}
+            <div className="w-full h-full flex flex-col">
+              <div className="w-full px-8 pt-6">
+                <UnitCardMenu selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
+              </div>
+              <div className="w-full flex-1 flex items-center justify-center">
+                <GradeCardPreview
+                  formData={{
+                    quarterName: 'Q3',
+                    schoolYear: '2025-2026',
+                    unitName: selectedUnit,
+                    reportDate: new Date().toISOString().split('T')[0],
+                  }}
+                  onClose={() => {}}
                 />
-              </>
+              </div>
+            </div>
           )}
->>>>>>> de52bfb7d182eaba733a62334524b2aa2a669e01
 
           {/* ATTENDANCE TAB */}
           {activeTab === 'attendance' && (
@@ -540,13 +472,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         onApply={(value) => handleBulkFill(bulkFillAssignmentId, value)}
       />
 
-      <ReportCardExportModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        student={studentToExport}
-        currentSubject={course?.courseName || 'Course'}
-        onDownload={generateReportCard}
-      />
     </div>
   );
 };
