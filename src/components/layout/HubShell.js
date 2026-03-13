@@ -167,20 +167,32 @@ const HubShell = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email]);
 
-  // Load grades stats for the hub card widget
+  // Load grades stats for the hub card widget from the spreadsheet JSON
+  // (JSON is the source of truth; database may not have grade data)
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const allStudents = await databaseService.getAllStudents();
-        const active = allStudents.filter(s => s.active !== false);
-        const currentQ = getAcademicQuarter();
-        const missingCount = active.filter(s => !s.grades || s.grades.length === 0).length;
+        const res = await fetch('/templates/Q3_GradeSpreadsheet_2025-2026.json');
+        if (!res.ok) throw new Error('JSON unavailable');
+        const json = await res.json();
+
+        let studentCount = 0;
+        let missingCount = 0;
+        Object.values(json).forEach(rows => {
+          rows.forEach(row => {
+            studentCount++;
+            // A student is "missing" if every grade column is null/empty
+            const hasAnyGrade = [row[3], row[6], row[9], row[12]].some(g => g != null && g !== '');
+            if (!hasAnyGrade) missingCount++;
+          });
+        });
+
         const lastSaved = localStorage.getItem('gradebook_last_saved');
         setGradesStats({
-          studentCount: active.length,
+          studentCount,
           missingGrades: missingCount,
-          quarter: currentQ,
+          quarter: getAcademicQuarter(),
           lastSaved: lastSaved || null,
         });
       } catch {
