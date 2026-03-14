@@ -29,11 +29,21 @@ const getEarnedCredits = (enrollment) => {
   return 0;
 };
 
-/** Deduplicate enrollments by courseId, keeping the best record */
+/** Deduplicate enrollments. Key priority:
+ *  1. courseId when set
+ *  2. courseName + subjectArea + term (catches duplicates that lack a courseId)
+ *  Keeps the record with a grade; on tie keeps the more recently modified.
+ *  Returns { kept, removed } so callers can delete the inferior DB records.
+ */
 function deduplicateEnrollments(enrollments) {
   const byCourse = {};
+  const keyOf = (e) =>
+    e.courseId
+      ? `id:${e.courseId}`
+      : `name:${(e.courseName || '').trim().toLowerCase()}|${(e.subjectArea || '').trim()}|${(e.term || '').trim()}`;
+
   for (const e of enrollments) {
-    const key = e.courseId || e.id;
+    const key = keyOf(e);
     if (!byCourse[key]) {
       byCourse[key] = e;
     } else {
@@ -49,7 +59,11 @@ function deduplicateEnrollments(enrollments) {
       }
     }
   }
-  return Object.values(byCourse);
+
+  const kept = Object.values(byCourse);
+  const keptIds = new Set(kept.map(e => e.id));
+  const removed = enrollments.filter(e => !keptIds.has(e.id));
+  return { kept, removed };
 }
 
 function computeCreditsEarned(enrollments) {

@@ -7,46 +7,45 @@ export function useAutoSave(dirty, saveFn, { delay = 2500, enabled = true } = {}
   const saveFnRef = useRef(saveFn);
   const retryCountRef = useRef(0);
   const pendingRef = useRef(false);
+  const isSavingRef = useRef(false); // use ref so executeSave doesn't need saveStatus as dep
 
-  // Keep saveFn ref current without triggering effect re-runs
   useEffect(() => {
     saveFnRef.current = saveFn;
   }, [saveFn]);
 
   const executeSave = useCallback(async () => {
-    if (saveStatus === 'saving') {
+    if (isSavingRef.current) {
       pendingRef.current = true;
       return;
     }
 
+    isSavingRef.current = true;
     setSaveStatus('saving');
     try {
       await saveFnRef.current();
+      isSavingRef.current = false;
       setSaveStatus('saved');
       setLastSavedAt(new Date());
       retryCountRef.current = 0;
 
-      // If changes came in during the save, re-queue
       if (pendingRef.current) {
         pendingRef.current = false;
         timerRef.current = setTimeout(executeSave, delay);
       }
     } catch (error) {
       console.error('Auto-save failed:', error);
+      isSavingRef.current = false;
       retryCountRef.current += 1;
 
       if (retryCountRef.current <= 3) {
-        // Exponential backoff: 1s, 2s, 4s
         const retryDelay = Math.pow(2, retryCountRef.current - 1) * 1000;
-        setSaveStatus('saving');
         timerRef.current = setTimeout(executeSave, retryDelay);
       } else {
         setSaveStatus('error');
       }
     }
-  }, [delay, saveStatus]);
+  }, [delay]); // removed saveStatus from deps — isSavingRef handles the guard
 
-  // Trigger debounced save when data becomes dirty
   useEffect(() => {
     if (!enabled || !dirty) return;
 
