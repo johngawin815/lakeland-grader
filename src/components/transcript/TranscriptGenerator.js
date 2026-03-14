@@ -14,11 +14,18 @@ import { useAutoSave } from '../../hooks/useAutoSave';
 
 const isPassing = (grade) => grade && !['F', 'I', '', null, undefined].includes(grade);
 
-/** Auto-compute earned credits: 0.5 if percentage >= 60 or passing letter grade */
+/** Return credit value based on term: quarter (Q1–Q4) = 0.25, everything else = 0.5 */
+const getTermCredits = (enrollment) => {
+  const term = (enrollment.term || '').toUpperCase().trim();
+  return /^Q[1-4]$/.test(term) ? 0.25 : 0.5;
+};
+
+/** Auto-compute earned credits based on term length and passing grade */
 const getEarnedCredits = (enrollment) => {
+  const creditValue = getTermCredits(enrollment);
   const pct = parseFloat(enrollment.percentage);
-  if (!isNaN(pct) && pct >= 60) return 0.5;
-  if (isPassing(enrollment.letterGrade)) return 0.5;
+  if (!isNaN(pct) && pct >= 60) return creditValue;
+  if (isPassing(enrollment.letterGrade)) return creditValue;
   return 0;
 };
 
@@ -62,7 +69,7 @@ function computeCreditsInProgress(enrollments) {
   for (const e of enrollments) {
     if (e.status === 'Active' && getEarnedCredits(e) === 0) {
       const area = SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
-      inProgress[area] = (inProgress[area] || 0) + 0.5;
+      inProgress[area] = (inProgress[area] || 0) + getTermCredits(e);
     }
   }
   return inProgress;
@@ -274,7 +281,6 @@ const TranscriptGenerator = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [enrolling, setEnrolling] = useState(null);
   const [saveMsg, setSaveMsg] = useState('');
 
   // --- New State ---
@@ -302,10 +308,6 @@ const TranscriptGenerator = ({ user }) => {
 
   // eslint-disable-next-line no-unused-vars
   const { saveStatus, lastSavedAt, forceSave } = useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
-
-  useEffect(() => {
-    if (selectedStudent) setTranscriptDirty(true);
-  }, [editedEnrollments, removedEnrollmentIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load students and courses on mount
   useEffect(() => {
@@ -448,28 +450,6 @@ const TranscriptGenerator = ({ user }) => {
         teacherName: course.teacherName, term: course.term,
       }];
     });
-  };
-
-  // --- Quick Enroll ---
-  const handleQuickEnroll = async (course) => {
-    if (!selectedStudent || !window.confirm(`Enroll ${selectedStudent.studentName} in ${course.courseName}?`)) return;
-    setEnrolling(course.id);
-    try {
-      const enrollId = `${selectedStudent.id}-${course.id}`;
-      await databaseService.enrollStudent({
-        id: enrollId, studentId: selectedStudent.id, courseId: course.id,
-        courseName: course.courseName, subjectArea: course.subjectArea,
-        teacherName: course.teacherName, letterGrade: '',
-        percentage: null, enrollmentDate: new Date().toISOString().split('T')[0],
-        term: course.term, status: 'Active', credits: 0,
-      });
-      if (user) await databaseService.logAudit(user, 'QuickEnroll', `Enrolled ${selectedStudent.studentName} in ${course.courseName}`);
-      await handleSelectStudent(selectedStudent);
-    } catch (e) {
-      console.error('Enrollment failed:', e);
-    } finally {
-      setEnrolling(null);
-    }
   };
 
   // --- Save Plan ---
@@ -894,11 +874,16 @@ const TranscriptGenerator = ({ user }) => {
                                       </select>
                                     </td>
                                     <td className="px-1 py-1.5 text-center">
-                                      <button onClick={() => handleDeleteEnrollment(e.id, e.courseName)}
-                                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all"
-                                        title="Remove from transcript">
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
+                                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                                        <span className="p-0.5 rounded text-slate-300" title="Click any cell to edit">
+                                          <Pencil className="w-3 h-3" />
+                                        </span>
+                                        <button onClick={() => handleDeleteEnrollment(e.id, e.courseName)}
+                                          className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+                                          title="Remove from transcript">
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 );
@@ -1149,10 +1134,6 @@ const TranscriptGenerator = ({ user }) => {
                                       <p className="text-xs font-semibold text-slate-700 truncate">{course.courseName}</p>
                                       {course.teacherName && <p className="text-[10px] text-slate-400">{course.teacherName}</p>}
                                     </div>
-                                    <button onClick={() => handleQuickEnroll(course)} disabled={enrolling === course.id}
-                                      className="text-[11px] font-bold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2.5 py-1 rounded-lg transition disabled:opacity-50 shrink-0">
-                                      {enrolling === course.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Enroll'}
-                                    </button>
                                   </div>
                                 );
                               })}
