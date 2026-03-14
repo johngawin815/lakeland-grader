@@ -11,7 +11,6 @@ import ClassAnalytics from './ClassAnalytics';
 import GradeCardPreview from './GradeCardPreview';
 import NewAssignmentModal from './modals/NewAssignmentModal';
 import WeightSettingsModal from './modals/WeightSettingsModal';
-import BulkFillModal from './modals/BulkFillModal';
 import { useGradebook } from '../../hooks/useGradebook';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { useUndoStack } from '../../hooks/useUndoStack';
@@ -26,7 +25,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     finalGrades, loading, dirty, previousGrades,
     getCategoryPercentage, getTotalAbsences,
     handleGradeChange: rawGradeChange,
-    handleAddAssignment, handleBulkFill,
+    handleAddAssignment,
     handleAttendanceUpdate, handleUpdateCategories,
     markClean,
   } = useGradebook(course?.id, user?.units);
@@ -35,8 +34,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
   const [activeTab, setActiveTab] = useState('grades');
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedStudentForPanel, setSelectedStudentForPanel] = useState(null);
-  const [activeModal, setActiveModal] = useState(null); // 'assignment' | 'weights' | 'bulkFill' | 'export' | null
-  const [bulkFillAssignmentId, setBulkFillAssignmentId] = useState(null);
+  const [activeModal, setActiveModal] = useState(null); // 'assignment' | 'weights' | 'export' | null
   const [selectedUnit, setSelectedUnit] = useState('Harmony');
 
   // --- UNDO/REDO ---
@@ -176,11 +174,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
     if (onNavigateToGradeCards) onNavigateToGradeCards();
   }, [finalGrades, categories, getCategoryPercentage, getTotalAbsences, previousGrades, setGradeCardPayload, course, user, onNavigateToGradeCards, commentTone]);
-
-  const handleOpenBulkFill = useCallback((assignmentId) => {
-    setBulkFillAssignmentId(assignmentId);
-    setActiveModal('bulkFill');
-  }, []);
 
   // --- SAVE STATUS DISPLAY ---
   const getSaveStatusDisplay = () => {
@@ -425,14 +418,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         onClose={() => setActiveModal(null)}
         categories={categories}
         onSave={handleUpdateCategories}
-      />
-
-      <BulkFillModal
-        isOpen={activeModal === 'bulkFill'}
-        onClose={() => setActiveModal(null)}
-        assignmentName={assignments.find(a => a.id === bulkFillAssignmentId)?.name || ''}
-        studentCount={students.length}
-        onApply={(value) => handleBulkFill(bulkFillAssignmentId, value)}
       />
 
     </div>

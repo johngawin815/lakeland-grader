@@ -111,7 +111,7 @@ const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
     if (activeStudent && activeStudent !== formData.studentName) {
       setFormData(prev => ({ ...prev, studentName: activeStudent }));
     }
-  }, [activeStudent]);
+  }, [activeStudent, formData.studentName]);
 
   // Auto-fill from gradebook payload
   useEffect(() => {
