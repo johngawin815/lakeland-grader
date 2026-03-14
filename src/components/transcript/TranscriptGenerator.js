@@ -812,8 +812,6 @@ const TranscriptGenerator = ({ user }) => {
                         {SUBJECT_AREAS.map(area => {
                           const courses = enrollmentsBySubject[area];
                           const isCollapsed = collapsedSubjects.has(area);
-                          const hasCoursesOrAdding = courses.length > 0 || addingCourseToSubject === area;
-                          if (!hasCoursesOrAdding) return null;
                           return (
                             <React.Fragment key={area}>
                               {/* Subject section header */}
