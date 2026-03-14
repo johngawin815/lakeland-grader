@@ -53,7 +53,7 @@ const CourseFormModal = ({ isOpen, onClose, course, user, onSaved }) => {
   // Auto-save to localStorage after each edit
   useEffect(() => {
     localStorage.setItem(LS_KEY, JSON.stringify(formData));
-  }, [formData]);
+  }, [formData, LS_KEY]);
 
   if (!isOpen) return null;
 

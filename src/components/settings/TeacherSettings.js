@@ -28,7 +28,7 @@ const TeacherSettings = ({ user, onUpdateUser }) => {
     setIsDirty(false);
   }, [selectedUnits, user, onUpdateUser]);
 
-  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: selectedUnits.length > 0 });
+  useAutoSave(isDirty, saveFn, { delay: 3000, enabled: selectedUnits.length > 0 });
 
   // Mark dirty on unit change
   useEffect(() => {

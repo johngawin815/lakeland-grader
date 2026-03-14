@@ -6,13 +6,8 @@ import { databaseService } from '../../services/databaseService';
 const DocumentUploadPortal = ({ onBack }) => {
   const [passcodeInput, setPasscodeInput] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
-  // Local storage key for document upload
+  const [studentData, setStudentData] = useState(null);
   const LS_KEY = `documentUpload_${studentData?.id || 'anon'}`;
-  const saved = studentData?.id ? localStorage.getItem(LS_KEY) : null;
-  const [studentData, setStudentData] = useState(() => {
-    if (saved) return JSON.parse(saved);
-    return null;
-  });
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -31,7 +26,7 @@ const DocumentUploadPortal = ({ onBack }) => {
     setIsDirty(false);
   }, [studentData]);
 
-  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!studentData });
+  useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!studentData });
 
   // Mark dirty on uploaded documents change
   useEffect(() => {
@@ -39,7 +34,7 @@ const DocumentUploadPortal = ({ onBack }) => {
       setIsDirty(true);
       if (studentData.id) localStorage.setItem(LS_KEY, JSON.stringify(studentData));
     }
-  }, [studentData]);
+  }, [studentData, LS_KEY]);
 
   const verifyPasscode = async () => {
     setError('');

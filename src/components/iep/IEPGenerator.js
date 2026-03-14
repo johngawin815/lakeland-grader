@@ -318,12 +318,12 @@ const IEPGenerator = ({ user }) => {
     await databaseService.saveIepDraft({ ...draft, lastModified: new Date().toISOString(), modifiedBy: user?.name || 'Unknown' });
     setIsDirty(false);
   }, [draft, selectedStudent, user]);
-  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
+  useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
 
   // Mark dirty on draft change
   useEffect(() => {
     if (selectedStudent) setIsDirty(true);
-  }, [draft]);
+  }, [draft, selectedStudent]);
 
   // Load students on mount
   useEffect(() => {

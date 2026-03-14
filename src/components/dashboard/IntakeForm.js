@@ -20,7 +20,7 @@ const IntakeForm = ({ onSave, units, defaultUnit }) => {
   React.useEffect(() => {
     const formData = watch();
     localStorage.setItem(LS_KEY, JSON.stringify(formData));
-  }, [watch]);
+  }, [watch, LS_KEY]);
 
   const [openSections, setOpenSections] = useState({
     student: true,

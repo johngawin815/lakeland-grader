@@ -228,7 +228,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   };
 
   // Use auto-save hook
-  const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
+  const { saveStatus } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
 
   // Auto-save indicator
   const AutoSaveStatus = () => {
