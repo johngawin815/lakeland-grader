@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
-  ClipboardList, Shield, BookOpen, FileSpreadsheet, GraduationCap,
+  ClipboardList, Shield, FileSpreadsheet,
   Calendar, ScrollText,
   FileCheck, NotebookPen, Upload, Settings, Loader2
 } from 'lucide-react';
@@ -13,7 +13,6 @@ const KTEAReporter = lazy(() => import('../ktea/KTEAReporter'));
 const DischargeNarrativeBuilder = lazy(() => import('../discharge/DischargeNarrativeBuilder'));
 const CurriculumMaps = lazy(() => import('../curriculum/CurriculumMaps'));
 const StudentMasterDashboard = lazy(() => import('../dashboard/StudentMasterDashboard'));
-const GradeGenerator = lazy(() => import('../grading/GradeGenerator'));
 const GradeSpreadsheetModal = lazy(() => import('../grading/GradeSpreadsheetModal'));
 const AuditLog = lazy(() => import('./AuditLog'));
 const IEPGenerator = lazy(() => import('../iep/IEPGenerator'));
@@ -21,7 +20,6 @@ const TranscriptGenerator = lazy(() => import('../transcript/TranscriptGenerator
 const WorkbookGenerator = lazy(() => import('../workbook/WorkbookGenerator'));
 const TeacherSettings = lazy(() => import('../settings/TeacherSettings'));
 const DocumentUploadPortal = lazy(() => import('../upload/DocumentUploadPortal'));
-const ElementaryGradeCard = lazy(() => import('../grading/ElementaryGradeCard'));
 
 const getGreeting = () => {
   const hour = new Date().getHours();

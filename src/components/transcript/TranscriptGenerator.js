@@ -134,35 +134,6 @@ const getPriorityGaps = (gaps, creditsEarned) =>
       return (gaps[b] ?? 0) - (gaps[a] ?? 0);
     });
 
-// ─── COMPACT PROGRESS BAR (kept for Plan tab gap cards) ─────────────────────
-
-const ProgressBar = ({ label, earned, required, inProgress = 0 }) => {
-  const pct = required > 0 ? Math.min(100, (earned / required) * 100) : 100;
-  const pctWithIp = required > 0 ? Math.min(100, ((earned + inProgress) / required) * 100) : 100;
-  const gap = Math.max(0, required - earned);
-  const color = pct >= 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-500';
-  const ipColor = pct >= 100 ? 'bg-emerald-200' : pct >= 50 ? 'bg-amber-200' : 'bg-red-200';
-
-  return (
-    <div className="space-y-0.5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-700">{label}</span>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-bold text-slate-500">{earned}/{required}</span>
-          {gap > 0 && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1 py-0.5 rounded">-{gap}</span>}
-          {gap === 0 && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
-        </div>
-      </div>
-      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full relative" style={{ width: `${pctWithIp}%` }}>
-          <div className={`absolute inset-0 ${ipColor} rounded-full`} />
-          <div className={`absolute inset-y-0 left-0 ${color} rounded-full`} style={{ width: pct > 0 ? `${(pct / pctWithIp) * 100}%` : '0%' }} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ─── DONUT CHART (overall progress ring) ────────────────────────────────────
 
 const DonutChart = ({ earned, total }) => {
