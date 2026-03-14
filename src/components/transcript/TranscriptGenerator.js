@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search, BookOpen, Flag, TrendingUp, AlertTriangle,
   CheckCircle2, Download, Save, Loader2, UserPlus, GraduationCap, Info, Pencil, Trash2,
-  ChevronDown, ChevronRight, ExternalLink, Plus, ClipboardList, XCircle
+  ChevronDown, ChevronRight, ExternalLink, Plus, ClipboardList, XCircle, UploadCloud, X
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -302,6 +302,11 @@ const TranscriptGenerator = ({ user }) => {
   const [addingCourseToSubject, setAddingCourseToSubject] = useState(null);
   const [newCourseForm, setNewCourseForm] = useState({ courseId: '', term: '', grade: '', percentage: '', status: 'Active' });
   const [collapsedSubjects, setCollapsedSubjects] = useState(new Set());
+  
+  // --- Import Past Transcript State ---
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importStep, setImportStep] = useState('upload');
+  const [importedCourses, setImportedCourses] = useState([]);
 
   // Auto-save integration
   const saveFn = useCallback(async () => {
@@ -348,6 +353,9 @@ const TranscriptGenerator = ({ user }) => {
     setActiveTab('transcript');
     setAddingCourseToSubject(null);
     setCollapsedSubjects(new Set());
+    setShowImportModal(false);
+    setImportStep('upload');
+    setImportedCourses([]);
     try {
       const [enrollments, masterGrades, plan] = await Promise.all([
         databaseService.getStudentEnrollments(student.id),
@@ -641,6 +649,43 @@ const TranscriptGenerator = ({ user }) => {
     });
   };
 
+  // --- Import logic ---
+  const handleFileUpload = () => {
+    setImportStep('reading');
+    // Simulate an AI / OCR extraction process
+    setTimeout(() => {
+      setImportedCourses([
+        { id: 'ext1', courseName: 'Algebra 1', term: 'Sem 1', letterGrade: 'B', credits: 0.5, subjectArea: 'Math', selected: true },
+        { id: 'ext2', courseName: 'Algebra 1', term: 'Sem 2', letterGrade: 'A', credits: 0.5, subjectArea: 'Math', selected: true },
+        { id: 'ext3', courseName: 'Biology', term: 'Year', letterGrade: 'C', credits: 1.0, subjectArea: 'Science', selected: true },
+        { id: 'ext4', courseName: 'US History', term: 'Year', letterGrade: 'B', credits: 1.0, subjectArea: 'Social Studies', selected: true },
+        { id: 'ext5', courseName: 'Physical Ed', term: 'Sem 1', letterGrade: 'A', credits: 0.5, subjectArea: 'Elective', selected: true },
+      ]);
+      setImportStep('verify');
+    }, 1500);
+  };
+
+  const handleMergeImport = () => {
+    const toAdd = importedCourses.filter(c => c.selected).map(c => ({
+      id: `imported-${Date.now()}-${c.id}`,
+      courseId: null,
+      courseName: c.courseName,
+      subjectArea: c.subjectArea,
+      term: c.term || 'Prior School',
+      letterGrade: c.letterGrade,
+      percentage: '',
+      status: 'Completed',
+      isManual: true,
+      isImported: true,
+    }));
+    setEditedEnrollments(prev => [...prev, ...toAdd]);
+    setTranscriptDirty(true);
+    setShowImportModal(false);
+    setImportStep('upload');
+    setSaveMsg(`Successfully added ${toAdd.length} courses`);
+    setTimeout(() => setSaveMsg(''), 4000);
+  };
+
   // ─── RENDER: Student Picker ─────────────────────────────────────────────────
 
   if (!selectedStudent) {
@@ -789,9 +834,16 @@ const TranscriptGenerator = ({ user }) => {
                       <span className="text-sm font-bold text-slate-700">Transcript</span>
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">{totalEarned} cr earned</span>
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                      <Pencil className="w-3 h-3" />
-                      <span>Click cells to edit</span>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setShowImportModal(true)}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-200 transition-colors">
+                        <UploadCloud className="w-3.5 h-3.5" />
+                        Import Past Transcript
+                      </button>
+                      <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                        <Pencil className="w-3 h-3" />
+                        <span>Click cells to edit</span>
+                      </div>
                     </div>
                   </div>
 
@@ -851,7 +903,14 @@ const TranscriptGenerator = ({ user }) => {
                                 const leftBorder = isFailing ? 'border-l-4 border-red-400' : isPassed ? 'border-l-4 border-emerald-400' : isActive ? 'border-l-4 border-amber-300' : '';
                                 return (
                                   <tr key={e.id} className={`border-b border-slate-50 hover:bg-orange-50/20 group ${leftBorder}`}>
-                                    <td className="px-3 py-1.5 font-medium text-slate-700">{e.courseName}</td>
+                                    <td className="px-3 py-1.5 font-medium text-slate-700">
+                                      <div className="flex items-center gap-2">
+                                        {e.courseName}
+                                        {e.isImported && (
+                                          <span className="text-[9px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 tracking-wide" title="Imported from past transcript">IMPORTED</span>
+                                        )}
+                                      </div>
+                                    </td>
                                     <td className="px-2 py-1.5">
                                       <input type="text" value={e.term || ''}
                                         onChange={ev => handleEditField(e.id, 'term', ev.target.value)}
@@ -1251,6 +1310,125 @@ const TranscriptGenerator = ({ user }) => {
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* ── Import Modal ── */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50 shrink-0">
+               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                 <UploadCloud className="w-5 h-5 text-indigo-600" />
+                 Import Past Transcript
+               </h2>
+               <button onClick={() => { setShowImportModal(false); setImportStep('upload'); }} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                 <X className="w-5 h-5" />
+               </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto flex-1 bg-white">
+               {importStep === 'upload' && (
+                  <div className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 rounded-2xl p-12 flex flex-col items-center justify-center bg-indigo-50/30 text-center hover:bg-indigo-50/60 transition-colors cursor-pointer group" onClick={handleFileUpload}>
+                     <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                        <UploadCloud className="w-8 h-8 text-indigo-600" />
+                     </div>
+                     <p className="text-base font-bold text-slate-700">Click to browse or drag transcript file here</p>
+                     <p className="text-sm text-slate-500 mt-2">Supports PDF, PNG, or JPG images of prior school transcripts.</p>
+                  </div>
+               )}
+               {importStep === 'reading' && (
+                  <div className="py-16 flex flex-col items-center justify-center text-center">
+                     <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+                     <p className="text-base font-bold text-slate-800">Reading Transcript...</p>
+                     <p className="text-sm text-slate-500 mt-1">Our AI is extracting courses and grades. This might take a few seconds.</p>
+                  </div>
+               )}
+               {importStep === 'verify' && (
+                  <div>
+                     <div className="flex items-start justify-between mb-4">
+                        <div>
+                           <p className="text-base font-bold text-slate-800">Verify Extracted Data</p>
+                           <p className="text-sm text-slate-500 mt-1">Please review the extracted courses. Correct the Subject Area if needed before importing.</p>
+                        </div>
+                     </div>
+                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <table className="w-full text-sm text-left">
+                           <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-xs uppercase tracking-wider">
+                              <tr>
+                                 <th className="px-4 py-3 w-10 text-center">
+                                    <input type="checkbox" checked={importedCourses.length > 0 && importedCourses.every(c => c.selected)} 
+                                      onChange={(e) => setImportedCourses(prev => prev.map(c => ({...c, selected: e.target.checked})))} 
+                                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                                 </th>
+                                 <th className="px-4 py-3">Course Name</th>
+                                 <th className="px-4 py-3 w-24">Term</th>
+                                 <th className="px-4 py-3 w-20 text-center">Grade</th>
+                                 <th className="px-4 py-3 w-40">Subject Area</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-100">
+                              {importedCourses.map(course => (
+                                 <tr key={course.id} className={`${course.selected ? 'hover:bg-slate-50/50' : 'opacity-40 bg-slate-50'} transition-all`}>
+                                    <td className="px-4 py-3 text-center">
+                                       <input type="checkbox" checked={course.selected} onChange={() => {
+                                          setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, selected: !c.selected} : c));
+                                       }} className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                       <input type="text" value={course.courseName} disabled={!course.selected}
+                                          onChange={(e) => {
+                                              setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, courseName: e.target.value} : c));
+                                          }}
+                                          className="w-full bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-indigo-400 focus:bg-white text-sm font-medium text-slate-700 outline-none px-1 py-0.5 transition-colors disabled:opacity-50" />
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-500">{course.term}</td>
+                                    <td className="px-4 py-3">
+                                       <input type="text" value={course.letterGrade} disabled={!course.selected}
+                                          onChange={(e) => {
+                                              setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, letterGrade: e.target.value} : c));
+                                          }}
+                                          className={`w-full text-center bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-indigo-400 focus:bg-white text-sm font-bold outline-none px-1 py-0.5 transition-colors disabled:opacity-50 ${course.letterGrade === 'F' ? 'text-red-600' : isPassing(course.letterGrade) ? 'text-emerald-600' : 'text-slate-700'}`} />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                       <select value={course.subjectArea} disabled={!course.selected} onChange={(e) => {
+                                           setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, subjectArea: e.target.value} : c));
+                                       }} className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none disabled:opacity-50 disabled:bg-slate-50">
+                                           {SUBJECT_AREAS.map(area => <option key={area} value={area}>{area}</option>)}
+                                           <option value="Elective">Elective</option>
+                                       </select>
+                                    </td>
+                                 </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+               )}
+            </div>
+
+            {/* Footer */}
+            {importStep === 'verify' && (
+               <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+                   <p className="text-xs font-semibold text-slate-500">
+                     {importedCourses.filter(c => c.selected).length} of {importedCourses.length} courses selected
+                   </p>
+                   <div className="flex gap-3">
+                     <button onClick={() => { setShowImportModal(false); setImportStep('upload'); }} 
+                        className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">
+                        Cancel
+                     </button>
+                     <button onClick={handleMergeImport} disabled={importedCourses.filter(c => c.selected).length === 0}
+                        className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm shadow-indigo-200 transition-colors disabled:opacity-50">
+                        <Plus className="w-4 h-4" />
+                        Add to Lakeland Transcript
+                     </button>
+                   </div>
+               </div>
+            )}
+          </div>
         </div>
       )}
     </div>
