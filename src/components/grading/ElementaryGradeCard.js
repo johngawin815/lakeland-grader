@@ -23,8 +23,11 @@ import {
   getQuarterCompletion,
   getTotalCompletion,
 } from './elementaryGradeCardData';
+import { useGrading } from '../../context/GradingContext';
 
-const ElementaryGradeCard = ({ user }) => {
+const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
+  const { gradeCardPayload, clearGradeCardPayload } = useGrading();
+
   // Local storage key for elementary grade card
   const LS_KEY = `elementaryGradeCard_${user?.email || 'anon'}`;
   const [formData, setFormData] = useState(() => {
@@ -102,6 +105,46 @@ const ElementaryGradeCard = ({ user }) => {
       setIsFetching(false);
     }
   };
+
+  // Auto-fill activeStudent if provided
+  useEffect(() => {
+    if (activeStudent && activeStudent !== formData.studentName) {
+      setFormData(prev => ({ ...prev, studentName: activeStudent }));
+    }
+  }, [activeStudent]);
+
+  // Auto-fill from gradebook payload
+  useEffect(() => {
+    if (gradeCardPayload && isEmbedded) {
+      const qStr = gradeCardPayload.quarter || 'Q1';
+      const qNum = qStr.replace('Q', '');
+      const subjArea = gradeCardPayload.subjectArea || '';
+
+      let subjId = null;
+      if (subjArea.includes('English') || subjArea.includes('ELA')) subjId = 1;
+      else if (subjArea.includes('Math')) subjId = 2;
+      else if (subjArea.includes('Science')) subjId = 3;
+      else if (subjArea.includes('Social')) subjId = 4;
+      else if (subjArea.includes('PE') || subjArea.includes('Physical')) subjId = 5;
+
+      setFormData(prev => {
+        const next = { ...prev, studentName: gradeCardPayload.studentName };
+        if (gradeCardPayload.gradeLevel) next.gradeLevel = String(gradeCardPayload.gradeLevel);
+        if (gradeCardPayload.schoolYear) next.schoolYear = gradeCardPayload.schoolYear;
+        if (gradeCardPayload.teacherName) next.teacher = gradeCardPayload.teacherName;
+        
+        if (subjId) {
+          next[`eg_q${qNum}_subj${subjId}`] = gradeCardPayload.courseLetterGrade || '';
+        }
+        localStorage.setItem(LS_KEY, JSON.stringify(next));
+        return next;
+      });
+
+      setFetchBanner('Data smart-loaded from Gradebook!');
+      setTimeout(() => setFetchBanner(''), 5000);
+      clearGradeCardPayload();
+    }
+  }, [gradeCardPayload, isEmbedded, clearGradeCardPayload, LS_KEY]);
 
   // --- Quick-fill actions ---
   const fillQuarter = (quarter, section, value) => {
@@ -242,9 +285,10 @@ const ElementaryGradeCard = ({ user }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 font-sans text-slate-800">
+    <div className={`flex flex-col h-full bg-slate-50 font-sans text-slate-800 ${isEmbedded ? 'rounded-xl border border-slate-200 shadow-sm overflow-hidden' : ''}`}>
 
       {/* HEADER */}
+      {!isEmbedded && (
       <div className="shrink-0 bg-white border-b border-slate-200 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center gap-3">
           <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -256,9 +300,10 @@ const ElementaryGradeCard = ({ user }) => {
           )}
         </div>
       </div>
+      )}
 
       {/* SCROLLABLE BODY */}
-      <div className="flex-1 overflow-y-auto px-4 py-5 pb-28">
+      <div className={`flex-1 overflow-y-auto px-4 ${isEmbedded ? 'py-4 pb-20' : 'py-5 pb-28'}`}>
         <div className="max-w-6xl mx-auto space-y-4">
 
           {/* FETCH BANNER */}

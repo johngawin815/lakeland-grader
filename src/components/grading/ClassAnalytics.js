@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, Users, Award, AlertTriangle, BarChart3, XCircle } from 'lucide-react';
+import { TrendingUp, Users, Award, AlertTriangle, BarChart3, XCircle, GraduationCap } from 'lucide-react';
 import { calculateLetterGrade } from '../../utils/gradeCalculator';
 
-const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades, attendance }) => {
+const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades, attendance, onGenerateGradeCard, onStudentClick }) => {
 
   const stats = useMemo(() => {
     const validGrades = students
@@ -175,16 +175,32 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
           ) : (
             <div className="space-y-2">
               {failingStudents.map(s => (
-                <div key={s.id} className="flex items-center justify-between bg-rose-50 rounded-xl px-4 py-3 border border-rose-100">
-                  <div>
-                    <span className="text-sm font-bold text-slate-800">{s.name}</span>
+                <div key={s.id} className="flex items-center justify-between bg-rose-50 rounded-xl px-4 py-3 border border-rose-100 group">
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => onStudentClick && onStudentClick(s)}
+                      className="text-sm font-bold text-slate-800 hover:text-indigo-600 transition-colors text-left"
+                    >
+                      {s.name}
+                    </button>
                     {s.absences > 0 && (
-                      <span className="ml-2 text-xs font-bold text-rose-500 bg-rose-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-bold text-rose-500 bg-rose-100 px-2 py-0.5 rounded-full">
                         {s.absences} absences
                       </span>
                     )}
                   </div>
-                  <span className="text-sm font-black text-rose-600">{s.grade.toFixed(1)}%</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-black text-rose-600">{s.grade.toFixed(1)}%</span>
+                    {onGenerateGradeCard && (
+                      <button 
+                        onClick={() => onGenerateGradeCard(s)}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-rose-200 text-rose-500 hover:text-rose-700 transition-all"
+                        title="Generate Grade Card"
+                      >
+                        <GraduationCap className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -253,11 +269,25 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
           </p>
           <div className="space-y-2">
             {absenceCorrelation.map(s => (
-              <div key={s.id} className="flex items-center justify-between bg-slate-50/80 rounded-xl px-4 py-3 border border-amber-200/50">
-                <span className="text-sm font-bold text-slate-800">{s.name}</span>
+              <div key={s.id} className="flex items-center justify-between bg-slate-50/80 rounded-xl px-4 py-3 border border-amber-200/50 group">
+                <button 
+                  onClick={() => onStudentClick && onStudentClick(s)}
+                  className="text-sm font-bold text-slate-800 hover:text-indigo-600 transition-colors text-left"
+                >
+                  {s.name}
+                </button>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="font-bold text-amber-700">{s.absences} absences</span>
                   <span className="font-bold text-rose-600">{s.grade.toFixed(1)}%</span>
+                  {onGenerateGradeCard && (
+                    <button 
+                      onClick={() => onGenerateGradeCard(s)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-amber-200/50 text-amber-600 hover:text-amber-800 transition-all"
+                      title="Generate Grade Card"
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

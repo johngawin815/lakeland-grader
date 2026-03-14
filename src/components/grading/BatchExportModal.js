@@ -63,23 +63,26 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
       const defaultFilename = templateConfig?.filename || 'quarter_card_template.docx';
       const upperFilename = UPPER_LEVEL_CONFIG.filename;
 
-      const [defaultResp, upperResp] = await Promise.all([
+      const [defaultResp, upperResp, elemResp] = await Promise.all([
         fetch(`/templates/${defaultFilename}`),
         fetch(`/templates/${upperFilename}`),
+        fetch(`/templates/grade_card_elementary_grand.docx`),
       ]);
       if (!defaultResp.ok) throw new Error(`Template not found: ${defaultFilename}`);
 
       const defaultBuffer = await defaultResp.arrayBuffer();
       const upperBuffer = upperResp.ok ? await upperResp.arrayBuffer() : null;
+      const elemBuffer = elemResp.ok ? await elemResp.arrayBuffer() : null;
 
       const zip = new JSZip();
 
       for (let i = 0; i < selected.length; i++) {
         const student = selected[i];
-        const gradeLevel = parseInt(formData?.gradeLevel || '0', 10);
+        const gradeLevel = parseInt(student.gradeLevel || formData?.gradeLevel || '0', 10);
         const useUpperLevel = gradeLevel >= 9 && gradeLevel <= 12 && upperBuffer;
+        const useElementary = gradeLevel >= 1 && gradeLevel <= 5 && elemBuffer;
 
-        const templateBuffer = useUpperLevel ? upperBuffer : defaultBuffer;
+        const templateBuffer = useUpperLevel ? upperBuffer : useElementary ? elemBuffer : defaultBuffer;
         const docZip = new PizZip(templateBuffer);
         const doc = new Docxtemplater(docZip, {
           paragraphLoop: true,
@@ -115,6 +118,25 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
             data[`${qPrefix}_r${row}_grade`] = formData?.[`${prefix}Grade`] || '';
             data[`${qPrefix}_r${row}_instructor`] = formData?.[`${prefix}Instructor`] || '';
           });
+        } else if (useElementary) {
+          const qNum = (formData?.quarterName || 'Q1').replace('Q', '');
+          data = {
+            student_name: student.name,
+            school_year: formData?.schoolYear || getCurrentSchoolYear(),
+            grade_level: student.gradeLevel || formData?.gradeLevel || '',
+            teacher: formData?.teacherName || '',
+            admit_date: formData?.admitDate || '',
+            discharge_date: formData?.dischargeDate || '',
+          };
+          data[`q${qNum}_subj1`] = formData?.engGrade || student.letter || '';
+          data[`q${qNum}_subj2`] = formData?.mathGrade || '';
+          data[`q${qNum}_subj3`] = formData?.sciGrade || '';
+          data[`q${qNum}_subj4`] = formData?.socGrade || '';
+          data[`q${qNum}_subj5`] = formData?.elec1Grade || '';
+          
+          for (let b = 1; b <= 22; b++) {
+            data[`q${qNum}_beh${b}`] = 'S';
+          }
         } else {
           data = {
             student_name: student.name,

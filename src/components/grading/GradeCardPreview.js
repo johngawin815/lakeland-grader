@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { X, Loader2, Download, RotateCcw, FileDown, CloudUpload, ChevronDown, FileArchive, Eraser, Check } from 'lucide-react';
+import { X, Loader2, Download, RotateCcw, FileDown, CloudUpload, ChevronDown, FileArchive, Eraser, Check, MoreVertical, Edit } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 import { saveAs } from 'file-saver';
 import ExcelJS from 'exceljs';
@@ -72,7 +72,7 @@ const gradeColor = (g) => {
 // localStorage key for remembering last-used bulk export type (Task 7)
 const EXPORT_PREF_KEY = 'gradeCardPreview_lastExportType';
 
-const GradeCardPreview = ({ formData, onClose }) => {
+const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
   const [data, setData]                   = useState(null);
   const LS_KEY = `gradeSpreadsheetPreview_${formData.quarterName}_${formData.schoolYear}`;
   const [loading, setLoading]             = useState(false);
@@ -86,6 +86,8 @@ const GradeCardPreview = ({ formData, onClose }) => {
   const [bulkProgress, setBulkProgress]   = useState(0);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const exportMenuRef = useRef(null);
+  const [actionMenuOpenId, setActionMenuOpenId] = useState(null);
+  const actionMenuRef = useRef(null);
 
   // Task 4: per-row save flash state
   const [savedRows, setSavedRows] = useState(new Set());
@@ -103,24 +105,47 @@ const GradeCardPreview = ({ formData, onClose }) => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/templates/Q3_GradeSpreadsheet_2025-2026.json');
-      if (!response.ok) throw new Error('Failed to load spreadsheet JSON');
-      const json = await response.json();
-      const units = ['Harmony', 'Integrity'];
+      const students = await databaseService.getAllStudents();
+      const activeStudents = students.filter(s => s.active !== false);
       const mapped = {};
-      units.forEach(unit => {
-        mapped[unit] = (json[unit] || []).map(row => ({
-          name: row[0] || '',
-          grade: row[1] || '',
+
+      await Promise.all(activeStudents.map(async (student) => {
+        const enrollments = await databaseService.getStudentEnrollments(student.id);
+        // Filter by term to map matching school year
+        const termEnrollments = enrollments.filter(e => !formData.schoolYear || e.term === formData.schoolYear);
+
+        const getCourse = (area) => termEnrollments.find(e => e.subjectArea === area);
+        const eng = getCourse('English') || {};
+        const math = getCourse('Math') || {};
+        const sci = getCourse('Science') || {};
+        const soc = getCourse('Social Studies') || {};
+
+        const electives = termEnrollments.filter(e => e.subjectArea === 'Elective' || !['English', 'Math', 'Science', 'Social Studies'].includes(e.subjectArea));
+        const elec1 = electives[0] || {};
+        const elec2 = electives[1] || {};
+
+        const unit = student.unitName || 'Unassigned';
+        if (!mapped[unit]) mapped[unit] = [];
+        
+        mapped[unit].push({
+          id: student.id,
+          studentId: student.id,
+          name: student.studentName || `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+          grade: student.gradeLevel ? String(student.gradeLevel) : '',
           unitName: unit,
-          socCourse: row[2] || '', socGrade: row[3] || '', socPct: row[4] ? row[4].replace('%','') : '', socCred: '',
-          sciCourse: row[5] || '', sciGrade: row[6] || '', sciPct: row[7] ? row[7].replace('%','') : '', sciCred: '',
-          mathCourse: row[8] || '', mathGrade: row[9] || '', mathPct: row[10] ? row[10].replace('%','') : '', mathCred: '',
-          engCourse: row[11] || '', engGrade: row[12] || '', engPct: row[13] ? row[13].replace('%','') : '', engCred: '',
-          elec1Course: row[14] || '', elec1Grade: row[15] || '', elec1Cred: '',
-          elec2Course: row[16] || '', elec2Grade: row[17] || '', elec2Cred: '',
-        }));
+          socCourse: soc.courseName || '', socGrade: soc.letterGrade || '', socPct: soc.percentage != null ? String(soc.percentage) : '', socCred: soc.credits != null ? String(soc.credits) : '',
+          sciCourse: sci.courseName || '', sciGrade: sci.letterGrade || '', sciPct: sci.percentage != null ? String(sci.percentage) : '', sciCred: sci.credits != null ? String(sci.credits) : '',
+          mathCourse: math.courseName || '', mathGrade: math.letterGrade || '', mathPct: math.percentage != null ? String(math.percentage) : '', mathCred: math.credits != null ? String(math.credits) : '',
+          engCourse: eng.courseName || '', engGrade: eng.letterGrade || '', engPct: eng.percentage != null ? String(eng.percentage) : '', engCred: eng.credits != null ? String(eng.credits) : '',
+          elec1Course: elec1.courseName || '', elec1Grade: elec1.letterGrade || '', elec1Pct: elec1.percentage != null ? String(elec1.percentage) : '', elec1Cred: elec1.credits != null ? String(elec1.credits) : '',
+          elec2Course: elec2.courseName || '', elec2Grade: elec2.letterGrade || '', elec2Pct: elec2.percentage != null ? String(elec2.percentage) : '', elec2Cred: elec2.credits != null ? String(elec2.credits) : '',
+        });
+      }));
+
+      Object.keys(mapped).forEach(unit => {
+        mapped[unit].sort((a, b) => a.name.localeCompare(b.name));
       });
+
       setData(mapped);
     } catch (err) {
       console.error('Error loading spreadsheet data:', err);
@@ -128,7 +153,7 @@ const GradeCardPreview = ({ formData, onClose }) => {
     } finally {
       setLoading(false);
     }
-  }, [LS_KEY]);
+  }, [formData.schoolYear]);
 
   useEffect(() => { if (!data) loadData(); }, [data, loadData]);
 
@@ -144,6 +169,17 @@ const GradeCardPreview = ({ formData, onClose }) => {
     const h = (e) => {
       if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
         setExportMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  // Close row action menu on outside click
+  useEffect(() => {
+    const h = (e) => {
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target)) {
+        setActionMenuOpenId(null);
       }
     };
     document.addEventListener('mousedown', h);
@@ -186,8 +222,10 @@ const GradeCardPreview = ({ formData, onClose }) => {
   const buildRowTemplateData = (row) => {
     const gl = parseInt(row.grade, 10);
     const useUpperLevel = gl >= 9 && gl <= 12;
+    const useElementary = gl >= 1 && gl <= 5;
     const qMap = { Q1: 'q1', Q2: 'q2', Q3: 'q3', Q4: 'q4', Summer: 'q5' };
     const qPrefix = qMap[formData.quarterName] || 'q1';
+    const qNum = (formData.quarterName || 'Q1').replace('Q', '');
 
     if (useUpperLevel) {
       const templateData = {
@@ -212,7 +250,26 @@ const GradeCardPreview = ({ formData, onClose }) => {
         templateData[`${qPrefix}_r${s.row}_credits`]    = s.cred || getAutoCredits(s.grade);
         templateData[`${qPrefix}_r${s.row}_instructor`] = getInstructor(unit, s.area);
       });
-      return { templateData, useUpperLevel };
+      return { templateData, useUpperLevel, useElementary };
+    } else if (useElementary) {
+      const templateData = {
+        student_name: row.name,
+        grade_level: row.grade,
+        school_year: formData.schoolYear || '',
+        teacher: '',
+        admit_date: '',
+        discharge_date: '',
+      };
+      templateData[`q${qNum}_subj1`] = row.engGrade || '';
+      templateData[`q${qNum}_subj2`] = row.mathGrade || '';
+      templateData[`q${qNum}_subj3`] = row.sciGrade || '';
+      templateData[`q${qNum}_subj4`] = row.socGrade || '';
+      templateData[`q${qNum}_subj5`] = row.elec1Grade || ''; // PE
+
+      for (let b = 1; b <= 22; b++) {
+        templateData[`q${qNum}_beh${b}`] = (row.engGrade || row.mathGrade) ? 'S' : '';
+      }
+      return { templateData, useUpperLevel: false, useElementary: true };
     } else {
       const templateData = {
         student_name: row.name,
@@ -230,7 +287,7 @@ const GradeCardPreview = ({ formData, onClose }) => {
         elec1_class: row.elec1Course, elec1_grade: row.elec1Grade, elec1_pct: '', elec1_cred: row.elec1Cred || getAutoCredits(row.elec1Grade),
         elec2_class: row.elec2Course, elec2_grade: row.elec2Grade, elec2_pct: '', elec2_cred: row.elec2Cred || getAutoCredits(row.elec2Grade),
       };
-      return { templateData, useUpperLevel };
+      return { templateData, useUpperLevel: false, useElementary: false };
     }
   };
 
@@ -238,15 +295,12 @@ const GradeCardPreview = ({ formData, onClose }) => {
     const rowKey = `${row.studentId}-${row.name}`;
     setGeneratingId(rowKey);
     try {
-      const { templateData, useUpperLevel } = buildRowTemplateData(row);
-      let templateFile;
-      const gradeNum = parseInt(row.grade, 10);
+      const { templateData, useUpperLevel, useElementary } = buildRowTemplateData(row);
+      let templateFile = 'quarter_card_template.docx';
       if (useUpperLevel) {
         templateFile = 'Upper Level Grade Card.docx';
-      } else if (gradeNum >= 1 && gradeNum <= 5) {
+      } else if (useElementary) {
         templateFile = 'grade_card_elementary_grand.docx';
-      } else {
-        templateFile = 'quarter_card_template.docx';
       }
 
       const response = await fetch(`/templates/${templateFile}`);
@@ -282,19 +336,22 @@ const GradeCardPreview = ({ formData, onClose }) => {
         return;
       }
 
-      const [upperResp, quarterResp] = await Promise.all([
+      const [upperResp, quarterResp, elemResp] = await Promise.all([
         fetch('/templates/Upper Level Grade Card.docx'),
         fetch('/templates/quarter_card_template.docx'),
+        fetch('/templates/grade_card_elementary_grand.docx'),
       ]);
       const upperBuffer   = upperResp.ok   ? await upperResp.arrayBuffer()   : null;
       const quarterBuffer = quarterResp.ok ? await quarterResp.arrayBuffer() : null;
+      const elemBuffer    = elemResp.ok    ? await elemResp.arrayBuffer()    : null;
       if (!quarterBuffer) throw new Error('quarter_card_template.docx not found');
 
       const archive = new JSZip();
       for (let i = 0; i < filtered.length; i++) {
         const row = filtered[i];
-        const { templateData, useUpperLevel } = buildRowTemplateData(row);
-        const templateBuffer = useUpperLevel && upperBuffer ? upperBuffer : quarterBuffer;
+        const { templateData, useUpperLevel, useElementary } = buildRowTemplateData(row);
+        
+        const templateBuffer = (useUpperLevel && upperBuffer) ? upperBuffer : (useElementary && elemBuffer) ? elemBuffer : quarterBuffer;
         const docZip = new PizZip(templateBuffer);
         const doc = new Docxtemplater(docZip, { paragraphLoop: true, linebreaks: true, nullGetter: () => '' });
         doc.render(templateData);
@@ -753,23 +810,49 @@ const GradeCardPreview = ({ formData, onClose }) => {
                               );
                             })}
                             {/* Task 4: action column — shows save flash or card-gen button */}
-                            <div className="flex items-center justify-center">
+                            <div className="flex items-center justify-center relative">
                               {justSaved ? (
                                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-600">
                                   <Check className="w-3.5 h-3.5" />
                                 </span>
                               ) : (
-                                <button
-                                  onClick={() => generateRowDocx(row)}
-                                  disabled={generatingId === `${row.studentId}-${row.name}`}
-                                  className="p-1 rounded hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 transition-colors disabled:opacity-50"
-                                  title="Generate grade card"
-                                >
-                                  {generatingId === `${row.studentId}-${row.name}`
-                                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    : <FileDown className="w-3.5 h-3.5" />
-                                  }
-                                </button>
+                                <div className="relative">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActionMenuOpenId(actionMenuOpenId === rowKey ? null : rowKey);
+                                    }}
+                                    className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
+                                    title="Actions"
+                                  >
+                                    {generatingId === `${row.studentId}-${row.name}`
+                                      ? <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                                      : <MoreVertical className="w-3.5 h-3.5" />
+                                    }
+                                  </button>
+                                  
+                                  {actionMenuOpenId === rowKey && !generatingId && (
+                                    <div 
+                                      ref={actionMenuRef}
+                                      className="absolute right-full top-0 mr-2 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200"
+                                    >
+                                      <button
+                                        onClick={() => { setActionMenuOpenId(null); generateRowDocx(row); }}
+                                        className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center gap-2"
+                                      >
+                                        <FileDown className="w-3.5 h-3.5" /> Generate Card
+                                      </button>
+                                      {onEditStudent && (
+                                        <button
+                                          onClick={() => { setActionMenuOpenId(null); onEditStudent(row); }}
+                                          className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center gap-2"
+                                        >
+                                          <Edit className="w-3.5 h-3.5" /> Edit Student
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>

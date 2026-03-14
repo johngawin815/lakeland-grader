@@ -9,6 +9,7 @@ import { FileDown, Printer, FileText, User, BookOpen, Calculator, FlaskConical, 
 import { useGrading } from '../../context/GradingContext';
 import GradeCardPreview from './GradeCardPreview';
 import BatchExportModal from './BatchExportModal';
+import ElementaryGradeCard from './ElementaryGradeCard';
 
 // --- SUBJECT AREA → FORM FIELD MAPPING ---
 const SUBJECT_FIELD_MAP = {
@@ -125,6 +126,16 @@ const TEMPLATES = {
     hasInstructors: true,
     hasAdmitDischarge: true,
     hasSummerQuarter: true,
+  },
+  elementary_grand: {
+    id: 'elementary_grand',
+    label: 'Elementary Grade Card (K-5)',
+    filename: 'grade_card_elementary_grand.docx',
+    hasElectives: false,
+    hasTeacher: true,
+    hasCredits: false,
+    hasGradeLevel: true,
+    hasSchoolYear: true
   }
 };
 
@@ -203,6 +214,13 @@ const GradeGenerator = ({ user, activeStudent }) => {
   };
   useEffect(() => {
     if (gradeCardPayload) {
+      // Auto-switch to elementary and let ElementaryGradeCard handle the payload
+      const gl = parseInt(gradeCardPayload.gradeLevel, 10);
+      if (gl >= 1 && gl <= 5) {
+        setSelectedTemplate('elementary_grand');
+        return; // Do not clear the payload here; ElementaryGradeCard will pick it up
+      }
+
       const updates = {
         studentName: gradeCardPayload.studentName || '',
         gradeLevel: gradeCardPayload.gradeLevel || '',
@@ -233,7 +251,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
       setTimeout(() => setAutoFillBanner(false), 5000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gradeCardPayload, clearGradeCardPayload]);
+  }, [gradeCardPayload, clearGradeCardPayload, selectedTemplate]);
 
   // Fetch all cross-course grades for a student
   const fetchAllGrades = async (studentName) => {
@@ -324,7 +342,9 @@ const GradeGenerator = ({ user, activeStudent }) => {
     const gl = parseInt(formData.gradeLevel, 10);
     if (gl >= 9 && gl <= 12) {
       setSelectedTemplate('upper_level');
-    } else if (gl >= 1 && gl <= 8 && selectedTemplate === 'upper_level') {
+    } else if (gl >= 1 && gl <= 5) {
+      setSelectedTemplate('elementary_grand');
+    } else if (gl >= 6 && gl <= 8 && (selectedTemplate === 'upper_level' || selectedTemplate === 'elementary_grand')) {
       setSelectedTemplate('quarter');
     }
   }, [formData.gradeLevel, selectedTemplate]);
@@ -595,7 +615,12 @@ const GradeGenerator = ({ user, activeStudent }) => {
           )}
 
           {/* UNIFIED FORM CARD */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 divide-y divide-slate-100">
+          {selectedTemplate === 'elementary_grand' ? (
+            <div className="flex-1 overflow-hidden relative print:hidden">
+              <ElementaryGradeCard user={user} activeStudent={activeStudent || formData.studentName} isEmbedded={true} />
+            </div>
+          ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 divide-y divide-slate-100 mb-6">
 
             {/* Student Information */}
             <div className="p-5">
@@ -684,11 +709,13 @@ const GradeGenerator = ({ user, activeStudent }) => {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
 
       {/* ZONE 3: STICKY ACTION FOOTER */}
-      <div className="shrink-0 sticky bottom-0 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] px-6 py-3 z-10 print:hidden">
+      {selectedTemplate !== 'elementary_grand' && (
+      <div className="shrink-0 sticky bottom-0 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] px-6 py-3 z-20 print:hidden">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
 
           {/* Left: Secondary Actions */}
@@ -754,6 +781,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
           </div>
         </div>
       </div>
+      )}
 
       {/* PREVIEW MODAL */}
       {showPreview && (

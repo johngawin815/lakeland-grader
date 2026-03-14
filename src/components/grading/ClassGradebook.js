@@ -14,7 +14,6 @@ import WeightSettingsModal from './modals/WeightSettingsModal';
 import BulkFillModal from './modals/BulkFillModal';
 import { useGradebook } from '../../hooks/useGradebook';
 import { useAutoSave } from '../../hooks/useAutoSave';
-import Q3GradeSpreadsheet from '../../data/Q3_GradeSpreadsheet_2025-2026.json';
 import { useUndoStack } from '../../hooks/useUndoStack';
 
 
@@ -23,7 +22,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
   // --- CENTRAL STATE via custom hook ---
   const {
-    students: origStudents, assignments, categories, grades: origGrades, attendance,
+    students, assignments, categories, grades, attendance,
     finalGrades, loading, dirty, previousGrades,
     getCategoryPercentage, getTotalAbsences,
     handleGradeChange: rawGradeChange,
@@ -31,44 +30,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     handleAttendanceUpdate, handleUpdateCategories,
     markClean,
   } = useGradebook(course?.id, user?.units);
-
-  // --- Q3 Spreadsheet override ---
-  const [spreadsheetStudents, setSpreadsheetStudents] = useState([]);
-  const [spreadsheetGrades, setSpreadsheetGrades] = useState({});
-
-  useEffect(() => {
-    if (!Q3GradeSpreadsheet) return;
-    const units = ['Harmony', 'Integrity'];
-    let studentsArr = [];
-    let gradesObj = {};
-    units.forEach(unit => {
-      const rows = Q3GradeSpreadsheet[unit] || [];
-      rows.forEach(row => {
-        const name = row[0];
-        const gradeLevel = row[1];
-        studentsArr.push({
-          id: `${unit}-${name.replace(/\s+/g, '-')}`,
-          studentName: name,
-          gradeLevel,
-          unitName: unit,
-          active: true,
-        });
-        gradesObj[`${unit}-${name.replace(/\s+/g, '-')}`] = {
-          // Example: English grade
-          english: row[11],
-          englishPct: row[12],
-          math: row[7],
-          mathPct: row[8],
-          science: row[5],
-          sciencePct: row[6],
-          history: row[3],
-          historyPct: row[4],
-        };
-      });
-    });
-    setSpreadsheetStudents(studentsArr);
-    setSpreadsheetGrades(gradesObj);
-  }, []);
 
   // --- LOCAL UI STATE ---
   const [activeTab, setActiveTab] = useState('grades');
@@ -251,10 +212,6 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
   const statusDisplay = getSaveStatusDisplay();
 
-  // Use spreadsheet data if available
-  const students = spreadsheetStudents.length > 0 ? spreadsheetStudents : origStudents;
-  const grades = spreadsheetStudents.length > 0 ? spreadsheetGrades : origGrades;
-
   return (
     <div className="min-h-screen w-screen h-screen bg-slate-50 p-0 font-sans text-slate-800">
       {!course ? (
@@ -364,6 +321,10 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                     reportDate: new Date().toISOString().split('T')[0],
                   }}
                   onClose={() => {}}
+                  onEditStudent={(row) => {
+                    const realStudent = students.find(s => s.name === row.name) || row;
+                    setSelectedStudentForPanel(realStudent);
+                  }}
                 />
               </div>
             </div>
@@ -428,6 +389,8 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
               categories={categories}
               grades={grades}
               attendance={attendance}
+              onGenerateGradeCard={handleGenerateGradeCard}
+              onStudentClick={setSelectedStudentForPanel}
             />
           )}
         </div>
