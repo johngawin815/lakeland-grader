@@ -271,7 +271,6 @@ const WorkbookGenerator = ({ user }) => {
   const [unitTopic, setUnitTopic] = useState('');
   const [dayNumber, setDayNumber] = useState(1);
   const [dayFocus, setDayFocus] = useState('');
-  const [dayFocus] = useState('');
   const [readingLevel, setReadingLevel] = useState(READING_LEVELS[6].value);
   const [unitWorkbooks, setUnitWorkbooks] = useState([]);
 
