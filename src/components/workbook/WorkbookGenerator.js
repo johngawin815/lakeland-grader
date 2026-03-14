@@ -39,20 +39,20 @@ const DAY_SCOPE_SEQUENCE = [
   {
     day: 1,
     label: 'Overview & Introduction',
-    directive: 'Activate schema and build background knowledge. Introduce the unit essential question and foundational vocabulary through an anticipatory set and guided exploration of the topic\'s historical context.',
+    directive: 'Activate schema and build background knowledge. Introduce the unit essential question and foundational vocabulary through an anticipatory set and guided exploration of the topic context.',
     standards: 'ELA: RI.1 cite textual evidence, L.4 determine word meaning, L.6 academic vocabulary / SS: Developing questions and planning inquiries',
   },
   {
     day: 2,
-    label: 'Historical Narrative I',
-    directive: 'Immersive high-interest historical fiction — Part 1. Students experience a key event or era through a compelling narrative protagonist, building historical empathy and temporal-spatial understanding.',
-    standards: 'ELA: RL.3 analyze character/event development, RL.5 analyze text structure, W.3 narrative writing / SS: Historical empathy, cause and effect, contextualization',
+    label: 'Opinion Texts',
+    directive: 'Read and analyze high-interest opinion/editorial texts relevant to the unit topic. Identify author claims, supporting evidence, and rhetorical strategies. Discuss and debate perspectives.',
+    standards: 'ELA: RI.8 evaluate argument/claims, W.1 write arguments, SL.1 collaborative discussion / SS: Civic literacy, evaluating perspectives, evidence-based reasoning',
   },
   {
     day: 3,
-    label: 'Historical Narrative II',
-    directive: 'Continuation of the narrative arc from Day 2. Deepen the central conflict, introduce a turning point, and connect personal experience to historical consequence through guided close reading.',
-    standards: 'ELA: RL.2 determine theme/central idea, RL.6 analyze point of view, W.3 narrative writing / SS: Continuity and change, multiple historical perspectives',
+    label: 'Informational Research',
+    directive: 'Engage with informational texts and research articles. Extract key facts, synthesize information from multiple sources, and develop research-based responses or presentations.',
+    standards: 'ELA: RI.7 integrate multiple sources, W.2 write informative/explanatory texts, SL.4 present information clearly / SS: Gathering and evaluating sources, using evidence',
   },
   {
     day: 4,
@@ -62,8 +62,8 @@ const DAY_SCOPE_SEQUENCE = [
   },
   {
     day: 5,
-    label: 'Opinion & Persuasion',
-    directive: 'Read opinion/editorial texts, identify rhetorical moves (ethos, pathos, logos), then craft evidence-based argumentative writing using a clear claim-evidence-reasoning framework.',
+    label: 'Argument & Persuasion',
+    directive: 'Craft evidence-based argumentative writing using a clear claim-evidence-reasoning framework. Peer review and revise for clarity and persuasiveness.',
     standards: 'ELA: W.1 write arguments, RI.8 evaluate reasoning, SL.3 evaluate speaker\'s point of view / SS: Civic literacy, evaluating perspectives, evidence-based reasoning',
   },
   {
