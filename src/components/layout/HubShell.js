@@ -272,14 +272,6 @@ const HubShell = () => {
 
         <div className="w-8 h-px bg-slate-700/50 my-1" />
 
-        {/* Exports */}
-        <SidebarButton
-          label={sidebarCollapsed ? '' : 'Exports'}
-          icon={FileSpreadsheet}
-          active={false}
-          onClick={() => setIsSpreadsheetModalOpen(true)}
-        />
-
         {/* Settings */}
         <SidebarButton
           label={sidebarCollapsed ? '' : 'Settings'}
@@ -399,14 +391,14 @@ const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
   <button
     onClick={onClick}
     title={label}
-    className={`w-full flex flex-col items-center gap-0.5 py-1 rounded-xl transition-all duration-200
+    className={`w-full flex flex-col items-center gap-1.5 py-4 rounded-xl transition-all duration-200
       ${active
         ? 'bg-white/10 ring-1 ring-white/10 text-white'
         : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
       }`}
   >
-    <Icon size={20} className={color?.icon || undefined} />
-    <span className="text-[11px] font-semibold leading-tight text-center px-1">
+    <Icon size={28} className={color?.icon || undefined} />
+    <span className="text-[14px] font-semibold leading-tight text-center px-1">
       {label}
     </span>
   </button>
