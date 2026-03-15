@@ -3,6 +3,7 @@ import { X, Download, CheckSquare, Square, Loader2, Users } from 'lucide-react';
 import JSZip from 'jszip';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import toast from 'react-hot-toast';
 import { saveAs } from 'file-saver';
 import { calculateLetterGrade } from '../../utils/gradeCalculator';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
@@ -192,7 +193,7 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
 
     } catch (error) {
       console.error('Batch export error:', error);
-      alert('Error during batch export. Ensure template files exist in public/templates/.');
+      toast.error('Error during batch export. Ensure template files exist in public/templates/.');
     } finally {
       setExporting(false);
       setProgress(0);

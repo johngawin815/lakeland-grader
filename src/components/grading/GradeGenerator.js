@@ -2,6 +2,7 @@ import HonorRollCard from './HonorRollCard';
 import React, { useState, useEffect } from 'react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import toast from 'react-hot-toast';
 
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
@@ -147,7 +148,6 @@ const GradeGenerator = ({ user, activeStudent }) => {
   const [selectedTemplate, setSelectedTemplate] = useState('quarter');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [autoFillBanner, setAutoFillBanner] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
@@ -448,7 +448,7 @@ const GradeGenerator = ({ user, activeStudent }) => {
       saveAs(out, `${formData.studentName || 'Student'}_${templateConfig.label}.docx`);
     } catch (error) {
       console.error("Error generating document:", error);
-      alert("Error generating document. Ensure template files exist in public/templates/.");
+      toast.error("Error generating document. Ensure template files exist in public/templates/.");
     } finally {
       setLoading(false);
     }
@@ -456,14 +456,14 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
   const saveToCloud = async () => {
     const nameToSave = formData.studentName;
-    if (!nameToSave) return alert("Please enter a student name.");
+    if (!nameToSave) return toast.error("Please enter a student name.");
 
     setSaving(true);
     try {
       // --- Persist to Enrollments (same pattern as ClassGradebook) ---
       const students = await databaseService.findStudentByName(nameToSave.trim());
       if (!students || students.length === 0) {
-        alert('Student not found in database. Please check the name and try again.');
+        toast.error('Student not found in database. Please check the name and try again.');
         setSaving(false);
         return;
       }
@@ -514,11 +514,10 @@ const GradeGenerator = ({ user, activeStudent }) => {
 
       await databaseService.addKteaReport(record);
 
-      setSuccessMsg('Saved to Database!');
-      setTimeout(() => setSuccessMsg(''), 3000);
+      toast.success('Saved to Database!');
     } catch (error) {
       console.error("Database Error:", error);
-      alert("Failed to save to database: " + error.message);
+      toast.error("Failed to save to database: " + error.message);
     } finally {
       setSaving(false);
     }
@@ -753,14 +752,8 @@ const GradeGenerator = ({ user, activeStudent }) => {
             </button>
           </div>
 
-          {/* Center: Status */}
-          <div className="flex-1 flex justify-center">
-            {successMsg && (
-              <span className="text-emerald-600 font-bold text-sm flex items-center gap-1.5 animate-in fade-in">
-                <CheckCircle className="w-4 h-4" /> {successMsg}
-              </span>
-            )}
-          </div>
+          {/* Center: Status (Removed for global toast) */}
+          <div className="flex-1 flex justify-center"></div>
 
           {/* Right: Primary Actions */}
           <div className="flex items-center gap-2">

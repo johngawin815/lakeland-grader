@@ -3,6 +3,7 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
+import toast from 'react-hot-toast';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import {
   FileSpreadsheet, User, BookOpen, Heart, Wrench,
@@ -37,7 +38,6 @@ const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
   const [activeQuarter, setActiveQuarter] = useState(1);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
   const [isFetching, setIsFetching] = useState(false);
   const [fetchBanner, setFetchBanner] = useState('');
   const [showScoringKey, setShowScoringKey] = useState(false);
@@ -227,7 +227,7 @@ const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
       saveAs(out, `${formData.studentName || 'Student'}_Elementary_Grade_Card.docx`);
     } catch (error) {
       console.error('Error generating document:', error);
-      alert('Error generating document. Ensure template file exists in public/templates/.');
+      toast.error('Error generating document. Ensure template file exists in public/templates/.');
     } finally {
       setLoading(false);
     }
@@ -246,13 +246,11 @@ const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
         createdAt: new Date().toISOString(),
       };
       await databaseService.addKteaReport(record);
-      setSuccessMsg('Auto-saved to Database!');
-      setTimeout(() => setSuccessMsg(''), 2000);
+      toast.success('Auto-saved to Database!');
       setDirty(false);
     } catch (error) {
       console.error('Database Error:', error);
-      setSuccessMsg('Auto-save failed!');
-      setTimeout(() => setSuccessMsg(''), 2000);
+      toast.error('Auto-save failed!');
     } finally {
       setSaving(false);
     }
@@ -571,14 +569,8 @@ const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
             </button>
           </div>
 
-          {/* Center: Status */}
-          <div className="flex-1 flex justify-center">
-            {successMsg && (
-              <span className="text-emerald-600 font-bold text-sm flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4" /> {successMsg}
-              </span>
-            )}
-          </div>
+          {/* Center: Status (Removed for global toast) */}
+          <div className="flex-1 flex justify-center"></div>
 
           {/* Right: Primary */}
           <div className="flex items-center gap-2">

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import toast from 'react-hot-toast';
 import { databaseService } from '../../services/databaseService';
 import stateGraduationRequirements, { SUBJECT_AREAS } from '../../data/stateGraduationRequirements';
 import { useAutoSave } from '../../hooks/useAutoSave';
@@ -723,7 +724,6 @@ const TranscriptGenerator = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [saveMsg, setSaveMsg] = useState('');
 
   // --- New State ---
   const [activeTab, setActiveTab] = useState('transcript');
@@ -752,8 +752,7 @@ const TranscriptGenerator = ({ user }) => {
     setStudentEnrollments(editedEnrollments.map(e => ({ ...e })));
     setRemovedEnrollmentIds([]);
     setTranscriptDirty(false);
-    setSaveMsg('Transcript auto-saved');
-    setTimeout(() => setSaveMsg(''), 2000);
+    toast.success('Transcript auto-saved');
   }, [editedEnrollments, removedEnrollmentIds, selectedStudent, user]);
 
   // eslint-disable-next-line no-unused-vars
@@ -822,7 +821,6 @@ const TranscriptGenerator = ({ user }) => {
     setRecommendedCourses([]);
     setPlanNotes('');
     setSavedPlan(null);
-    setSaveMsg('');
     setTranscriptDirty(false);
     setRemovedEnrollmentIds([]);
     setActiveTab('transcript');
@@ -908,7 +906,6 @@ const TranscriptGenerator = ({ user }) => {
 
   const handleSaveTranscript = async () => {
     setSavingTranscript(true);
-    setSaveMsg('');
     try {
       for (const enrollment of editedEnrollments) await databaseService.enrollStudent(enrollment);
       for (const id of removedEnrollmentIds) {
@@ -918,11 +915,10 @@ const TranscriptGenerator = ({ user }) => {
       setStudentEnrollments(editedEnrollments.map(e => ({ ...e })));
       setRemovedEnrollmentIds([]);
       setTranscriptDirty(false);
-      setSaveMsg('Transcript saved');
-      setTimeout(() => setSaveMsg(''), 3000);
+      toast.success('Transcript saved');
     } catch (e) {
       console.error('Save transcript failed:', e);
-      setSaveMsg('Save failed');
+      toast.error('Save failed');
     } finally {
       setSavingTranscript(false);
     }
@@ -1018,7 +1014,6 @@ const TranscriptGenerator = ({ user }) => {
   const handleSavePlan = async () => {
     if (!selectedStudent) return;
     setSaving(true);
-    setSaveMsg('');
     try {
       const plan = {
         ...(savedPlan || {}),
@@ -1035,11 +1030,10 @@ const TranscriptGenerator = ({ user }) => {
       const saved = await databaseService.saveTranscriptPlan(plan);
       setSavedPlan(saved);
       if (user) await databaseService.logAudit(user, 'SaveTranscriptPlan', `Saved transcript plan for ${selectedStudent.studentName}`);
-      setSaveMsg('Plan saved');
-      setTimeout(() => setSaveMsg(''), 3000);
+      toast.success('Plan saved');
     } catch (e) {
       console.error('Save failed:', e);
-      setSaveMsg('Save failed');
+      toast.error('Save failed');
     } finally {
       setSaving(false);
     }
@@ -1266,8 +1260,7 @@ const TranscriptGenerator = ({ user }) => {
     setTranscriptDirty(true);
     setShowImportModal(false);
     setImportStep('upload');
-    setSaveMsg(`Successfully added ${toAdd.length} courses`);
-    setTimeout(() => setSaveMsg(''), 4000);
+    toast.success(`Successfully added ${toAdd.length} courses`);
   };
 
   // ─── RENDER: Student Picker ─────────────────────────────────────────────────
@@ -1351,11 +1344,6 @@ const TranscriptGenerator = ({ user }) => {
                   <StatusBadge status={onTrackStatus} />
                   <span className="text-xs font-extrabold text-white ml-1">{totalEarned}<span className="font-normal opacity-70">/{totalRequired} cr</span></span>
                 </div>
-              )}
-              {saveMsg && (
-                <span className={`text-[11px] font-semibold px-2 py-1 rounded-lg ${saveMsg.includes('failed') ? 'bg-red-500/30 text-red-100' : 'bg-emerald-500/30 text-emerald-100'}`}>
-                  {saveMsg}
-                </span>
               )}
               {transcriptDirty && !readOnly && (
                 <button onClick={handleSaveTranscript} disabled={savingTranscript}

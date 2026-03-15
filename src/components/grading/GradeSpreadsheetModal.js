@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, FileSpreadsheet, Download, Filter, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import toast from 'react-hot-toast';
 
 const GRADE_LEVELS = ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
@@ -270,7 +271,7 @@ const GradeSpreadsheetModal = ({ isOpen, onClose }) => {
       );
     } catch (err) {
       console.error('Export error:', err);
-      alert('Failed to export spreadsheet.');
+      toast.error('Failed to export spreadsheet.');
     } finally {
       setExporting(false);
     }

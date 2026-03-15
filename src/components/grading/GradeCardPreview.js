@@ -6,6 +6,7 @@ import ExcelJS from 'exceljs';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import JSZip from 'jszip';
+import toast from 'react-hot-toast';
 
 const UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
 
@@ -79,8 +80,6 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
   const [error, setError]                 = useState('');
   const [downloading, setDownloading]     = useState(false);
   const [saving, setSaving]               = useState(false);
-  const [saveStatus, setSaveStatus]       = useState('');
-  const [refreshMsg, setRefreshMsg]       = useState('');
   const [generatingId, setGeneratingId]   = useState(null);
   const [bulkExporting, setBulkExporting] = useState(null);
   const [bulkProgress, setBulkProgress]   = useState(0);
@@ -317,7 +316,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
       saveAs(out, `${row.name}_GradeCard_${formData.quarterName}.docx`);
     } catch (err) {
       console.error('Error generating grade card:', err);
-      alert('Error generating grade card. Ensure template files exist in public/templates/.');
+      toast.error('Error generating grade card. Ensure template files exist in public/templates/.');
     } finally {
       setGeneratingId(null);
     }
@@ -332,7 +331,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
       const allRows = Object.values(data).flat();
       const filtered = allRows.filter(filterFn);
       if (filtered.length === 0) {
-        alert(`No students match the "${label}" filter.`);
+        toast.error(`No students match the "${label}" filter.`);
         return;
       }
 
@@ -367,7 +366,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
       saveAs(zipBlob, zipFilename);
     } catch (err) {
       console.error('Bulk export error:', err);
-      alert('Error during bulk export. Ensure template files exist in public/templates/.');
+      toast.error('Error during bulk export. Ensure template files exist in public/templates/.');
     } finally {
       setBulkExporting(null);
       setBulkProgress(0);
@@ -428,7 +427,6 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
   const handleSave = async () => {
     if (!data) return;
     setSaving(true);
-    setSaveStatus('');
     try {
       const allRows = Object.values(data).flat();
       const promises = [];
@@ -460,12 +458,10 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
         });
       });
       await Promise.all(promises);
-      setSaveStatus('Saved!');
-      setTimeout(() => setSaveStatus(''), 3000);
+      toast.success('Saved!');
     } catch (err) {
       console.error('Error saving spreadsheet:', err);
-      setSaveStatus('Error!');
-      setTimeout(() => setSaveStatus(''), 3000);
+      toast.error('Error saving spreadsheet!');
     } finally {
       setSaving(false);
     }
@@ -474,8 +470,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
   // ---------- Refresh ----------
   const handleRefresh = async () => {
     await loadData();
-    setRefreshMsg('Refreshed!');
-    setTimeout(() => setRefreshMsg(''), 2000);
+    toast.success('Refreshed!');
   };
 
   // ---------- Clear all grades ----------
@@ -492,10 +487,10 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
           await databaseService.upsertStudent(student);
         }
       }));
-      setSaveStatus('All grades cleared!');
+      toast.success('All grades cleared!');
       setData(null);
     } catch (err) {
-      alert('Failed to clear grades.');
+      toast.error('Failed to clear grades.');
       console.error('Clear all error:', err);
     } finally {
       setLoading(false);
@@ -536,7 +531,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
       saveAs(blob, `${formData.quarterName}_GradeSpreadsheet_${formData.schoolYear}.xlsx`);
     } catch (err) {
       console.error('Download error:', err);
-      alert('Failed to generate spreadsheet. Please try again.');
+      toast.error('Failed to generate spreadsheet. Please try again.');
     } finally {
       setDownloading(false);
     }
@@ -578,7 +573,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
               title="Reload data from database"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              {refreshMsg || (loading ? 'Refreshing…' : 'Refresh')}
+              {loading ? 'Refreshing…' : 'Refresh'}
             </button>
             <button
               onClick={handleSave}
@@ -586,7 +581,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
               className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition-colors shadow-sm disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudUpload className="w-3.5 h-3.5" />}
-              {saving ? 'Saving…' : saveStatus || 'Save to DB'}
+              {saving ? 'Saving…' : 'Save to DB'}
             </button>
             <button
               onClick={handleClearAll}
