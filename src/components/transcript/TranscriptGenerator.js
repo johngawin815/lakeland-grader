@@ -374,6 +374,124 @@ const GraduationProjectionChart = ({ earned, required, currentGrade }) => {
   );
 };
 
+const CourseRow = React.memo(({
+  course,
+  selected,
+  readOnly,
+  onToggleSelect,
+  onEditField,
+  onFocusField,
+  onBlurField,
+  onDelete
+}) => {
+  const cr = getEarnedCredits(course);
+  const isFailing = course.letterGrade === 'F' || (course.percentage !== '' && course.percentage != null && parseFloat(course.percentage) < 60);
+  const isPassed = cr > 0 && course.status !== 'Active';
+  const isActive = course.status === 'Active';
+  const leftBorder = isFailing ? 'border-l-4 border-red-400' : isPassed ? 'border-l-4 border-emerald-400' : isActive ? 'border-l-4 border-amber-300' : '';
+
+  return (
+    <tr className={`border-b border-slate-50 hover:bg-orange-50/20 group ${leftBorder}`}>
+      <td className="px-2 py-1.5 text-center">
+        <input type="checkbox" checked={selected} onChange={() => onToggleSelect(course.id)} className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer" />
+      </td>
+      <td className="px-3 py-1.5 font-medium text-slate-700">
+        <div className="flex items-center gap-2">
+          {course.courseName}
+          {course.isImported && (
+            <span className="text-[9px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 tracking-wide" title="Imported from past transcript">IMPORTED</span>
+          )}
+        </div>
+      </td>
+      <td className="px-2 py-1.5 align-top">
+        <div className="flex flex-col gap-1">
+          <input
+            type="text"
+            value={course.term || ''}
+            onFocus={() => onFocusField(course.id, 'term', course.term || '')}
+            onChange={ev => onEditField(course.id, 'term', ev.target.value, false)}
+            onBlur={ev => {
+              const { canonical } = normaliseTermInput(ev.target.value);
+              if (canonical !== ev.target.value) onEditField(course.id, 'term', canonical, false);
+              onBlurField(course.id, 'term', canonical);
+            }}
+            readOnly={readOnly}
+            className={`w-full bg-transparent border-0 border-b text-xs text-slate-500 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`}
+          />
+          {/* Smart term badge/hint */}
+          {!readOnly && (() => {
+            const { canonical, creditHint } = normaliseTermInput(course.term || '');
+            if (!course.term || (canonical === course.term && !creditHint)) return null;
+            return (
+              <div className="flex items-center gap-1 text-[10px] mt-0.5">
+                <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold border border-orange-200 shadow-sm">
+                  {canonical}{creditHint ? ` · ${creditHint} cr` : ''}
+                </span>
+                <button
+                  type="button"
+                  className="ml-1 px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded border border-emerald-200 text-[10px] font-bold hover:bg-emerald-200 transition"
+                  onClick={() => onEditField(course.id, 'term', canonical, true)}
+                >
+                  Apply
+                </button>
+              </div>
+            );
+          })()}
+        </div>
+      </td>
+      <td className="px-2 py-1.5 text-center">
+        <input type="text" value={course.letterGrade || ''} placeholder="—"
+          onFocus={() => onFocusField(course.id, 'letterGrade', course.letterGrade || '')}
+          onChange={ev => onEditField(course.id, 'letterGrade', ev.target.value, false)}
+          onBlur={ev => onBlurField(course.id, 'letterGrade', ev.target.value)}
+          readOnly={readOnly}
+          className={`w-full text-center bg-transparent border-0 border-b text-xs font-bold outline-none px-0.5 py-0.5 transition-colors ${
+            course.letterGrade === 'F' ? 'text-red-600' : isPassing(course.letterGrade) ? 'text-emerald-600' : 'text-slate-400'
+          } ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`} />
+      </td>
+      <td className="px-2 py-1.5 text-center">
+        <input type="text"
+          value={course.percentage != null && course.percentage !== '' ? course.percentage : ''}
+          placeholder="—"
+          onFocus={() => onFocusField(course.id, 'percentage', course.percentage || '')}
+          onChange={ev => onEditField(course.id, 'percentage', ev.target.value, false)}
+          onBlur={ev => onBlurField(course.id, 'percentage', ev.target.value)}
+          readOnly={readOnly}
+          className={`w-full text-center bg-transparent border-0 border-b text-xs text-slate-600 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`} />
+      </td>
+      <td className="px-2 py-1.5 text-center">
+        <span className={`text-xs font-bold ${cr > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>
+          {cr > 0 ? cr : '—'}
+        </span>
+      </td>
+      <td className="px-2 py-1.5 text-center">
+        <select value={course.status || 'Active'}
+          onChange={ev => onEditField(course.id, 'status', ev.target.value, true)}
+          disabled={readOnly}
+          className={`bg-transparent border-0 text-[10px] font-semibold outline-none text-slate-500 ${readOnly ? 'cursor-default' : 'cursor-pointer hover:text-slate-700'}`}>
+          <option value="Active">Active</option>
+          <option value="Completed">Completed</option>
+          <option value="Withdrawn">Withdrawn</option>
+        </select>
+      </td>
+      <td className="px-1 py-1.5 text-center">
+        {!readOnly && (
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+            <span className="p-0.5 rounded text-slate-300" title="Click any cell to edit">
+              <Pencil className="w-3 h-3" />
+            </span>
+            <button onClick={() => onDelete(course.id, course.courseName)}
+              className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+              title="Remove from transcript">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      </td>
+    </tr>
+  );
+});
+
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const TranscriptGenerator = ({ user }) => {
@@ -540,11 +658,29 @@ const TranscriptGenerator = ({ user }) => {
     }
   }, [clearUndo, transcriptDirty, user]);
 
+  // --- Debounced Undo Stack ---
+  const undoBufferRef = React.useRef(null);
+
+  const handleFocusField = useCallback((enrollmentId, field, value) => {
+    setEditedEnrollments(prev => {
+      undoBufferRef.current = { enrollmentId, field, before: value, snapshot: prev.map(e => ({ ...e })) };
+      return prev;
+    });
+  }, []);
+
+  const handleBlurField = useCallback((enrollmentId, field, value) => {
+    const buffer = undoBufferRef.current;
+    if (buffer && buffer.enrollmentId === enrollmentId && buffer.field === field && buffer.before !== value) {
+      pushUndo({ ...buffer, after: value });
+    }
+    undoBufferRef.current = null;
+  }, [pushUndo]);
+
   // --- Inline editing ---
-  const handleEditField = (enrollmentId, field, value) => {
+  const handleEditField = useCallback((enrollmentId, field, value, immediateUndo = false) => {
     setEditedEnrollments(prev => {
       const before = prev.find(e => e.id === enrollmentId);
-      if (before) {
+      if (immediateUndo && before && before[field] !== value) {
         pushUndo({ enrollmentId, field, before: before[field], after: value, snapshot: prev.map(e => ({ ...e })) });
       }
       return prev.map(e => {
@@ -555,14 +691,14 @@ const TranscriptGenerator = ({ user }) => {
       });
     });
     setTranscriptDirty(true);
-  };
+  }, [pushUndo]);
 
-  const handleDeleteEnrollment = (enrollmentId, courseName) => {
+  const handleDeleteEnrollment = useCallback((enrollmentId, courseName) => {
     if (!window.confirm(`Remove "${courseName}" from the transcript?`)) return;
     setRemovedEnrollmentIds(prev => [...prev, enrollmentId]);
     setEditedEnrollments(prev => prev.filter(e => e.id !== enrollmentId));
     setTranscriptDirty(true);
-  };
+  }, []);
 
   const handleSaveTranscript = async () => {
     setSavingTranscript(true);
@@ -611,10 +747,10 @@ const TranscriptGenerator = ({ user }) => {
   const allCourseIds = useMemo(() => SAFE_SUBJECT_AREAS.flatMap(area => (enrollmentsBySubject[area] || []).map(e => e.id)), [enrollmentsBySubject]);
   const allSelected = allCourseIds.length > 0 && selectedCourseIds.length === allCourseIds.length;
   const noneSelected = selectedCourseIds.length === 0;
-  const toggleSelectAll = () => setSelectedCourseIds(allSelected ? [] : allCourseIds);
-  const toggleSelectCourse = (id) => setSelectedCourseIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
-  const clearAllSelected = () => setSelectedCourseIds([]);
-  const handleDeleteSelected = () => {
+  const toggleSelectAll = useCallback(() => setSelectedCourseIds(allSelected ? [] : allCourseIds), [allSelected, allCourseIds]);
+  const toggleSelectCourse = useCallback((id) => setSelectedCourseIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]), []);
+  const clearAllSelected = useCallback(() => setSelectedCourseIds([]), []);
+  const handleDeleteSelected = useCallback(() => {
     if (selectedCourseIds.length === 0) return;
     if (!window.confirm(`Remove ${selectedCourseIds.length} selected course(s) from the transcript?`)) return;
     selectedCourseIds.forEach(id => {
@@ -624,7 +760,7 @@ const TranscriptGenerator = ({ user }) => {
       if (course) handleDeleteEnrollment(id, course.courseName);
     });
     setSelectedCourseIds([]);
-  };
+  }, [selectedCourseIds, enrollmentsBySubject, handleDeleteEnrollment]);
 
   const enrolledCourseIds = useMemo(() => new Set(editedEnrollments.map(e => e.courseId)), [editedEnrollments]);
   const availableCoursesBySubject = useMemo(() => {
@@ -830,14 +966,14 @@ const TranscriptGenerator = ({ user }) => {
     setNewCourseForm({ courseId: '', term: '', grade: '', percentage: '', status: 'Active' });
   };
 
-  const toggleSubjectCollapse = (area) => {
+  const toggleSubjectCollapse = useCallback((area) => {
     setCollapsedSubjects(prev => {
       const next = new Set(prev);
       if (next.has(area)) next.delete(area);
       else next.add(area);
       return next;
     });
-  };
+  }, []);
 
   // --- Import logic (Gemini Vision OCR) ---
   const [importError, setImportError] = useState('');
@@ -1179,131 +1315,42 @@ const TranscriptGenerator = ({ user }) => {
                               </tr>
 
                               {/* Course rows */}
-                              {!isCollapsed && courses.map(e => {
-                                const cr = getEarnedCredits(e);
-                                const isFailing = e.letterGrade === 'F' || (e.percentage !== '' && e.percentage != null && parseFloat(e.percentage) < 60);
-                                const isPassed = cr > 0 && e.status !== 'Active';
-                                const isActive = e.status === 'Active';
-                                const leftBorder = isFailing ? 'border-l-4 border-red-400' : isPassed ? 'border-l-4 border-emerald-400' : isActive ? 'border-l-4 border-amber-300' : '';
-                                return (
-                                  <tr key={e.id} className={`border-b border-slate-50 hover:bg-orange-50/20 group ${leftBorder}`}>
-                                    <td className="px-2 py-1.5 text-center">
-                                      <input type="checkbox" checked={selectedCourseIds.includes(e.id)} onChange={() => toggleSelectCourse(e.id)} className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer" />
-                                    </td>
-                                    <td className="px-3 py-1.5 font-medium text-slate-700">
-                                      <div className="flex items-center gap-2">
-                                        {e.courseName}
-                                        {e.isImported && (
-                                          <span className="text-[9px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 tracking-wide" title="Imported from past transcript">IMPORTED</span>
-                                        )}
-                                      </div>
-                                    </td>
-                                    <td className="px-2 py-1.5 align-top">
-                                      <div className="flex flex-col gap-1">
-                                        <input
-                                          type="text"
-                                          value={e.term || ''}
-                                          onChange={ev => {
-                                            handleEditField(e.id, 'term', ev.target.value);
-                                          }}
-                                          onBlur={ev => {
-                                            const { canonical } = normaliseTermInput(ev.target.value);
-                                            if (canonical !== ev.target.value) handleEditField(e.id, 'term', canonical);
-                                          }}
-                                          readOnly={readOnly}
-                                          className={`w-full bg-transparent border-0 border-b text-xs text-slate-500 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`}
-                                        />
-                                        {/* Smart term badge/hint */}
-                                        {!readOnly && (() => {
-                                          const { canonical, creditHint } = normaliseTermInput(e.term || '');
-                                          if (!e.term || (canonical === e.term && !creditHint)) return null;
-                                          return (
-                                            <div className="flex items-center gap-1 text-[10px] mt-0.5">
-                                              <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold border border-orange-200 shadow-sm">
-                                                {canonical}{creditHint ? ` · ${creditHint} cr` : ''}
-                                              </span>
-                                              <button
-                                                type="button"
-                                                className="ml-1 px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded border border-emerald-200 text-[10px] font-bold hover:bg-emerald-200 transition"
-                                                onClick={() => handleEditField(e.id, 'term', canonical)}
-                                              >
-                                                Apply
-                                              </button>
-                                            </div>
-                                          );
-                                        })()}
-                                      </div>
-                                    </td>
-                                    <td className="px-2 py-1.5 text-center">
-                                      <input type="text" value={e.letterGrade || ''} placeholder="—"
-                                        onChange={ev => handleEditField(e.id, 'letterGrade', ev.target.value)}
-                                        readOnly={readOnly}
-                                        className={`w-full text-center bg-transparent border-0 border-b text-xs font-bold outline-none px-0.5 py-0.5 transition-colors ${
-                                          e.letterGrade === 'F' ? 'text-red-600' : isPassing(e.letterGrade) ? 'text-emerald-600' : 'text-slate-400'
-                                        } ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`} />
-                                    </td>
-                                    <td className="px-2 py-1.5 text-center">
-                                      <input type="text"
-                                        value={e.percentage != null && e.percentage !== '' ? e.percentage : ''}
-                                        placeholder="—"
-                                        onChange={ev => handleEditField(e.id, 'percentage', ev.target.value)}
-                                        readOnly={readOnly}
-                                        className={`w-full text-center bg-transparent border-0 border-b text-xs text-slate-600 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`} />
-                                    </td>
-                                    <td className="px-2 py-1.5 text-center">
-                                      <span className={`text-xs font-bold ${cr > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>
-                                        {cr > 0 ? cr : '—'}
-                                      </span>
-                                    </td>
-                                    <td className="px-2 py-1.5 text-center">
-                                      <select value={e.status || 'Active'}
-                                        onChange={ev => handleEditField(e.id, 'status', ev.target.value)}
-                                        disabled={readOnly}
-                                        className={`bg-transparent border-0 text-[10px] font-semibold outline-none text-slate-500 ${readOnly ? 'cursor-default' : 'cursor-pointer hover:text-slate-700'}`}>
-                                        <option value="Active">Active</option>
-                                        <option value="Completed">Completed</option>
-                                        <option value="Withdrawn">Withdrawn</option>
-                                      </select>
-                                    </td>
-                                    <td className="px-1 py-1.5 text-center">
-                                      {!readOnly && (
-                                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
-                                          <span className="p-0.5 rounded text-slate-300" title="Click any cell to edit">
-                                            <Pencil className="w-3 h-3" />
-                                          </span>
-                                          <button onClick={() => handleDeleteEnrollment(e.id, e.courseName)}
-                                            className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
-                                            title="Remove from transcript">
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                          </button>
-                                                                      {/* Mass delete button */}
-                                                                      {!isCollapsed && courses.length > 0 && (
-                                                                        <tr>
-                                                                          <td colSpan={8} className="px-3 py-2 text-left">
-                                                                            <button
-                                                                              onClick={handleDeleteSelected}
-                                                                              disabled={noneSelected}
-                                                                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow transition disabled:opacity-40 disabled:cursor-not-allowed`}
-                                                                            >
-                                                                              <Trash2 className="w-4 h-4" /> Delete Selected
-                                                                            </button>
-                                                                            {!noneSelected && (
-                                                                              <button
-                                                                                onClick={clearAllSelected}
-                                                                                className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold transition"
-                                                                              >
-                                                                                Clear All
-                                                                              </button>
-                                                                            )}
-                                                                          </td>
-                                                                        </tr>
-                                                                      )}
-                                        </div>
-                                      )}
-                                    </td>
-                                  </tr>
-                                );
-                              })}
+                              {!isCollapsed && courses.map(e => (
+                                <CourseRow
+                                  key={e.id}
+                                  course={e}
+                                  selected={selectedCourseIds.includes(e.id)}
+                                  readOnly={readOnly}
+                                  onToggleSelect={toggleSelectCourse}
+                                  onEditField={handleEditField}
+                                  onFocusField={handleFocusField}
+                                  onBlurField={handleBlurField}
+                                  onDelete={handleDeleteEnrollment}
+                                />
+                              ))}
+
+                              {/* Mass delete button */}
+                              {!isCollapsed && courses.length > 0 && (
+                                <tr>
+                                  <td colSpan={8} className="px-3 py-2 text-left bg-orange-50/20 border-b border-slate-100">
+                                    <button
+                                      onClick={handleDeleteSelected}
+                                      disabled={noneSelected}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                      <Trash2 className="w-4 h-4" /> Delete Selected
+                                    </button>
+                                    {!noneSelected && (
+                                      <button
+                                        onClick={clearAllSelected}
+                                        className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold transition"
+                                      >
+                                        Clear All
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              )}
 
                               {/* Inline Add Course form */}
                               {!isCollapsed && addingCourseToSubject === area && (
