@@ -34,11 +34,10 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onChunk, sign
   if (!apiKey) throw new Error('No Claude API key configured.');
 
   const model = getClaudeModel();
-  const url = 'https://api.anthropic.com/v1/messages';
+  const url = '/api/claude/messages';
 
   const headers = {
-    'x-api-key': apiKey,
-    'anthropic-version': '2023-06-01',
+    'x-forwarded-api-key': apiKey,
     'content-type': 'application/json',
   };
 
