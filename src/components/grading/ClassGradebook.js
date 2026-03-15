@@ -100,7 +100,14 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
       });
     });
 
-    await Promise.all(savePromises);
+    const results = await Promise.allSettled(savePromises);
+    
+    // Surface failures if any occurred without breaking the loop
+    const failures = results.filter(r => r.status === 'rejected');
+    if (failures.length > 0) {
+      console.error(`Failed to save ${failures.length} student grade records:`, failures);
+      // Future enhancement: Dispatch global toast notification here about partial failure
+    }
 
     // Save full gradebook data
     await databaseService.saveGradebook({

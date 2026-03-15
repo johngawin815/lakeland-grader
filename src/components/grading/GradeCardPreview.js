@@ -358,6 +358,9 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
         const docBuffer = doc.getZip().generate({ type: 'arraybuffer' });
         archive.file(`${row.name}_GradeCard_${formData.quarterName}.docx`, docBuffer);
         setBulkProgress(((i + 1) / filtered.length) * 100);
+        
+        // Yield to the main thread so React can paint the progress bar
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       const zipBlob = await archive.generateAsync({ type: 'blob' });

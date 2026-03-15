@@ -182,6 +182,9 @@ const BatchExportModal = ({ isOpen, onClose, students, finalGrades, formData, te
         zip.file(`${student.name}_GradeCard.docx`, docBlob);
 
         setProgress(((i + 1) / selected.length) * 100);
+        
+        // Yield to the main thread so React can paint the progress bar
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });

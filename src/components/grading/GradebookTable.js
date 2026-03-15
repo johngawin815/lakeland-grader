@@ -3,6 +3,38 @@ import { GraduationCap, FileDown, TrendingUp, ArrowDown } from 'lucide-react';
 import { useGridKeyboard } from '../../hooks/useGridKeyboard';
 import { UNIT_CONFIG } from '../../config/unitConfig';
 
+const GradeCell = React.memo(({ 
+  studentId, studentName, assignmentId, assignmentName, maxScore, 
+  grade, isWarning, isFailing, rowIndex, colIndex, onChange, onFocus 
+}) => {
+  return (
+    <td className="p-2 text-center border-r border-slate-200/50" role="gridcell">
+      <input
+        type="number"
+        min="0"
+        max={maxScore}
+        value={grade ?? ''}
+        onChange={(e) => onChange(studentId, assignmentId, maxScore, e.target.value)}
+        onFocus={(e) => {
+          if (onFocus) onFocus(rowIndex, colIndex);
+          e.target.select(); // UX: Mimic Excel highlight-on-focus behavior
+        }}
+        data-row={rowIndex}
+        data-col={colIndex}
+        aria-label={`${studentName} - ${assignmentName}`}
+        className={`w-24 p-2 text-center border rounded-lg outline-none transition-all duration-300 font-mono ${
+          isWarning
+            ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300/50'
+            : isFailing
+            ? 'border-rose-300 bg-rose-50 text-rose-600 font-bold focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'
+        }`}
+        placeholder="—"
+      />
+    </td>
+  );
+});
+
 const GradebookTable = ({
   students,
   assignments,
@@ -145,27 +177,21 @@ const GradebookTable = ({
                   const cellKey = `${student.id}-${assignment.id}`;
                   const isWarning = warnCells.has(cellKey);
                   return (
-                    <td key={assignment.id} className="p-2 text-center border-r border-slate-200/50" role="gridcell">
-                      <input
-                        type="number"
-                        min="0"
-                        max={assignment.maxScore}
-                        value={grade ?? ''}
-                        onChange={(e) => handleValidatedChange(student.id, assignment.id, assignment.maxScore, e.target.value)}
-                        onFocus={() => onCellFocus(rowIndex, colIndex)}
-                        data-row={rowIndex}
-                        data-col={colIndex}
-                        aria-label={`${student.name} - ${assignment.name}`}
-                        className={`w-24 p-2 text-center border rounded-lg outline-none transition-all duration-300 font-mono ${
-                          isWarning
-                            ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300/50'
-                            : isFailing
-                            ? 'border-rose-300 bg-rose-50 text-rose-600 font-bold focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20'
-                            : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'
-                        }`}
-                        placeholder="—"
-                      />
-                    </td>
+                    <GradeCell
+                      key={assignment.id}
+                      studentId={student.id}
+                      studentName={student.name}
+                      assignmentId={assignment.id}
+                      assignmentName={assignment.name}
+                      maxScore={assignment.maxScore}
+                      grade={grade}
+                      isWarning={isWarning}
+                      isFailing={isFailing}
+                      rowIndex={rowIndex}
+                      colIndex={colIndex}
+                      onChange={handleValidatedChange}
+                      onFocus={onCellFocus}
+                    />
                   );
                 })}
                 <td className="p-4 text-center font-bold border-l border-slate-200/80 sticky right-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
