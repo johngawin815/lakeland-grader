@@ -48,6 +48,7 @@ function KTEAReporter({ user, activeStudent }) {
   const [queue, setQueue] = useState([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [growthResult, setGrowthResult] = useState(null);
   const submitModeRef = useRef('queue');
 
   // SPREADSHEET VIEW STATE
@@ -99,7 +100,7 @@ function KTEAReporter({ user, activeStudent }) {
 
     const fields = [
       "studentName", "gradeLevel", "admitDate", "dischargeDate", "teacherName", "unitName",
-      "preReadingRaw", "preReadingStd", "preReadingGE", "preMathRaw", "preMathStd", "preMathGE", "preWritingRaw", "preWritingStd", "preWritingGE",
+      "age", "sped504", "title1", "preReadingRaw", "preReadingStd", "preReadingGE", "preMathRaw", "preMathStd", "preMathGE", "preWritingRaw", "preWritingStd", "preWritingGE",
       "postReadingRaw", "postReadingStd", "postReadingGE", "postMathRaw", "postMathStd", "postMathGE", "postWritingRaw", "postWritingStd", "postWritingGE"
     ];
     fields.forEach(f => setValue(f, student[f]));
@@ -117,7 +118,8 @@ function KTEAReporter({ user, activeStudent }) {
         setMsg(`Updated: ${data.studentName}`);
         setTimeout(() => setMsg(''), 3000);
         setEditingId(null);
-        reset({ teacherName: data.teacherName, unitName: data.unitName });
+        reset({ teacherName: data.teacherName, unitName: data.unitName, gradeLevel: data.gradeLevel });
+        setGrowthResult(null);
       } catch (e) { alert("Update Failed: " + e.message); }
       setSaving(false);
       return;
@@ -134,11 +136,13 @@ function KTEAReporter({ user, activeStudent }) {
             setMsg(`Saved & Submitted: ${fixedName}`);
             setTimeout(() => setMsg(''), 3000);
             reset({ teacherName: data.teacherName, unitName: data.unitName, gradeLevel: data.gradeLevel });
+            setGrowthResult(null);
         } catch (e) { alert("Submission Failed: " + e.message); }
         setSaving(false);
     } else {
         setQueue([...queue, newRecord]);
         reset({ teacherName: data.teacherName, unitName: data.unitName, gradeLevel: data.gradeLevel });
+        setGrowthResult(null);
     }
   };
 
@@ -160,15 +164,19 @@ function KTEAReporter({ user, activeStudent }) {
   const calculateGrowth = () => {
     const data = getValues();
     const calc = (pre, post) => {
-        const p1 = parseFloat(pre);
-        const p2 = parseFloat(post);
+        // Strip non-numeric characters like '>' or '<' often found in GE scores
+        const p1 = parseFloat(String(pre).replace(/[^0-9.]/g, ''));
+        const p2 = parseFloat(String(post).replace(/[^0-9.]/g, ''));
         if (isNaN(p1) || isNaN(p2)) return "N/A";
         const diff = (p2 - p1).toFixed(1);
         return (diff > 0 ? "+" : "") + diff;
     };
 
-    const growthMsg = `Growth Calculation:\n\nReading: ${calc(data.preReadingGE, data.postReadingGE)}\nMath: ${calc(data.preMathGE, data.postMathGE)}\nWriting: ${calc(data.preWritingGE, data.postWritingGE)}`;
-    alert(growthMsg);
+    setGrowthResult({
+      reading: calc(data.preReadingGE, data.postReadingGE),
+      math: calc(data.preMathGE, data.postMathGE),
+      writing: calc(data.preWritingGE, data.postWritingGE)
+    });
   };
 
   // --- 3. SPREADSHEET VIEW ---
@@ -631,7 +639,7 @@ function KTEAReporter({ user, activeStudent }) {
         {/* MAIN FORM AREA */}
         <div className="flex-1 bg-slate-50/80 backdrop-blur-xl rounded-2xl p-6 shadow-2xl shadow-slate-200/60 flex flex-col border border-slate-200/50 overflow-y-auto">
             <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col">
-                <div className="grid grid-cols-7 gap-4 mb-6 items-end">
+                <div className="grid grid-cols-7 gap-4 mb-4 items-end">
                     <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Teacher</label> <input {...register("teacherName")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" /> </div>
                     <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Unit</label> <select {...register("unitName")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"><option value="">Select...</option>{UNIT_CONFIG.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}</select> </div>
                     <div className="col-span-2"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Student Name</label> <input {...register("studentName")} className="w-full p-3 rounded-xl border border-indigo-300/80 bg-indigo-50/50 text-base focus:ring-4 focus:ring-indigo-500/30 outline-none font-bold transition-all" /> </div>
@@ -640,7 +648,13 @@ function KTEAReporter({ user, activeStudent }) {
                     <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Discharge</label> <input type="date" {...register("dischargeDate")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" /> </div>
                 </div>
 
-                <div className="flex gap-6 flex-1 mb-6">
+                <div className="grid grid-cols-7 gap-4 mb-6 items-end">
+                    <div className="col-span-1"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Age</label> <input type="number" {...register("age")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all" /> </div>
+                    <div className="col-span-2"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Sped/504</label> <select {...register("sped504")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"><option value="">None</option><option value="IEP">IEP</option><option value="504">504 Plan</option></select> </div>
+                    <div className="col-span-2"> <label className="text-[11px] font-bold text-slate-500 mb-1.5 block uppercase tracking-wider">Title 1</label> <select {...register("title1")} className="w-full p-3 rounded-xl border border-slate-300/80 bg-white text-sm focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"><option value="">No</option><option value="Yes">Yes</option></select> </div>
+                </div>
+
+                <div className="flex gap-6 flex-1 mb-4">
                     <div className="flex-1 bg-white/80 rounded-xl border border-blue-200/50 overflow-hidden flex flex-col shadow-lg shadow-blue-500/5">
                         <div className="p-3 text-center font-extrabold text-xs tracking-widest text-blue-700 bg-blue-100/60 border-b border-blue-200/50">PRE-TEST</div>
                         <div className="p-5 space-y-4">
@@ -659,6 +673,26 @@ function KTEAReporter({ user, activeStudent }) {
                     </div>
                 </div>
 
+                {/* GROWTH CALCULATION RESULTS PANEL */}
+                {growthResult && (
+                  <div className="mb-6 p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 shadow-inner flex items-center justify-around animate-in fade-in slide-in-from-bottom-2">
+                      <div className="flex items-center gap-3">
+                          <Calculator className="w-6 h-6 text-emerald-600" />
+                          <div><div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Reading Growth</div><div className="text-xl font-extrabold text-slate-800">{growthResult.reading}</div></div>
+                      </div>
+                      <div className="w-px h-10 bg-emerald-200"></div>
+                      <div className="flex items-center gap-3">
+                          <Calculator className="w-6 h-6 text-emerald-600" />
+                          <div><div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Math Growth</div><div className="text-xl font-extrabold text-slate-800">{growthResult.math}</div></div>
+                      </div>
+                      <div className="w-px h-10 bg-emerald-200"></div>
+                      <div className="flex items-center gap-3">
+                          <Calculator className="w-6 h-6 text-emerald-600" />
+                          <div><div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Writing Growth</div><div className="text-xl font-extrabold text-slate-800">{growthResult.writing}</div></div>
+                      </div>
+                  </div>
+                )}
+
                 <div className="mt-auto flex gap-3 pt-5 border-t border-slate-200/80">
                     {editingId ? (
                         <button type="submit" className="w-full p-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10"><Zap className="w-4 h-4" /> UPDATE RECORD</button>
@@ -668,7 +702,7 @@ function KTEAReporter({ user, activeStudent }) {
                             <button type="submit" onClick={() => { submitModeRef.current = 'direct'; }} className="flex-1 p-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-2"><Send className="w-4 h-4" /> SAVE & SUBMIT</button>
                         </>
                     )}
-                    <button type="button" onClick={() => reset()} className="px-6 py-3 bg-white border border-slate-300/80 rounded-xl text-slate-500 hover:bg-slate-100/80 font-bold transition-colors shadow-sm">Clear</button>
+                    <button type="button" onClick={() => { reset(); setGrowthResult(null); }} className="px-6 py-3 bg-white border border-slate-300/80 rounded-xl text-slate-500 hover:bg-slate-100/80 font-bold transition-colors shadow-sm">Clear</button>
                 </div>
             </form>
         </div>
@@ -722,9 +756,11 @@ function ScoreRow({ label, type, register, errors }) {
             <div className="flex gap-2 flex-[2]">
                 <div className="w-full relative">
                     <input {...register(`${type}Raw`, { min: { value: 0, message: "Min 0" } })} placeholder="Raw" type="number" className={`w-full p-2.5 rounded-lg text-sm text-center outline-none transition-all ${rawError ? errorRing : defaultRing }`} />
+                    {rawError && <span className="absolute -bottom-4 left-0 w-full text-center text-[10px] text-red-500 font-bold">{rawError.message}</span>}
                 </div>
                 <div className="w-full relative">
                     <input {...register(`${type}Std`, { min: { value: 40, message: "Min 40" }, max: { value: 160, message: "Max 160" } })} placeholder="Std" type="number" className={`w-full p-2.5 rounded-lg text-sm text-center outline-none transition-all ${stdError ? errorRing : defaultRing }`} />
+                    {stdError && <span className="absolute -bottom-4 left-0 w-full text-center text-[10px] text-red-500 font-bold">{stdError.message}</span>}
                 </div>
                 <input {...register(`${type}GE`)} placeholder="GE" type="text" className={`w-full p-2.5 rounded-lg border-2 border-amber-400 bg-amber-50 text-sm text-center font-bold outline-none transition-all focus:ring-4 focus:ring-amber-400/30`} />
             </div>
