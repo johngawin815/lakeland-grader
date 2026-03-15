@@ -232,28 +232,6 @@ const StatusBadge = ({ status }) => {
 
 
 
-// ...existing code...
-
-  // Mass selection state for transcript courses (must be after enrollmentsBySubject is defined)
-  const [selectedCourseIds, setSelectedCourseIds] = useState([]);
-  const allCourseIds = useMemo(() => SAFE_SUBJECT_AREAS.flatMap(area => (enrollmentsBySubject[area] || []).map(e => e.id)), [enrollmentsBySubject]);
-  const allSelected = allCourseIds.length > 0 && selectedCourseIds.length === allCourseIds.length;
-  const noneSelected = selectedCourseIds.length === 0;
-  const toggleSelectAll = () => setSelectedCourseIds(allSelected ? [] : allCourseIds);
-  const toggleSelectCourse = (id) => setSelectedCourseIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
-  const clearAllSelected = () => setSelectedCourseIds([]);
-  const handleDeleteSelected = () => {
-    if (selectedCourseIds.length === 0) return;
-    if (!window.confirm(`Remove ${selectedCourseIds.length} selected course(s) from the transcript?`)) return;
-    selectedCourseIds.forEach(id => {
-      // Find the course by id in enrollmentsBySubject
-      const course = SAFE_SUBJECT_AREAS.map(area => (enrollmentsBySubject[area] || []).find(e => e.id === id)).find(Boolean)
-        || (enrollmentsBySubject['Elective'] || []).find(e => e.id === id);
-      if (course) handleDeleteEnrollment(id, course.courseName);
-    });
-    setSelectedCourseIds([]);
-  };
-
 const CreditRing = ({ earned, required, size = 64 }) => {
   const strokeWidth = size < 50 ? 4 : 5;
   const r = (size - strokeWidth * 2) / 2;
@@ -428,6 +406,7 @@ const TranscriptGenerator = ({ user }) => {
   const [addingCourseToSubject, setAddingCourseToSubject] = useState(null);
   const [newCourseForm, setNewCourseForm] = useState({ courseId: '', term: '', grade: '', percentage: '', status: 'Active' });
   const [collapsedSubjects, setCollapsedSubjects] = useState(new Set());
+  const [selectedCourseIds, setSelectedCourseIds] = useState([]);
   
   // --- Import Past Transcript State ---
   const [showImportModal, setShowImportModal] = useState(false);
@@ -529,6 +508,7 @@ const TranscriptGenerator = ({ user }) => {
     setShowImportModal(false);
     setImportStep('upload');
     setImportedCourses([]);
+    setSelectedCourseIds([]);
     try {
       const [enrollments, masterGrades, plan] = await Promise.all([
         databaseService.getStudentEnrollments(student.id),
@@ -626,6 +606,25 @@ const TranscriptGenerator = ({ user }) => {
     }
     return grouped;
   }, [editedEnrollments]);
+
+  // Mass selection state for transcript courses (must be after enrollmentsBySubject is defined)
+  const allCourseIds = useMemo(() => SAFE_SUBJECT_AREAS.flatMap(area => (enrollmentsBySubject[area] || []).map(e => e.id)), [enrollmentsBySubject]);
+  const allSelected = allCourseIds.length > 0 && selectedCourseIds.length === allCourseIds.length;
+  const noneSelected = selectedCourseIds.length === 0;
+  const toggleSelectAll = () => setSelectedCourseIds(allSelected ? [] : allCourseIds);
+  const toggleSelectCourse = (id) => setSelectedCourseIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+  const clearAllSelected = () => setSelectedCourseIds([]);
+  const handleDeleteSelected = () => {
+    if (selectedCourseIds.length === 0) return;
+    if (!window.confirm(`Remove ${selectedCourseIds.length} selected course(s) from the transcript?`)) return;
+    selectedCourseIds.forEach(id => {
+      // Find the course by id in enrollmentsBySubject
+      const course = SAFE_SUBJECT_AREAS.map(area => (enrollmentsBySubject[area] || []).find(e => e.id === id)).find(Boolean)
+        || (enrollmentsBySubject['Elective'] || []).find(e => e.id === id);
+      if (course) handleDeleteEnrollment(id, course.courseName);
+    });
+    setSelectedCourseIds([]);
+  };
 
   const enrolledCourseIds = useMemo(() => new Set(editedEnrollments.map(e => e.courseId)), [editedEnrollments]);
   const availableCoursesBySubject = useMemo(() => {
@@ -808,6 +807,7 @@ const TranscriptGenerator = ({ user }) => {
     setAddingCourseToSubject(null);
     setCollapsedSubjects(new Set());
     clearUndo();
+    setSelectedCourseIds([]);
   };
 
   // --- Add new course (inline form) ---
