@@ -2,7 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, FileSpreadsheet,
-  Calendar, ScrollText,
+  ScrollText,
   FileCheck, NotebookPen, Upload, Settings, Loader2
 } from 'lucide-react';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';

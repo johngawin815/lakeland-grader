@@ -298,6 +298,7 @@ const TabBar = ({ activeTab, onChange }) => {
 
 // ─── GRADUATION PROJECTION CHART ─────────────────────────────────────────────
 
+// eslint-disable-next-line no-unused-vars
 const GraduationProjectionChart = ({ earned, required, currentGrade }) => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -371,6 +372,10 @@ const GraduationProjectionChart = ({ earned, required, currentGrade }) => {
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const TranscriptGenerator = ({ user }) => {
+
+  // --- Role-based access ---
+  // Admins and teachers can edit; viewer/read-only roles cannot.
+  const readOnly = user?.role === 'viewer' || user?.role === 'readonly';
 
   // --- Existing State ---
   const [allStudents, setAllStudents] = useState([]);
@@ -452,7 +457,7 @@ const TranscriptGenerator = ({ user }) => {
           setTranscriptDirty(true);
         }
       }
-      if (ctrl && (e.shiftKey && e.key === 'z' || e.key === 'y')) {
+      if (ctrl && ((e.shiftKey && e.key === 'z') || e.key === 'y')) {
         e.preventDefault();
         const action = redoEdit();
         if (action?.snapshot) {
@@ -513,7 +518,7 @@ const TranscriptGenerator = ({ user }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [clearUndo, transcriptDirty, user]);
 
   // --- Inline editing ---
   const handleEditField = (enrollmentId, field, value) => {
@@ -560,10 +565,6 @@ const TranscriptGenerator = ({ user }) => {
       setSavingTranscript(false);
     }
   };
-
-  // --- Role-based access ---
-  // Admins and teachers can edit; viewer/read-only roles cannot.
-  const readOnly = user?.role === 'viewer' || user?.role === 'readonly';
 
   // --- Computed values ---
   const stateReqs = selectedStudent?.homeState ? stateGraduationRequirements[selectedStudent.homeState] : null;
