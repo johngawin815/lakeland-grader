@@ -53,8 +53,6 @@ const GradebookTable = ({
   const rows = students.length;
   const cols = assignments.length;
 
-  const { handleKeyDown, onCellFocus } = useGridKeyboard({ rows, cols, tableRef });
-
   const handleValidatedChange = useCallback((studentId, assignmentId, maxScore, rawValue) => {
     // Allow clearing
     if (rawValue === '' || rawValue === '-') {
@@ -100,6 +98,14 @@ const GradebookTable = ({
     getScrollElement: () => tableRef.current,
     estimateSize: (index) => unitGroups[index].type === 'header' ? 36 : 57, // Estimated heights
     overscan: 5,
+  });
+
+  const { handleKeyDown, onCellFocus } = useGridKeyboard({
+    rows,
+    cols,
+    tableRef,
+    rowVirtualizer,
+    unitGroups,
   });
 
   const totalColumns = assignments.length + 2; // student col + assignments + overall col
