@@ -41,6 +41,15 @@ function getBusinessQuarter(dateStr) {
   return null;
 }
 
+export const calculateGEGrowth = (pre, post) => {
+  // Strip non-numeric characters like '>' or '<' often found in GE scores
+  const p1 = parseFloat(String(pre).replace(/[^0-9.]/g, ''));
+  const p2 = parseFloat(String(post).replace(/[^0-9.]/g, ''));
+  if (isNaN(p1) || isNaN(p2)) return "N/A";
+  const diff = (p2 - p1).toFixed(1);
+  return (diff > 0 ? "+" : "") + diff;
+};
+
 function KTEAReporter({ user, activeStudent }) {
   const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm();
 
@@ -163,19 +172,11 @@ function KTEAReporter({ user, activeStudent }) {
 
   const calculateGrowth = () => {
     const data = getValues();
-    const calc = (pre, post) => {
-        // Strip non-numeric characters like '>' or '<' often found in GE scores
-        const p1 = parseFloat(String(pre).replace(/[^0-9.]/g, ''));
-        const p2 = parseFloat(String(post).replace(/[^0-9.]/g, ''));
-        if (isNaN(p1) || isNaN(p2)) return "N/A";
-        const diff = (p2 - p1).toFixed(1);
-        return (diff > 0 ? "+" : "") + diff;
-    };
 
     setGrowthResult({
-      reading: calc(data.preReadingGE, data.postReadingGE),
-      math: calc(data.preMathGE, data.postMathGE),
-      writing: calc(data.preWritingGE, data.postWritingGE)
+      reading: calculateGEGrowth(data.preReadingGE, data.postReadingGE),
+      math: calculateGEGrowth(data.preMathGE, data.postMathGE),
+      writing: calculateGEGrowth(data.preWritingGE, data.postWritingGE)
     });
   };
 
