@@ -228,8 +228,21 @@ const StatusBadge = ({ status }) => {
     </span>
   );
 };
+
   // Mass selection state for transcript courses
   const [selectedCourseIds, setSelectedCourseIds] = useState([]);
+
+  // Group enrollments by subject area
+  const enrollmentsBySubject = useMemo(() => {
+    const grouped = {};
+    for (const area of SAFE_SUBJECT_AREAS) grouped[area] = [];
+    grouped['Elective'] = grouped['Elective'] || [];
+    for (const e of editedEnrollments) {
+      const area = SAFE_SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
+      grouped[area].push(e);
+    }
+    return grouped;
+  }, [editedEnrollments]);
 
   // Select all/clear all logic
   const allCourseIds = useMemo(() => SAFE_SUBJECT_AREAS.flatMap(area => (enrollmentsBySubject[area] || []).map(e => e.id)), [enrollmentsBySubject]);
@@ -242,7 +255,9 @@ const StatusBadge = ({ status }) => {
     if (selectedCourseIds.length === 0) return;
     if (!window.confirm(`Remove ${selectedCourseIds.length} selected course(s) from the transcript?`)) return;
     selectedCourseIds.forEach(id => {
-      const course = allCourseIds.map(cid => enrollmentsBySubject[SAFE_SUBJECT_AREAS.find(area => enrollmentsBySubject[area].some(e => e.id === cid))].find(e => e.id === id)).find(Boolean);
+      // Find the course by id in enrollmentsBySubject
+      const course = SAFE_SUBJECT_AREAS.map(area => (enrollmentsBySubject[area] || []).find(e => e.id === id)).find(Boolean)
+        || (enrollmentsBySubject['Elective'] || []).find(e => e.id === id);
       if (course) handleDeleteEnrollment(id, course.courseName);
     });
     setSelectedCourseIds([]);
