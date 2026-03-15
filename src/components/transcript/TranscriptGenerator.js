@@ -13,7 +13,7 @@ import { useUndoStack } from '../../hooks/useUndoStack';
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
-const isPassing = (grade) => grade && !['F', 'I', '', null, undefined].includes(grade);
+const isPassing = (grade) => grade && !['F', 'I', 'W', 'WF', 'NC', '', null, undefined].includes(String(grade).trim().toUpperCase());
 
 /** Return credit value based on term: quarter (Q1–Q4) = 0.25, everything else = 0.5 */
 const getTermCredits = (enrollment) => {
@@ -448,6 +448,11 @@ const TranscriptGenerator = ({ user }) => {
   useEffect(() => {
     const onKey = (e) => {
       if (!selectedStudent || readOnly) return;
+      
+      // Prevent firing when the user is typing in standard text inputs
+      const tag = e.target?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable) return;
+
       const ctrl = e.ctrlKey || e.metaKey;
       if (ctrl && !e.shiftKey && e.key === 'z') {
         e.preventDefault();
@@ -499,7 +504,7 @@ const TranscriptGenerator = ({ user }) => {
       ]);
       const merged = masterGrades.length > 0 ? masterGrades : enrollments;
       const deduped = deduplicateEnrollments(merged);
-      const withCredits = deduped.map(e => ({ ...e, credits: getEarnedCredits(e) }));
+      const withCredits = deduped.kept.map(e => ({ ...e, credits: getEarnedCredits(e) }));
       setStudentEnrollments(withCredits);
       setEditedEnrollments(withCredits.map(e => ({ ...e })));
       if (plan) {
