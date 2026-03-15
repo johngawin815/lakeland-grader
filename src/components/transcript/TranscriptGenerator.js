@@ -980,7 +980,7 @@ const TranscriptGenerator = ({ user }) => {
   }, [allCourses]);
 
   // Optimization: Only update enrolled course IDs when the actual list of IDs changes, bypassing keystroke updates
-  const enrolledCourseIdsString = useMemo(() => editedEnrollments.map(e => e.courseId).filter(Boolean).sort().join(','), [editedEnrollments]);
+  const enrolledCourseIdsString = useMemo(() => editedEnrollments.map(e => e.courseId).filter(id => id != null && id !== '').sort().join(','), [editedEnrollments]);
   const enrolledCourseIds = useMemo(() => new Set(enrolledCourseIdsString ? enrolledCourseIdsString.split(',') : []), [enrolledCourseIdsString]);
 
   const availableCoursesBySubject = useMemo(() => {
