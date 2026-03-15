@@ -133,6 +133,7 @@ const HubShell = () => {
   const [dashboardInitialTab, setDashboardInitialTab] = useState(null);
   const [showUploadPortal, setShowUploadPortal] = useState(false);
   const [gradesStats, setGradesStats] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -230,18 +231,27 @@ const HubShell = () => {
     <div className="flex h-screen bg-slate-200 font-sans overflow-hidden">
 
       {/* 1. SIDEBAR NAVIGATION */}
-      <aside className="w-[140px] bg-slate-900 flex flex-col items-center py-3 shrink-0 border-r border-slate-700/50 z-20">
+      <aside className={`transition-all duration-300 bg-slate-900 flex flex-col items-center py-3 shrink-0 border-r border-slate-700/50 z-20 ${sidebarCollapsed ? 'w-16' : 'w-48'}`}>
+        {/* Collapse/Expand Button */}
+        <button
+          className="mb-2 p-1 rounded hover:bg-slate-800 text-slate-400 self-end mr-2"
+          onClick={() => setSidebarCollapsed(v => !v)}
+          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronRight size={18} className="rotate-180" />}
+        </button>
+
         {/* Logo / Home */}
         <button
           onClick={() => setCurrentView('home')}
-          className={`w-14 flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-200 ${
+          className={`w-full flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-200 ${
             currentView === 'home'
               ? 'bg-indigo-600/20 text-white'
               : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           }`}
         >
-          <School size={20} className="text-indigo-500" />
-          <span className="text-[10px] font-bold tracking-tight">Home</span>
+          <School size={24} className="text-indigo-500" />
+          {!sidebarCollapsed && <span className="text-[11px] font-bold tracking-tight">Home</span>}
         </button>
 
         <div className="w-8 h-px bg-slate-700/50 my-1" />
@@ -251,7 +261,7 @@ const HubShell = () => {
           {visibleModules.map(m => (
             <SidebarButton
               key={m.id}
-              label={m.title}
+              label={sidebarCollapsed ? '' : m.title}
               icon={m.icon}
               color={m.color}
               active={currentView === m.id}
@@ -264,7 +274,7 @@ const HubShell = () => {
 
         {/* Exports */}
         <SidebarButton
-          label="Exports"
+          label={sidebarCollapsed ? '' : 'Exports'}
           icon={FileSpreadsheet}
           active={false}
           onClick={() => setIsSpreadsheetModalOpen(true)}
@@ -272,7 +282,7 @@ const HubShell = () => {
 
         {/* Settings */}
         <SidebarButton
-          label="Settings"
+          label={sidebarCollapsed ? '' : 'Settings'}
           icon={Settings}
           active={currentView === 'settings'}
           onClick={() => { setDashboardInitialTab(null); setCurrentView('settings'); }}
@@ -281,47 +291,51 @@ const HubShell = () => {
         <div className="w-8 h-px bg-slate-700/50 my-1" />
 
         {/* User */}
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-1 mb-2">
           <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-sm border-2 border-slate-700/80">
             {user.name.charAt(0)}
           </div>
-          <span className="text-[10px] font-medium text-slate-400 truncate w-full text-center px-1">{user.name.split(' ')[0]}</span>
-          <button onClick={handleLogout} className="text-[10px] font-semibold text-slate-500 hover:text-indigo-400 transition-colors">
-            Sign Out
-          </button>
+          {!sidebarCollapsed && <span className="text-[10px] font-medium text-slate-400 truncate w-full text-center px-1">{user.name.split(' ')[0]}</span>}
+          {!sidebarCollapsed && (
+            <button onClick={handleLogout} className="text-[10px] font-semibold text-slate-500 hover:text-indigo-400 transition-colors">
+              Sign Out
+            </button>
+          )}
         </div>
       </aside>
 
+
       {/* 2. MAIN CONTENT AREA */}
       <main className="flex-1 overflow-hidden flex flex-col">
+        {/* Top Bar */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 bg-white/70 backdrop-blur-md shadow-sm">
+          <div className="text-lg font-semibold text-indigo-700">
+            {formatDate()}
+          </div>
+          <div className="px-4 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium">
+            {getAcademicQuarter()} · {getCurrentSchoolYear()}
+          </div>
+        </div>
+
         {currentView === 'home' && (
           <div className="hub-mesh-bg h-full flex flex-col">
             <div className="max-w-6xl mx-auto px-4 py-2 flex-1 flex flex-col justify-start">
 
               {/* === HERO SECTION === */}
               <div className="text-center mb-6 animate-slide-up">
-                <div className="inline-flex items-center gap-2 mb-4 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1.5">
-                  <Calendar size={14} />
-                  {formatDate()}
-                  <span className="w-1 h-1 bg-indigo-300 rounded-full" />
-                  <span>{getAcademicQuarter()} &middot; {getCurrentSchoolYear()}</span>
-                </div>
-
-                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                <h1 className="text-4xl font-extrabold text-slate-900 mb-2">
                   {getGreeting()},{' '}
                   <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
                     {user.name.split(' ')[0]}
                   </span>
                 </h1>
-                <p className="text-lg text-slate-500 mt-3 max-w-lg mx-auto">
+                <p className="text-lg text-slate-600 max-w-2xl mx-auto">
                   Manage your {user.units?.join(' & ')} unit roster, gradebooks, and student assessments.
                 </p>
               </div>
 
-
-
               {/* === MODULE GRID === */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 flex-1" style={{minHeight:0}}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1" style={{minHeight:0}}>
                 {visibleModules.map((m, index) => (
                   <LaunchCard
                     key={m.id}
