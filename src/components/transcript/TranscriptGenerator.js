@@ -1167,39 +1167,41 @@ const TranscriptGenerator = ({ user }) => {
                                         )}
                                       </div>
                                     </td>
-                                    <td className="px-2 py-1.5 relative">
-                                      <input
-                                        type="text"
-                                        value={e.term || ''}
-                                        onChange={ev => {
-                                          handleEditField(e.id, 'term', ev.target.value);
-                                        }}
-                                        onBlur={ev => {
-                                          const { canonical } = normaliseTermInput(ev.target.value);
-                                          if (canonical !== ev.target.value) handleEditField(e.id, 'term', canonical);
-                                        }}
-                                        readOnly={readOnly}
-                                        className={`w-full bg-transparent border-0 border-b text-xs text-slate-500 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`}
-                                      />
-                                      {/* Smart term badge/hint */}
-                                      {!readOnly && (() => {
-                                        const { canonical, creditHint } = normaliseTermInput(e.term || '');
-                                        if (!e.term || (canonical === e.term && !creditHint)) return null;
-                                        return (
-                                          <div className="absolute left-0 top-full mt-0.5 flex items-center gap-1 text-[10px]">
-                                            <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold border border-orange-200 shadow-sm">
-                                              {canonical}{creditHint ? ` · ${creditHint} cr` : ''}
-                                            </span>
-                                            <button
-                                              type="button"
-                                              className="ml-1 px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded border border-emerald-200 text-[10px] font-bold hover:bg-emerald-200 transition"
-                                              onClick={() => handleEditField(e.id, 'term', canonical)}
-                                            >
-                                              Apply
-                                            </button>
-                                          </div>
-                                        );
-                                      })()}
+                                    <td className="px-2 py-1.5 align-top">
+                                      <div className="flex flex-col gap-1">
+                                        <input
+                                          type="text"
+                                          value={e.term || ''}
+                                          onChange={ev => {
+                                            handleEditField(e.id, 'term', ev.target.value);
+                                          }}
+                                          onBlur={ev => {
+                                            const { canonical } = normaliseTermInput(ev.target.value);
+                                            if (canonical !== ev.target.value) handleEditField(e.id, 'term', canonical);
+                                          }}
+                                          readOnly={readOnly}
+                                          className={`w-full bg-transparent border-0 border-b text-xs text-slate-500 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`}
+                                        />
+                                        {/* Smart term badge/hint */}
+                                        {!readOnly && (() => {
+                                          const { canonical, creditHint } = normaliseTermInput(e.term || '');
+                                          if (!e.term || (canonical === e.term && !creditHint)) return null;
+                                          return (
+                                            <div className="flex items-center gap-1 text-[10px] mt-0.5">
+                                              <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold border border-orange-200 shadow-sm">
+                                                {canonical}{creditHint ? ` · ${creditHint} cr` : ''}
+                                              </span>
+                                              <button
+                                                type="button"
+                                                className="ml-1 px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded border border-emerald-200 text-[10px] font-bold hover:bg-emerald-200 transition"
+                                                onClick={() => handleEditField(e.id, 'term', canonical)}
+                                              >
+                                                Apply
+                                              </button>
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
                                     </td>
                                     <td className="px-2 py-1.5 text-center">
                                       <input type="text" value={e.letterGrade || ''} placeholder="—"
