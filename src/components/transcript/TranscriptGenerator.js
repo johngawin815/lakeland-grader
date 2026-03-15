@@ -968,17 +968,28 @@ const TranscriptGenerator = ({ user }) => {
     setSelectedCourseIds([]);
   }, [selectedCourseIds, enrollmentsBySubject, handleDeleteEnrollment]);
 
-  const enrolledCourseIds = useMemo(() => new Set(editedEnrollments.map(e => e.courseId)), [editedEnrollments]);
+  // Optimization: Group all courses by subject ONCE, not on every keystroke
+  const allCoursesGrouped = useMemo(() => {
+    const grouped = {};
+    for (const area of SAFE_SUBJECT_AREAS) grouped[area] = [];
+    for (const c of allCourses) {
+      const area = SAFE_SUBJECT_AREAS.includes(c.subjectArea) ? c.subjectArea : 'Elective';
+      if (grouped[area]) grouped[area].push(c);
+    }
+    return grouped;
+  }, [allCourses]);
+
+  // Optimization: Only update enrolled course IDs when the actual list of IDs changes, bypassing keystroke updates
+  const enrolledCourseIdsString = useMemo(() => editedEnrollments.map(e => e.courseId).filter(Boolean).sort().join(','), [editedEnrollments]);
+  const enrolledCourseIds = useMemo(() => new Set(enrolledCourseIdsString ? enrolledCourseIdsString.split(',') : []), [enrolledCourseIdsString]);
+
   const availableCoursesBySubject = useMemo(() => {
     const result = {};
     for (const area of SAFE_SUBJECT_AREAS) {
-      result[area] = allCourses.filter(c => {
-        const courseArea = SAFE_SUBJECT_AREAS.includes(c.subjectArea) ? c.subjectArea : 'Elective';
-        return courseArea === area && !enrolledCourseIds.has(c.id);
-      });
+      result[area] = (allCoursesGrouped[area] || []).filter(c => !enrolledCourseIds.has(c.id));
     }
     return result;
-  }, [allCourses, enrolledCourseIds]);
+  }, [allCoursesGrouped, enrolledCourseIds]);
 
   const filteredStudents = useMemo(() => {
     let list = allStudents;
