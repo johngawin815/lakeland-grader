@@ -10,8 +10,6 @@ import { databaseService } from '../../services/databaseService';
 import stateGraduationRequirements, { SUBJECT_AREAS } from '../../data/stateGraduationRequirements';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { useUndoStack } from '../../hooks/useUndoStack';
-import { getApiKey, hasApiKey } from '../../services/geminiService';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -504,6 +502,12 @@ const TranscriptGenerator = ({ user }) => {
         setRecommendedCourses(plan.recommendedCourses || []);
         setPlanNotes(plan.notes || '');
       }
+
+      // SECURITY PILLAR V: Granular Action Logging
+      if (user) {
+        // Run asynchronously without blocking the UI
+        databaseService.logAudit(user, 'ViewStudentTranscript', `Viewed transcript for ${student.studentName}`).catch(console.error);
+      }
     } catch (e) {
       console.error('Failed to load student data:', e);
     } finally {
@@ -801,57 +805,24 @@ const TranscriptGenerator = ({ user }) => {
     setImportStep('reading');
     setImportError('');
 
-    // ── No API key → friendly fallback ──────────────────────────────────────
-    if (!hasApiKey()) {
-      setImportError('No Gemini API key is configured. Go to Settings → AI Configuration to add one. Using sample data for preview.');
-      setImportedCourses([
-        { id: 'ext1', courseName: 'Algebra 1',  term: 'Sem 1', letterGrade: 'B', credits: 0.5, subjectArea: 'Math',          selected: true },
-        { id: 'ext2', courseName: 'Algebra 1',  term: 'Sem 2', letterGrade: 'A', credits: 0.5, subjectArea: 'Math',          selected: true },
-        { id: 'ext3', courseName: 'Biology',     term: 'Year',  letterGrade: 'C', credits: 1.0, subjectArea: 'Science',       selected: true },
-        { id: 'ext4', courseName: 'US History',  term: 'Year',  letterGrade: 'B', credits: 1.0, subjectArea: 'Social Studies',selected: true },
-        { id: 'ext5', courseName: 'Physical Ed', term: 'Sem 1', letterGrade: 'A', credits: 0.5, subjectArea: 'Elective',      selected: true },
-      ]);
-      setImportStep('verify');
-      return;
-    }
-
     try {
-      // Convert file → base64 data URL
-      const dataUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const base64Data = dataUrl.split(',')[1];
-      const mimeType = file.type || 'application/octet-stream';
+      // SECURITY PILLAR III & V: Send file to secure backend, log the attempt
+      if (user && selectedStudent) {
+        databaseService.logAudit(
+          user, 
+          'ExtractTranscriptOCR', 
+          `Initiated secure AI transcript extraction for ${selectedStudent.studentName}`
+        ).catch(console.error);
+      }
 
-      const genAI = new GoogleGenerativeAI(getApiKey());
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-      const prompt = `You are a transcript parser. Extract ALL courses from this high school transcript image or PDF.
-
-Return ONLY a valid JSON array — no markdown, no explanation. Each object must have:
-  courseName  (string)
-  term        (string — e.g. "Sem 1", "Q1", "Year", "Fall 2023")
-  letterGrade (string — e.g. "A", "B+", "C", "F", or "" if missing)
-  credits     (number — 0.25 for quarter, 0.5 for semester, 1.0 for full year; estimate if not shown)
-  subjectArea (one of exactly: "English", "Math", "Science", "Social Studies", "Elective")
-
-If the grade is missing, use "". Map subject areas as best you can to the five options. Output nothing other than the JSON array.`;
-
-      const result = await model.generateContent([
-        prompt,
-        { inlineData: { mimeType, data: base64Data } },
-      ]);
-
-      const raw = result.response.text().trim().replace(/^```json?\s*/i, '').replace(/```\s*$/, '');
-      const parsed = JSON.parse(raw);
+      // Delegate OCR process to backend service. 
+      // Do NOT expose Gemini SDK or API Keys in the React client.
+      const parsed = await databaseService.extractTranscriptCourses(file);
 
       if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No courses found in transcript.');
 
       setImportedCourses(parsed.map((c, i) => ({
-        id: `gemini-${i}`,
+        id: `extracted-${i}`,
         courseName:  String(c.courseName  || '').trim(),
         term:        String(c.term        || '').trim(),
         letterGrade: String(c.letterGrade || '').trim(),
@@ -861,8 +832,9 @@ If the grade is missing, use "". Map subject areas as best you can to the five o
       })));
       setImportStep('verify');
     } catch (err) {
-      console.error('Gemini OCR failed:', err);
-      setImportError(`AI extraction failed: ${err.message}. Please check your API key and try again.`);
+      console.error('Secure OCR extraction failed:', err);
+      // SECURITY PILLAR IV: Sanitise error messages shown to the user
+      setImportError('Extraction failed. Please ensure the document is clear and try again.');
       setImportStep('upload');
     }
   };
