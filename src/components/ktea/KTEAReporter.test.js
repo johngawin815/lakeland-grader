@@ -100,4 +100,71 @@ describe('KTEAReporter Submission Logic', () => {
       expect(screen.getByText('Smith, Jane')).toBeInTheDocument();
     });
   });
+
+  it('displays validation errors when standard scores are out of bounds', async () => {
+    const { container } = render(<KTEAReporter user={mockUser} activeStudent="" />);
+
+    // Fill in a valid name, but an invalid standard score (Max is 160)
+    const nameInput = container.querySelector('input[name="studentName"]');
+    fireEvent.change(nameInput, { target: { value: 'John Doe' } });
+    
+    const preReadingStdInput = container.querySelector('input[name="preReadingStd"]');
+    fireEvent.change(preReadingStdInput, { target: { value: '200' } });
+
+    // Attempt to submit
+    const submitBtn = screen.getByText(/SAVE & SUBMIT/i);
+    fireEvent.click(submitBtn);
+
+    // Submission should be halted by react-hook-form, and the error exposed
+    await waitFor(() => {
+      expect(databaseService.addKteaReport).not.toHaveBeenCalled();
+      expect(screen.getByText('Max 160')).toBeInTheDocument();
+    });
+  });
+
+  it('allows removing a student from the batch queue before submission', async () => {
+    const { container } = render(<KTEAReporter user={mockUser} activeStudent="" />);
+    
+    // Add a user to the queue
+    const nameInput = container.querySelector('input[name="studentName"]');
+    fireEvent.change(nameInput, { target: { value: 'Jane Smith' } });
+    fireEvent.click(screen.getByText(/ADD TO QUEUE/i));
+
+    await waitFor(() => expect(screen.getByText('Smith, Jane')).toBeInTheDocument());
+
+    // Find the 'X' button next to the name in the queue and click it
+    const queueItemName = screen.getByText('Smith, Jane');
+    const removeBtn = queueItemName.closest('div').parentElement.querySelector('button');
+    fireEvent.click(removeBtn);
+
+    // Verify it disappears and the queue is empty
+    await waitFor(() => {
+      expect(screen.queryByText('Smith, Jane')).not.toBeInTheDocument();
+      expect(screen.getByText('Queue is empty')).toBeInTheDocument();
+    });
+  });
+
+  it('aborts deletion if window.confirm is cancelled', async () => {
+    // Mock search results to trigger the search dropdown
+    databaseService.searchKteaReports.mockResolvedValueOnce([{ id: '123', studentName: 'Test Student', gradeLevel: 5 }]);
+    
+    // Hijack window.confirm to simulate a user clicking "Cancel"
+    const confirmSpy = jest.spyOn(window, 'confirm').mockImplementation(() => false);
+
+    render(<KTEAReporter user={mockUser} activeStudent="Test Student" />);
+
+    // Wait for search result to render
+    await waitFor(() => expect(screen.getByText('Test Student')).toBeInTheDocument());
+
+    // Click the trash can icon
+    const trashBtn = screen.getByText('Test Student').closest('div').parentElement.querySelector('button');
+    fireEvent.click(trashBtn);
+
+    // Verify confirm was shown, but database delete was NOT called
+    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining('Delete record for Test Student?'));
+    expect(databaseService.deleteKteaReport).not.toHaveBeenCalled();
+    
+    // Clean up our spy
+    confirmSpy.mockRestore();
+  });
 });
