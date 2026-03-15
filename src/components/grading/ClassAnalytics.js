@@ -40,7 +40,32 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
     return bands;
   }, [students, finalGrades]);
 
-  const maxBand = Math.max(...Object.values(distribution), 1);
+  const maxBand = useMemo(() => Math.max(...Object.values(distribution), 1), [distribution]);
+
+  // Compute attendance metrics in one pass to avoid un-memoized heavy calculations
+  const attendanceMetrics = useMemo(() => {
+    const absencesMap = {};
+    students.forEach(s => { absencesMap[s.id] = 0; });
+    
+    let totalAbsences = 0;
+    const days = Object.keys(attendance);
+    
+    days.forEach(date => {
+      const dayRecord = attendance[date];
+      Object.entries(dayRecord).forEach(([studentId, status]) => {
+        if (status === 'Absent' && absencesMap[studentId] !== undefined) {
+          absencesMap[studentId]++;
+          totalAbsences++;
+        }
+      });
+    });
+
+    const rate = (days.length > 0 && students.length > 0) 
+      ? ((totalAbsences / (days.length * students.length)) * 100).toFixed(1) + '%'
+      : 'N/A';
+
+    return { studentAbsences: absencesMap, totalDays: days.length, rate };
+  }, [students, attendance]);
 
   const failingStudents = useMemo(() => {
     return students
@@ -48,14 +73,13 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
         const g = finalGrades[s.id];
         return g !== null && g !== undefined && g < 60;
       })
-      .map(s => {
-        const absences = Object.values(attendance).reduce((count, day) => {
-          return day[s.id] === 'Absent' ? count + 1 : count;
-        }, 0);
-        return { ...s, grade: finalGrades[s.id], absences };
-      })
+      .map(s => ({
+        ...s,
+        grade: finalGrades[s.id],
+        absences: attendanceMetrics.studentAbsences[s.id] || 0
+      }))
       .sort((a, b) => a.grade - b.grade);
-  }, [students, finalGrades, attendance]);
+  }, [students, finalGrades, attendanceMetrics]);
 
   const assignmentStats = useMemo(() => {
     return assignments.map(a => {
@@ -78,15 +102,14 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
 
   const absenceCorrelation = useMemo(() => {
     return students
-      .map(s => {
-        const absences = Object.values(attendance).reduce((count, day) => {
-          return day[s.id] === 'Absent' ? count + 1 : count;
-        }, 0);
-        return { ...s, grade: finalGrades[s.id], absences };
-      })
+      .map(s => ({
+        ...s,
+        grade: finalGrades[s.id],
+        absences: attendanceMetrics.studentAbsences[s.id] || 0
+      }))
       .filter(s => s.absences >= 3 && s.grade !== null && s.grade < 70)
       .sort((a, b) => b.absences - a.absences);
-  }, [students, finalGrades, attendance]);
+  }, [students, finalGrades, attendanceMetrics]);
 
   const bandColors = {
     A: { bar: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' },
@@ -125,16 +148,8 @@ const ClassAnalytics = ({ students, finalGrades, assignments, categories, grades
         <StatCard
           icon={<XCircle className="w-5 h-5 text-rose-500" />}
           label="Absence Rate"
-          value={(() => {
-            const totalDays = Object.keys(attendance).length;
-            if (totalDays === 0) return 'N/A';
-            const totalAbsences = Object.values(attendance).reduce((sum, day) => {
-              return sum + Object.values(day).filter(s => s === 'Absent').length;
-            }, 0);
-            const rate = (totalAbsences / (totalDays * students.length)) * 100;
-            return `${rate.toFixed(1)}%`;
-          })()}
-          sub={`${Object.keys(attendance).length} days tracked`}
+          value={attendanceMetrics.rate}
+          sub={`${attendanceMetrics.totalDays} days tracked`}
           color="rose"
         />
       </div>

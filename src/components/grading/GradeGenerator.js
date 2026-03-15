@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import toast from 'react-hot-toast';
+import { z } from 'zod';
 
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
@@ -139,6 +140,22 @@ const TEMPLATES = {
     hasSchoolYear: true
   }
 };
+
+// --- ZOD VALIDATION SCHEMA ---
+const pctRefine = (val) => !val || (!isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 120);
+
+const gradeFormSchema = z.object({
+  studentName: z.string().trim().min(1, "Student name is required."),
+  schoolYear: z.string().regex(/^\d{4}-\d{4}$/, "School year must be in YYYY-YYYY format (e.g., 2025-2026)."),
+  quarterName: z.string().min(1, "Quarter is required."),
+  reportDate: z.string().refine(val => !isNaN(Date.parse(val)), "Invalid report date."),
+  engPct: z.string().optional().refine(pctRefine, "English % must be between 0-120."),
+  mathPct: z.string().optional().refine(pctRefine, "Math % must be between 0-120."),
+  sciPct: z.string().optional().refine(pctRefine, "Science % must be between 0-120."),
+  socPct: z.string().optional().refine(pctRefine, "Social Studies % must be between 0-120."),
+  elec1Pct: z.string().optional().refine(pctRefine, "Elective 1 % must be between 0-120."),
+  elec2Pct: z.string().optional().refine(pctRefine, "Elective 2 % must be between 0-120."),
+}).passthrough();
 
 const GradeGenerator = ({ user, activeStudent }) => {
   // --- STATE ---
@@ -420,6 +437,15 @@ const GradeGenerator = ({ user, activeStudent }) => {
   };
 
   const generateDocx = async () => {
+    try {
+      gradeFormSchema.parse(formData);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        err.errors.forEach(e => toast.error(e.message));
+        return;
+      }
+    }
+
     const templateConfig = TEMPLATES[selectedTemplate];
     setLoading(true);
 
@@ -455,8 +481,16 @@ const GradeGenerator = ({ user, activeStudent }) => {
   };
 
   const saveToCloud = async () => {
+    try {
+      gradeFormSchema.parse(formData);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        err.errors.forEach(e => toast.error(e.message));
+        return;
+      }
+    }
+
     const nameToSave = formData.studentName;
-    if (!nameToSave) return toast.error("Please enter a student name.");
 
     setSaving(true);
     try {

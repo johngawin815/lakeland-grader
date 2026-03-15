@@ -4,6 +4,7 @@ import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import toast from 'react-hot-toast';
+import { z } from 'zod';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import {
   FileSpreadsheet, User, BookOpen, Heart, Wrench,
@@ -25,6 +26,11 @@ import {
   getTotalCompletion,
 } from './elementaryGradeCardData';
 import { useGrading } from '../../context/GradingContext';
+
+const elementarySchema = z.object({
+  studentName: z.string().trim().min(1, 'Student name is required.'),
+  schoolYear: z.string().regex(/^\d{4}-\d{4}$/, 'School year must be in YYYY-YYYY format (e.g., 2025-2026).'),
+}).passthrough();
 
 const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
   const { gradeCardPayload, clearGradeCardPayload } = useGrading();
@@ -183,6 +189,14 @@ const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
 
     // Manual save handler for button
     const saveToDatabase = async () => {
+      try {
+        elementarySchema.parse(formData);
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          err.errors.forEach(e => toast.error(e.message));
+          return;
+        }
+      }
       await saveFn();
     };
   const copyQuarter = (from, to) => {
@@ -203,6 +217,15 @@ const ElementaryGradeCard = ({ user, activeStudent, isEmbedded }) => {
 
   // --- Export ---
   const generateDocx = async () => {
+    try {
+      elementarySchema.parse(formData);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        err.errors.forEach(e => toast.error(e.message));
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const response = await fetch('/templates/grade_card_elementary_grand.docx');
