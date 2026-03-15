@@ -315,6 +315,7 @@ const TranscriptGenerator = ({ user }) => {
 
   // --- Select a student ---
   const handleSelectStudent = useCallback(async (student) => {
+    if (transcriptDirty && !window.confirm('You have unsaved changes. Switch student without saving?')) return;
     setLoading(true);
     setSelectedStudent(student);
     setRecommendedCourses([]);
@@ -579,6 +580,7 @@ const TranscriptGenerator = ({ user }) => {
 
   // --- Back to picker ---
   const handleBack = () => {
+    if (transcriptDirty && !window.confirm('You have unsaved changes. Leave without saving?')) return;
     setSelectedStudent(null);
     setStudentEnrollments([]);
     setEditedEnrollments([]);
@@ -757,44 +759,53 @@ const TranscriptGenerator = ({ user }) => {
     <div className="h-full flex flex-col bg-slate-50">
 
       {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm shrink-0">
-        <div className="px-4 py-3 flex items-center justify-between gap-3">
+      <div className="sticky top-0 z-30 shrink-0 shadow-md">
 
-          {/* Left: Back + identity */}
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={handleBack}
-              className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-sm font-medium shrink-0 transition-colors">
-              <ChevronRight className="w-4 h-4 rotate-180" />
-              Back
-            </button>
-            <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-              <span className="text-xs font-bold text-orange-700">{getInitials(selectedStudent.studentName)}</span>
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-extrabold text-slate-800 leading-tight truncate">{selectedStudent.studentName}</h2>
-              <p className="text-[11px] text-slate-400 leading-tight">
-                Grade {selectedStudent.gradeLevel} &middot; Class of {gradYear}
-                {stateReqs && <> &middot; {stateReqs.name}</>}
-              </p>
-            </div>
-          </div>
+        {/* Identity banner */}
+        <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 px-5 py-3">
+          <div className="flex items-center justify-between gap-3">
 
-          {/* Right: Status badge + credits + save */}
-          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-            {totalRequired > 0 && <StatusBadge status={onTrackStatus} />}
-            {totalRequired > 0 && (
-              <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
-                {totalEarned} / {totalRequired} cr
-              </span>
-            )}
-            {saveMsg && <span className="text-[11px] text-slate-500 font-medium">{saveMsg}</span>}
-            {transcriptDirty && (
-              <button onClick={handleSaveTranscript} disabled={savingTranscript}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold transition disabled:opacity-50">
-                {savingTranscript ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                Save
+            {/* Left: back + avatar + name */}
+            <div className="flex items-center gap-3 min-w-0">
+              <button onClick={handleBack}
+                className="flex items-center gap-1 text-orange-100 hover:text-white text-xs font-semibold shrink-0 transition-colors bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg">
+                <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+                Back
               </button>
-            )}
+              <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center shrink-0 shadow-inner">
+                <span className="text-sm font-extrabold text-white">{getInitials(selectedStudent.studentName)}</span>
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-extrabold text-white leading-tight truncate">{selectedStudent.studentName}</h2>
+                <p className="text-[11px] text-orange-100 leading-tight">
+                  Grade {selectedStudent.gradeLevel}&ensp;·&ensp;Class of {gradYear}
+                  {selectedStudent.homeState && <>&ensp;·&ensp;{selectedStudent.homeState}</>}
+                  {selectedStudent.district && <>&ensp;·&ensp;{selectedStudent.district}</>}
+                </p>
+              </div>
+            </div>
+
+            {/* Right: pill stats + save */}
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              {totalRequired > 0 && (
+                <div className="flex items-center gap-1.5 bg-white/15 border border-white/25 rounded-full px-3 py-1">
+                  <StatusBadge status={onTrackStatus} />
+                  <span className="text-xs font-extrabold text-white ml-1">{totalEarned}<span className="font-normal opacity-70">/{totalRequired} cr</span></span>
+                </div>
+              )}
+              {saveMsg && (
+                <span className={`text-[11px] font-semibold px-2 py-1 rounded-lg ${saveMsg.includes('failed') ? 'bg-red-500/30 text-red-100' : 'bg-emerald-500/30 text-emerald-100'}`}>
+                  {saveMsg}
+                </span>
+              )}
+              {transcriptDirty && (
+                <button onClick={handleSaveTranscript} disabled={savingTranscript}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold shadow transition disabled:opacity-50">
+                  {savingTranscript ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  Save Changes
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -817,35 +828,38 @@ const TranscriptGenerator = ({ user }) => {
               {/* Left: Editable transcript table */}
               <div className="lg:col-span-2">
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-orange-50/60 to-white">
                     <div className="flex items-center gap-2">
                       <BookOpen className="w-4 h-4 text-orange-600" />
-                      <span className="text-sm font-bold text-slate-700">Transcript</span>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">{totalEarned} cr earned</span>
+                      <span className="text-sm font-bold text-slate-700">Official Transcript</span>
+                      <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-orange-500 text-white shadow-sm">{totalEarned} cr earned</span>
+                      {transcriptDirty && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 animate-pulse">Unsaved changes</span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <button onClick={() => setShowImportModal(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-200 transition-colors">
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg shadow-sm transition-colors">
                         <UploadCloud className="w-3.5 h-3.5" />
                         Import Past Transcript
                       </button>
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                      <div className="flex items-center gap-1 text-[10px] text-slate-400 bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-lg">
                         <Pencil className="w-3 h-3" />
-                        <span>Click cells to edit</span>
+                        <span>Click any cell to edit</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
-                      <thead>
-                        <tr className="bg-slate-50/80 text-slate-400 uppercase tracking-wider text-[10px]">
-                          <th className="text-left px-3 py-2 font-semibold">Course</th>
-                          <th className="text-left px-2 py-2 font-semibold w-20">Term</th>
-                          <th className="text-center px-2 py-2 font-semibold w-14">Grade</th>
-                          <th className="text-center px-2 py-2 font-semibold w-14">%</th>
-                          <th className="text-center px-2 py-2 font-semibold w-16">Credits</th>
-                          <th className="text-center px-2 py-2 font-semibold w-24">Status</th>
+                      <thead className="sticky top-0 z-10">
+                        <tr className="bg-slate-800 text-slate-300 uppercase tracking-wider text-[10px]">
+                          <th className="text-left px-3 py-2.5 font-semibold">Course</th>
+                          <th className="text-left px-2 py-2.5 font-semibold w-20">Term</th>
+                          <th className="text-center px-2 py-2.5 font-semibold w-14">Grade</th>
+                          <th className="text-center px-2 py-2.5 font-semibold w-14">%</th>
+                          <th className="text-center px-2 py-2.5 font-semibold w-16">Credits</th>
+                          <th className="text-center px-2 py-2.5 font-semibold w-24">Status</th>
                           <th className="w-8"></th>
                         </tr>
                       </thead>
@@ -856,27 +870,38 @@ const TranscriptGenerator = ({ user }) => {
                           return (
                             <React.Fragment key={area}>
                               {/* Subject section header */}
-                              <tr className="bg-slate-50/60">
+                              <tr className="bg-gradient-to-r from-orange-50 to-amber-50/30 border-t-2 border-orange-100">
                                 <td colSpan={7} className="px-3 py-2">
                                   <div className="flex items-center justify-between">
                                     <button onClick={() => toggleSubjectCollapse(area)}
-                                      className="flex items-center gap-1.5 text-[11px] font-bold text-orange-700 uppercase tracking-wider hover:text-orange-800 transition-colors">
+                                      className="flex items-center gap-1.5 text-[11px] font-extrabold text-orange-800 uppercase tracking-widest hover:text-orange-900 transition-colors">
                                       {isCollapsed
                                         ? <ChevronRight className="w-3.5 h-3.5" />
                                         : <ChevronDown className="w-3.5 h-3.5" />}
                                       {area}
                                     </button>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-[10px] font-semibold text-slate-400">{creditsEarned[area] || 0} cr</span>
+                                      {stateReqs && (
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                          (creditsEarned[area] || 0) >= (stateReqs.requirements[area] || 0) && (stateReqs.requirements[area] || 0) > 0
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                            : 'bg-orange-50 text-orange-600 border-orange-200'
+                                        }`}>
+                                          {creditsEarned[area] || 0}/{stateReqs.requirements[area] || 0} cr
+                                        </span>
+                                      )}
+                                      {!stateReqs && (
+                                        <span className="text-[10px] font-semibold text-slate-400">{creditsEarned[area] || 0} cr</span>
+                                      )}
                                       <button
                                         onClick={() => {
                                           setAddingCourseToSubject(addingCourseToSubject === area ? null : area);
                                           setNewCourseForm({ courseId: '', term: '', grade: '', percentage: '', status: 'Active' });
                                           if (isCollapsed) toggleSubjectCollapse(area);
                                         }}
-                                        className="flex items-center gap-0.5 text-[10px] font-bold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-1.5 py-0.5 rounded transition-colors">
+                                        className="flex items-center gap-0.5 text-[10px] font-bold text-white bg-orange-500 hover:bg-orange-600 px-2 py-0.5 rounded-md shadow-sm transition-colors">
                                         <Plus className="w-3 h-3" />
-                                        Add
+                                        Add Course
                                       </button>
                                     </div>
                                   </div>
@@ -1009,8 +1034,16 @@ const TranscriptGenerator = ({ user }) => {
                         })}
                         {editedEnrollments.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="text-center py-8 text-slate-400 text-xs">
-                              No courses on transcript yet. Use the "Add" button next to any subject area.
+                            <td colSpan={7} className="py-10">
+                              <div className="flex flex-col items-center gap-3 text-center px-4">
+                                <div className="w-12 h-12 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center">
+                                  <BookOpen className="w-6 h-6 text-orange-300" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-500">No courses on this transcript yet</p>
+                                <p className="text-xs text-slate-400 max-w-xs">
+                                  Click <span className="font-bold text-orange-600">+ Add Course</span> next to any subject above, or use <span className="font-bold text-indigo-600">Import Past Transcript</span> to bring in prior school records.
+                                </p>
+                              </div>
                             </td>
                           </tr>
                         )}
@@ -1040,9 +1073,12 @@ const TranscriptGenerator = ({ user }) => {
                   <>
                     {/* Overall credit gauge */}
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <TrendingUp className="w-4 h-4 text-orange-600" />
-                        <span className="text-sm font-bold text-slate-700">Overall Progress</span>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-orange-600" />
+                          <span className="text-sm font-bold text-slate-700">Overall Progress</span>
+                        </div>
+                        <StatusBadge status={onTrackStatus} />
                       </div>
                       {allMet && (
                         <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 mb-3">
@@ -1053,7 +1089,24 @@ const TranscriptGenerator = ({ user }) => {
                       <div className="flex justify-center mb-3">
                         <DonutChart earned={totalEarned} total={totalRequired} />
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-600 justify-center">
+                      {/* Grade-level on-track bar */}
+                      <div className="mt-2 mb-1">
+                        <div className="flex justify-between text-[10px] font-semibold text-slate-400 mb-1">
+                          <span>Grade 8</span><span>9</span><span>10</span><span>11</span><span>12 ✓</span>
+                        </div>
+                        <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                          {[{g:8,c:2},{g:9,c:5.5},{g:10,c:11},{g:11,c:16.5},{g:12,c:21}].map(({g,c}) => (
+                            <div key={g} className="absolute top-0 h-full w-px bg-slate-300"
+                              style={{ left: `${(c / totalRequired) * 100}%` }} />
+                          ))}
+                          <div className={`h-full rounded-full transition-all duration-700 ${allMet ? 'bg-emerald-500' : totalEarned/totalRequired >= 0.5 ? 'bg-amber-400' : 'bg-red-400'}`}
+                            style={{ width: `${Math.min(100,(totalEarned/totalRequired)*100)}%` }} />
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1 text-center">
+                          Expected at grade {selectedStudent.gradeLevel}: <span className="font-bold text-slate-600">{({8:2,9:5.5,10:11,11:16.5,12:21})[selectedStudent.gradeLevel] ?? '—'} cr</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600 justify-center mt-2 pt-2 border-t border-slate-100">
                         <GraduationCap className="w-3.5 h-3.5 text-orange-500" />
                         <span className="font-bold">{totalRequired}</span>
                         <span>credits required &middot; {stateReqs.name}</span>

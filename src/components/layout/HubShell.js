@@ -257,7 +257,7 @@ const HubShell = () => {
         <div className="w-8 h-px bg-slate-700/50 my-1" />
 
         {/* Module nav buttons */}
-        <nav className="flex-1 flex flex-col items-center gap-0.5 overflow-hidden w-full px-2">
+        <nav className="flex-1 flex flex-col items-center gap-0.5 overflow-y-auto w-full px-2 scrollbar-none">
           {visibleModules.map(m => (
             <SidebarButton
               key={m.id}
