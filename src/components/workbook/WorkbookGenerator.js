@@ -309,6 +309,14 @@ const WorkbookGenerator = ({ user }) => {
   const [streamText, setStreamText] = useState('');
   const [genError, setGenError] = useState('');
   const abortRef = useRef(null);
+  const streamContainerRef = useRef(null);
+
+  // Auto-scroll the stream container
+  useEffect(() => {
+    if (view === 'generating' && streamContainerRef.current) {
+      streamContainerRef.current.scrollTop = streamContainerRef.current.scrollHeight;
+    }
+  }, [streamText, view]);
 
   // Preview
   const [previewHtml, setPreviewHtml] = useState('');
@@ -316,6 +324,7 @@ const WorkbookGenerator = ({ user }) => {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [repairMsg, setRepairMsg] = useState(null);
   const [repairing, setRepairing] = useState(false);
   const iframeRef = useRef(null);
 
@@ -592,18 +601,25 @@ const WorkbookGenerator = ({ user }) => {
   const handleRepair = () => {
     if (!previewHtml || repairing) return;
     setRepairing(true);
+    setRepairMsg(null);
 
-    try {
-      const { html, fixes } = repairWorkbook(previewHtml, PRINT_ENGINE_CSS);
-      setPreviewHtml(html);
-      setSaved(false);
-      if (fixes.length === 0) {
-        alert('No structural issues detected — the workbook looks structurally correct.');
+    setTimeout(() => {
+      try {
+        const { html, fixes } = repairWorkbook(previewHtml, PRINT_ENGINE_CSS);
+        setPreviewHtml(html);
+        setSaved(false);
+        if (fixes.length === 0) {
+          setRepairMsg({ type: 'success', text: 'No structural issues detected.' });
+        } else {
+          setRepairMsg({ type: 'success', text: `Repaired ${fixes.length} issues.` });
+        }
+      } catch (err) {
+        setRepairMsg({ type: 'error', text: `Repair failed: ${err.message || 'Unknown error'}` });
+      } finally {
+        setRepairing(false);
+        setTimeout(() => setRepairMsg(null), 4000);
       }
-    } catch (err) {
-      alert(`Repair failed: ${err.message || 'Unknown error'}`);
-    }
-    setRepairing(false);
+    }, 50);
   };
 
   // ─── FILTERED LIBRARY ────────────────────────────────────────────────────
@@ -1031,7 +1047,9 @@ const WorkbookGenerator = ({ user }) => {
               </div>
             </div>
             {/* Stream preview */}
-            <pre className="max-w-2xl mx-auto bg-slate-900 text-lime-400 text-[11px] font-mono p-4 rounded-xl overflow-auto max-h-[60vh] leading-relaxed whitespace-pre-wrap">
+            <pre 
+              ref={streamContainerRef}
+              className="max-w-2xl mx-auto bg-slate-900 text-lime-400 text-[11px] font-mono p-4 rounded-xl overflow-auto max-h-[60vh] leading-relaxed whitespace-pre-wrap">
               {streamText || 'Waiting for response...'}
             </pre>
           </div>
@@ -1084,6 +1102,12 @@ const WorkbookGenerator = ({ user }) => {
             {repairing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wrench className="w-3.5 h-3.5" />}
             {repairing ? 'Fixing...' : 'Fix'}
           </button>
+
+          {repairMsg && (
+            <span className={`text-xs font-bold flex items-center gap-1 ${repairMsg.type === 'error' ? 'text-red-500' : 'text-emerald-600'}`}>
+              {repairMsg.type === 'error' ? <AlertTriangle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />} {repairMsg.text}
+            </span>
+          )}
 
           <button onClick={handlePrint}
             className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5">
