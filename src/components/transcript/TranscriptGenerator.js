@@ -11,6 +11,8 @@ import stateGraduationRequirements, { SUBJECT_AREAS } from '../../data/stateGrad
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { useUndoStack } from '../../hooks/useUndoStack';
 
+const SAFE_SUBJECT_AREAS = Array.isArray(SUBJECT_AREAS) ? SUBJECT_AREAS : [];
+
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
 const isPassing = (grade) => grade && !['F', 'I', 'W', 'WF', 'NC', '', null, undefined].includes(String(grade).trim().toUpperCase());
@@ -119,9 +121,9 @@ function deduplicateEnrollments(enrollments) {
 
 function computeCreditsEarned(enrollments) {
   const earned = {};
-  for (const area of SUBJECT_AREAS) earned[area] = 0;
+  for (const area of SAFE_SUBJECT_AREAS) earned[area] = 0;
   for (const e of enrollments) {
-    const area = SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
+    const area = SAFE_SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
     const cr = getEarnedCredits(e);
     if (cr > 0) earned[area] = (earned[area] || 0) + cr;
   }
@@ -130,10 +132,10 @@ function computeCreditsEarned(enrollments) {
 
 function computeCreditsInProgress(enrollments) {
   const inProgress = {};
-  for (const area of SUBJECT_AREAS) inProgress[area] = 0;
+  for (const area of SAFE_SUBJECT_AREAS) inProgress[area] = 0;
   for (const e of enrollments) {
     if (e.status === 'Active' && getEarnedCredits(e) === 0) {
-      const area = SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
+      const area = SAFE_SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
       inProgress[area] = (inProgress[area] || 0) + getTermCredits(e);
     }
   }
@@ -142,7 +144,7 @@ function computeCreditsInProgress(enrollments) {
 
 function computeGaps(earned, requirements) {
   const gaps = {};
-  for (const area of SUBJECT_AREAS) {
+  for (const area of SAFE_SUBJECT_AREAS) {
     const needed = requirements[area] || 0;
     const have = earned[area] || 0;
     gaps[area] = Math.max(0, needed - have);
@@ -176,7 +178,7 @@ const calcGradYear = (gradeLevel) => {
 };
 
 const getPriorityGaps = (gaps, creditsEarned) =>
-  SUBJECT_AREAS
+  SAFE_SUBJECT_AREAS
     .filter(a => (gaps[a] ?? 0) > 0)
     .sort((a, b) => {
       const aZero = (creditsEarned[a] ?? 0) === 0 ? 0 : 1;
@@ -427,20 +429,26 @@ const TranscriptGenerator = ({ user }) => {
   }, [editedEnrollments, removedEnrollmentIds, selectedStudent, user]);
 
   // eslint-disable-next-line no-unused-vars
-  const { saveStatus, lastSavedAt, forceSave } = useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
+  const autoSaveResult = useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent }) || {};
+  const { saveStatus, lastSavedAt, forceSave } = autoSaveResult;
 
   // Undo / redo stack for inline transcript edits
-  const { push: pushUndo, undo: undoEdit, redo: redoEdit, canUndo, canRedo, clear: clearUndo } = useUndoStack(100);
+  const undoStack = useUndoStack(100) || {};
+  const { push: pushUndo = () => {}, undo: undoEdit = () => {}, redo: redoEdit = () => {}, canUndo = false, canRedo = false, clear: clearUndo = () => {} } = undoStack;
 
   // Load students and courses on mount
   useEffect(() => {
     (async () => {
-      const [studs, courses] = await Promise.all([
-        databaseService.getAllStudents(),
-        databaseService.getAllCourses(),
-      ]);
-      setAllStudents(studs.filter(s => s.active !== false));
-      setAllCourses(courses);
+      try {
+        const [studs, courses] = await Promise.all([
+          databaseService.getAllStudents(),
+          databaseService.getAllCourses(),
+        ]);
+        setAllStudents(Array.isArray(studs) ? studs.filter(s => s && s.active !== false) : []);
+        setAllCourses(Array.isArray(courses) ? courses : []);
+      } catch (err) {
+        console.error('Failed to load students or courses:', err);
+      }
     })();
   }, []);
 
@@ -502,7 +510,9 @@ const TranscriptGenerator = ({ user }) => {
         databaseService.getStudentMasterGrades(student.id),
         databaseService.getTranscriptPlanByStudent(student.id),
       ]);
-      const merged = masterGrades.length > 0 ? masterGrades : enrollments;
+      const safeMasterGrades = Array.isArray(masterGrades) ? masterGrades : [];
+      const safeEnrollments = Array.isArray(enrollments) ? enrollments : [];
+      const merged = safeMasterGrades.length > 0 ? safeMasterGrades : safeEnrollments;
       const deduped = deduplicateEnrollments(merged);
       const withCredits = deduped.kept.map(e => ({ ...e, credits: getEarnedCredits(e) }));
       setStudentEnrollments(withCredits);
@@ -579,13 +589,14 @@ const TranscriptGenerator = ({ user }) => {
   const totalEarned = useMemo(() => Object.values(creditsEarned).reduce((s, v) => s + v, 0), [creditsEarned]);
   const totalRequired = stateReqs?.totalCredits || 0;
   const allMet = gaps ? Object.values(gaps).every(g => g === 0) && totalEarned >= totalRequired : false;
-  const hasGaps = gaps && SUBJECT_AREAS.some(area => (gaps[area] || 0) > 0);
+  const hasGaps = gaps && SAFE_SUBJECT_AREAS.some(area => (gaps[area] || 0) > 0);
 
   const enrollmentsBySubject = useMemo(() => {
     const grouped = {};
-    for (const area of SUBJECT_AREAS) grouped[area] = [];
+    for (const area of SAFE_SUBJECT_AREAS) grouped[area] = [];
+    grouped['Elective'] = grouped['Elective'] || [];
     for (const e of editedEnrollments) {
-      const area = SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
+      const area = SAFE_SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
       grouped[area].push(e);
     }
     return grouped;
@@ -594,9 +605,9 @@ const TranscriptGenerator = ({ user }) => {
   const enrolledCourseIds = useMemo(() => new Set(editedEnrollments.map(e => e.courseId)), [editedEnrollments]);
   const availableCoursesBySubject = useMemo(() => {
     const result = {};
-    for (const area of SUBJECT_AREAS) {
+    for (const area of SAFE_SUBJECT_AREAS) {
       result[area] = allCourses.filter(c => {
-        const courseArea = SUBJECT_AREAS.includes(c.subjectArea) ? c.subjectArea : 'Elective';
+        const courseArea = SAFE_SUBJECT_AREAS.includes(c.subjectArea) ? c.subjectArea : 'Elective';
         return courseArea === area && !enrolledCourseIds.has(c.id);
       });
     }
@@ -678,7 +689,7 @@ const TranscriptGenerator = ({ user }) => {
       const headerRow = ws1.addRow(['Subject Area', 'Course Name', 'Term', 'Grade', 'Credits', 'Status']);
       headerRow.eachCell(cell => { cell.font = headerFont; cell.fill = headerFill; cell.alignment = { horizontal: 'center' }; });
 
-      for (const area of SUBJECT_AREAS) {
+      for (const area of SAFE_SUBJECT_AREAS) {
         const courses = enrollmentsBySubject[area];
         if (courses.length === 0) continue;
         const subRow = ws1.addRow([area, '', '', '', '', '']);
@@ -711,7 +722,7 @@ const TranscriptGenerator = ({ user }) => {
         ws2.addRow(['Total Credits Required:', stateReqs.totalCredits]);
         const reqHeader = ws2.addRow(['Subject Area', 'Required', 'Earned', 'In Progress', 'Gap']);
         reqHeader.eachCell(cell => { cell.font = headerFont; cell.fill = headerFill; cell.alignment = { horizontal: 'center' }; });
-        for (const area of SUBJECT_AREAS) {
+        for (const area of SAFE_SUBJECT_AREAS) {
           const req = stateReqs.requirements[area] || 0;
           const have = creditsEarned[area] || 0;
           const ip = creditsInProgress[area] || 0;
@@ -833,7 +844,7 @@ const TranscriptGenerator = ({ user }) => {
         term:        String(c.term        || '').trim(),
         letterGrade: String(c.letterGrade || '').trim(),
         credits:     parseFloat(c.credits) || 0.5,
-        subjectArea: SUBJECT_AREAS.includes(c.subjectArea) ? c.subjectArea : 'Elective',
+        subjectArea: SAFE_SUBJECT_AREAS.includes(c.subjectArea) ? c.subjectArea : 'Elective',
         selected: true,
       })));
       setImportStep('verify');
@@ -1093,7 +1104,7 @@ const TranscriptGenerator = ({ user }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {SUBJECT_AREAS.map(area => {
+                        {SAFE_SUBJECT_AREAS.map(area => {
                           const courses = enrollmentsBySubject[area];
                           const isCollapsed = collapsedSubjects.has(area);
                           return (
@@ -1385,7 +1396,7 @@ const TranscriptGenerator = ({ user }) => {
                         <span className="text-sm font-bold text-slate-700">By Subject</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                        {SUBJECT_AREAS.map(area => (
+                        {SAFE_SUBJECT_AREAS.map(area => (
                           <SubjectProgressCard key={area}
                             subject={area}
                             required={stateReqs.requirements[area] || 0}
@@ -1728,7 +1739,7 @@ const TranscriptGenerator = ({ user }) => {
                                        <select value={course.subjectArea} disabled={!course.selected} onChange={(e) => {
                                            setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, subjectArea: e.target.value} : c));
                                        }} className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none disabled:opacity-50 disabled:bg-slate-50">
-                                           {SUBJECT_AREAS.map(area => <option key={area} value={area}>{area}</option>)}
+                                           {SAFE_SUBJECT_AREAS.map(area => <option key={area} value={area}>{area}</option>)}
                                            <option value="Elective">Elective</option>
                                        </select>
                                     </td>
