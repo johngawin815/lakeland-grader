@@ -159,9 +159,18 @@ function KTEAReporter({ user, activeStudent }) {
     if (queue.length === 0) return;
     setSaving(true);
     try {
-      for (const student of queue) {
-        const { tempId, ...cleanData } = student;
-        await databaseService.addKteaReport({ ...cleanData, submittedBy: user.email, schoolYear: "2024-2025" });
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < queue.length; i += CHUNK_SIZE) {
+        const chunk = queue.slice(i, i + CHUNK_SIZE);
+        await Promise.all(chunk.map(student => {
+          const { tempId, ...cleanData } = student;
+          return databaseService.addKteaReport({ ...cleanData, submittedBy: user.email, schoolYear: "2024-2025" });
+        }));
+        
+        // Brief pause between chunks to avoid hitting Azure's rate limits
+        if (i + CHUNK_SIZE < queue.length) {
+          await new Promise(res => setTimeout(res, 500));
+        }
       }
       setMsg(`Saved ${queue.length} records to Azure.`);
       setQueue([]);
