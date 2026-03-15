@@ -9,7 +9,7 @@ const NewAssignmentModal = ({ isOpen, onClose, categories, onSave }) => {
   const autoSaveFn = async () => {
     if (onSave) onSave(newAssignment);
   };
-  const { saveStatus, lastSavedAt } = useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
+  useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
 
 
   if (!isOpen) return null;
