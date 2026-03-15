@@ -9,6 +9,9 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import stateGraduationRequirements, { SUBJECT_AREAS } from '../../data/stateGraduationRequirements';
 import { useAutoSave } from '../../hooks/useAutoSave';
+import { useUndoStack } from '../../hooks/useUndoStack';
+import { getApiKey, hasApiKey } from '../../services/geminiService';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -18,6 +21,56 @@ const isPassing = (grade) => grade && !['F', 'I', '', null, undefined].includes(
 const getTermCredits = (enrollment) => {
   const term = (enrollment.term || '').toUpperCase().trim();
   return /^Q[1-4]$/.test(term) ? 0.25 : 0.5;
+};
+
+/**
+ * Smart term normaliser — maps common free-text entries to canonical form.
+ * Returns { canonical, creditHint } where creditHint is 0.25 | 0.5 | 1.0 | null.
+ * Examples:
+ *   "fall 2023"  → { canonical: "Fall 2023",  creditHint: 0.5  }
+ *   "q2"         → { canonical: "Q2",         creditHint: 0.25 }
+ *   "year"       → { canonical: "Year",       creditHint: 1.0  }
+ *   "semester 1" → { canonical: "Sem 1",      creditHint: 0.5  }
+ *   "1st quarter"→ { canonical: "Q1",         creditHint: 0.25 }
+ */
+const normaliseTermInput = (raw) => {
+  const t = (raw || '').trim();
+  const u = t.toUpperCase();
+
+  // Quarter patterns
+  if (/^Q[1-4]$/.test(u)) return { canonical: u, creditHint: 0.25 };
+  if (/^(1ST|FIRST)\s*QUARTER$/i.test(t))  return { canonical: 'Q1', creditHint: 0.25 };
+  if (/^(2ND|SECOND)\s*QUARTER$/i.test(t)) return { canonical: 'Q2', creditHint: 0.25 };
+  if (/^(3RD|THIRD)\s*QUARTER$/i.test(t))  return { canonical: 'Q3', creditHint: 0.25 };
+  if (/^(4TH|FOURTH)\s*QUARTER$/i.test(t)) return { canonical: 'Q4', creditHint: 0.25 };
+  if (/^QUARTER\s*([1-4])$/i.test(t)) {
+    const n = t.match(/([1-4])/)[1];
+    return { canonical: `Q${n}`, creditHint: 0.25 };
+  }
+
+  // Full-year patterns
+  if (/^(FULL\s*)?YEAR$/i.test(t)) return { canonical: 'Year', creditHint: 1.0 };
+  if (/^ANNUAL$/i.test(t))         return { canonical: 'Year', creditHint: 1.0 };
+
+  // Semester patterns
+  const semMatch = t.match(/^(SEM(?:ESTER)?)[\s._-]*([12])$/i);
+  if (semMatch) return { canonical: `Sem ${semMatch[2]}`, creditHint: 0.5 };
+  if (/^(1ST|FIRST)\s*(SEM(ESTER)?)$/i.test(t))  return { canonical: 'Sem 1', creditHint: 0.5 };
+  if (/^(2ND|SECOND)\s*(SEM(ESTER)?)$/i.test(t)) return { canonical: 'Sem 2', creditHint: 0.5 };
+
+  // Season + optional year: "Fall 2024", "Spring 23"
+  const seasonMatch = t.match(/^(FALL|SPRING|WINTER|SUMMER)[\s._-]*(\d{2,4})?$/i);
+  if (seasonMatch) {
+    const season = seasonMatch[1].charAt(0).toUpperCase() + seasonMatch[1].slice(1).toLowerCase();
+    const year   = seasonMatch[2] ? ` ${seasonMatch[2].length === 2 ? '20' + seasonMatch[2] : seasonMatch[2]}` : '';
+    const hint   = /^(SPRING|FALL)$/i.test(seasonMatch[1]) ? 0.5 : null;
+    return { canonical: `${season}${year}`, creditHint: hint };
+  }
+
+  // "Prior School" shorthand
+  if (/^PRIOR(\s*SCHOOL)?$/i.test(t)) return { canonical: 'Prior School', creditHint: 0.5 };
+
+  return { canonical: t, creditHint: null }; // no mapping found — keep as-is
 };
 
 /** Auto-compute earned credits based on term length and passing grade */
@@ -301,6 +354,9 @@ const TranscriptGenerator = ({ user }) => {
   // eslint-disable-next-line no-unused-vars
   const { saveStatus, lastSavedAt, forceSave } = useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
 
+  // Undo / redo stack for inline transcript edits
+  const { push: pushUndo, undo: undoEdit, redo: redoEdit, canUndo, canRedo, clear: clearUndo } = useUndoStack(100);
+
   // Load students and courses on mount
   useEffect(() => {
     (async () => {
@@ -312,6 +368,35 @@ const TranscriptGenerator = ({ user }) => {
       setAllCourses(courses);
     })();
   }, []);
+
+  // --- Ctrl+Z / Ctrl+Y undo/redo keyboard handler ---
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!selectedStudent || readOnly) return;
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && !e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        const action = undoEdit();
+        if (action?.snapshot) {
+          setEditedEnrollments(action.snapshot);
+          setTranscriptDirty(true);
+        }
+      }
+      if (ctrl && (e.shiftKey && e.key === 'z' || e.key === 'y')) {
+        e.preventDefault();
+        const action = redoEdit();
+        if (action?.snapshot) {
+          // Redo means re-applying the after value — rebuild from snapshot + after
+          setEditedEnrollments(action.snapshot.map(en =>
+            en.id === action.enrollmentId ? { ...en, [action.field]: action.after } : en
+          ));
+          setTranscriptDirty(true);
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedStudent, readOnly, undoEdit, redoEdit]);
 
   // --- Select a student ---
   const handleSelectStudent = useCallback(async (student) => {
@@ -327,6 +412,7 @@ const TranscriptGenerator = ({ user }) => {
     setActiveTab('transcript');
     setAddingCourseToSubject(null);
     setCollapsedSubjects(new Set());
+    clearUndo();
     setShowImportModal(false);
     setImportStep('upload');
     setImportedCourses([]);
@@ -355,12 +441,18 @@ const TranscriptGenerator = ({ user }) => {
 
   // --- Inline editing ---
   const handleEditField = (enrollmentId, field, value) => {
-    setEditedEnrollments(prev => prev.map(e => {
-      if (e.id !== enrollmentId) return e;
-      const newE = { ...e, [field]: value };
-      if (field === 'letterGrade' || field === 'percentage') newE.credits = getEarnedCredits(newE);
-      return newE;
-    }));
+    setEditedEnrollments(prev => {
+      const before = prev.find(e => e.id === enrollmentId);
+      if (before) {
+        pushUndo({ enrollmentId, field, before: before[field], after: value, snapshot: prev.map(e => ({ ...e })) });
+      }
+      return prev.map(e => {
+        if (e.id !== enrollmentId) return e;
+        const newE = { ...e, [field]: value };
+        if (field === 'letterGrade' || field === 'percentage') newE.credits = getEarnedCredits(newE);
+        return newE;
+      });
+    });
     setTranscriptDirty(true);
   };
 
@@ -392,6 +484,10 @@ const TranscriptGenerator = ({ user }) => {
       setSavingTranscript(false);
     }
   };
+
+  // --- Role-based access ---
+  // Admins and teachers can edit; viewer/read-only roles cannot.
+  const readOnly = user?.role === 'viewer' || user?.role === 'readonly';
 
   // --- Computed values ---
   const stateReqs = selectedStudent?.homeState ? stateGraduationRequirements[selectedStudent.homeState] : null;
@@ -593,6 +689,7 @@ const TranscriptGenerator = ({ user }) => {
     setActiveTab('transcript');
     setAddingCourseToSubject(null);
     setCollapsedSubjects(new Set());
+    clearUndo();
   };
 
   // --- Add new course (inline form) ---
@@ -624,21 +721,78 @@ const TranscriptGenerator = ({ user }) => {
     });
   };
 
-  // --- Import logic ---
-  const processImportFile = (file) => {
+  // --- Import logic (Gemini Vision OCR) ---
+  const [importError, setImportError] = useState('');
+
+  const processImportFile = async (file) => {
     if (!file) return;
     setImportStep('reading');
-    // TODO: replace setTimeout with real OCR/AI extraction using `file`
-    setTimeout(() => {
+    setImportError('');
+
+    // ── No API key → friendly fallback ──────────────────────────────────────
+    if (!hasApiKey()) {
+      setImportError('No Gemini API key is configured. Go to Settings → AI Configuration to add one. Using sample data for preview.');
       setImportedCourses([
-        { id: 'ext1', courseName: 'Algebra 1', term: 'Sem 1', letterGrade: 'B', credits: 0.5, subjectArea: 'Math', selected: true },
-        { id: 'ext2', courseName: 'Algebra 1', term: 'Sem 2', letterGrade: 'A', credits: 0.5, subjectArea: 'Math', selected: true },
-        { id: 'ext3', courseName: 'Biology', term: 'Year', letterGrade: 'C', credits: 1.0, subjectArea: 'Science', selected: true },
-        { id: 'ext4', courseName: 'US History', term: 'Year', letterGrade: 'B', credits: 1.0, subjectArea: 'Social Studies', selected: true },
-        { id: 'ext5', courseName: 'Physical Ed', term: 'Sem 1', letterGrade: 'A', credits: 0.5, subjectArea: 'Elective', selected: true },
+        { id: 'ext1', courseName: 'Algebra 1',  term: 'Sem 1', letterGrade: 'B', credits: 0.5, subjectArea: 'Math',          selected: true },
+        { id: 'ext2', courseName: 'Algebra 1',  term: 'Sem 2', letterGrade: 'A', credits: 0.5, subjectArea: 'Math',          selected: true },
+        { id: 'ext3', courseName: 'Biology',     term: 'Year',  letterGrade: 'C', credits: 1.0, subjectArea: 'Science',       selected: true },
+        { id: 'ext4', courseName: 'US History',  term: 'Year',  letterGrade: 'B', credits: 1.0, subjectArea: 'Social Studies',selected: true },
+        { id: 'ext5', courseName: 'Physical Ed', term: 'Sem 1', letterGrade: 'A', credits: 0.5, subjectArea: 'Elective',      selected: true },
       ]);
       setImportStep('verify');
-    }, 1500);
+      return;
+    }
+
+    try {
+      // Convert file → base64 data URL
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const base64Data = dataUrl.split(',')[1];
+      const mimeType = file.type || 'application/octet-stream';
+
+      const genAI = new GoogleGenerativeAI(getApiKey());
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+      const prompt = `You are a transcript parser. Extract ALL courses from this high school transcript image or PDF.
+
+Return ONLY a valid JSON array — no markdown, no explanation. Each object must have:
+  courseName  (string)
+  term        (string — e.g. "Sem 1", "Q1", "Year", "Fall 2023")
+  letterGrade (string — e.g. "A", "B+", "C", "F", or "" if missing)
+  credits     (number — 0.25 for quarter, 0.5 for semester, 1.0 for full year; estimate if not shown)
+  subjectArea (one of exactly: "English", "Math", "Science", "Social Studies", "Elective")
+
+If the grade is missing, use "". Map subject areas as best you can to the five options. Output nothing other than the JSON array.`;
+
+      const result = await model.generateContent([
+        prompt,
+        { inlineData: { mimeType, data: base64Data } },
+      ]);
+
+      const raw = result.response.text().trim().replace(/^```json?\s*/i, '').replace(/```\s*$/, '');
+      const parsed = JSON.parse(raw);
+
+      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No courses found in transcript.');
+
+      setImportedCourses(parsed.map((c, i) => ({
+        id: `gemini-${i}`,
+        courseName:  String(c.courseName  || '').trim(),
+        term:        String(c.term        || '').trim(),
+        letterGrade: String(c.letterGrade || '').trim(),
+        credits:     parseFloat(c.credits) || 0.5,
+        subjectArea: SUBJECT_AREAS.includes(c.subjectArea) ? c.subjectArea : 'Elective',
+        selected: true,
+      })));
+      setImportStep('verify');
+    } catch (err) {
+      console.error('Gemini OCR failed:', err);
+      setImportError(`AI extraction failed: ${err.message}. Please check your API key and try again.`);
+      setImportStep('upload');
+    }
   };
 
   const handleFileInputChange = (e) => {
@@ -798,12 +952,17 @@ const TranscriptGenerator = ({ user }) => {
                   {saveMsg}
                 </span>
               )}
-              {transcriptDirty && (
+              {transcriptDirty && !readOnly && (
                 <button onClick={handleSaveTranscript} disabled={savingTranscript}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold shadow transition disabled:opacity-50">
                   {savingTranscript ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                   Save Changes
                 </button>
+              )}
+              {readOnly && (
+                <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/20 text-orange-100 border border-white/25">
+                  View Only
+                </span>
               )}
             </div>
           </div>
@@ -838,14 +997,34 @@ const TranscriptGenerator = ({ user }) => {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setShowImportModal(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg shadow-sm transition-colors">
-                        <UploadCloud className="w-3.5 h-3.5" />
-                        Import Past Transcript
-                      </button>
+                      {!readOnly && (canUndo || canRedo) && (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => { const a = undoEdit(); if (a?.snapshot) { setEditedEnrollments(a.snapshot); setTranscriptDirty(true); } }}
+                            disabled={!canUndo}
+                            title="Undo (Ctrl+Z)"
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                          </button>
+                          <button onClick={() => { const a = redoEdit(); if (a?.snapshot) { setEditedEnrollments(a.snapshot.map(en => en.id === a.enrollmentId ? { ...en, [a.field]: a.after } : en)); setTranscriptDirty(true); } }}
+                            disabled={!canRedo}
+                            title="Redo (Ctrl+Y)"
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg>
+                          </button>
+                        </div>
+                      )}
+                      {!readOnly && (
+                        <button onClick={() => setShowImportModal(true)}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg shadow-sm transition-colors">
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          Import Past Transcript
+                        </button>
+                      )}
                       <div className="flex items-center gap-1 text-[10px] text-slate-400 bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-lg">
-                        <Pencil className="w-3 h-3" />
-                        <span>Click any cell to edit</span>
+                        {readOnly
+                          ? <><XCircle className="w-3 h-3 text-slate-300" /><span>View only</span></>
+                          : <><Pencil className="w-3 h-3" /><span>Click any cell to edit</span></>
+                        }
                       </div>
                     </div>
                   </div>
@@ -893,16 +1072,18 @@ const TranscriptGenerator = ({ user }) => {
                                       {!stateReqs && (
                                         <span className="text-[10px] font-semibold text-slate-400">{creditsEarned[area] || 0} cr</span>
                                       )}
-                                      <button
-                                        onClick={() => {
-                                          setAddingCourseToSubject(addingCourseToSubject === area ? null : area);
-                                          setNewCourseForm({ courseId: '', term: '', grade: '', percentage: '', status: 'Active' });
-                                          if (isCollapsed) toggleSubjectCollapse(area);
-                                        }}
-                                        className="flex items-center gap-0.5 text-[10px] font-bold text-white bg-orange-500 hover:bg-orange-600 px-2 py-0.5 rounded-md shadow-sm transition-colors">
-                                        <Plus className="w-3 h-3" />
-                                        Add Course
-                                      </button>
+                                      {!readOnly && (
+                                        <button
+                                          onClick={() => {
+                                            setAddingCourseToSubject(addingCourseToSubject === area ? null : area);
+                                            setNewCourseForm({ courseId: '', term: '', grade: '', percentage: '', status: 'Active' });
+                                            if (isCollapsed) toggleSubjectCollapse(area);
+                                          }}
+                                          className="flex items-center gap-0.5 text-[10px] font-bold text-white bg-orange-500 hover:bg-orange-600 px-2 py-0.5 rounded-md shadow-sm transition-colors">
+                                          <Plus className="w-3 h-3" />
+                                          Add Course
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                 </td>
@@ -928,21 +1109,28 @@ const TranscriptGenerator = ({ user }) => {
                                     <td className="px-2 py-1.5">
                                       <input type="text" value={e.term || ''}
                                         onChange={ev => handleEditField(e.id, 'term', ev.target.value)}
-                                        className="w-full bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white text-xs text-slate-500 outline-none px-0.5 py-0.5 transition-colors" />
+                                        onBlur={ev => {
+                                          const { canonical } = normaliseTermInput(ev.target.value);
+                                          if (canonical !== ev.target.value) handleEditField(e.id, 'term', canonical);
+                                        }}
+                                        readOnly={readOnly}
+                                        className={`w-full bg-transparent border-0 border-b text-xs text-slate-500 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`} />
                                     </td>
                                     <td className="px-2 py-1.5 text-center">
                                       <input type="text" value={e.letterGrade || ''} placeholder="—"
                                         onChange={ev => handleEditField(e.id, 'letterGrade', ev.target.value)}
-                                        className={`w-full text-center bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white text-xs font-bold outline-none px-0.5 py-0.5 transition-colors ${
+                                        readOnly={readOnly}
+                                        className={`w-full text-center bg-transparent border-0 border-b text-xs font-bold outline-none px-0.5 py-0.5 transition-colors ${
                                           e.letterGrade === 'F' ? 'text-red-600' : isPassing(e.letterGrade) ? 'text-emerald-600' : 'text-slate-400'
-                                        }`} />
+                                        } ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`} />
                                     </td>
                                     <td className="px-2 py-1.5 text-center">
                                       <input type="text"
                                         value={e.percentage != null && e.percentage !== '' ? e.percentage : ''}
                                         placeholder="—"
                                         onChange={ev => handleEditField(e.id, 'percentage', ev.target.value)}
-                                        className="w-full text-center bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white text-xs text-slate-600 outline-none px-0.5 py-0.5 transition-colors" />
+                                        readOnly={readOnly}
+                                        className={`w-full text-center bg-transparent border-0 border-b text-xs text-slate-600 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`} />
                                     </td>
                                     <td className="px-2 py-1.5 text-center">
                                       <span className={`text-xs font-bold ${cr > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>
@@ -952,23 +1140,26 @@ const TranscriptGenerator = ({ user }) => {
                                     <td className="px-2 py-1.5 text-center">
                                       <select value={e.status || 'Active'}
                                         onChange={ev => handleEditField(e.id, 'status', ev.target.value)}
-                                        className="bg-transparent border-0 text-[10px] font-semibold outline-none cursor-pointer text-slate-500 hover:text-slate-700">
+                                        disabled={readOnly}
+                                        className={`bg-transparent border-0 text-[10px] font-semibold outline-none text-slate-500 ${readOnly ? 'cursor-default' : 'cursor-pointer hover:text-slate-700'}`}>
                                         <option value="Active">Active</option>
                                         <option value="Completed">Completed</option>
                                         <option value="Withdrawn">Withdrawn</option>
                                       </select>
                                     </td>
                                     <td className="px-1 py-1.5 text-center">
-                                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
-                                        <span className="p-0.5 rounded text-slate-300" title="Click any cell to edit">
-                                          <Pencil className="w-3 h-3" />
-                                        </span>
-                                        <button onClick={() => handleDeleteEnrollment(e.id, e.courseName)}
-                                          className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
-                                          title="Remove from transcript">
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
+                                      {!readOnly && (
+                                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                                          <span className="p-0.5 rounded text-slate-300" title="Click any cell to edit">
+                                            <Pencil className="w-3 h-3" />
+                                          </span>
+                                          <button onClick={() => handleDeleteEnrollment(e.id, e.courseName)}
+                                            className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+                                            title="Remove from transcript">
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                      )}
                                     </td>
                                   </tr>
                                 );
@@ -1365,7 +1556,7 @@ const TranscriptGenerator = ({ user }) => {
                  <UploadCloud className="w-5 h-5 text-indigo-600" />
                  Import Past Transcript
                </h2>
-               <button onClick={() => { setShowImportModal(false); setImportStep('upload'); }} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+               <button onClick={() => { setShowImportModal(false); setImportStep('upload'); setImportError(''); }} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
                  <X className="w-5 h-5" />
                </button>
             </div>
@@ -1398,6 +1589,12 @@ const TranscriptGenerator = ({ user }) => {
                       <p className="text-base font-bold text-slate-700">Click to browse or drag transcript file here</p>
                       <p className="text-sm text-slate-500 mt-2">Supports PDF, PNG, or JPG images of prior school transcripts.</p>
                     </div>
+                    {importError && (
+                      <div className="mt-4 flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
+                        <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-700 font-medium">{importError}</p>
+                      </div>
+                    )}
                   </>
                )}
                {importStep === 'reading' && (
@@ -1477,7 +1674,7 @@ const TranscriptGenerator = ({ user }) => {
                      {importedCourses.filter(c => c.selected).length} of {importedCourses.length} courses selected
                    </p>
                    <div className="flex gap-3">
-                     <button onClick={() => { setShowImportModal(false); setImportStep('upload'); }} 
+                     <button onClick={() => { setShowImportModal(false); setImportStep('upload'); setImportError(''); }} 
                         className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">
                         Cancel
                      </button>
