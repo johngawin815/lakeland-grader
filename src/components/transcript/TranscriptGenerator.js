@@ -278,6 +278,8 @@ const TranscriptGenerator = ({ user }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importStep, setImportStep] = useState('upload');
   const [importedCourses, setImportedCourses] = useState([]);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = React.useRef(null);
 
   // Auto-save integration
   const saveFn = useCallback(async () => {
@@ -621,9 +623,10 @@ const TranscriptGenerator = ({ user }) => {
   };
 
   // --- Import logic ---
-  const handleFileUpload = () => {
+  const processImportFile = (file) => {
+    if (!file) return;
     setImportStep('reading');
-    // Simulate an AI / OCR extraction process
+    // TODO: replace setTimeout with real OCR/AI extraction using `file`
     setTimeout(() => {
       setImportedCourses([
         { id: 'ext1', courseName: 'Algebra 1', term: 'Sem 1', letterGrade: 'B', credits: 0.5, subjectArea: 'Math', selected: true },
@@ -634,6 +637,21 @@ const TranscriptGenerator = ({ user }) => {
       ]);
       setImportStep('verify');
     }, 1500);
+  };
+
+  const handleFileInputChange = (e) => {
+    processImportFile(e.target.files?.[0]);
+    e.target.value = '';
+  };
+
+  const handleDropZoneClick = () => fileInputRef.current?.click();
+
+  const handleDragOver = (e) => { e.preventDefault(); setDragOver(true); };
+  const handleDragLeave = () => setDragOver(false);
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    processImportFile(e.dataTransfer.files?.[0]);
   };
 
   const handleMergeImport = () => {
@@ -1302,13 +1320,32 @@ const TranscriptGenerator = ({ user }) => {
             {/* Body */}
             <div className="p-6 overflow-y-auto flex-1 bg-white">
                {importStep === 'upload' && (
-                  <div className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 rounded-2xl p-12 flex flex-col items-center justify-center bg-indigo-50/30 text-center hover:bg-indigo-50/60 transition-colors cursor-pointer group" onClick={handleFileUpload}>
-                     <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      className="hidden"
+                      onChange={handleFileInputChange}
+                    />
+                    <div
+                      className={`border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center text-center cursor-pointer group transition-colors ${
+                        dragOver
+                          ? 'border-indigo-500 bg-indigo-50/80'
+                          : 'border-indigo-200 hover:border-indigo-400 bg-indigo-50/30 hover:bg-indigo-50/60'
+                      }`}
+                      onClick={handleDropZoneClick}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                         <UploadCloud className="w-8 h-8 text-indigo-600" />
-                     </div>
-                     <p className="text-base font-bold text-slate-700">Click to browse or drag transcript file here</p>
-                     <p className="text-sm text-slate-500 mt-2">Supports PDF, PNG, or JPG images of prior school transcripts.</p>
-                  </div>
+                      </div>
+                      <p className="text-base font-bold text-slate-700">Click to browse or drag transcript file here</p>
+                      <p className="text-sm text-slate-500 mt-2">Supports PDF, PNG, or JPG images of prior school transcripts.</p>
+                    </div>
+                  </>
                )}
                {importStep === 'reading' && (
                   <div className="py-16 flex flex-col items-center justify-center text-center">
