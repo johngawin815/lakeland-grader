@@ -218,7 +218,7 @@ const StatusBadge = ({ status }) => {
   const config = {
     'on-track':        { bg: 'bg-green-100', text: 'text-green-700',  border: 'border-green-200',  label: 'On Track',        Icon: CheckCircle2 },
     'needs-attention': { bg: 'bg-amber-100', text: 'text-amber-700',  border: 'border-amber-200',  label: 'Needs Attention', Icon: AlertTriangle },
-    'at-risk':         { bg: 'bg-red-100',   text: 'text-red-700',    border: 'border-red-200',    label: 'At Risk',         Icon: XCircle },
+    // 'at-risk' intentionally omitted for student-facing kindness
   };
   const c = config[status] || config['on-track'];
   return (
@@ -228,6 +228,25 @@ const StatusBadge = ({ status }) => {
     </span>
   );
 };
+  // Mass selection state for transcript courses
+  const [selectedCourseIds, setSelectedCourseIds] = useState([]);
+
+  // Select all/clear all logic
+  const allCourseIds = useMemo(() => SAFE_SUBJECT_AREAS.flatMap(area => (enrollmentsBySubject[area] || []).map(e => e.id)), [enrollmentsBySubject]);
+  const allSelected = allCourseIds.length > 0 && selectedCourseIds.length === allCourseIds.length;
+  const noneSelected = selectedCourseIds.length === 0;
+  const toggleSelectAll = () => setSelectedCourseIds(allSelected ? [] : allCourseIds);
+  const toggleSelectCourse = (id) => setSelectedCourseIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+  const clearAllSelected = () => setSelectedCourseIds([]);
+  const handleDeleteSelected = () => {
+    if (selectedCourseIds.length === 0) return;
+    if (!window.confirm(`Remove ${selectedCourseIds.length} selected course(s) from the transcript?`)) return;
+    selectedCourseIds.forEach(id => {
+      const course = allCourseIds.map(cid => enrollmentsBySubject[SAFE_SUBJECT_AREAS.find(area => enrollmentsBySubject[area].some(e => e.id === cid))].find(e => e.id === id)).find(Boolean);
+      if (course) handleDeleteEnrollment(id, course.courseName);
+    });
+    setSelectedCourseIds([]);
+  };
 
 const CreditRing = ({ earned, required, size = 64 }) => {
   const strokeWidth = size < 50 ? 4 : 5;
@@ -1094,6 +1113,9 @@ const TranscriptGenerator = ({ user }) => {
                     <table className="w-full text-xs">
                       <thead className="sticky top-0 z-10">
                         <tr className="bg-slate-800 text-slate-300 uppercase tracking-wider text-[10px]">
+                          <th className="text-center px-2 py-2.5 font-semibold w-6">
+                            <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} title={allSelected ? 'Clear All' : 'Select All'} className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer" />
+                          </th>
                           <th className="text-left px-3 py-2.5 font-semibold">Course</th>
                           <th className="text-left px-2 py-2.5 font-semibold w-20">Term</th>
                           <th className="text-center px-2 py-2.5 font-semibold w-14">Grade</th>
@@ -1159,6 +1181,9 @@ const TranscriptGenerator = ({ user }) => {
                                 const leftBorder = isFailing ? 'border-l-4 border-red-400' : isPassed ? 'border-l-4 border-emerald-400' : isActive ? 'border-l-4 border-amber-300' : '';
                                 return (
                                   <tr key={e.id} className={`border-b border-slate-50 hover:bg-orange-50/20 group ${leftBorder}`}>
+                                    <td className="px-2 py-1.5 text-center">
+                                      <input type="checkbox" checked={selectedCourseIds.includes(e.id)} onChange={() => toggleSelectCourse(e.id)} className="rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer" />
+                                    </td>
                                     <td className="px-3 py-1.5 font-medium text-slate-700">
                                       <div className="flex items-center gap-2">
                                         {e.courseName}
@@ -1245,6 +1270,28 @@ const TranscriptGenerator = ({ user }) => {
                                             title="Remove from transcript">
                                             <Trash2 className="w-3.5 h-3.5" />
                                           </button>
+                                                                      {/* Mass delete button */}
+                                                                      {!isCollapsed && courses.length > 0 && (
+                                                                        <tr>
+                                                                          <td colSpan={8} className="px-3 py-2 text-left">
+                                                                            <button
+                                                                              onClick={handleDeleteSelected}
+                                                                              disabled={noneSelected}
+                                                                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow transition disabled:opacity-40 disabled:cursor-not-allowed`}
+                                                                            >
+                                                                              <Trash2 className="w-4 h-4" /> Delete Selected
+                                                                            </button>
+                                                                            {!noneSelected && (
+                                                                              <button
+                                                                                onClick={clearAllSelected}
+                                                                                className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold transition"
+                                                                              >
+                                                                                Clear All
+                                                                              </button>
+                                                                            )}
+                                                                          </td>
+                                                                        </tr>
+                                                                      )}
                                         </div>
                                       )}
                                     </td>
