@@ -2,6 +2,7 @@ import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { GraduationCap, FileDown, TrendingUp, ArrowDown } from 'lucide-react';
 import { useGridKeyboard } from '../../hooks/useGridKeyboard';
 import { UNIT_CONFIG } from '../../config/unitConfig';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 const GradeCell = React.memo(({ 
   studentId, studentName, assignmentId, assignmentName, maxScore, 
@@ -93,6 +94,14 @@ const GradebookTable = ({
     return groups;
   }, [students]);
 
+  // Setup TanStack Virtualizer
+  const rowVirtualizer = useVirtualizer({
+    count: unitGroups.length,
+    getScrollElement: () => tableRef.current,
+    estimateSize: (index) => unitGroups[index].type === 'header' ? 36 : 57, // Estimated heights
+    overscan: 5,
+  });
+
   const totalColumns = assignments.length + 2; // student col + assignments + overall col
 
   if (students.length === 0) {
@@ -106,6 +115,10 @@ const GradebookTable = ({
       </div>
     );
   }
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom = virtualItems.length > 0 ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end : 0;
 
   return (
     <div className="overflow-auto flex-1" ref={tableRef} onKeyDown={handleKeyDown} role="grid">
@@ -137,13 +150,18 @@ const GradebookTable = ({
           </tr>
         </thead>
         <tbody className="text-sm text-slate-800 divide-y divide-slate-100/50">
-          {unitGroups.map((item, idx) => {
+          {paddingTop > 0 && (
+            <tr><td style={{ height: `${paddingTop}px`, padding: 0, border: 0 }} colSpan={totalColumns} aria-hidden="true" /></tr>
+          )}
+          {virtualItems.map((virtualRow) => {
+            const item = unitGroups[virtualRow.index];
+            
             if (item.type === 'header') {
               const unitStyle = UNIT_CONFIG.find(u => u.key === item.unitName);
               const hasMultipleUnits = unitGroups.filter(g => g.type === 'header').length > 1;
               if (!hasMultipleUnits) return null;
               return (
-                <tr key={`unit-header-${item.unitName}`} className="bg-slate-50/80">
+                <tr key={`unit-header-${item.unitName}`} className="bg-slate-50/80" data-index={virtualRow.index} ref={rowVirtualizer.measureElement}>
                   <td colSpan={totalColumns} className="px-4 py-2 border-b border-slate-200/60">
                     <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${unitStyle?.tagBg || 'bg-slate-100 text-slate-600'} px-2.5 py-1 rounded-md`}>
                       {unitStyle?.icon && <unitStyle.icon className="w-3.5 h-3.5" />}
@@ -158,7 +176,7 @@ const GradebookTable = ({
             const finalGrade = finalGrades[student.id];
             const isPassing = finalGrade === null || finalGrade >= 60;
             return (
-              <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200 group">
+              <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200 group" data-index={virtualRow.index} ref={rowVirtualizer.measureElement}>
                 <td className="p-4 font-bold border-r border-slate-200/80 sticky left-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm">
                   <div className="flex justify-between items-center">
                     <button onClick={() => onStudentClick(student)} className="text-left hover:text-indigo-600 transition-colors">
@@ -200,6 +218,9 @@ const GradebookTable = ({
               </tr>
             );
           })}
+          {paddingBottom > 0 && (
+            <tr><td style={{ height: `${paddingBottom}px`, padding: 0, border: 0 }} colSpan={totalColumns} aria-hidden="true" /></tr>
+          )}
         </tbody>
       </table>
     </div>
