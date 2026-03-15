@@ -492,6 +492,212 @@ const CourseRow = React.memo(({
   );
 });
 
+// ─── VIRTUALIZED STUDENT LIST ───────────────────────────────────────────────
+
+const VirtualizedStudentList = React.memo(({ students, onSelect }) => {
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(400); // Safe fallback
+  const containerRef = React.useRef(null);
+  const itemHeight = 78; // Button height ~66px + 12px gap
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setContainerHeight(entries[0].contentRect.height);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const maxScroll = Math.max(0, students.length * itemHeight - containerHeight);
+  const clampedScrollTop = Math.min(scrollTop, maxScroll);
+  const startIndex = Math.max(0, Math.floor(clampedScrollTop / itemHeight) - 3);
+  const endIndex = Math.min(students.length - 1, Math.ceil((clampedScrollTop + containerHeight) / itemHeight) + 3);
+  const visibleItems = students.slice(startIndex, endIndex + 1);
+
+  if (students.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+        <UserPlus className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+        <p className="text-sm text-slate-400 font-medium">No students found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+      className="flex-1 overflow-y-auto relative pr-2 -mr-2"
+    >
+      <div style={{ height: students.length * itemHeight }}>
+        {visibleItems.map((s, idx) => {
+          const absoluteIndex = startIndex + idx;
+          const gradYear = calcGradYear(s.gradeLevel);
+          return (
+            <div
+              key={s.id}
+              style={{
+                position: 'absolute',
+                top: absoluteIndex * itemHeight,
+                left: 0,
+                right: 0,
+                height: itemHeight - 8 // Subtract gap for visual spacing
+              }}
+            >
+              <button onClick={() => onSelect(s)}
+                className="w-full h-full flex items-center gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-orange-300 hover:shadow-md hover:shadow-orange-100/50 transition-all group text-left">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-orange-700">{getInitials(s.studentName)}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-slate-800 text-sm truncate">{s.studentName}</p>
+                  <p className="text-xs text-slate-400">Grade {s.gradeLevel} &middot; Class of {gradYear} &middot; {s.unitName}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {s.homeState ? (
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200/60">
+                      {s.homeState}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-medium text-slate-300 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />No state
+                    </span>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-orange-400 transition-colors" />
+                </div>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
+// ─── VIRTUALIZED COURSE SELECT ──────────────────────────────────────────────
+
+const VirtualizedCourseSelect = React.memo(({ options, value, onChange, placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const containerRef = React.useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+
+  const itemHeight = 28;
+  const listHeight = 168; // max ~6 items visible at once
+
+  const filteredOptions = useMemo(() => {
+    if (!searchTerm) return options;
+    const lower = searchTerm.toLowerCase();
+    return options.filter(o => o.courseName.toLowerCase().includes(lower));
+  }, [options, searchTerm]);
+
+  const maxScroll = Math.max(0, filteredOptions.length * itemHeight - listHeight);
+  const clampedScrollTop = Math.min(scrollTop, maxScroll);
+  const startIndex = Math.max(0, Math.floor(clampedScrollTop / itemHeight) - 2);
+  const endIndex = Math.min(filteredOptions.length - 1, Math.ceil((clampedScrollTop + listHeight) / itemHeight) + 2);
+  const visibleItems = filteredOptions.slice(startIndex, endIndex + 1);
+
+  const selectedOption = options.find(o => o.id === value);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [isOpen]);
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <div onClick={() => setIsOpen(!isOpen)}
+        className="w-full text-xs border border-slate-200 rounded px-1.5 py-1 bg-white cursor-pointer flex justify-between items-center hover:border-orange-400 transition-colors">
+        <span className="truncate text-slate-700">{selectedOption ? selectedOption.courseName : placeholder}</span>
+        <ChevronDown className="w-3 h-3 text-slate-400 shrink-0 ml-1" />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 top-full mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden">
+          <div className="p-1.5 border-b border-slate-100 bg-slate-50">
+            <input type="text" autoFocus placeholder="Search courses..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              className="w-full px-2 py-1 text-xs border border-slate-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/20 outline-none rounded bg-white" />
+          </div>
+          <div className="overflow-y-auto relative bg-white" onScroll={e => setScrollTop(e.currentTarget.scrollTop)}
+            style={{ height: Math.min(listHeight, filteredOptions.length * itemHeight) || itemHeight }}>
+            {filteredOptions.length === 0 ? (
+              <div className="text-xs text-slate-400 p-2 text-center italic">No courses found</div>
+            ) : (
+              <div style={{ height: filteredOptions.length * itemHeight }}>
+                {visibleItems.map((opt, idx) => (
+                  <div key={opt.id} onClick={() => { onChange(opt.id); setIsOpen(false); setSearchTerm(''); }}
+                    className="flex items-center px-3 text-xs cursor-pointer hover:bg-orange-50 text-slate-700 hover:text-orange-700 truncate transition-colors"
+                    style={{ position: 'absolute', top: (startIndex + idx) * itemHeight, left: 0, right: 0, height: itemHeight }}>
+                    {opt.courseName}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+// ─── VIRTUALIZED RECOMMENDED COURSE LIST ────────────────────────────────────
+
+const VirtualizedRecommendedCourseList = React.memo(({ courses, recommendedCourses, onToggle }) => {
+  const [scrollTop, setScrollTop] = useState(0);
+  const containerRef = React.useRef(null);
+  const [containerHeight, setContainerHeight] = useState(240); // default max height
+
+  const itemHeight = 52; // ~46px height + 6px visual gap
+  const maxScroll = Math.max(0, courses.length * itemHeight - containerHeight);
+  const clampedScrollTop = Math.min(scrollTop, maxScroll);
+  const startIndex = Math.max(0, Math.floor(clampedScrollTop / itemHeight) - 2);
+  const endIndex = Math.min(courses.length - 1, Math.ceil((clampedScrollTop + containerHeight) / itemHeight) + 2);
+  const visibleItems = courses.slice(startIndex, endIndex + 1);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setContainerHeight(entries[0].contentRect.height);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const totalHeight = courses.length * itemHeight;
+
+  return (
+    <div ref={containerRef} onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+      className="relative overflow-y-auto pr-1 -mr-1" style={{ height: Math.min(240, totalHeight) }}>
+      <div style={{ height: totalHeight }}>
+        {visibleItems.map((course, idx) => {
+          const absoluteIndex = startIndex + idx;
+          const isSelected = recommendedCourses.some(c => c.courseId === course.id);
+          return (
+            <div key={course.id}
+              style={{ position: 'absolute', top: absoluteIndex * itemHeight, left: 0, right: 0, height: itemHeight - 6 }}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all ${
+                isSelected ? 'bg-orange-50 border-orange-200' : 'bg-white border-slate-100 hover:border-slate-200'
+              }`}>
+              <input type="checkbox" checked={isSelected} onChange={() => onToggle(course)}
+                className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-slate-700 truncate">{course.courseName}</p>
+                {course.teacherName && <p className="text-[10px] text-slate-400 truncate">{course.teacherName}</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const TranscriptGenerator = ({ user }) => {
@@ -1063,10 +1269,10 @@ const TranscriptGenerator = ({ user }) => {
           <p className="text-sm text-orange-100 mt-0.5">Analyze graduation requirements and build course plans</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-2xl mx-auto space-y-4">
+        <div className="flex-1 flex flex-col p-6 min-h-0">
+          <div className="max-w-2xl mx-auto w-full flex flex-col h-full space-y-4">
             {/* Search + Filter */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 shrink-0">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
@@ -1083,41 +1289,7 @@ const TranscriptGenerator = ({ user }) => {
             </div>
 
             {/* Student List */}
-            <div className="space-y-2">
-              {filteredStudents.length === 0 && (
-                <div className="text-center py-12">
-                  <UserPlus className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400 font-medium">No students found. Add students via the Dashboard.</p>
-                </div>
-              )}
-              {filteredStudents.map(s => {
-                const gradYear = calcGradYear(s.gradeLevel);
-                return (
-                  <button key={s.id} onClick={() => handleSelectStudent(s)}
-                    className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-orange-300 hover:shadow-md hover:shadow-orange-100/50 transition-all group text-left">
-                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                      <span className="text-sm font-bold text-orange-700">{getInitials(s.studentName)}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-800 text-sm truncate">{s.studentName}</p>
-                      <p className="text-xs text-slate-400">Grade {s.gradeLevel} &middot; Class of {gradYear} &middot; {s.unitName}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {s.homeState ? (
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200/60">
-                          {s.homeState}
-                        </span>
-                      ) : (
-                        <span className="text-xs font-medium text-slate-300 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" />No state
-                        </span>
-                      )}
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-orange-400 transition-colors" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <VirtualizedStudentList students={filteredStudents} onSelect={handleSelectStudent} />
           </div>
         </div>
       </div>
@@ -1356,14 +1528,12 @@ const TranscriptGenerator = ({ user }) => {
                               {!isCollapsed && addingCourseToSubject === area && (
                                 <tr className="bg-orange-50/40 border-b border-orange-100">
                                   <td className="px-3 py-2">
-                                    <select value={newCourseForm.courseId}
-                                      onChange={e => setNewCourseForm(f => ({ ...f, courseId: e.target.value }))}
-                                      className="w-full text-xs border border-slate-200 rounded px-1.5 py-1 bg-white focus:border-orange-400 outline-none">
-                                      <option value="">— Select course —</option>
-                                      {(availableCoursesBySubject[area] || []).map(c => (
-                                        <option key={c.id} value={c.id}>{c.courseName}</option>
-                                      ))}
-                                    </select>
+                                    <VirtualizedCourseSelect
+                                      options={availableCoursesBySubject[area] || []}
+                                      value={newCourseForm.courseId}
+                                      onChange={val => setNewCourseForm(f => ({ ...f, courseId: val }))}
+                                      placeholder="— Select course —"
+                                    />
                                   </td>
                                   <td className="px-2 py-2">
                                     <input type="text" placeholder="Term"
@@ -1610,24 +1780,13 @@ const TranscriptGenerator = ({ user }) => {
                             </div>
                           </div>
                           {available.length > 0 ? (
-                            <div className="p-3 space-y-1.5">
+                            <div className="p-3">
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Available Courses</p>
-                              {available.map(course => {
-                                const isSelected = recommendedCourses.some(c => c.courseId === course.id);
-                                return (
-                                  <div key={course.id}
-                                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all ${
-                                      isSelected ? 'bg-orange-50 border-orange-200' : 'bg-white border-slate-100 hover:border-slate-200'
-                                    }`}>
-                                    <input type="checkbox" checked={isSelected} onChange={() => toggleRecommended(course)}
-                                      className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-semibold text-slate-700 truncate">{course.courseName}</p>
-                                      {course.teacherName && <p className="text-[10px] text-slate-400">{course.teacherName}</p>}
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                              <VirtualizedRecommendedCourseList
+                                courses={available}
+                                recommendedCourses={recommendedCourses}
+                                onToggle={toggleRecommended}
+                              />
                             </div>
                           ) : (
                             <p className="text-[11px] text-slate-400 italic p-4">No available courses in this subject. Add courses via the Dashboard.</p>
