@@ -298,6 +298,78 @@ const TabBar = ({ activeTab, onChange }) => {
   );
 };
 
+// ─── GRADUATION PROJECTION CHART ─────────────────────────────────────────────
+
+const GraduationProjectionChart = ({ earned, required, currentGrade }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const dataPoints = [8, 9, 10, 11, 12];
+  const expectedData = [2, 5.5, 11, 16.5, 21].map(v => v * (required > 0 ? required / 21 : 1));
+  
+  const gLvl = Math.max(8, Math.min(12, typeof currentGrade === 'number' ? currentGrade : parseInt(currentGrade, 10) || 9));
+  const gradesLeft = Math.max(1, 12 - gLvl);
+  const creditsNeeded = Math.max(0, required - earned);
+  const creditsPerYear = creditsNeeded / gradesLeft;
+
+  const actualData = dataPoints.map(g => {
+    if (g < gLvl) {
+      return (earned / Math.max(1, gLvl - 8)) * (g - 8);
+    }
+    if (g === gLvl) return earned;
+    return Math.min(required, earned + creditsPerYear * (g - gLvl));
+  });
+
+  const width = 400;
+  const height = 120;
+  const paddingX = 20;
+  const paddingY = 20;
+
+  const getX = (idx) => paddingX + (idx * (width - 2 * paddingX) / (dataPoints.length - 1));
+  const getY = (val) => height - paddingY - ((val || 0) / Math.max(1, required)) * (height - 2 * paddingY);
+
+  const expectedPath = expectedData.map((val, idx) => `${idx === 0 ? 'M' : 'L'} ${getX(idx)} ${getY(val)}`).join(' ');
+  const actualLinePath = actualData.map((val, idx) => `${idx === 0 ? 'M' : 'L'} ${getX(idx)} ${getY(val)}`).join(' ');
+  const actualAreaPath = `${actualLinePath} L ${getX(dataPoints.length - 1)} ${height - paddingY} L ${getX(0)} ${height - paddingY} Z`;
+
+  return (
+    <div className="w-full max-w-sm mt-4 bg-slate-900 rounded-xl p-4 overflow-hidden relative shadow-inner">
+      <div className="flex justify-between items-center mb-2">
+         <h4 className="text-xs font-bold text-slate-300">Credit Accumulation Projection</h4>
+         <div className="flex items-center gap-3 text-[9px]">
+            <div className="flex items-center gap-1"><span className="w-2.5 h-0.5 border-t-2 border-dashed border-slate-500"></span><span className="text-slate-400">Target</span></div>
+            <div className="flex items-center gap-1"><span className="w-2.5 h-0.5 bg-orange-500"></span><span className="text-slate-300">Projected</span></div>
+         </div>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
+        {[0, 0.5, 1].map(ratio => (
+          <line key={ratio} x1={paddingX} y1={paddingY + ratio * (height - 2 * paddingY)} 
+                x2={width - paddingX} y2={paddingY + ratio * (height - 2 * paddingY)} 
+                stroke="#334155" strokeWidth="1" strokeDasharray="4 4" />
+        ))}
+        <path d={expectedPath} fill="none" stroke="#64748b" strokeWidth="2" strokeDasharray="4 4" />
+        <path d={actualAreaPath} fill="url(#gradGradient)" 
+              className={`transition-all duration-[1500ms] ease-out ${mounted ? 'opacity-40' : 'opacity-0'}`} />
+        <path d={actualLinePath} fill="none" stroke="#f97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+              strokeDasharray={1000} strokeDashoffset={mounted ? 0 : 1000}
+              className="transition-all duration-[1500ms] ease-out" />
+        {mounted && (
+          <circle cx={getX(dataPoints.indexOf(gLvl))} cy={getY(earned)} r="5" fill="#f97316" stroke="#0f172a" strokeWidth="2" className="animate-pulse" />
+        )}
+        {dataPoints.map((g, idx) => (
+          <text key={g} x={getX(idx)} y={height - 2} fill={g === gLvl ? '#f97316' : '#94a3b8'} fontSize="11" fontWeight={g === gLvl ? "bold" : "normal"} textAnchor="middle">Gr {g}</text>
+        ))}
+        <defs>
+          <linearGradient id="gradGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f97316" stopOpacity="1" />
+            <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  );
+};
+
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const TranscriptGenerator = ({ user }) => {
@@ -1646,6 +1718,78 @@ If the grade is missing, use "". Map subject areas as best you can to the five o
                                       className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
                                  </th>
                                  <th className="px-4 py-3">Course Name</th>
+                                 <th className="px-4 py-3 w-24">Term</th>
+                                 <th className="px-4 py-3 w-20 text-center">Grade</th>
+                                 <th className="px-4 py-3 w-40">Subject Area</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-100">
+                              {importedCourses.map(course => (
+                                 <tr key={course.id} className={`${course.selected ? 'hover:bg-slate-50/50' : 'opacity-40 bg-slate-50'} transition-all`}>
+                                    <td className="px-4 py-3 text-center">
+                                       <input type="checkbox" checked={course.selected} onChange={() => {
+                                          setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, selected: !c.selected} : c));
+                                       }} className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                       <input type="text" value={course.courseName} disabled={!course.selected}
+                                          onChange={(e) => {
+                                              setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, courseName: e.target.value} : c));
+                                          }}
+                                          className="w-full bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-indigo-400 focus:bg-white text-sm font-medium text-slate-700 outline-none px-1 py-0.5 transition-colors disabled:opacity-50" />
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-500">{course.term}</td>
+                                    <td className="px-4 py-3">
+                                       <input type="text" value={course.letterGrade} disabled={!course.selected}
+                                          onChange={(e) => {
+                                              setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, letterGrade: e.target.value} : c));
+                                          }}
+                                          className={`w-full text-center bg-transparent border-0 border-b border-transparent hover:border-slate-200 focus:border-indigo-400 focus:bg-white text-sm font-bold outline-none px-1 py-0.5 transition-colors disabled:opacity-50 ${course.letterGrade === 'F' ? 'text-red-600' : isPassing(course.letterGrade) ? 'text-emerald-600' : 'text-slate-700'}`} />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                       <select value={course.subjectArea} disabled={!course.selected} onChange={(e) => {
+                                           setImportedCourses(prev => prev.map(c => c.id === course.id ? {...c, subjectArea: e.target.value} : c));
+                                       }} className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none disabled:opacity-50 disabled:bg-slate-50">
+                                           {SUBJECT_AREAS.map(area => <option key={area} value={area}>{area}</option>)}
+                                           <option value="Elective">Elective</option>
+                                       </select>
+                                    </td>
+                                 </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+               )}
+            </div>
+
+            {/* Footer */}
+            {importStep === 'verify' && (
+               <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+                   <p className="text-xs font-semibold text-slate-500">
+                     {importedCourses.filter(c => c.selected).length} of {importedCourses.length} courses selected
+                   </p>
+                   <div className="flex gap-3">
+                     <button onClick={() => { setShowImportModal(false); setImportStep('upload'); setImportError(''); }} 
+                        className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">
+                        Cancel
+                     </button>
+                     <button onClick={handleMergeImport} disabled={importedCourses.filter(c => c.selected).length === 0}
+                        className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm shadow-indigo-200 transition-colors disabled:opacity-50">
+                        <Plus className="w-4 h-4" />
+                        Add to Lakeland Transcript
+                     </button>
+                   </div>
+               </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TranscriptGenerator;
                                  <th className="px-4 py-3 w-24">Term</th>
                                  <th className="px-4 py-3 w-20 text-center">Grade</th>
                                  <th className="px-4 py-3 w-40">Subject Area</th>
