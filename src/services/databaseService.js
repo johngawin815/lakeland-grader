@@ -213,6 +213,23 @@ function buildRealService() {
       }
     },
 
+    // === OCR / TRANSCRIPT EXTRACTION ===
+    extractTranscriptCourses: async (file) => {
+      const formData = new FormData();
+      formData.append('transcript', file);
+
+      const response = await fetch('/api/transcript/extract', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to extract transcript securely.');
+      }
+      const data = await response.json();
+      return data.courses; 
+    },
+
     logAudit: async (user, action, details) => {
       if (!user) return;
       try {

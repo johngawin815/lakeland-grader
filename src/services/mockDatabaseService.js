@@ -563,6 +563,21 @@ export const mockDatabaseService = {
 
   getTeacher: async (id) => teachers.get(id) || null,
 
+  // === OCR / TRANSCRIPT EXTRACTION ===
+  extractTranscriptCourses: async (file) => {
+    console.info(`[mockDB] Simulating secure OCR extraction for: ${file.name}`);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([
+          { courseName: 'Mock Algebra 1', term: 'Sem 1', letterGrade: 'B', credits: 0.5, subjectArea: 'Math' },
+          { courseName: 'Mock Biology', term: 'Year', letterGrade: 'A', credits: 1.0, subjectArea: 'Science' },
+          { courseName: 'Mock US History', term: 'Sem 2', letterGrade: 'C', credits: 0.5, subjectArea: 'Social Studies' },
+          { courseName: 'Mock Physical Ed', term: 'Q1', letterGrade: 'A', credits: 0.25, subjectArea: 'Elective' }
+        ]);
+      }, 2000); // 2-second simulation delay
+    });
+  },
+
   // === DATA MANAGEMENT ===
   resetAllData: async () => {
     students.clear();
