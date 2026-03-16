@@ -740,7 +740,10 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
                 return (
                   <div key={unitName} className="rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm">
                     {/* Unit header */}
-                    <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: colors.bg }}>
+                    <div
+                      className="px-4 py-2.5 flex items-center justify-between sticky top-0 z-20"
+                      style={{ background: colors.bg }}
+                    >
                       <span className="text-white font-semibold text-sm tracking-wide">{unitName}</span>
                       <span className="text-white/70 text-xs font-medium">{rows.length} student{rows.length !== 1 ? 's' : ''}</span>
                     </div>
@@ -749,7 +752,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
                     <div className="overflow-x-auto">
                       <div
                         style={{ display: 'grid', gridTemplateColumns: gridTemplate, minWidth: 1200 }}
-                        className="bg-slate-50 border-b border-slate-200"
+                        className="bg-slate-50 border-b border-slate-200 sticky top-[44px] z-10"
                       >
                         {COLUMNS.map((col, ci) => (
                           <div
