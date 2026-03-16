@@ -7,6 +7,8 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import JSZip from 'jszip';
 import toast from 'react-hot-toast';
+import GradeGenerator from './GradeGenerator';
+import ElementaryGradeCard from './ElementaryGradeCard';
 
 const UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
 
@@ -565,7 +567,35 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
             )}
           </div>
 
+          {/* Step 1: Add Create Grade Card dropdown/button */}
           <div className="flex items-center gap-2">
+            <div className="relative" style={{ marginRight: 12 }}>
+              <button
+                onClick={() => setCreateCardMenuOpen(prev => !prev)}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors shadow-sm disabled:opacity-50"
+                title="Create Grade Card"
+              >
+                Create Grade Card
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+              {createCardMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50">
+                  <button
+                    onClick={() => handleOpenGradeCardModal('upper')}
+                    className="w-full text-left px-4 py-2 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex items-center justify-between"
+                  >
+                    Upper Level Grade Card (6–12)
+                  </button>
+                  <button
+                    onClick={() => handleOpenGradeCardModal('elementary')}
+                    className="w-full text-left px-4 py-2 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex items-center justify-between"
+                  >
+                    Elementary Grade Card (K–5)
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={handleRefresh}
               disabled={loading}
@@ -878,3 +908,58 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
 };
 
 export default GradeCardPreview;
+
+// Helper function to open a grade card modal
+const handleOpenGradeCardModal = (type) => {
+  setCreateCardMenuOpen(false);
+  setGradeCardModalType(type);
+};
+
+const handleCloseGradeCardModal = () => {
+  setGradeCardModalType(null);
+};
+
+// ---------- Grade Card Creation Modal ----------
+const GradeCardCreationModal = ({ gradeCardModalType, onClose }) => {
+  const [studentName, setStudentName] = useState('');
+  const [gradeLevel, setGradeLevel] = useState('');
+  const [courses, setCourses] = useState([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleSave = async () => {
+    if (!studentName || !gradeLevel) {
+      toast.error('Please enter student name and grade level');
+      return;
+    }
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      onClose();
+    }, 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-60 bg-black/40 backdrop-blur-sm flex items-center justify-center" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        style={{ width: '540px', maxWidth: '96vw', maxHeight: '90vh' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-white">
+          <h3 className="text-base font-bold text-slate-800">Create {gradeCardModalType === 'upper' ? 'Upper Level' : 'Elementary'} Grade Card</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600 ml-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto px-6 py-4">
+          {/* Step 4: Render form for grade card creation (reuse existing components) */}
+          {gradeCardModalType === 'upper' ? (
+            <GradeGenerator user={null} activeStudent={null} />
+          ) : (
+            <ElementaryGradeCard user={null} activeStudent={null} isEmbedded={true} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
