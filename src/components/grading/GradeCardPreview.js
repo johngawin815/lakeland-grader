@@ -89,6 +89,8 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
   const exportMenuRef = useRef(null);
   const [actionMenuOpenId, setActionMenuOpenId] = useState(null);
   const actionMenuRef = useRef(null);
+  const [createCardMenuOpen, setCreateCardMenuOpen] = useState(false);
+  const [gradeCardModalType, setGradeCardModalType] = useState(null);
 
   // Task 4: per-row save flash state
   const [savedRows, setSavedRows] = useState(new Set());
@@ -423,6 +425,15 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
     if (lastExportType === 'elementary')  return 'Elementary / MS (K-8)';
     if (data && unitList.includes(lastExportType)) return lastExportType;
     return 'Export Cards';
+  };
+
+  const handleOpenGradeCardModal = (type) => {
+    setCreateCardMenuOpen(false);
+    setGradeCardModalType(type);
+  };
+
+  const handleCloseGradeCardModal = () => {
+    setGradeCardModalType(null);
   };
 
   // ---------- Save all rows to DB ----------
@@ -903,21 +914,18 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
           <span>Tip: Click <FileDown className="w-3 h-3 inline" /> on any row to generate a grade card</span>
         </div>
       </div>
+
+      {gradeCardModalType && (
+        <GradeCardCreationModal
+          gradeCardModalType={gradeCardModalType}
+          onClose={handleCloseGradeCardModal}
+        />
+      )}
     </div>
   );
 };
 
 export default GradeCardPreview;
-
-// Helper function to open a grade card modal
-const handleOpenGradeCardModal = (type) => {
-  setCreateCardMenuOpen(false);
-  setGradeCardModalType(type);
-};
-
-const handleCloseGradeCardModal = () => {
-  setGradeCardModalType(null);
-};
 
 // ---------- Grade Card Creation Modal ----------
 const GradeCardCreationModal = ({ gradeCardModalType, onClose }) => {
