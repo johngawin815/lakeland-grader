@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, FileSpreadsheet,
   ScrollText,
-  FileCheck, NotebookPen, Upload, Settings, Loader2, FileBadge
+  FileCheck, NotebookPen, Upload, Settings, Loader2
 } from 'lucide-react';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 import { databaseService } from '../../services/databaseService';

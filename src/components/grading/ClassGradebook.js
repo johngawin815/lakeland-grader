@@ -8,7 +8,7 @@ import { generateSmartComment } from '../../utils/commentGenerator';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 import StudentSummaryPanel from './StudentSummaryPanel';
 import ClassAnalytics from './ClassAnalytics';
-import GradeCardPreview from './GradeCardPreview';
+
 import GradebookTable from './GradebookTable';
 import NewAssignmentModal from './modals/NewAssignmentModal';
 import WeightSettingsModal from './modals/WeightSettingsModal';
@@ -124,6 +124,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
     markClean();
     databaseService.logAudit(user, 'SaveGrades', `Auto-saved ${students.length} student grades for ${course.courseName}.`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course, user, students, finalGrades, assignments, categories, attendance, grades, markClean]);
 
   const { saveStatus, lastSavedAt, forceSave } = useAutoSave(dirty, saveFn, {
