@@ -17,8 +17,11 @@ import { useAutoSave } from '../../hooks/useAutoSave';
 import { useUndoStack } from '../../hooks/useUndoStack';
 
 
-const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabel = "Back to Dashboard" }) => {
+const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabel = "Back to Dashboard", hideHeader = false }) => {
   const { setGradeCardPayload, commentTone } = useGrading();
+  
+  // Flag to detect if we are inside GradingWorkspace (which already has its own tabs/header)
+  const isNested = !onExit; 
 
   // --- CENTRAL STATE via custom hook ---
   const {
@@ -228,93 +231,123 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         </div>
       ) : (
       <>
-        {/* HEADER */}
-        <div className="w-full mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-8 pt-8">
-          <div className="flex flex-col gap-1">
-            {onExit && (
-              <button 
-                onClick={onExit} 
-                className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-400 hover:text-indigo-600 transition-all duration-300 group"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" /> 
-                {backLabel}
-              </button>
-            )}
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white shadow-lg shadow-indigo-100/50 rounded-2xl text-indigo-600 border border-indigo-50">
-                <GraduationCap className="w-8 h-8" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-                  {course.courseName || 'Class Gradebook'}
-                </h1>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-slate-500 font-medium">{course.teacherName || user.name}</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-300" />
-                  <span className="text-slate-500 font-bold">{students.length} Students Enrolled</span>
-                  {course.subjectArea && (
-                    <span className="ml-1 text-[10px] font-black uppercase tracking-widest bg-indigo-600 text-white px-2.5 py-1 rounded-full shadow-sm shadow-indigo-200">
-                      {course.subjectArea}
-                    </span>
-                  )}
+        {/* HEADER - Only show if not nested or explicitly requested */}
+        {!isNested && !hideHeader && (
+          <div className="w-full mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-8 pt-8">
+            <div className="flex flex-col gap-1">
+              {onExit && (
+                <button 
+                  onClick={onExit} 
+                  className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-400 hover:text-indigo-600 transition-all duration-300 group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" /> 
+                  {backLabel}
+                </button>
+              )}
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white shadow-lg shadow-indigo-100/50 rounded-2xl text-indigo-600 border border-indigo-50">
+                  <GraduationCap className="w-8 h-8" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+                    {course.courseName || 'Class Gradebook'}
+                  </h1>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-slate-500 font-medium">{course.teacherName || user.name}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-300" />
+                    <span className="text-slate-500 font-bold">{students.length} Students Enrolled</span>
+                    {course.subjectArea && (
+                      <span className="ml-1 text-[10px] font-black uppercase tracking-widest bg-indigo-600 text-white px-2.5 py-1 rounded-full shadow-sm shadow-indigo-200">
+                        {course.subjectArea}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* CONTROLS */}
-          {activeTab === 'grades' && (
-            <div className="flex gap-3 items-center bg-white p-2 rounded-2xl border border-slate-200/60 shadow-sm self-end md:self-auto">
-              <div className="flex items-center gap-3 px-3 border-r border-slate-100">
-                {statusDisplay && (
-                  <div className={`flex items-center gap-2 text-xs font-bold ${statusDisplay.cls}`} aria-live="polite">
+            {/* CONTROLS */}
+            {activeTab === 'grades' && (
+              <div className="flex gap-3 items-center bg-white p-2 rounded-2xl border border-slate-200/60 shadow-sm self-end md:self-auto">
+                <div className="flex items-center gap-3 px-3 border-r border-slate-100">
+                  {statusDisplay && (
+                    <div className={`flex items-center gap-2 text-xs font-bold ${statusDisplay.cls}`} aria-live="polite">
+                      {statusDisplay.icon}
+                      <span>{statusDisplay.text}</span>
+                    </div>
+                  )}
+                  {saveStatus === 'error' && (
+                    <button onClick={forceSave} className="text-[10px] font-black text-rose-600 hover:text-rose-800 underline uppercase tracking-tighter">Retry Save</button>
+                  )}
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={forceSave}
+                    className="bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/20 transition-all flex items-center gap-2 text-sm shadow-lg shadow-slate-900/20"
+                    title="Force Save Now"
+                  >
+                    <CloudUpload className="w-4 h-4 text-indigo-400" /> Save
+                  </button>
+                  
+                  {/* Undo / Redo Group */}
+                  <div className="flex bg-slate-100 p-1 rounded-xl">
+                    <button onClick={handleUndo} disabled={!undoStack.canUndo} className="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Undo (Ctrl+Z)">
+                      <Undo2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={handleRedo} disabled={!undoStack.canRedo} className="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Redo (Ctrl+Shift+Z)">
+                      <Redo2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="w-px h-8 bg-slate-100 mx-1 self-center" />
+
+                  <button
+                    onClick={() => setActiveModal('weights')}
+                    className="bg-white text-slate-700 font-bold py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:outline-none transition-all flex items-center gap-2 text-sm"
+                  >
+                    <Percent className="w-4 h-4 text-indigo-500" /> Weights
+                  </button>
+                  <button
+                    onClick={() => setActiveModal('assignment')}
+                    className="bg-indigo-50 text-indigo-700 font-bold py-2.5 px-4 rounded-xl border border-indigo-100 hover:bg-indigo-100/80 transition-all flex items-center gap-2 text-sm"
+                  >
+                    <Plus className="w-4 h-4" /> Add Assignment
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* COMPACT CONTROLS - Show if nested */}
+        {isNested && activeTab === 'grades' && (
+          <div className="px-8 pt-4 pb-2 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-widest text-slate-400">Status:</span>
+                {statusDisplay ? (
+                  <div className={`flex items-center gap-2 text-xs font-bold ${statusDisplay.cls}`}>
                     {statusDisplay.icon}
                     <span>{statusDisplay.text}</span>
                   </div>
+                ) : (
+                  <span className="text-xs font-bold text-slate-300 italic">No activity</span>
                 )}
-                {saveStatus === 'error' && (
-                  <button onClick={forceSave} className="text-[10px] font-black text-rose-600 hover:text-rose-800 underline uppercase tracking-tighter">Retry Save</button>
-                )}
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={forceSave}
-                  className="bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/20 transition-all flex items-center gap-2 text-sm shadow-lg shadow-slate-900/20"
-                  title="Force Save Now"
-                >
-                  <CloudUpload className="w-4 h-4 text-indigo-400" /> Save
-                </button>
-                
-                {/* Undo / Redo Group */}
-                <div className="flex bg-slate-100 p-1 rounded-xl">
-                  <button onClick={handleUndo} disabled={!undoStack.canUndo} className="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Undo (Ctrl+Z)">
-                    <Undo2 className="w-4 h-4" />
-                  </button>
-                  <button onClick={handleRedo} disabled={!undoStack.canRedo} className="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Redo (Ctrl+Shift+Z)">
-                    <Redo2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="w-px h-8 bg-slate-100 mx-1 self-center" />
-
-                <button
-                  onClick={() => setActiveModal('weights')}
-                  className="bg-white text-slate-700 font-bold py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:outline-none transition-all flex items-center gap-2 text-sm"
-                >
-                  <Percent className="w-4 h-4 text-indigo-500" /> Weights
-                </button>
-                <button
-                  onClick={() => setActiveModal('assignment')}
-                  className="bg-indigo-50 text-indigo-700 font-bold py-2.5 px-4 rounded-xl border border-indigo-100 hover:bg-indigo-100/80 transition-all flex items-center gap-2 text-sm"
-                >
-                  <Plus className="w-4 h-4" /> Add Assignment
-                </button>
               </div>
             </div>
-          )}
-        </div>
+            <div className="flex gap-2">
+               <div className="flex bg-slate-100 p-1 rounded-lg">
+                  <button onClick={handleUndo} disabled={!undoStack.canUndo} className="p-1 px-2 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-white disabled:opacity-30 transition-all" title="Undo"><Undo2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={handleRedo} disabled={!undoStack.canRedo} className="p-1 px-2 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-white disabled:opacity-30 transition-all" title="Redo"><Redo2 className="w-3.5 h-3.5" /></button>
+                </div>
+               <button onClick={() => setActiveModal('weights')} className="text-xs font-bold text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-1.5"><Percent className="w-3.5 h-3.5" /> Weights</button>
+               <button onClick={() => setActiveModal('assignment')} className="text-xs font-bold text-indigo-700 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-all flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Assignment</button>
+               <button onClick={forceSave} className="text-xs font-bold bg-slate-900 text-white px-4 py-1.5 rounded-lg hover:bg-slate-800 transition-all shadow-md flex items-center gap-1.5"><CloudUpload className="w-3.5 h-3.5" /> Save</button>
+            </div>
+          </div>
+        )}
 
         {/* TAB NAVIGATION */}
         <div className="flex gap-1 px-8 mb-[-1px] z-10">

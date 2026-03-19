@@ -86,12 +86,19 @@ const GradebookTable = ({
     return groups;
   }, [students]);
 
+  // Filter unit groups based on whether we need unit headers
+  const displayGroups = useMemo(() => {
+    const hasMultipleUnits = unitGroups.filter(g => g.type === 'header').length > 1;
+    if (hasMultipleUnits) return unitGroups;
+    return unitGroups.filter(g => g.type === 'student');
+  }, [unitGroups]);
+
   // Setup TanStack Virtualizer
   const rowVirtualizer = useVirtualizer({
-    count: unitGroups.length,
+    count: displayGroups.length,
     getScrollElement: () => tableRef.current,
-    estimateSize: (index) => unitGroups[index].type === 'header' ? 36 : 57, // Estimated heights
-    overscan: 5,
+    estimateSize: (index) => displayGroups[index]?.type === 'header' ? 44 : 64, 
+    overscan: 10,
   });
 
   const { handleKeyDown, onCellFocus: rawOnCellFocus } = useGridKeyboard({
@@ -99,7 +106,7 @@ const GradebookTable = ({
     cols,
     tableRef,
     rowVirtualizer,
-    unitGroups,
+    unitGroups: displayGroups,
   });
 
   const onCellFocus = useCallback((r, c) => {
@@ -150,7 +157,7 @@ const GradebookTable = ({
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-600 font-black uppercase tracking-tighter">
                       {categories.find(c => c.id === assignment.categoryId)?.name}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-bold">/ {assignment.maxScore}</span>
+                    <span className="text-[10px] text-slate-400 font-bold">/ {Number(assignment.maxScore)}</span>
                   </div>
                   <button 
                     onClick={() => onBulkFill(assignment.id)} 
@@ -174,12 +181,11 @@ const GradebookTable = ({
             <tr><td style={{ height: `${paddingTop}px`, padding: 0, border: 0 }} colSpan={totalColumns} aria-hidden="true" /></tr>
           )}
           {virtualItems.map((virtualRow) => {
-            const item = unitGroups[virtualRow.index];
+            const item = displayGroups[virtualRow.index];
+            if (!item) return null;
             
             if (item.type === 'header') {
               const unitStyle = UNIT_CONFIG.find(u => u.key === item.unitName);
-              const hasMultipleUnits = unitGroups.filter(g => g.type === 'header').length > 1;
-              if (!hasMultipleUnits) return null;
               return (
                 <tr key={`unit-header-${item.unitName}`} className="bg-slate-50/80" data-index={virtualRow.index} ref={rowVirtualizer.measureElement}>
                   <td colSpan={totalColumns} className="px-4 py-2 border-b border-slate-200/60">
@@ -228,7 +234,7 @@ const GradebookTable = ({
                       studentName={student.name}
                       assignmentId={assignment.id}
                       assignmentName={assignment.name}
-                      maxScore={assignment.maxScore}
+                      maxScore={Number(assignment.maxScore)}
                       grade={grade}
                       isWarning={isWarning}
                       isFailing={isFailing}

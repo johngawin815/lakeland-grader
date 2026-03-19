@@ -159,7 +159,7 @@ const StudentSummaryPanel = ({ student, grades, assignments, categories, attenda
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <span className="text-sm font-black text-slate-800">{cat.name}</span>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">{cat.weight}% of Total Grade</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">{Number(cat.weight)}% of Total Grade</div>
                       </div>
                       <span className={`text-base font-black px-3 py-1 rounded-xl ${cat.percentage !== null ? getGradeColor(cat.percentage).replace('text-', 'bg-').concat('/10 ').concat(getGradeColor(cat.percentage)) : 'bg-slate-100 text-slate-400'}`}>
                         {cat.percentage !== null ? `${cat.percentage.toFixed(1)}%` : 'N/A'}
@@ -185,13 +185,13 @@ const StudentSummaryPanel = ({ student, grades, assignments, categories, attenda
                                 <input
                                   type="number"
                                   min="0"
-                                  max={a.maxScore}
+                                  max={Number(a.maxScore)}
                                   value={score}
                                   onChange={(e) => handleScoreChange(a.id, e.target.value)}
                                   className="w-16 text-xs text-center font-black py-1.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
                                   aria-label={`${student.name} - ${a.name}`}
                                 />
-                                <span className="text-[10px] font-bold text-slate-400">/ {a.maxScore}</span>
+                                <span className="text-[10px] font-bold text-slate-400">/ {Number(a.maxScore)}</span>
                               </div>
                             </div>
                           );

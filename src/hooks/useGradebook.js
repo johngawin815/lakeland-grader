@@ -127,7 +127,19 @@ export function useGradebook(courseId, userUnits) {
         // 4. Load saved gradebook data
         const savedGradebook = await databaseService.getGradebook(courseId);
         if (savedGradebook) {
-          if (savedGradebook.assignments?.length > 0) setAssignments(savedGradebook.assignments);
+          // Data Cleanup: Fix any corrupted assignments (e.g. 100100 bug)
+          const cleanAssignments = (savedGradebook.assignments || []).map(a => {
+            let max = parseInt(a.maxScore);
+            // If it looks like 100100 or 5050, take the first half
+            if (max > 1000 && String(max).length % 2 === 0) {
+              const s = String(max);
+              const half = s.substring(0, s.length / 2);
+              if (half + half === s) max = parseInt(half);
+            }
+            return { ...a, maxScore: isNaN(max) ? 100 : max };
+          });
+          
+          if (cleanAssignments.length > 0) setAssignments(cleanAssignments);
           if (savedGradebook.categories?.length > 0) setCategories(savedGradebook.categories);
           if (savedGradebook.attendance) setAttendance(savedGradebook.attendance);
           if (savedGradebook.grades) setGrades(savedGradebook.grades);

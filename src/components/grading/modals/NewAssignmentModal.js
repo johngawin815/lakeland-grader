@@ -4,12 +4,6 @@ import { X, Save, BookOpen } from 'lucide-react';
 
 const NewAssignmentModal = ({ isOpen, onClose, categories, onSave }) => {
   const [newAssignment, setNewAssignment] = useState({ name: '', categoryId: categories[0]?.id || 'hw', maxScore: 100 });
-  // Auto-save integration
-  const isDirty = newAssignment.name !== '' || newAssignment.maxScore !== 100 || newAssignment.categoryId !== (categories[0]?.id || 'hw');
-  const autoSaveFn = async () => {
-    if (onSave) onSave(newAssignment);
-  };
-  useAutoSave(isDirty, autoSaveFn, { delay: 2500, enabled: true });
 
 
   if (!isOpen) return null;
