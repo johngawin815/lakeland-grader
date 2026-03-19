@@ -9,6 +9,7 @@ import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils
 import StudentSummaryPanel from './StudentSummaryPanel';
 import ClassAnalytics from './ClassAnalytics';
 import GradeCardPreview from './GradeCardPreview';
+import GradebookTable from './GradebookTable';
 import NewAssignmentModal from './modals/NewAssignmentModal';
 import WeightSettingsModal from './modals/WeightSettingsModal';
 import { useGradebook } from '../../hooks/useGradebook';
@@ -25,7 +26,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
     finalGrades, loading, dirty, previousGrades,
     getCategoryPercentage, getTotalAbsences,
     handleGradeChange: rawGradeChange,
-    handleAddAssignment,
+    handleAddAssignment, handleBulkFill,
     handleAttendanceUpdate, handleUpdateCategories,
     markClean,
   } = useGradebook(course?.id, user?.units);
@@ -215,7 +216,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
   const statusDisplay = getSaveStatusDisplay();
 
   return (
-    <div className="min-h-screen w-screen h-screen bg-slate-50 p-0 font-sans text-slate-800">
+    <div className="flex flex-col h-full w-full bg-slate-50 p-0 font-sans text-slate-800">
       {!course ? (
         <div className="flex flex-col items-center justify-center h-full text-center p-10">
           <BookOpen className="w-16 h-16 text-slate-300 mb-4" />
@@ -306,27 +307,26 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         </div>
 
         {/* MAIN CONTENT CARD */}
-        <div className="w-full h-[calc(100vh-220px)] bg-slate-50/80 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col">
+        <div className="w-full flex-1 bg-slate-50/80 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-0">
 
-          {/* GRADES TAB - UNIT CARD MENU + FULL SPREADSHEET PREVIEW */}
+          {/* GRADES TAB - UNIT CARD MENU + GRADEBOOK TABLE */}
           {activeTab === 'grades' && (
             <div className="w-full h-full flex flex-col">
               <div className="w-full px-8 pt-6">
                 <UnitCardMenu selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
               </div>
-              <div className="w-full flex-1 flex items-center justify-center">
-                <GradeCardPreview
-                  formData={{
-                    quarterName: 'Q3',
-                    schoolYear: '2025-2026',
-                    unitName: selectedUnit,
-                    reportDate: new Date().toISOString().split('T')[0],
-                  }}
-                  onClose={() => {}}
-                  onEditStudent={(row) => {
-                    const realStudent = students.find(s => s.name === row.name) || row;
-                    setSelectedStudentForPanel(realStudent);
-                  }}
+              <div className="w-full flex-1 flex flex-col min-h-0 overflow-hidden border-t border-slate-200">
+                <GradebookTable
+                  students={students.filter(s => s.unitName === selectedUnit)}
+                  assignments={assignments}
+                  categories={categories}
+                  grades={grades}
+                  finalGrades={finalGrades}
+                  onGradeChange={handleGradeChange}
+                  onStudentClick={setSelectedStudentForPanel}
+                  onExportClick={() => {}}
+                  onGradeCardClick={handleGenerateGradeCard}
+                  onBulkFill={handleBulkFill}
                 />
               </div>
             </div>

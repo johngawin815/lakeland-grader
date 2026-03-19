@@ -376,14 +376,14 @@ const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
   <button
     onClick={onClick}
     title={label}
-    className={`w-full flex flex-col items-center gap-1.5 py-4 rounded-xl transition-all duration-200
+    className={`w-full flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-200
       ${active
         ? 'bg-white/10 ring-1 ring-white/10 text-white'
         : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
       }`}
   >
-    <Icon size={28} className={color?.icon || undefined} />
-    <span className="text-[14px] font-semibold leading-tight text-center px-1">
+    <Icon size={24} className={color?.icon || undefined} />
+    <span className="text-[12px] font-semibold leading-tight text-center px-1">
       {label}
     </span>
   </button>
