@@ -755,9 +755,7 @@ const TranscriptGenerator = ({ user }) => {
     toast.success('Transcript auto-saved');
   }, [editedEnrollments, removedEnrollmentIds, selectedStudent, user]);
 
-  // eslint-disable-next-line no-unused-vars
-  const autoSaveResult = useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent }) || {};
-  const { saveStatus, lastSavedAt, forceSave } = autoSaveResult;
+  useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
 
   // Undo / redo stack for inline transcript edits
   const undoStack = useUndoStack(100) || {};

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAutoSave } from '../../../hooks/useAutoSave';
 import { X, Save, BookOpen } from 'lucide-react';
 
 const NewAssignmentModal = ({ isOpen, onClose, categories, onSave }) => {

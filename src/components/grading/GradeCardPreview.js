@@ -929,23 +929,6 @@ export default GradeCardPreview;
 
 // ---------- Grade Card Creation Modal ----------
 const GradeCardCreationModal = ({ gradeCardModalType, onClose }) => {
-  const [studentName, setStudentName] = useState('');
-  const [gradeLevel, setGradeLevel] = useState('');
-  const [courses, setCourses] = useState([]);
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  const handleSave = async () => {
-    if (!studentName || !gradeLevel) {
-      toast.error('Please enter student name and grade level');
-      return;
-    }
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      onClose();
-    }, 2000);
-  };
-
   return (
     <div className="fixed inset-0 z-60 bg-black/40 backdrop-blur-sm flex items-center justify-center" onClick={onClose}>
       <div

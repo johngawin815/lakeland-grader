@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import {
   FileSpreadsheet, User, BookOpen, Heart, Wrench,
-  FileDown, CloudUpload, RefreshCw, Loader2, CheckCircle,
+  FileDown, CloudUpload, RefreshCw, Loader2,
   ChevronDown, ChevronUp, Copy, Eraser, PaintBucket, Info,
 } from 'lucide-react';
 import {

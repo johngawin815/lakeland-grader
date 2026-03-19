@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Pencil, Trash2, Users, Loader2, StickyNote, Search, FileCheck } from 'lucide-react';
+import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, StickyNote, Search, FileCheck } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook';
-import CourseFormModal from './CourseFormModal';
 import EnrollmentManager from './EnrollmentManager';
 import IntakeForm from './IntakeForm';
 import { databaseService } from '../../services/databaseService';
@@ -15,7 +14,7 @@ const MOCK_USER = { name: "John Gawin", units: ["Harmony"], email: "john.gawin@l
 
 // --- Main Dashboard Component ---
 const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, initialTab }) => {
-  const [activeTab, setActiveTab] = useState(initialTab || 'roster');
+  const [, setActiveTab] = useState(initialTab || 'roster');
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [managingCourse, setManagingCourse] = useState(null);
 
@@ -61,20 +60,6 @@ const StudentMasterDashboard = ({ setView, user = MOCK_USER, onSelectCourse, ini
 };
 
 // --- Helper Components ---
-
-const TabButton = ({ label, icon, isActive, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`px-5 py-2.5 rounded-t-lg font-semibold text-sm transition-all flex items-center gap-2 border-b-2 ${
-      isActive
-        ? 'border-indigo-500 text-indigo-600 bg-white/50'
-        : 'border-transparent text-slate-400 hover:text-slate-600'
-    }`}
-  >
-    {React.cloneElement(icon, { className: 'w-4 h-4' })}
-    {label}
-  </button>
-);
 
 
 // --- "My Unit Roster" Tab Content ---
