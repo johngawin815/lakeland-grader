@@ -81,22 +81,24 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
   const saveFn = useCallback(async () => {
     if (!course?.id) return;
 
-    // Save per-student enrollment grades
-    const savePromises = students.map(student => {
-      const percentage = finalGrades[student.id];
-      if (percentage === null || percentage === undefined) return Promise.resolve(null);
+    // Save per-student enrollment grades PER SUBJECT
+    const savePromises = students.flatMap(student => {
+      return categories.map(cat => {
+        const percentage = getCategoryPercentage(student.id, cat);
+        if (percentage === null || percentage === undefined) return Promise.resolve(null);
 
-      return databaseService.saveCourseGrade({
-        id: `${student.id}-${course.id}`,
-        studentId: student.id,
-        courseId: course.id,
-        courseName: course.courseName,
-        subjectArea: course.subjectArea || '',
-        teacherName: course.teacherName || user?.name || '',
-        percentage: parseFloat(percentage.toFixed(2)),
-        letterGrade: calculateLetterGrade(percentage),
-        term: course.term || getCurrentSchoolYear(),
-        status: 'Active',
+        return databaseService.saveCourseGrade({
+          id: `${student.id}-${course.id}-${cat.id}`,
+          studentId: student.id,
+          courseId: `${course.id}-${cat.id}`,
+          courseName: course.courseName || 'My Gradebook',
+          subjectArea: cat.name,
+          teacherName: course.teacherName || user?.name || '',
+          percentage: parseFloat(percentage.toFixed(2)),
+          letterGrade: calculateLetterGrade(percentage),
+          term: course.term || getCurrentSchoolYear(),
+          status: 'Active',
+        });
       });
     });
 

@@ -4,9 +4,12 @@ import { calculateLetterGrade } from '../utils/gradeCalculator';
 import { getCurrentSchoolYear } from '../utils/smartUtils';
 
 const DEFAULT_CATEGORIES = [
-  { id: 'hw', name: 'Homework', weight: 20 },
-  { id: 'quiz', name: 'Quizzes', weight: 30 },
-  { id: 'test', name: 'Tests', weight: 50 },
+  { id: 'eng', name: 'English', weight: 1 },
+  { id: 'math', name: 'Math', weight: 1 },
+  { id: 'sci', name: 'Science', weight: 1 },
+  { id: 'soc', name: 'Social Studies', weight: 1 },
+  { id: 'elec', name: 'Elective', weight: 1 },
+  { id: 'gen', name: 'General', weight: 1 },
 ];
 
 export function useGradebook(courseId, userUnits) {

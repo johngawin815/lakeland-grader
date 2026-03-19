@@ -39,7 +39,7 @@ const NewAssignmentModal = ({ isOpen, onClose, categories, onSave }) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-slate-600 mb-1.5">Category</label>
+              <label className="block text-sm font-bold text-slate-600 mb-1.5">Subject</label>
               <select value={newAssignment.categoryId} onChange={(e) => setNewAssignment({ ...newAssignment, categoryId: e.target.value })} className="w-full p-3 rounded-xl border border-slate-300/80 focus:ring-4 focus:ring-indigo-500/20 outline-none bg-white text-base transition-all">
                 {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
               </select>
