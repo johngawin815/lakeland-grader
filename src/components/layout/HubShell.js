@@ -8,13 +8,14 @@ import {
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 import { databaseService } from '../../services/databaseService';
 import { useStudent } from '../../context/StudentContext';
+import { ErrorBoundary } from '../ErrorBoundary';
 
 // --- LAZY-LOADED MODULE IMPORTS ---
 const KTEAReporter = lazy(() => import('../ktea/KTEAReporter'));
 const DischargeNarrativeBuilder = lazy(() => import('../discharge/DischargeNarrativeBuilder'));
 const CurriculumMaps = lazy(() => import('../curriculum/CurriculumMaps'));
 const StudentMasterDashboard = lazy(() => import('../dashboard/StudentMasterDashboard'));
-const GradingWorkspace = lazy(() => import('../grading/GradingWorkspace'));
+import GradingWorkspace from '../grading/GradingWorkspace';
 const AuditLog = lazy(() => import('./AuditLog'));
 const IEPGenerator = lazy(() => import('../iep/IEPGenerator'));
 const TranscriptGenerator = lazy(() => import('../transcript/TranscriptGenerator'));
@@ -355,7 +356,11 @@ const HubShell = () => {
               {currentView === 'workbook' && <WorkbookGenerator user={user} />}
               {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
               {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
-              {currentView === 'grades' && <GradingWorkspace user={user} activeStudent={activeStudent?.studentName || activeStudent || ''} />}
+              {currentView === 'grades' && (
+                <ErrorBoundary>
+                  <GradingWorkspace user={user} activeStudent={activeStudent?.studentName || activeStudent || ''} />
+                </ErrorBoundary>
+              )}
             </div>
           </Suspense>
         )}

@@ -7,10 +7,6 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import JSZip from 'jszip';
 import toast from 'react-hot-toast';
-import GradeGenerator from './GradeGenerator';
-import ElementaryGradeCard from './ElementaryGradeCard';
-
-const UNIT_ORDER = ['Determination', 'Discovery', 'Freedom', 'Harmony', 'Integrity', 'Serenity'];
 
 // Instructor lookup: maps (unitName, subjectArea) → instructor name
 const INSTRUCTOR_MAP = {
@@ -75,9 +71,7 @@ const gradeColor = (g) => {
 // localStorage key for remembering last-used bulk export type (Task 7)
 const EXPORT_PREF_KEY = 'gradeCardPreview_lastExportType';
 
-const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
-  const [data, setData]                   = useState(null);
-  const LS_KEY = `gradeSpreadsheetPreview_${formData.quarterName}_${formData.schoolYear}`;
+const GradeCardPreview = ({ formData, onClose, onEditStudent, onCreateCard }) => {
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState('');
   const [downloading, setDownloading]     = useState(false);
@@ -914,43 +908,8 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent }) => {
           <span>Tip: Click <FileDown className="w-3 h-3 inline" /> on any row to generate a grade card</span>
         </div>
       </div>
-
-      {gradeCardModalType && (
-        <GradeCardCreationModal
-          gradeCardModalType={gradeCardModalType}
-          onClose={handleCloseGradeCardModal}
-        />
-      )}
     </div>
   );
 };
 
 export default GradeCardPreview;
-
-// ---------- Grade Card Creation Modal ----------
-const GradeCardCreationModal = ({ gradeCardModalType, onClose }) => {
-  return (
-    <div className="fixed inset-0 z-60 bg-black/40 backdrop-blur-sm flex items-center justify-center" onClick={onClose}>
-      <div
-        className="bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-        style={{ width: '540px', maxWidth: '96vw', maxHeight: '90vh' }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-white">
-          <h3 className="text-base font-bold text-slate-800">Create {gradeCardModalType === 'upper' ? 'Upper Level' : 'Elementary'} Grade Card</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600 ml-1">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-auto px-6 py-4">
-          {/* Step 4: Render form for grade card creation (reuse existing components) */}
-          {gradeCardModalType === 'upper' ? (
-            <GradeGenerator user={null} activeStudent={null} />
-          ) : (
-            <ElementaryGradeCard user={null} activeStudent={null} isEmbedded={true} />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
