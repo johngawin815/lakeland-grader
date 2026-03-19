@@ -6,10 +6,10 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 const GradeCell = React.memo(({ 
   studentId, studentName, assignmentId, assignmentName, maxScore, 
-  grade, isWarning, isFailing, rowIndex, colIndex, onChange, onFocus 
+  grade, isWarning, isFailing, rowIndex, colIndex, isFocused, onChange, onFocus 
 }) => {
   return (
-    <td className="p-2 text-center border-r border-slate-200/50" role="gridcell">
+    <td className={`p-1.5 text-center border-r border-slate-200/60 transition-colors duration-200 ${isFocused ? 'bg-indigo-50/50' : ''}`} role="gridcell">
       <input
         type="number"
         min="0"
@@ -18,17 +18,17 @@ const GradeCell = React.memo(({
         onChange={(e) => onChange(studentId, assignmentId, maxScore, e.target.value)}
         onFocus={(e) => {
           if (onFocus) onFocus(rowIndex, colIndex);
-          e.target.select(); // UX: Mimic Excel highlight-on-focus behavior
+          e.target.select(); 
         }}
         data-row={rowIndex}
         data-col={colIndex}
         aria-label={`${studentName} - ${assignmentName}`}
-        className={`w-24 p-2 text-center border rounded-lg outline-none transition-all duration-300 font-mono ${
+        className={`w-28 p-2.5 text-center border rounded-xl outline-none transition-all duration-300 font-mono text-sm ${
           isWarning
             ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300/50'
             : isFailing
-            ? 'border-rose-300 bg-rose-50 text-rose-600 font-bold focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20'
-            : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'
+            ? 'border-rose-300 bg-rose-50 text-rose-600 font-black focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20'
+            : 'border-slate-200 bg-white hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10'
         }`}
         placeholder="—"
       />
@@ -37,19 +37,13 @@ const GradeCell = React.memo(({
 });
 
 const GradebookTable = ({
-  students,
-  assignments,
-  categories,
-  grades,
-  finalGrades,
-  onGradeChange,
-  onStudentClick,
-  onExportClick,
-  onGradeCardClick,
-  onBulkFill,
+  students, assignments, categories, grades, finalGrades,
+  onGradeChange, onStudentClick, onExportClick, onGradeCardClick, onBulkFill,
 }) => {
   const tableRef = useRef(null);
   const [warnCells, setWarnCells] = useState(new Set());
+  const [focusedRow, setFocusedRow] = useState(null);
+  const [focusedCol, setFocusedCol] = useState(null);
   const rows = students.length;
   const cols = assignments.length;
 
@@ -100,13 +94,19 @@ const GradebookTable = ({
     overscan: 5,
   });
 
-  const { handleKeyDown, onCellFocus } = useGridKeyboard({
+  const { handleKeyDown, onCellFocus: rawOnCellFocus } = useGridKeyboard({
     rows,
     cols,
     tableRef,
     rowVirtualizer,
     unitGroups,
   });
+
+  const onCellFocus = useCallback((r, c) => {
+    setFocusedRow(r);
+    setFocusedCol(c);
+    rawOnCellFocus(r, c);
+  }, [rawOnCellFocus]);
 
   const totalColumns = assignments.length + 2; // student col + assignments + overall col
 
@@ -127,35 +127,49 @@ const GradebookTable = ({
   const paddingBottom = virtualItems.length > 0 ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end : 0;
 
   return (
-    <div className="overflow-auto flex-1" ref={tableRef} onKeyDown={handleKeyDown} role="grid">
-      <table className="w-full border-collapse min-w-[800px]">
-        <thead className="bg-slate-100/80 backdrop-blur-sm text-slate-600 text-xs uppercase font-bold tracking-wider sticky top-0 z-10 shadow-sm shadow-slate-200/50">
-          <tr>
-            <th className="p-4 text-left border-b border-r border-slate-200/80 sticky left-0 bg-slate-100/80 w-48 min-w-[12rem]">Student</th>
-            {assignments.map(assignment => (
-              <th key={assignment.id} className="p-3 text-center border-b border-slate-200/80 min-w-[9rem]">
-                <div className="flex flex-col items-center gap-1.5">
-                  <span className="truncate max-w-[140px]" title={assignment.name}>{assignment.name}</span>
+    <div 
+      className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent" 
+      ref={tableRef} 
+      onKeyDown={handleKeyDown} 
+      role="grid"
+    >
+      <table className="w-full border-separate border-spacing-0 min-w-[1000px]">
+        <thead className="sticky top-0 z-30 shadow-md">
+          <tr className="bg-slate-100 backdrop-blur-md">
+            <th className="p-4 text-left border-b border-r border-slate-200 sticky left-0 z-40 bg-slate-100 w-64 min-w-[16rem] transition-colors duration-200">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Student Name</span>
+            </th>
+            {assignments.map((assignment, idx) => (
+              <th 
+                key={assignment.id} 
+                className={`p-4 text-center border-b border-slate-200 min-w-[10rem] transition-all duration-300 ${focusedCol === idx ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600'}`}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-xs font-bold truncate max-w-[140px] px-1" title={assignment.name}>{assignment.name}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 font-semibold">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-600 font-black uppercase tracking-tighter">
                       {categories.find(c => c.id === assignment.categoryId)?.name}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">/ {assignment.maxScore}</span>
+                    <span className="text-[10px] text-slate-400 font-bold">/ {assignment.maxScore}</span>
                   </div>
-                  <button onClick={() => onBulkFill(assignment.id)} className="mt-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100 transition-colors">
+                  <button 
+                    onClick={() => onBulkFill(assignment.id)} 
+                    className="mt-1 text-[10px] text-indigo-600 hover:text-indigo-800 font-black flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg transition-all border border-indigo-100/50 uppercase tracking-tighter"
+                  >
                     <ArrowDown className="w-3 h-3" /> Fill All
                   </button>
                 </div>
               </th>
             ))}
-            <th className="p-4 text-center border-b border-l border-slate-200/80 sticky right-0 bg-slate-100/80 w-32 shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
-              <div className="flex items-center justify-center gap-2 text-indigo-600">
-                <TrendingUp className="w-5 h-5" /> Overall
+            <th className="p-4 text-center border-b border-l border-slate-200 sticky right-0 z-40 bg-slate-100 w-32 shadow-[-8px_0_15px_-5px_rgba(0,0,0,0.05)]">
+              <div className="flex flex-col items-center justify-center gap-1 text-indigo-600">
+                <TrendingUp className="w-5 h-5" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Overall</span>
               </div>
             </th>
           </tr>
         </thead>
-        <tbody className="text-sm text-slate-800 divide-y divide-slate-100/50">
+        <tbody className="text-sm text-slate-800">
           {paddingTop > 0 && (
             <tr><td style={{ height: `${paddingTop}px`, padding: 0, border: 0 }} colSpan={totalColumns} aria-hidden="true" /></tr>
           )}
@@ -181,17 +195,24 @@ const GradebookTable = ({
             const { student, originalIndex: rowIndex } = item;
             const finalGrade = finalGrades[student.id];
             const isPassing = finalGrade === null || finalGrade >= 60;
+            const isRowFocused = focusedRow === rowIndex;
+            
             return (
-              <tr key={student.id} className="hover:bg-slate-100/50 transition-colors duration-200 group" data-index={virtualRow.index} ref={rowVirtualizer.measureElement}>
-                <td className="p-4 font-bold border-r border-slate-200/80 sticky left-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm">
+              <tr 
+                key={student.id} 
+                className={`transition-all duration-200 group even:bg-slate-50/50 ${isRowFocused ? 'bg-indigo-50/30' : 'hover:bg-slate-50/80'}`} 
+                data-index={virtualRow.index} 
+                ref={rowVirtualizer.measureElement}
+              >
+                <td className={`p-4 font-bold border-r border-slate-100 sticky left-0 z-20 transition-all duration-200 shadow-[4px_0_10px_-5px_rgba(0,0,0,0.05)] ${isRowFocused ? 'bg-indigo-50 shadow-indigo-100/50' : 'bg-white group-even:bg-slate-50/50 group-hover:bg-slate-50'}`}>
                   <div className="flex justify-between items-center">
-                    <button onClick={() => onStudentClick(student)} className="text-left hover:text-indigo-600 transition-colors">
-                      {student.name}
-                      {student.gradeLevel && <div className="text-xs text-slate-400 font-normal">Grade {student.gradeLevel}</div>}
+                    <button onClick={() => onStudentClick(student)} className="text-left group/name flex flex-col">
+                      <span className={`text-sm tracking-tight transition-colors ${isRowFocused ? 'text-indigo-700' : 'text-slate-900 group-hover/name:text-indigo-600'}`}>{student.name}</span>
+                      {student.gradeLevel && <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Grade {student.gradeLevel}</span>}
                     </button>
                     <div className="flex gap-1">
-                      <button onClick={() => onGradeCardClick(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-emerald-600 transition-all p-1" title="Generate Grade Card"><GraduationCap className="w-5 h-5" /></button>
-                      <button onClick={() => onExportClick(student)} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-600 transition-all p-1" title="Export Report Card"><FileDown className="w-5 h-5" /></button>
+                      <button onClick={() => onGradeCardClick(student)} className="text-slate-300 opacity-0 group-hover:opacity-100 hover:text-emerald-600 hover:scale-110 transition-all p-1.5 bg-white shadow-sm rounded-lg border border-slate-100" title="Generate Grade Card"><GraduationCap className="w-4 h-4" /></button>
+                      <button onClick={() => onExportClick(student)} className="text-slate-300 opacity-0 group-hover:opacity-100 hover:text-indigo-600 hover:scale-110 transition-all p-1.5 bg-white shadow-sm rounded-lg border border-slate-100" title="Export Report Card"><FileDown className="w-4 h-4" /></button>
                     </div>
                   </div>
                 </td>
@@ -213,13 +234,25 @@ const GradebookTable = ({
                       isFailing={isFailing}
                       rowIndex={rowIndex}
                       colIndex={colIndex}
+                      isFocused={isRowFocused && focusedCol === colIndex}
                       onChange={handleValidatedChange}
                       onFocus={onCellFocus}
                     />
                   );
                 })}
-                <td className="p-4 text-center font-bold border-l border-slate-200/80 sticky right-0 bg-white/50 group-hover:bg-slate-100/50 backdrop-blur-sm shadow-[-4px_0_8px_rgba(0,0,0,0.02)]">
-                  {finalGrade !== null ? <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${isPassing ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{finalGrade.toFixed(1)}%</span> : <span className="text-slate-400 text-xs italic">N/A</span>}
+                <td className={`p-4 text-center font-black border-l border-slate-100 sticky right-0 z-20 shadow-[-8px_0_15px_-5px_rgba(0,0,0,0.05)] transition-all duration-200 ${isRowFocused ? 'bg-indigo-50' : 'bg-white group-even:bg-slate-50/50 group-hover:bg-slate-50'}`}>
+                  {finalGrade !== null ? (
+                    <div className={`inline-flex flex-col items-center justify-center min-w-[3.5rem] py-1 rounded-xl shadow-sm border ${
+                      isPassing ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
+                    }`}>
+                      <span className="text-xs">{finalGrade.toFixed(1)}%</span>
+                      <span className="text-[8px] font-black uppercase tracking-widest opacity-60">
+                        {isPassing ? 'Passing' : 'Failing'}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-slate-300 text-[10px] font-black uppercase tracking-widest italic">No Data</span>
+                  )}
                 </td>
               </tr>
             );

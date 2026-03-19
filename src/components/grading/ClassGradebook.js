@@ -229,86 +229,117 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
       ) : (
       <>
         {/* HEADER */}
-        <div className="w-full mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-8">
-          <div>
+        <div className="w-full mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-8 pt-8">
+          <div className="flex flex-col gap-1">
             {onExit && (
-              <button onClick={onExit} className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors duration-300">
-                <ArrowLeft className="w-4 h-4" /> {backLabel}
+              <button 
+                onClick={onExit} 
+                className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-400 hover:text-indigo-600 transition-all duration-300 group"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" /> 
+                {backLabel}
               </button>
             )}
-            <h1 className="text-4xl font-extrabold text-slate-900 flex items-center gap-3">
-              <span className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white shadow-lg shadow-indigo-100/50 rounded-2xl text-indigo-600 border border-indigo-50">
                 <GraduationCap className="w-8 h-8" />
-              </span>
-              {course.courseName || 'Class Gradebook'}
-            </h1>
-            <p className="text-slate-500 mt-2 text-base">
-               {course.teacherName || user.name} | {students.length} Students
-               {course.subjectArea && <span className="ml-2 text-xs font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">{course.subjectArea}</span>}
-            </p>
+              </div>
+              <div>
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+                  {course.courseName || 'Class Gradebook'}
+                </h1>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-slate-500 font-medium">{course.teacherName || user.name}</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300" />
+                  <span className="text-slate-500 font-bold">{students.length} Students Enrolled</span>
+                  {course.subjectArea && (
+                    <span className="ml-1 text-[10px] font-black uppercase tracking-widest bg-indigo-600 text-white px-2.5 py-1 rounded-full shadow-sm shadow-indigo-200">
+                      {course.subjectArea}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* CONTROLS */}
           {activeTab === 'grades' && (
-            <div className="flex gap-2 items-center flex-wrap">
-              {/* Save status indicator */}
-              {statusDisplay && (
-                <div className={`flex items-center gap-1.5 text-sm font-bold ${statusDisplay.cls}`} aria-live="polite">
-                  {statusDisplay.icon}
-                  <span>{statusDisplay.text}</span>
-                </div>
-              )}
-              {saveStatus === 'error' && (
-                <button onClick={forceSave} className="text-xs font-bold text-red-600 hover:text-red-800 underline">Retry</button>
-              )}
-              {/* Manual save fallback */}
-              <button
-                onClick={forceSave}
-                className="bg-white text-slate-600 font-bold py-2 px-4 rounded-xl border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all flex items-center gap-2 text-sm"
-                title="Save now (auto-saves every few seconds)"
-              >
-                <CloudUpload className="w-4 h-4 text-indigo-500" /> Save
-              </button>
-              {/* Undo / Redo */}
-              <div className="flex gap-1">
-                <button onClick={handleUndo} disabled={!undoStack.canUndo} className="p-2 rounded-lg border border-slate-200/80 bg-white text-slate-500 hover:text-indigo-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Undo (Ctrl+Z)">
-                  <Undo2 className="w-4 h-4" />
+            <div className="flex gap-3 items-center bg-white p-2 rounded-2xl border border-slate-200/60 shadow-sm self-end md:self-auto">
+              <div className="flex items-center gap-3 px-3 border-r border-slate-100">
+                {statusDisplay && (
+                  <div className={`flex items-center gap-2 text-xs font-bold ${statusDisplay.cls}`} aria-live="polite">
+                    {statusDisplay.icon}
+                    <span>{statusDisplay.text}</span>
+                  </div>
+                )}
+                {saveStatus === 'error' && (
+                  <button onClick={forceSave} className="text-[10px] font-black text-rose-600 hover:text-rose-800 underline uppercase tracking-tighter">Retry Save</button>
+                )}
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={forceSave}
+                  className="bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/20 transition-all flex items-center gap-2 text-sm shadow-lg shadow-slate-900/20"
+                  title="Force Save Now"
+                >
+                  <CloudUpload className="w-4 h-4 text-indigo-400" /> Save
                 </button>
-                <button onClick={handleRedo} disabled={!undoStack.canRedo} className="p-2 rounded-lg border border-slate-200/80 bg-white text-slate-500 hover:text-indigo-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Redo (Ctrl+Shift+Z)">
-                  <Redo2 className="w-4 h-4" />
+                
+                {/* Undo / Redo Group */}
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                  <button onClick={handleUndo} disabled={!undoStack.canUndo} className="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Undo (Ctrl+Z)">
+                    <Undo2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={handleRedo} disabled={!undoStack.canRedo} className="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Redo (Ctrl+Shift+Z)">
+                    <Redo2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="w-px h-8 bg-slate-100 mx-1 self-center" />
+
+                <button
+                  onClick={() => setActiveModal('weights')}
+                  className="bg-white text-slate-700 font-bold py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:outline-none transition-all flex items-center gap-2 text-sm"
+                >
+                  <Percent className="w-4 h-4 text-indigo-500" /> Weights
+                </button>
+                <button
+                  onClick={() => setActiveModal('assignment')}
+                  className="bg-indigo-50 text-indigo-700 font-bold py-2.5 px-4 rounded-xl border border-indigo-100 hover:bg-indigo-100/80 transition-all flex items-center gap-2 text-sm"
+                >
+                  <Plus className="w-4 h-4" /> Add Assignment
                 </button>
               </div>
-              <button
-                onClick={() => setActiveModal('weights')}
-                className="bg-white text-slate-700 font-bold py-2 px-4 rounded-xl border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all flex items-center gap-2 text-sm"
-              >
-                <Percent className="w-4 h-4 text-indigo-500" /> Weights
-              </button>
-              <button
-                onClick={() => setActiveModal('assignment')}
-                className="bg-white text-slate-700 font-bold py-2 px-4 rounded-xl border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all flex items-center gap-2 text-sm"
-              >
-                <Plus className="w-4 h-4 text-indigo-500" /> Add Assignment
-              </button>
             </div>
           )}
         </div>
 
         {/* TAB NAVIGATION */}
-        <div className="flex border-b border-slate-200/80 px-8">
-          <button onClick={() => setActiveTab('grades')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'grades' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <GraduationCap className="w-5 h-5" /> Grades
-          </button>
-          <button onClick={() => setActiveTab('attendance')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'attendance' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <Calendar className="w-5 h-5" /> Attendance
-          </button>
-          <button onClick={() => setActiveTab('analytics')} className={`px-6 py-3 font-bold text-sm transition-all duration-300 rounded-t-lg flex items-center gap-2.5 border-b-2 ${activeTab === 'analytics' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <TrendingUp className="w-5 h-5" /> Analytics
-          </button>
+        <div className="flex gap-1 px-8 mb-[-1px] z-10">
+          {[
+            { id: 'grades', icon: GraduationCap, label: 'Gradebook' },
+            { id: 'attendance', icon: Calendar, label: 'Attendance' },
+            { id: 'analytics', icon: TrendingUp, label: 'Class Insights' }
+          ].map(tab => (
+            <button 
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)} 
+              className={`px-6 py-3.5 font-bold text-sm transition-all duration-300 rounded-t-2xl flex items-center gap-2.5 border-t border-x ${
+                activeTab === tab.id 
+                  ? 'bg-white border-slate-200 text-indigo-600 shadow-[0_-4px_10px_-5px_rgba(0,0,0,0.05)]' 
+                  : 'bg-transparent border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+              }`}
+            >
+              <tab.icon className={`w-4.5 h-4.5 ${activeTab === tab.id ? 'text-indigo-600' : 'text-slate-400'}`} /> 
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* MAIN CONTENT CARD */}
-        <div className="w-full flex-1 bg-slate-50/80 backdrop-blur-xl border border-slate-200/50 rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-slate-200/60 overflow-hidden flex flex-col min-h-0">
+        <div className="mx-8 mb-8 flex-1 bg-white border border-slate-200 rounded-b-2xl rounded-tr-2xl shadow-xl shadow-slate-200/40 overflow-hidden flex flex-col min-h-0 relative">
 
           {/* GRADES TAB - UNIT CARD MENU + GRADEBOOK TABLE */}
           {activeTab === 'grades' && (
