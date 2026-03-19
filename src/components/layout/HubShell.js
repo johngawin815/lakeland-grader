@@ -226,7 +226,8 @@ const HubShell = () => {
   const visibleModules = modules.filter(m => !m.adminOnly || user.role === 'admin');
 
   return (
-    <div className="flex h-screen bg-slate-200 font-sans overflow-hidden">
+    <ErrorBoundary>
+      <div className="flex h-screen bg-slate-200 font-sans overflow-hidden">
 
       {/* 1. SIDEBAR NAVIGATION */}
       <aside className={`transition-all duration-300 bg-slate-900 flex flex-col items-center py-3 shrink-0 border-r border-slate-700/50 z-20 ${sidebarCollapsed ? 'w-16' : 'w-48'}`}>
@@ -363,7 +364,8 @@ const HubShell = () => {
           </Suspense>
         )}
       </main>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 
