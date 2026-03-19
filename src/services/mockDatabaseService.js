@@ -441,6 +441,8 @@ export const mockDatabaseService = {
   },
 
   // === ENROLLMENTS ===
+  getAllEnrollments: async () => [...enrollments.values()],
+
   enrollStudent: async (data) => {
     enrollments.set(data.id, data);
     saveMap('enrollments', enrollments);

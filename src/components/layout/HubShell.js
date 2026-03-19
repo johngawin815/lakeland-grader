@@ -14,14 +14,13 @@ const KTEAReporter = lazy(() => import('../ktea/KTEAReporter'));
 const DischargeNarrativeBuilder = lazy(() => import('../discharge/DischargeNarrativeBuilder'));
 const CurriculumMaps = lazy(() => import('../curriculum/CurriculumMaps'));
 const StudentMasterDashboard = lazy(() => import('../dashboard/StudentMasterDashboard'));
-const GradeSpreadsheetModal = lazy(() => import('../grading/GradeSpreadsheetModal'));
+const GradingWorkspace = lazy(() => import('../grading/GradingWorkspace'));
 const AuditLog = lazy(() => import('./AuditLog'));
 const IEPGenerator = lazy(() => import('../iep/IEPGenerator'));
 const TranscriptGenerator = lazy(() => import('../transcript/TranscriptGenerator'));
 const WorkbookGenerator = lazy(() => import('../workbook/WorkbookGenerator'));
 const TeacherSettings = lazy(() => import('../settings/TeacherSettings'));
 const DocumentUploadPortal = lazy(() => import('../upload/DocumentUploadPortal'));
-const GradeGenerator = lazy(() => import('../grading/GradeGenerator'));
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -59,15 +58,6 @@ const modules = [
       icon: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100',
       hoverShadow: 'hover:shadow-indigo-200/50', hoverBorder: 'hover:border-indigo-300/60',
       accent: 'from-indigo-500 to-indigo-600', chevronHover: 'group-hover:text-indigo-600',
-    }
-  },
-  {
-    id: 'gradeCards', title: 'Grade Cards', desc: 'Generate Report Cards',
-    icon: FileBadge,
-    color: {
-      icon: 'text-fuchsia-600', bg: 'bg-fuchsia-50', border: 'border-fuchsia-100',
-      hoverShadow: 'hover:shadow-fuchsia-200/50', hoverBorder: 'hover:border-fuchsia-300/60',
-      accent: 'from-fuchsia-500 to-fuchsia-600', chevronHover: 'group-hover:text-fuchsia-600',
     }
   },
   {
@@ -141,7 +131,6 @@ const HubShell = () => {
   const [user, setUser] = useState(null);
   const { activeStudent } = useStudent() || {};
   const [currentView, setCurrentView] = useState("home");
-  const [isSpreadsheetModalOpen, setIsSpreadsheetModalOpen] = useState(false);
   const [dashboardInitialTab, setDashboardInitialTab] = useState(null);
   const [showUploadPortal, setShowUploadPortal] = useState(false);
   const [gradesStats, setGradesStats] = useState(null);
@@ -218,12 +207,8 @@ const HubShell = () => {
   };
 
   const navigateTo = (moduleId) => {
-    if (moduleId === 'grades') {
-      setIsSpreadsheetModalOpen(true);
-    } else {
-      setDashboardInitialTab(null);
-      setCurrentView(moduleId);
-    }
+    setDashboardInitialTab(null);
+    setCurrentView(moduleId);
   };
 
   if (!user) {
@@ -368,26 +353,13 @@ const HubShell = () => {
               {currentView === 'iep' && <IEPGenerator user={user} />}
               {currentView === 'transcript' && <TranscriptGenerator user={user} />}
               {currentView === 'workbook' && <WorkbookGenerator user={user} />}
-              {currentView === 'gradeCards' && <GradeGenerator user={user} activeStudent={activeStudent?.studentName || activeStudent || ''} />}
               {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
               {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
-              {/* All grading entry points now redirect to unified Quarter Spreadsheet Preview */}
-              {currentView === 'grades' && (
-                <GradeSpreadsheetModal
-                  isOpen={true}
-                  onClose={() => setCurrentView('home')}
-                />
-              )}
+              {currentView === 'grades' && <GradingWorkspace user={user} activeStudent={activeStudent?.studentName || activeStudent || ''} />}
             </div>
           </Suspense>
         )}
       </main>
-      <Suspense fallback={null}>
-        <GradeSpreadsheetModal
-          isOpen={isSpreadsheetModalOpen}
-          onClose={() => setIsSpreadsheetModalOpen(false)}
-        />
-      </Suspense>
     </div>
   );
 };

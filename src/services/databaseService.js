@@ -111,6 +111,10 @@ function buildRealService() {
       return resource;
     },
     deleteCourse: async (id) => { await coursesContainer.item(id, id).delete(); },
+    getAllEnrollments: async () => {
+      const { resources } = await enrollmentsContainer.items.query("SELECT * FROM c").fetchAll();
+      return resources;
+    },
     enrollStudent: async (enrollmentData) => {
       const { resource } = await enrollmentsContainer.items.upsert(enrollmentData);
       return resource;

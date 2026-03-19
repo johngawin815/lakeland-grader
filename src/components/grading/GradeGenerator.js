@@ -30,11 +30,25 @@ const INSTRUCTOR_MAP = {
 const getInstructor = (unitName, subjectArea) =>
   (INSTRUCTOR_MAP[unitName] && INSTRUCTOR_MAP[unitName][subjectArea]) || '';
 
-// A grade of D or higher earns 0.5 credits per course
+// A grade of D or higher (>= 60%) earns 0.25 credits per course for Upper Level at quarter end.
 const PASSING_GRADES = ['A', 'B', 'C', 'D'];
-const getAutoCredits = (letterGrade) => {
-  if (!letterGrade) return '';
-  const first = letterGrade.trim().toUpperCase().charAt(0);
+const getAutoCredits = (letterGrade, pct, gradeLevelStr) => {
+  if (!letterGrade && pct === '') return '';
+  
+  const gl = parseInt(gradeLevelStr, 10);
+  const isUpperLevel = (!isNaN(gl) && gl >= 9 && gl <= 12);
+
+  if (isUpperLevel) {
+    if (pct !== '') {
+      return parseFloat(pct) >= 60 ? '0.25' : '0';
+    } else if (letterGrade) {
+      const first = String(letterGrade).trim().toUpperCase().charAt(0);
+      return PASSING_GRADES.includes(first) ? '0.25' : '0';
+    }
+  }
+
+  // Fallback for MS or other templates
+  const first = String(letterGrade || '').trim().toUpperCase().charAt(0);
   return PASSING_GRADES.includes(first) ? '0.5' : '';
 };
 
@@ -310,7 +324,9 @@ const GradeGenerator = ({ user, activeStudent }) => {
         const courseName = enrollment.courseName || '';
         const letterGrade = enrollment.letterGrade || '';
         const pct = enrollment.percentage != null ? String(enrollment.percentage) : '';
-        const credits = enrollment.credits != null ? String(enrollment.credits) : getAutoCredits(letterGrade);
+        
+        const effectiveGradeLevel = student.gradeLevel ? String(student.gradeLevel) : formData.gradeLevel;
+        const credits = enrollment.credits != null ? String(enrollment.credits) : getAutoCredits(letterGrade, pct, effectiveGradeLevel);
 
         if (mapping) {
           updates[mapping.classField] = courseName;
