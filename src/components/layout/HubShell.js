@@ -357,9 +357,7 @@ const HubShell = () => {
               {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
               {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
               {currentView === 'grades' && (
-                <ErrorBoundary>
-                  <GradingWorkspace user={user} activeStudent={activeStudent?.studentName || activeStudent || ''} />
-                </ErrorBoundary>
+                <div style={{ color: 'red', fontSize: '30px', padding: '50px' }}>HUBSHELL STUB</div>
               )}
             </div>
           </Suspense>
