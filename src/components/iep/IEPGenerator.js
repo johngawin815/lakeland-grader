@@ -100,18 +100,42 @@ const TRANSITION_SUBSECTIONS = [
 
 // ─── INLINE FORM COMPONENTS ─────────────────────────────────────────────────
 
+const INPUT_CLS = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-slate-50/50 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400 hover:bg-white outline-none transition-all';
+
 const FInput = ({ value, onChange, w = '', placeholder = '', label = '' }) => (
   <div className={w || 'w-full'}>
     {label && <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>}
-    <input
-      value={value || ''}
-      onChange={e => onChange(e.target.value)}
-      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-slate-50/50
-                 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400 hover:bg-white outline-none transition-all"
-      placeholder={placeholder}
-    />
+    <input value={value || ''} onChange={e => onChange(e.target.value)} className={INPUT_CLS} placeholder={placeholder} />
   </div>
 );
+
+// Date input — shows native date picker, converts between YYYY-MM-DD (stored) and display
+const FDateInput = ({ value, onChange, label = '' }) => {
+  // Convert stored MM/DD/YYYY → YYYY-MM-DD for the input, and back on change
+  const toInputVal = (v) => {
+    if (!v) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    const parts = v.split('/');
+    if (parts.length === 3) return `${parts[2]}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}`;
+    return '';
+  };
+  const toStored = (v) => {
+    if (!v) return '';
+    const [y, m, d] = v.split('-');
+    return `${m}/${d}/${y}`;
+  };
+  return (
+    <div className="w-full">
+      {label && <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>}
+      <input
+        type="date"
+        value={toInputVal(value)}
+        onChange={e => onChange(toStored(e.target.value))}
+        className={INPUT_CLS + ' cursor-pointer'}
+      />
+    </div>
+  );
+};
 
 const FArea = ({ value, onChange, rows = 3, placeholder = '', label = '' }) => (
   <div className="w-full">
@@ -120,8 +144,7 @@ const FArea = ({ value, onChange, rows = 3, placeholder = '', label = '' }) => (
       value={value || ''}
       onChange={e => onChange(e.target.value)}
       rows={rows}
-      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-slate-50/50
-                 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400 hover:bg-white outline-none transition-all resize-y"
+      className={INPUT_CLS + ' resize-y'}
       placeholder={placeholder}
     />
   </div>
@@ -143,8 +166,7 @@ const FSelect = ({ value, onChange, options, placeholder = 'Select...', label = 
     <select
       value={value || ''}
       onChange={e => onChange(e.target.value)}
-      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white
-                 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400 outline-none transition-all cursor-pointer"
+      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-400 outline-none transition-all cursor-pointer"
     >
       <option value="">{placeholder}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -154,33 +176,42 @@ const FSelect = ({ value, onChange, options, placeholder = 'Select...', label = 
 
 // ─── SECTION CARD ────────────────────────────────────────────────────────────
 
-const SectionCard = ({ id, title, icon: Icon, badge, isOpen, onToggle, children }) => (
-  <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-    <button
-      type="button"
-      onClick={() => onToggle(id)}
-      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors text-left"
-    >
-      <div className="flex items-center gap-3">
-        {Icon && <Icon className="w-5 h-5 text-cyan-600" />}
-        <span className="font-bold text-slate-800">{title}</span>
-        {badge && (
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200">
-            {badge}
-          </span>
-        )}
-      </div>
-      {isOpen
-        ? <ChevronUp className="w-5 h-5 text-slate-400" />
-        : <ChevronDown className="w-5 h-5 text-slate-400" />}
-    </button>
-    {isOpen && (
-      <div className="px-5 pb-5 border-t border-slate-100">
-        {children}
-      </div>
-    )}
-  </div>
-);
+// status: 'complete' | 'partial' | 'empty'
+const SectionCard = ({ id, title, icon: Icon, badge, status, isOpen, onToggle, children }) => {
+  const statusIcon = status === 'complete'
+    ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-xs font-bold">✓</span>
+    : status === 'partial'
+    ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-600 text-xs">~</span>
+    : null;
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <button
+        type="button"
+        onClick={() => onToggle(id)}
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors text-left"
+      >
+        <div className="flex items-center gap-3">
+          {Icon && <Icon className="w-5 h-5 text-cyan-600" />}
+          <span className="font-bold text-slate-800">{title}</span>
+          {statusIcon}
+          {badge && (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200">
+              {badge}
+            </span>
+          )}
+        </div>
+        {isOpen
+          ? <ChevronUp className="w-5 h-5 text-slate-400" />
+          : <ChevronDown className="w-5 h-5 text-slate-400" />}
+      </button>
+      {isOpen && (
+        <div className="px-5 pb-5 border-t border-slate-100">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ─── GOAL BANK MODAL ────────────────────────────────────────────────────────
 
@@ -290,6 +321,8 @@ const IEPGenerator = ({ user }) => {
 
   // Goal bank modal
   const [showGoalBank, setShowGoalBank] = useState(false);
+  const [showCustomGoalForm, setShowCustomGoalForm] = useState(false);
+  const [customGoalText, setCustomGoalText] = useState('');
 
   // Services inline form
   const [showServiceForm, setShowServiceForm] = useState(false);
@@ -410,6 +443,72 @@ const IEPGenerator = ({ user }) => {
     }));
   }, [selectedStudent, kteaData, enrollments]);
 
+  // ─── SECTION COMPLETION STATUS ──────────────────────────────────────────────────────────
+  const sectionStatus = useMemo(() => {
+    const filled = (...keys) => keys.filter(k => !!draft[k]).length;
+    const total = (...keys) => keys.length;
+    const pct = (...keys) => filled(...keys) / total(...keys);
+    const demographics = pct('studentName', 'birthDate', 'gradeLevel', 'district', 'studentMosisId');
+    const decisionMaker = pct('decisionMakerRole', 'decisionMakerName');
+    const meeting = pct('iepDate', 'iepInitiationDate', 'iepDueDate', 'evalDate');
+    const plaafp = pct('disabilityImpact', 'strengthsText', 'parentInput', 'changesFunctioning', 'evalSummary');
+    const specialC = SPECIAL_CONSIDERATION_ITEMS.length > 0 ? 'complete' : 'empty';
+    const goals = draft.goals.length >= 1 ? (draft.goals.length >= 2 ? 'complete' : 'partial') : 'empty';
+    const services = (draft.services.length > 0 || draft.accommodations.length > 0) ? 'complete' : 'empty';
+    const s = (p) => p >= 1 ? 'complete' : p > 0 ? 'partial' : 'empty';
+    return {
+      demographics: s(demographics),
+      decisionMaker: s(decisionMaker),
+      meeting: s(meeting),
+      presentLevels: s(plaafp),
+      specialConsiderations: specialC,
+      goals,
+      services,
+      regularEd: draft.regularEdExplanation ? 'complete' : (draft.regularEdInRegular === false ? 'partial' : 'empty'),
+      transition: draft.hasTransitionPlan
+        ? (draft.transition?.postSecondaryEmployment ? 'partial' : 'empty')
+        : 'empty',
+    };
+  }, [draft]);
+
+  const handleAddCustomGoal = useCallback(() => {
+    if (!customGoalText.trim() || draft.goals.length >= 3) return;
+    const newGoal = {
+      id: Date.now(),
+      sourceId: null,
+      area: 'Custom',
+      goalText: customGoalText.trim(),
+      benchmarks: [{ text: '', targetDate: '' }, { text: '', targetDate: '' }, { text: '', targetDate: '' }],
+      measureMethods: [],
+      domains: [],
+      baselineData: '',
+      targetDate: '',
+    };
+    setDraft(prev => ({ ...prev, goals: [...prev.goals, newGoal] }));
+    setCustomGoalText('');
+    setShowCustomGoalForm(false);
+    setIsDirty(true);
+  }, [customGoalText, draft.goals]);
+
+  const updateGoalField = useCallback((goalId, field, value) => {
+    setDraft(prev => ({
+      ...prev,
+      goals: prev.goals.map(g => g.id !== goalId ? g : { ...g, [field]: value }),
+    }));
+  }, []);
+
+  const updateBenchmarkText = useCallback((goalId, bIndex, value) => {
+    setDraft(prev => ({
+      ...prev,
+      goals: prev.goals.map(g => {
+        if (g.id !== goalId) return g;
+        const bms = [...(g.benchmarks || [])];
+        bms[bIndex] = { ...(bms[bIndex] || {}), text: value };
+        return { ...g, benchmarks: bms };
+      }),
+    }));
+  }, []);
+
   const handleAddGoal = useCallback((bankGoal) => {
     if (draft.goals.length >= 3) return;
     const newGoal = {
@@ -500,7 +599,7 @@ const IEPGenerator = ({ user }) => {
     const dd = draft;
 
     try {
-      const response = await fetch('/templates/IEP Master Form.docx');
+      const response = await fetch('/IEP/IEP Master Form.docx');
       if (!response.ok) throw new Error('Could not find template: IEP Master Form.docx');
       const arrayBuffer = await response.arrayBuffer();
 
@@ -532,7 +631,6 @@ const IEPGenerator = ({ user }) => {
         edAddress: dd.decisionMakerAddress || '',
         edPhone: dd.decisionMakerPhone || '',
         edEmail: dd.decisionMakerEmail || '',
-        'edEmail ': dd.decisionMakerEmail || '',
         caseManager: dd.caseManager || user?.name || '',
         caseManagerPhone: dd.caseManagerPhone || '',
         initial: dd.meetingType === 'Initial' ? '\u2612' : '\u2610',
@@ -556,12 +654,17 @@ const IEPGenerator = ({ user }) => {
         transistionRepresentativeMethod: dd.transitionRepMethod || '',
         otherMethod: dd.otherParticipantMethod || '',
         // Page 2 - Present Levels (PLAAFP)
-        disabilityImpact: [dd.academicLevels, dd.functionalLevels, dd.impactStatement].filter(Boolean).join('\n\n') || '',
+        disabilityImpact: dd.disabilityImpact || [dd.academicLevels, dd.impactStatement].filter(Boolean).join('\n\n') || '',
         studentStrengths: dd.strengthsText || '',
         parentConcerns: dd.parentInput || '',
         changesInFunctioning: dd.changesFunctioning || '',
         evalSummary: buildEvalSummary(dd, kteaData),
         transitionSummary: dd.transitionAssessments || '',
+        // Language checkboxes
+        lang_English: (dd.primaryLanguage || 'English') === 'English' ? '\u2612' : '\u2610',
+        lang_Spanish: dd.primaryLanguage === 'Spanish' ? '\u2612' : '\u2610',
+        lang_Sign: dd.primaryLanguage === 'Sign Language' ? '\u2612' : '\u2610',
+        lang_Other: dd.primaryLanguage === 'Other' ? '\u2612' : '\u2610',
         // Pages 4-5 - Goals (loop)
         goals: paddedGoals.map((goal, i) => ({
           id: i + 1,
@@ -763,7 +866,7 @@ const IEPGenerator = ({ user }) => {
       <div className="max-w-3xl mx-auto py-6 px-4 space-y-4">
 
         {/* ══════════════════ 1. STUDENT DEMOGRAPHICS ══════════════════ */}
-        <SectionCard id="demographics" title="Student Demographics" icon={User} isOpen={openSections.demographics} onToggle={toggleSection}>
+        <SectionCard id="demographics" title="Student Demographics" icon={User} status={sectionStatus.demographics} isOpen={openSections.demographics} onToggle={toggleSection}>
           <div className="space-y-4 pt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FInput label="Student Name" value={d.studentName} onChange={v => setDraft(prev => ({ ...prev, studentName: v }))} placeholder="Full name" />
@@ -787,11 +890,21 @@ const IEPGenerator = ({ user }) => {
               <p className="font-semibold text-slate-600 mb-1">Serving School</p>
               <p>Lakeland Regional School &middot; 2323 West Grand Street, Springfield, MO 65802 &middot; 417-865-5581</p>
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-2">Primary Language / Communication Mode</label>
+              <div className="flex flex-wrap gap-1">
+                {['English', 'Spanish', 'Sign Language', 'Other'].map(lang => (
+                  <FCheck key={lang} checked={(d.primaryLanguage || 'English') === lang}
+                    onChange={() => setDraft(prev => ({ ...prev, primaryLanguage: lang }))}
+                    label={lang} />
+                ))}
+              </div>
+            </div>
           </div>
         </SectionCard>
 
         {/* ══════════════════ 2. DECISION MAKER & CASE MANAGER ══════════════════ */}
-        <SectionCard id="decisionMaker" title="Decision Maker & Case Manager" icon={Users} isOpen={openSections.decisionMaker} onToggle={toggleSection}>
+        <SectionCard id="decisionMaker" title="Decision Maker & Case Manager" icon={Users} status={sectionStatus.decisionMaker} isOpen={openSections.decisionMaker} onToggle={toggleSection}>
           <div className="space-y-4 pt-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-2">Educational Decision Maker Role</label>
@@ -819,7 +932,7 @@ const IEPGenerator = ({ user }) => {
         </SectionCard>
 
         {/* ══════════════════ 3. MEETING INFORMATION ══════════════════ */}
-        <SectionCard id="meeting" title="Meeting Information" icon={Calendar} badge={d.iepDate ? `Meeting: ${d.iepDate}` : null} isOpen={openSections.meeting} onToggle={toggleSection}>
+        <SectionCard id="meeting" title="Meeting Information" icon={Calendar} badge={d.iepDate ? `Meeting: ${d.iepDate}` : null} status={sectionStatus.meeting} isOpen={openSections.meeting} onToggle={toggleSection}>
           <div className="space-y-4 pt-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-2">IEP Type</label>
@@ -829,13 +942,13 @@ const IEPGenerator = ({ user }) => {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FInput label="Date of IEP Meeting" value={d.iepDate} onChange={v => setDraft(prev => ({ ...prev, iepDate: v }))} placeholder="MM/DD/YYYY" />
-              <FInput label="Initiation Date of IEP" value={d.iepInitiationDate} onChange={v => setDraft(prev => ({ ...prev, iepInitiationDate: v }))} placeholder="MM/DD/YYYY" />
-              <FInput label="Most Recent Evaluation Date" value={d.evalDate} onChange={v => setDraft(prev => ({ ...prev, evalDate: v }))} placeholder="MM/DD/YYYY" />
-              <FInput label="Previous IEP Review Date" value={d.prevIepDate} onChange={v => setDraft(prev => ({ ...prev, prevIepDate: v }))} placeholder="MM/DD/YYYY" />
-              <FInput label="Next Triennial Evaluation" value={d.triennialDate} onChange={v => setDraft(prev => ({ ...prev, triennialDate: v }))} placeholder="MM/DD/YYYY" />
-              <FInput label="Projected Annual Review Date" value={d.iepDueDate} onChange={v => setDraft(prev => ({ ...prev, iepDueDate: v }))} placeholder="MM/DD/YYYY" />
-              <FInput label="Copy Provided to Parent(s)" value={d.copyProvidedDate} onChange={v => setDraft(prev => ({ ...prev, copyProvidedDate: v }))} placeholder="MM/DD/YYYY" />
+              <FDateInput label="Date of IEP Meeting" value={d.iepDate} onChange={v => setDraft(prev => ({ ...prev, iepDate: v }))} />
+              <FDateInput label="Initiation Date of IEP" value={d.iepInitiationDate} onChange={v => setDraft(prev => ({ ...prev, iepInitiationDate: v }))} />
+              <FDateInput label="Most Recent Evaluation Date" value={d.evalDate} onChange={v => setDraft(prev => ({ ...prev, evalDate: v }))} />
+              <FDateInput label="Previous IEP Review Date" value={d.prevIepDate} onChange={v => setDraft(prev => ({ ...prev, prevIepDate: v }))} />
+              <FDateInput label="Next Triennial Evaluation" value={d.triennialDate} onChange={v => setDraft(prev => ({ ...prev, triennialDate: v }))} />
+              <FDateInput label="Projected Annual Review Date" value={d.iepDueDate} onChange={v => setDraft(prev => ({ ...prev, iepDueDate: v }))} />
+              <FDateInput label="Copy Provided to Parent(s)" value={d.copyProvidedDate} onChange={v => setDraft(prev => ({ ...prev, copyProvidedDate: v }))} />
             </div>
             <hr className="border-slate-200" />
             <div>
@@ -853,18 +966,20 @@ const IEPGenerator = ({ user }) => {
         </SectionCard>
 
         {/* ══════════════════ 4. PRESENT LEVELS (PLAAFP) ══════════════════ */}
-        <SectionCard id="presentLevels" title="Present Levels (PLAAFP)" icon={ClipboardList} isOpen={openSections.presentLevels} onToggle={toggleSection}>
+        <SectionCard id="presentLevels" title="Present Levels (PLAAFP)" icon={ClipboardList} status={sectionStatus.presentLevels} isOpen={openSections.presentLevels} onToggle={toggleSection}>
           <div className="space-y-4 pt-4">
             <FArea label="How the disability affects involvement and progress in general education"
-              value={d.academicLevels || d.impactStatement} onChange={v => setDraft(prev => ({ ...prev, academicLevels: v }))} rows={5}
+              value={d.disabilityImpact || d.academicLevels || d.impactStatement} onChange={v => setDraft(prev => ({ ...prev, disabilityImpact: v }))} rows={5}
               placeholder="Describe how the disability affects involvement and progress in the general education curriculum..." />
-            <FArea label="Student Strengths" value={d.strengthsText} onChange={v => setDraft(prev => ({ ...prev, strengthsText: v }))} rows={3}
+            <FArea label="Current Functional Performance (supports the above)" value={d.functionalLevels} onChange={v => setDraft(prev => ({ ...prev, functionalLevels: v }))} rows={3}
+              placeholder="Functional skills: attention, behavior, communication, social skills..." />
+            <FArea label="Student Strengths, Preferences &amp; Interests" value={d.strengthsText} onChange={v => setDraft(prev => ({ ...prev, strengthsText: v }))} rows={3}
               placeholder="Student's strengths, preferences, and interests..." />
             <FArea label="Parent/Guardian Concerns" value={d.parentInput} onChange={v => setDraft(prev => ({ ...prev, parentInput: v }))} rows={3}
               placeholder="Concerns of the parent(s) for enhancing the education of their child..." />
             <FArea label="Changes in Functioning Since Prior IEP" value={d.changesFunctioning} onChange={v => setDraft(prev => ({ ...prev, changesFunctioning: v }))} rows={3}
               placeholder="Changes in condition or circumstance since the prior IEP..." />
-            <FArea label="Most Recent Evaluation/Re-evaluation Summary" value={d.evalSummary} onChange={v => setDraft(prev => ({ ...prev, evalSummary: v }))} rows={4}
+            <FArea label="Most Recent Evaluation / Re-evaluation Summary" value={d.evalSummary} onChange={v => setDraft(prev => ({ ...prev, evalSummary: v }))} rows={4}
               placeholder="Summary of most recent evaluation results..." />
             <FArea label="Age-Appropriate Transition Assessments Summary" value={d.transitionAssessments} onChange={v => setDraft(prev => ({ ...prev, transitionAssessments: v }))} rows={3}
               placeholder="Summary of age-appropriate transition assessments..." />
@@ -874,6 +989,7 @@ const IEPGenerator = ({ user }) => {
         {/* ══════════════════ 5. SPECIAL CONSIDERATIONS ══════════════════ */}
         <SectionCard id="specialConsiderations" title="Special Considerations" icon={Settings}
           badge={`${SPECIAL_CONSIDERATION_ITEMS.filter(i => d[i.key]).length} selected`}
+          status={sectionStatus.specialConsiderations}
           isOpen={openSections.specialConsiderations} onToggle={toggleSection}>
           <div className="space-y-1 pt-4">
             {SPECIAL_CONSIDERATION_ITEMS.map(item => (
@@ -889,20 +1005,47 @@ const IEPGenerator = ({ user }) => {
         </SectionCard>
 
         {/* ══════════════════ 6. ANNUAL GOALS ══════════════════ */}
-        <SectionCard id="goals" title="Annual Measurable Goals" icon={Target} badge={`${d.goals.length}/3 goals`} isOpen={openSections.goals} onToggle={toggleSection}>
+        <SectionCard id="goals" title="Annual Measurable Goals" icon={Target} badge={`${d.goals.length}/3 goals`} status={sectionStatus.goals} isOpen={openSections.goals} onToggle={toggleSection}>
           <div className="space-y-4 pt-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-500">Add up to 3 annual goals with benchmarks and measurement methods.</p>
-              <button
-                onClick={() => setShowGoalBank(true)}
-                disabled={d.goals.length >= 3}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors disabled:opacity-40"
-              >
-                <Plus className="w-4 h-4" /> Goal Bank
-              </button>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <p className="text-sm text-slate-500">Add up to 3 annual goals. You can edit any goal text directly.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowCustomGoalForm(s => !s); setShowGoalBank(false); }}
+                  disabled={d.goals.length >= 3}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-slate-600 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors disabled:opacity-40"
+                >
+                  <Plus className="w-4 h-4" /> Custom Goal
+                </button>
+                <button
+                  onClick={() => { setShowGoalBank(true); setShowCustomGoalForm(false); }}
+                  disabled={d.goals.length >= 3}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-colors disabled:opacity-40"
+                >
+                  <BookOpen className="w-4 h-4" /> Goal Bank
+                </button>
+              </div>
             </div>
 
-            {d.goals.length === 0 && (
+            {showCustomGoalForm && (
+              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                <label className="block text-xs font-semibold text-slate-500">Write a Custom Goal</label>
+                <FArea value={customGoalText} onChange={setCustomGoalText} rows={3}
+                  placeholder="After a year of instruction, [student name] will..." />
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => { setShowCustomGoalForm(false); setCustomGoalText(''); }}
+                    className="px-3 py-1.5 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+                    Cancel
+                  </button>
+                  <button onClick={handleAddCustomGoal} disabled={!customGoalText.trim()}
+                    className="px-4 py-1.5 text-sm font-bold text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 disabled:opacity-50">
+                    Add Goal
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {d.goals.length === 0 && !showCustomGoalForm && (
               <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
                 <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="font-semibold">No goals added yet</p>
@@ -911,7 +1054,8 @@ const IEPGenerator = ({ user }) => {
             )}
 
             {d.goals.map((goal, i) => (
-              <div key={goal.id} className="border border-slate-200 rounded-lg overflow-hidden">
+              <div key={goal.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                {/* Goal Header */}
                 <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-slate-700">Goal #{i + 1}</span>
@@ -922,20 +1066,38 @@ const IEPGenerator = ({ user }) => {
                   </button>
                 </div>
                 <div className="p-4 space-y-4">
-                  <div className="text-sm text-slate-800 leading-relaxed bg-white border border-slate-100 rounded-lg p-3">
-                    {goal.goalText}
+                  {/* Editable Goal Text */}
+                  <FArea
+                    label="Goal Statement (editable)"
+                    value={goal.goalText}
+                    onChange={v => updateGoalField(goal.id, 'goalText', v)}
+                    rows={3}
+                    placeholder="Annual measurable goal statement..."
+                  />
+                  {/* Baseline & Target Date */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Baseline Data" value={goal.baselineData || ''}
+                      onChange={v => updateGoalField(goal.id, 'baselineData', v)}
+                      placeholder="Current performance level..." />
+                    <FDateInput label="Target Date"
+                      value={goal.targetDate || ''}
+                      onChange={v => updateGoalField(goal.id, 'targetDate', v)} />
                   </div>
-                  {goal.benchmarks?.length > 0 && (
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-500 mb-2">Benchmarks / Objectives</label>
-                      {goal.benchmarks.map((bm, j) => (
-                        <div key={j} className="flex items-start gap-2 text-sm text-slate-700 mb-1.5">
-                          <span className="text-cyan-500 font-bold mt-0.5">{j + 1}.</span>
-                          <span>{bm.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {/* Editable Benchmarks */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2">Measurable Benchmarks / Objectives (edit to customize)</label>
+                    {(goal.benchmarks?.length > 0 ? goal.benchmarks : [{text:''},{text:''},{text:''}]).map((bm, j) => (
+                      <div key={j} className="flex items-start gap-2 mb-2">
+                        <span className="text-cyan-500 font-bold text-sm mt-2.5 shrink-0">{j + 1}.</span>
+                        <FInput
+                          value={bm.text || ''}
+                          onChange={v => updateBenchmarkText(goal.id, j, v)}
+                          placeholder={`Benchmark ${j + 1}...`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Transition Domain */}
                   {d.hasTransitionPlan && (
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 mb-2">Supports Post-secondary Domain</label>
@@ -946,8 +1108,9 @@ const IEPGenerator = ({ user }) => {
                       </div>
                     </div>
                   )}
+                  {/* Measurement Methods */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-2">Measurement Methods</label>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2">Progress will be measured by (check all that apply)</label>
                     <div className="grid grid-cols-2 gap-x-4">
                       {MEASUREMENT_METHODS.map(m => (
                         <FCheck key={m.id} checked={(goal.measureMethods || []).includes(m.id)} onChange={() => toggleGoalMeasure(goal.id, m.id)} label={m.label} />
@@ -963,6 +1126,7 @@ const IEPGenerator = ({ user }) => {
         {/* ══════════════════ 7. SERVICES, ACCOMMODATIONS, MODIFICATIONS ══════════════════ */}
         <SectionCard id="services" title="Services, Accommodations & Modifications" icon={Briefcase}
           badge={`${d.services.length} svc, ${d.accommodations.length} acc`}
+          status={sectionStatus.services}
           isOpen={openSections.services} onToggle={toggleSection}>
           <div className="space-y-5 pt-4">
             <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-600 border border-slate-100">
@@ -1210,6 +1374,8 @@ function createEmptyDraft() {
     disabilityCategory: '', secondaryDisability: '',
     studentAddress: '', studentPhone: '', birthDate: '', studentAge: '',
     studentMosisId: '',
+    primaryLanguage: 'English',
+    disabilityImpact: '',
     decisionMakerRole: '',
     decisionMakerName: '', decisionMakerAddress: '', decisionMakerPhone: '',
     decisionMakerEmail: '', decisionMakerFax: '',
