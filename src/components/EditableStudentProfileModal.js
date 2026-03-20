@@ -940,7 +940,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         )}
       </button>
     </div>
-
+  );
 
   // --- Status Messages ---
   const statusMessages = (
