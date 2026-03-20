@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAutoSave } from '../hooks/useAutoSave';
 import { useForm } from 'react-hook-form';
-import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users, Check } from 'lucide-react';
+import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users, Check, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
 import { STATE_OPTIONS } from '../data/stateGraduationRequirements';
 import { UNIT_CONFIG } from '../config/unitConfig';
@@ -61,6 +61,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   const [newMtpNote, setNewMtpNote] = useState('');
   const [showMtpInput, setShowMtpInput] = useState(false);
   const [detailTab, setDetailTab] = useState('profile');
+  const [isMtpOpen, setIsMtpOpen] = useState(true);
   const [uploadedDocuments, setUploadedDocuments] = useState(studentData?.uploadedDocuments || []);
   const [uploadPasscode, setUploadPasscode] = useState(studentData?.uploadPasscode || '');
   const [copiedLink, setCopiedLink] = useState(false);
@@ -499,6 +500,16 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       </div>
     </>
   ) : null;
+
+  // Computed IEP urgency — must be before compactProfileContent
+  const watchedIepDueDateValue = watch('iepDueDate');
+  const iepDueSoon = (() => {
+    if (watchedIep !== 'yes') return false;
+    const d = watchedIepDueDateValue || studentData?.iepDueDate;
+    if (!d) return false;
+    return Math.ceil((new Date(d) - new Date()) / (1000 * 60 * 60 * 24)) <= 30;
+  })();
+
   // --- Compact Profile Content (only evaluated for detail mode) ---
   const compactProfileContent = (mode === 'detail') ? (
     <>
@@ -558,10 +569,10 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
 
       {/* Row 2: Health & Admission */}
       <div className="pt-1.5 border-t border-slate-100">
-        <p className="flex items-center gap-1 text-[10px] font-bold text-rose-600 uppercase tracking-wide mb-1">
+        <p className="flex items-center gap-1.5 text-[10px] font-bold text-rose-600 uppercase tracking-wide mb-1.5 pl-1 border-l-2 border-rose-400">
           <Heart className="w-3 h-3" /> Health & Admission
         </p>
-        <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-1.5">
           <div>
             <label className={COMPACT_LABEL_CLASS}><Heart className="w-3 h-3" />Insurance</label>
             <input type="text" {...register('healthInsurance')} disabled={isSaving} placeholder="e.g., Medicaid" className={COMPACT_INPUT_CLASS} />
@@ -579,10 +590,10 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
 
       {/* Row 3: Guardian */}
       <div className="pt-1.5 border-t border-slate-100">
-        <p className="flex items-center gap-1 text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-1">
+        <p className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-1.5 pl-1 border-l-2 border-blue-400">
           <Users className="w-3 h-3" /> Guardian
         </p>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-1.5">
           <div>
             <label className={COMPACT_LABEL_CLASS}>Name</label>
             <input type="text" {...register('guardian1Name')} disabled={isSaving} placeholder="Full name" className={COMPACT_INPUT_CLASS} />
@@ -604,10 +615,10 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
 
       {/* Row 4: Home School */}
       <div className="pt-1.5 border-t border-slate-100">
-        <p className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 uppercase tracking-wide mb-1">
+        <p className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wide mb-1.5 pl-1 border-l-2 border-emerald-400">
           <School className="w-3 h-3" /> Home School
         </p>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-1.5">
           <div>
             <label className={COMPACT_LABEL_CLASS}>School Name</label>
             <input type="text" {...register('homeSchoolName')} disabled={isSaving} placeholder="School name" className={COMPACT_INPUT_CLASS} />
@@ -636,9 +647,9 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       </div>
 
       {/* Row 5: Unit chips */}
-      <div>
-        <label className={COMPACT_LABEL_CLASS}>
-          <Building2 className="w-3 h-3" />Unit
+      <div className="pt-1.5 border-t border-slate-100">
+        <label className={COMPACT_LABEL_CLASS + ' pl-1 border-l-2 border-slate-300 mb-1.5'}>
+          <Building2 className="w-3 h-3" />Unit Assignment
         </label>
         <div className="flex flex-wrap gap-1.5">
           {UNIT_OPTIONS.map((unit) => {
@@ -657,29 +668,50 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         {errors.unitName && <p className="text-[10px] text-red-500 mt-0.5">{errors.unitName.message}</p>}
       </div>
 
-      {/* Row 4: IEP inline */}
-      <div>
-        <label className={COMPACT_LABEL_CLASS}>
-          <FileCheck className="w-3 h-3" />IEP
-        </label>
+      {/* IEP Status — prominent alert card */}
+      <div className={`rounded-xl p-3 border-2 transition-all ${
+        watchedIep === 'yes'
+          ? (iepDueSoon ? 'bg-rose-50 border-rose-300' : 'bg-amber-50 border-amber-300')
+          : 'bg-slate-50 border-slate-200'
+      }`}>
+        <div className="flex items-center justify-between mb-2">
+          <label className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${
+            watchedIep === 'yes' ? (iepDueSoon ? 'text-rose-700' : 'text-amber-700') : 'text-slate-500'
+          }`}>
+            <FileCheck className="w-3.5 h-3.5" />
+            IEP Status
+            {watchedIep === 'yes' && iepDueSoon && (
+              <span className="flex items-center gap-0.5 text-rose-600 font-extrabold">
+                <AlertTriangle className="w-3 h-3" /> Due Soon!
+              </span>
+            )}
+          </label>
+          {watchedIep === 'yes' && (
+            <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-amber-500 text-white shadow-sm">
+              IEP Active
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
           <label className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
-            watchedIep === 'no' ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'
+            watchedIep === 'no' ? 'bg-white text-slate-700 border-slate-400 shadow-sm' : 'bg-white/60 text-slate-400 border-transparent hover:bg-white'
           } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
             <input type="radio" value="no" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
             No IEP
           </label>
           <label className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
-            watchedIep === 'yes' ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'
+            watchedIep === 'yes' ? 'bg-white text-amber-700 border-amber-400 shadow-sm' : 'bg-white/60 text-slate-400 border-transparent hover:bg-white'
           } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
             <input type="radio" value="yes" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
             Has IEP
           </label>
           {watchedIep === 'yes' && (
             <div className="flex items-center gap-1.5 ml-1">
-              <span className="text-[10px] text-slate-500 font-semibold">Due:</span>
+              <span className="text-[10px] font-semibold text-amber-700">Due Date:</span>
               <input type="date" {...register('iepDueDate')} disabled={isSaving}
-                className="px-2 py-1 rounded-md border border-slate-200 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white outline-none transition-all disabled:opacity-50 w-36" />
+                className={`px-2 py-1 rounded-md border text-xs font-medium text-slate-800 focus:ring-2 focus:border-amber-400 bg-white outline-none transition-all disabled:opacity-50 w-36 ${
+                  iepDueSoon ? 'border-rose-400 focus:ring-rose-300/40' : 'border-amber-300 focus:ring-amber-300/40'
+                }`} />
             </div>
           )}
         </div>
@@ -688,7 +720,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       {/* Status Footer */}
       <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${studentData.active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' : 'bg-slate-100 text-slate-500 border border-slate-200/60'}`}>
-          {studentData.active !== false ? 'Active' : 'Discharged'}
+          {studentData.active !== false ? '● Active' : '○ Discharged'}
         </span>
         <span className="text-[10px] text-slate-400 font-mono">{studentData.id}</span>
       </div>
@@ -936,77 +968,113 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     </div>
   );
 
-  // --- Windows 11 Sticky Note Panel (detail mode) ---
+  // --- Collapsible MTP Sticky Note Panel (detail mode) ---
   const stickyNotePanel = (
-    <div className="h-64 md:h-auto w-full md:w-72 xl:w-80 shrink-0 border-t md:border-t-0 md:border-l border-slate-200/60 bg-amber-50 flex flex-col">
+    <div className={`shrink-0 border-t md:border-t-0 md:border-l border-slate-200/60 bg-amber-50 flex flex-col transition-all duration-300 ease-in-out ${
+      isMtpOpen ? 'w-full md:w-72 xl:w-80 h-64 md:h-auto' : 'w-full md:w-10 h-auto'
+    }`}>
       {/* Panel Header */}
-      <div className="px-3 py-2.5 bg-amber-100/80 border-b border-amber-200/40 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-1.5">
-          <StickyNote className="w-3.5 h-3.5 text-amber-600" />
-          <span className="text-xs font-bold text-amber-800">MTP Notes</span>
-          {mtpNotes.length > 0 && (
-            <span className="text-[10px] font-bold min-w-[16px] h-[16px] inline-flex items-center justify-center rounded-full bg-amber-200/60 text-amber-700">
-              {mtpNotes.length}
-            </span>
-          )}
-        </div>
-        <button type="button" onClick={() => setShowMtpInput(prev => !prev)} disabled={isSaving}
-          className="p-1 rounded-md text-amber-600 hover:bg-amber-200/60 transition disabled:opacity-50"
-          title="Add note">
-          <Plus className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Notes List (scrollable -- only scroll point in the layout) */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
-        {mtpNotes.length === 0 && !showMtpInput ? (
-          <div className="text-center py-6">
-            <StickyNote className="w-6 h-6 text-amber-300 mx-auto mb-1.5" />
-            <p className="text-[11px] text-amber-600/60 font-medium">No notes yet</p>
+      <div className="px-2.5 py-2.5 bg-amber-100/80 border-b border-amber-200/40 flex items-center justify-between shrink-0">
+        {isMtpOpen ? (
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            <StickyNote className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span className="text-xs font-bold text-amber-800 whitespace-nowrap">MTP Notes</span>
+            {mtpNotes.length > 0 && (
+              <span className="text-[10px] font-bold min-w-[16px] h-[16px] inline-flex items-center justify-center rounded-full bg-amber-400/40 text-amber-800">
+                {mtpNotes.length}
+              </span>
+            )}
           </div>
         ) : (
-          [...mtpNotes].reverse().map((note) => (
-            <div key={note.id} className="bg-slate-50/80 rounded-lg p-2.5 border border-amber-200/40 group/note">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-amber-800">
-                    {new Date(note.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                  </span>
-                  <span className="text-[10px] text-amber-500">{note.author}</span>
-                </div>
-                <button type="button" onClick={() => removeMtpNote(note.id)} disabled={isSaving}
-                  className="opacity-0 group-hover/note:opacity-100 p-0.5 rounded text-amber-300 hover:text-rose-500 hover:bg-rose-50 transition-all disabled:opacity-50">
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-              <p className="text-xs text-slate-700 leading-relaxed">{note.note}</p>
-            </div>
-          ))
+          <div className="flex flex-col items-center w-full gap-1">
+            <StickyNote className="w-3.5 h-3.5 text-amber-600" />
+            {mtpNotes.length > 0 && (
+              <span className="text-[9px] font-black text-amber-700">{mtpNotes.length}</span>
+            )}
+          </div>
         )}
+        <div className={`flex items-center gap-1 shrink-0 ${isMtpOpen ? '' : 'w-full justify-center mt-1'}`}>
+          {isMtpOpen && (
+            <button type="button" onClick={() => setShowMtpInput(prev => !prev)} disabled={isSaving}
+              className="p-1 rounded-md text-amber-600 hover:bg-amber-200/60 transition disabled:opacity-50"
+              title="Add MTP note">
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsMtpOpen(prev => !prev)}
+            className="p-1 rounded-md text-amber-600 hover:bg-amber-200/60 transition"
+            title={isMtpOpen ? 'Collapse notes panel' : 'Expand notes panel'}
+          >
+            {isMtpOpen
+              ? <ChevronDown className="w-3.5 h-3.5 md:hidden" />
+              : <ChevronRight className="w-3.5 h-3.5 hidden md:block" />}
+            {isMtpOpen
+              ? <ChevronRight className="w-3.5 h-3.5 hidden md:block" />
+              : <ChevronDown className="w-3.5 h-3.5 md:hidden" />}
+          </button>
+        </div>
       </div>
 
-      {/* Compose Area (bottom, shrink-0) */}
-      {showMtpInput && (
-        <div className="border-t border-amber-200/60 bg-white/80 px-3 py-2 shrink-0 space-y-1.5">
-          <textarea
-            value={newMtpNote}
-            onChange={e => setNewMtpNote(e.target.value)}
-            disabled={isSaving}
-            placeholder="Monthly progress..."
-            className="w-full px-2 py-1.5 rounded-md border border-amber-200 text-xs text-slate-800 focus:ring-2 focus:ring-amber-300/40 focus:border-amber-400 bg-white outline-none resize-none disabled:opacity-50"
-            rows={2}
-          />
-          <div className="flex gap-1.5">
-            <button type="button" onClick={addMtpNote} disabled={isSaving || !newMtpNote.trim()}
-              className="px-2.5 py-1 rounded-md bg-amber-600 text-white text-[11px] font-bold hover:bg-amber-700 transition disabled:opacity-50">
-              Save
-            </button>
-            <button type="button" onClick={() => { setShowMtpInput(false); setNewMtpNote(''); }} disabled={isSaving}
-              className="px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-[11px] font-bold hover:bg-amber-200 transition disabled:opacity-50">
-              Cancel
-            </button>
+      {/* Notes List — only visible when open */}
+      {isMtpOpen && (
+        <>
+          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+            {mtpNotes.length === 0 && !showMtpInput ? (
+              <div className="text-center py-6">
+                <StickyNote className="w-6 h-6 text-amber-300 mx-auto mb-1.5" />
+                <p className="text-[11px] text-amber-600/60 font-medium">No notes yet</p>
+                <button type="button" onClick={() => setShowMtpInput(true)} disabled={isSaving}
+                  className="mt-2 text-[10px] font-bold text-amber-600 hover:text-amber-800 underline-offset-2 underline transition">
+                  Add first note
+                </button>
+              </div>
+            ) : (
+              [...mtpNotes].reverse().map((note) => (
+                <div key={note.id} className="bg-white/90 rounded-lg p-2.5 border border-amber-200/60 shadow-sm group/note">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-amber-800">
+                        {new Date(note.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </span>
+                      <span className="text-[10px] text-amber-500 font-medium">{note.author}</span>
+                    </div>
+                    <button type="button" onClick={() => removeMtpNote(note.id)} disabled={isSaving}
+                      className="opacity-0 group-hover/note:opacity-100 p-0.5 rounded text-amber-300 hover:text-rose-500 hover:bg-rose-50 transition-all disabled:opacity-50">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed">{note.note}</p>
+                </div>
+              ))
+            )}
           </div>
-        </div>
+
+          {/* Compose Area */}
+          {showMtpInput && (
+            <div className="border-t border-amber-200/60 bg-white/80 px-3 py-2 shrink-0 space-y-1.5">
+              <textarea
+                value={newMtpNote}
+                onChange={e => setNewMtpNote(e.target.value)}
+                disabled={isSaving}
+                placeholder="Monthly progress..."
+                className="w-full px-2 py-1.5 rounded-md border border-amber-200 text-xs text-slate-800 focus:ring-2 focus:ring-amber-300/40 focus:border-amber-400 bg-white outline-none resize-none disabled:opacity-50"
+                rows={3}
+              />
+              <div className="flex gap-1.5">
+                <button type="button" onClick={addMtpNote} disabled={isSaving || !newMtpNote.trim()}
+                  className="px-2.5 py-1 rounded-md bg-amber-600 text-white text-[11px] font-bold hover:bg-amber-700 transition disabled:opacity-50">
+                  Save Note
+                </button>
+                <button type="button" onClick={() => { setShowMtpInput(false); setNewMtpNote(''); }} disabled={isSaving}
+                  className="px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-[11px] font-bold hover:bg-amber-200 transition disabled:opacity-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -1128,8 +1196,8 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   if (mode === 'detail') {
     return (
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col bg-white h-full">
-        {/* Compact Header */}
-        <div className={`relative px-4 pt-3 pb-2 ${unitStyle.light} border-b border-slate-200/80 shrink-0`}>
+        {/* Compact Header with IEP badge */}
+        <div className={`relative px-4 pt-3 pb-2.5 ${unitStyle.light} border-b border-slate-200/80 shrink-0`}>
           <button type="button" onClick={onClose} disabled={isSaving}
             className="absolute top-2.5 right-3 p-1.5 rounded-md bg-white/80 hover:bg-white text-slate-400 hover:text-slate-600 transition border border-slate-200/60 disabled:opacity-50"
             aria-label="Close">
@@ -1140,10 +1208,24 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
               {initials.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-extrabold text-slate-900 leading-tight truncate">
-                {studentData.studentName}
-              </h3>
-              <div className="flex items-center gap-2 mt-0.5 text-xs font-semibold text-slate-500">
+              {/* Name row with IEP badge inline */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-extrabold text-slate-900 leading-tight truncate">
+                  {studentData.studentName}
+                </h3>
+                {studentData.iep === 'Yes' && (
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-sm ${
+                    iepDueSoon
+                      ? 'bg-rose-500 text-white animate-pulse'
+                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                  }`}>
+                    <FileCheck className="w-3 h-3" />
+                    IEP{iepDueSoon ? ' — Due Soon!' : ''}
+                  </span>
+                )}
+              </div>
+              {/* Sub-info row */}
+              <div className="flex items-center gap-2 mt-0.5 text-xs font-semibold text-slate-500 flex-wrap">
                 <span>Grade {studentData.gradeLevel}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300" />
                 <span>{daysIn}d in program</span>
@@ -1158,12 +1240,45 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
               </div>
             </div>
           </div>
+
+          {/* Quick-glance info strip */}
+          <div className="flex items-center gap-2 flex-wrap mt-2.5 pt-2 border-t border-black/5">
+            {studentData.unitName && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${unitStyle.light} ${unitStyle.text} border border-current/20`}>
+                <Building2 className="w-2.5 h-2.5" />
+                {studentData.unitName}
+              </span>
+            )}
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              studentData.active !== false
+                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                : 'bg-slate-100 text-slate-500 border border-slate-200'
+            }`}>
+              {studentData.active !== false ? '● Active' : '○ Discharged'}
+            </span>
+            {studentData.district && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                <MapPin className="w-2.5 h-2.5" />
+                {studentData.district}
+              </span>
+            )}
+            {studentData.iep === 'Yes' && studentData.iepDueDate && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                iepDueSoon
+                  ? 'bg-rose-100 text-rose-700 border border-rose-300'
+                  : 'bg-amber-100 text-amber-700 border border-amber-200'
+              }`}>
+                <CalendarClock className="w-2.5 h-2.5" />
+                IEP due: {new Date(studentData.iepDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Side-by-side content: Profile (left) + Sticky Notes (right) */}
         <div className="flex flex-col md:flex-row overflow-hidden flex-1">
-          {/* Profile Column */}
-          <div className="flex-1 px-4 py-3 space-y-2">
+          {/* Profile Column — scrollable */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
             {statusMessages}
             {compactProfileContent}
           </div>

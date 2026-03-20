@@ -108,7 +108,7 @@ const StudentSummaryPanel = ({ student, grades, assignments, categories, attenda
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">ID: {student.id}</span>
                 {student.iep === 'Yes' && (
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-violet-600 text-white px-2 py-0.5 rounded-md shadow-sm shadow-violet-200">IEP</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-md">IEP</span>
                 )}
               </div>
             </div>
