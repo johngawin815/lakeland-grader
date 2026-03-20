@@ -297,7 +297,7 @@ const HubShell = () => {
       {/* 2. MAIN CONTENT AREA */}
       <main className="flex-1 overflow-hidden flex flex-col">
         {/* Top Bar */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 bg-white/70 backdrop-blur-md shadow-sm">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-2.5 bg-white/70 backdrop-blur-md shadow-sm">
           <div className="text-lg font-semibold text-indigo-700">
             {formatDate()}
           </div>

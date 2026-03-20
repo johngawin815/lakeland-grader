@@ -22,7 +22,7 @@ const GradeCell = React.memo(({
         data-row={rowIndex}
         data-col={colIndex}
         aria-label={`${studentName} - ${assignmentName}`}
-        className={`w-28 p-2.5 text-center border rounded-xl outline-none transition-all duration-300 font-mono text-sm ${
+        className={`w-20 p-1.5 text-center border rounded-xl outline-none transition-all duration-300 font-mono text-sm ${
           isWarning
             ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300/50'
             : isFailing
@@ -133,13 +133,13 @@ const GradebookTable = ({
       <table className="w-full border-separate border-spacing-0 min-w-[1000px]">
         <thead className="sticky top-0 z-30 shadow-md">
           <tr className="bg-slate-100 backdrop-blur-md">
-            <th className="p-4 text-left border-b border-r border-slate-200 sticky left-0 z-40 bg-slate-100 w-64 min-w-[16rem] transition-colors duration-200">
+            <th className="p-3 text-left border-b border-r border-slate-200 sticky left-0 z-40 bg-slate-100 w-64 min-w-[16rem] transition-colors duration-200">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Student Name</span>
             </th>
             {assignments.map((assignment, idx) => (
               <th 
                 key={assignment.id} 
-                className={`p-4 text-center border-b border-slate-200 min-w-[10rem] transition-all duration-300 ${focusedCol === idx ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600'}`}
+                className={`p-3 text-center border-b border-slate-200 min-w-[9rem] transition-all duration-300 ${focusedCol === idx ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600'}`}
               >
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-xs font-bold truncate max-w-[140px] px-1" title={assignment.name}>{assignment.name}</span>
@@ -158,7 +158,7 @@ const GradebookTable = ({
                 </div>
               </th>
             ))}
-            <th className="p-4 text-center border-b border-l border-slate-200 sticky right-0 z-40 bg-slate-100 w-32 shadow-[-8px_0_15px_-5px_rgba(0,0,0,0.05)]">
+            <th className="p-3 text-center border-b border-l border-slate-200 sticky right-0 z-40 bg-slate-100 w-28 shadow-[-8px_0_15px_-5px_rgba(0,0,0,0.05)]">
               <div className="flex flex-col items-center justify-center gap-1 text-indigo-600">
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Overall</span>
@@ -199,7 +199,7 @@ const GradebookTable = ({
                 className={`transition-all duration-200 group even:bg-slate-50/50 ${isRowFocused ? 'bg-indigo-50/30' : 'hover:bg-slate-50/80'}`} 
                 data-index={virtualRow.index}
               >
-                <td className={`p-4 font-bold border-r border-slate-100 sticky left-0 z-20 transition-all duration-200 shadow-[4px_0_10px_-5px_rgba(0,0,0,0.05)] ${isRowFocused ? 'bg-indigo-50 shadow-indigo-100/50' : 'bg-white group-even:bg-slate-50/50 group-hover:bg-slate-50'}`}>
+                <td className={`p-3 font-bold border-r border-slate-100 sticky left-0 z-20 transition-all duration-200 shadow-[4px_0_10px_-5px_rgba(0,0,0,0.05)] ${isRowFocused ? 'bg-indigo-50 shadow-indigo-100/50' : 'bg-white group-even:bg-slate-50/50 group-hover:bg-slate-50'}`}>
                   <div className="flex justify-between items-center">
                     <button onClick={() => onStudentClick(student)} className="text-left group/name flex flex-col">
                       <span className={`text-sm tracking-tight transition-colors ${isRowFocused ? 'text-indigo-700' : 'text-slate-900 group-hover/name:text-indigo-600'}`}>{student.name}</span>
@@ -235,7 +235,7 @@ const GradebookTable = ({
                     />
                   );
                 })}
-                <td className={`p-4 text-center font-black border-l border-slate-100 sticky right-0 z-20 shadow-[-8px_0_15px_-5px_rgba(0,0,0,0.05)] transition-all duration-200 ${isRowFocused ? 'bg-indigo-50' : 'bg-white group-even:bg-slate-50/50 group-hover:bg-slate-50'}`}>
+                <td className={`p-3 text-center font-black border-l border-slate-100 sticky right-0 z-20 shadow-[-8px_0_15px_-5px_rgba(0,0,0,0.05)] transition-all duration-200 ${isRowFocused ? 'bg-indigo-50' : 'bg-white group-even:bg-slate-50/50 group-hover:bg-slate-50'}`}>
                   {finalGrade !== null ? (
                     <div className={`inline-flex flex-col items-center justify-center min-w-[3.5rem] py-1 rounded-xl shadow-sm border ${
                       isPassing ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
@@ -246,7 +246,7 @@ const GradebookTable = ({
                       </span>
                     </div>
                   ) : (
-                    <span className="text-slate-300 text-[10px] font-black uppercase tracking-widest italic">No Data</span>
+                    <span className="text-slate-200 text-[9px] font-black uppercase tracking-widest italic">No Data</span>
                   )}
                 </td>
               </tr>
