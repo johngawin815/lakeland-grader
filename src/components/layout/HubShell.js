@@ -8,14 +8,13 @@ import {
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 import { databaseService } from '../../services/databaseService';
 import { useStudent } from '../../context/StudentContext';
-import { ErrorBoundary } from '../ErrorBoundary';
 
 // --- LAZY-LOADED MODULE IMPORTS ---
 const KTEAReporter = lazy(() => import('../ktea/KTEAReporter'));
 const DischargeNarrativeBuilder = lazy(() => import('../discharge/DischargeNarrativeBuilder'));
 const CurriculumMaps = lazy(() => import('../curriculum/CurriculumMaps'));
 const StudentMasterDashboard = lazy(() => import('../dashboard/StudentMasterDashboard'));
-import GradingWorkspace from '../grading/GradingWorkspace';
+const GradingWorkspace = lazy(() => import('../grading/GradingWorkspace'));
 const AuditLog = lazy(() => import('./AuditLog'));
 const IEPGenerator = lazy(() => import('../iep/IEPGenerator'));
 const TranscriptGenerator = lazy(() => import('../transcript/TranscriptGenerator'));
@@ -226,8 +225,7 @@ const HubShell = () => {
   const visibleModules = modules.filter(m => !m.adminOnly || user.role === 'admin');
 
   return (
-    <ErrorBoundary>
-      <div className="flex h-screen bg-slate-200 font-sans overflow-hidden">
+    <div className="flex h-screen bg-slate-200 font-sans overflow-hidden">
 
       {/* 1. SIDEBAR NAVIGATION */}
       <aside className={`transition-all duration-300 bg-slate-900 flex flex-col items-center py-3 shrink-0 border-r border-slate-700/50 z-20 ${sidebarCollapsed ? 'w-16' : 'w-48'}`}>
@@ -357,15 +355,12 @@ const HubShell = () => {
               {currentView === 'workbook' && <WorkbookGenerator user={user} />}
               {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
               {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
-              {currentView === 'grades' && (
-                <div style={{ color: 'red', fontSize: '30px', padding: '50px' }}>HUBSHELL STUB</div>
-              )}
+              {currentView === 'grades' && <GradingWorkspace user={user} activeStudent={activeStudent?.studentName || activeStudent || ''} />}
             </div>
           </Suspense>
         )}
       </main>
-      </div>
-    </ErrorBoundary>
+    </div>
   );
 };
 
