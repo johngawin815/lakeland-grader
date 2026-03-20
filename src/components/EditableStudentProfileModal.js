@@ -591,12 +591,12 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
       </div>
 
-      {/* Row 4: Home School */}
+      {/* Row 4: Home School — all 6 fields in one dense row */}
       <div className="pt-1.5 border-t border-slate-100">
         <p className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wide mb-1.5 pl-1 border-l-2 border-emerald-400">
           <School className="w-3 h-3" /> Home School
         </p>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-2 xl:grid-cols-6 gap-1.5">
           <div>
             <label className={COMPACT_LABEL_CLASS}>School Name</label>
             <input type="text" {...register('homeSchoolName')} disabled={isSaving} placeholder="School name" className={COMPACT_INPUT_CLASS} />
@@ -624,74 +624,73 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         </div>
       </div>
 
-      {/* Row 5: Unit chips */}
-      <div className="pt-1.5 border-t border-slate-100">
-        <label className={COMPACT_LABEL_CLASS + ' pl-1 border-l-2 border-slate-300 mb-1.5'}>
-          <Building2 className="w-3 h-3" />Unit Assignment
-        </label>
-        <div className="flex flex-wrap gap-1.5">
-          {UNIT_OPTIONS.map((unit) => {
-            const isUnitSelected = watchedUnit === unit.key;
-            return (
-              <label key={unit.key}
-                className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
-                  isUnitSelected ? `${unit.light} ${unit.text} border-current` : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100 hover:text-slate-600'
-                } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
-                <input type="radio" value={unit.key} {...register('unitName', { required: 'Required' })} disabled={isSaving} className="sr-only" />
-                {unit.label}
-              </label>
-            );
-          })}
+      {/* Row 5: Unit + IEP side-by-side */}
+      <div className="pt-1.5 border-t border-slate-100 grid grid-cols-1 xl:grid-cols-2 gap-3">
+        {/* Unit */}
+        <div>
+          <label className={COMPACT_LABEL_CLASS + ' pl-1 border-l-2 border-slate-300 mb-1.5'}>
+            <Building2 className="w-3 h-3" />Unit Assignment
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {UNIT_OPTIONS.map((unit) => {
+              const isUnitSelected = watchedUnit === unit.key;
+              return (
+                <label key={unit.key}
+                  className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
+                    isUnitSelected ? `${unit.light} ${unit.text} border-current` : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100 hover:text-slate-600'
+                  } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <input type="radio" value={unit.key} {...register('unitName', { required: 'Required' })} disabled={isSaving} className="sr-only" />
+                  {unit.label}
+                </label>
+              );
+            })}
+          </div>
+          {errors.unitName && <p className="text-[10px] text-red-500 mt-0.5">{errors.unitName.message}</p>}
         </div>
-        {errors.unitName && <p className="text-[10px] text-red-500 mt-0.5">{errors.unitName.message}</p>}
-      </div>
 
-      {/* IEP Status — prominent alert card */}
-      <div className={`rounded-xl p-3 border-2 transition-all ${
-        watchedIep === 'yes'
-          ? (iepDueSoon ? 'bg-rose-50 border-rose-300' : 'bg-amber-50 border-amber-300')
-          : 'bg-slate-50 border-slate-200'
-      }`}>
-        <div className="flex items-center justify-between mb-2">
-          <label className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${
-            watchedIep === 'yes' ? (iepDueSoon ? 'text-rose-700' : 'text-amber-700') : 'text-slate-500'
-          }`}>
-            <FileCheck className="w-3.5 h-3.5" />
-            IEP Status
-            {watchedIep === 'yes' && iepDueSoon && (
-              <span className="flex items-center gap-0.5 text-rose-600 font-extrabold">
-                <AlertTriangle className="w-3 h-3" /> Due Soon!
+        {/* IEP Status */}
+        <div className={`rounded-xl p-2.5 border-2 transition-all ${
+          watchedIep === 'yes'
+            ? (iepDueSoon ? 'bg-rose-50 border-rose-300' : 'bg-amber-50 border-amber-300')
+            : 'bg-slate-50 border-slate-200'
+        }`}>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide ${
+              watchedIep === 'yes' ? (iepDueSoon ? 'text-rose-700' : 'text-amber-700') : 'text-slate-500'
+            }`}>
+              <FileCheck className="w-3.5 h-3.5" />IEP Status
+            </label>
+            {watchedIep === 'yes' && (
+              <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md text-white shadow-sm ${
+                iepDueSoon ? 'bg-rose-500' : 'bg-amber-500'
+              }`}>
+                {iepDueSoon ? 'Due Soon!' : 'IEP Active'}
               </span>
             )}
-          </label>
-          {watchedIep === 'yes' && (
-            <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-amber-500 text-white shadow-sm">
-              IEP Active
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
-            watchedIep === 'no' ? 'bg-white text-slate-700 border-slate-400 shadow-sm' : 'bg-white/60 text-slate-400 border-transparent hover:bg-white'
-          } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
-            <input type="radio" value="no" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
-            No IEP
-          </label>
-          <label className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
-            watchedIep === 'yes' ? 'bg-white text-amber-700 border-amber-400 shadow-sm' : 'bg-white/60 text-slate-400 border-transparent hover:bg-white'
-          } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
-            <input type="radio" value="yes" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
-            Has IEP
-          </label>
-          {watchedIep === 'yes' && (
-            <div className="flex items-center gap-1.5 ml-1">
-              <span className="text-[10px] font-semibold text-amber-700">Due Date:</span>
-              <input type="date" {...register('iepDueDate')} disabled={isSaving}
-                className={`px-2 py-1 rounded-md border text-xs font-medium text-slate-800 focus:ring-2 focus:border-amber-400 bg-white outline-none transition-all disabled:opacity-50 w-36 ${
-                  iepDueSoon ? 'border-rose-400 focus:ring-rose-300/40' : 'border-amber-300 focus:ring-amber-300/40'
-                }`} />
-            </div>
-          )}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
+              watchedIep === 'no' ? 'bg-white text-slate-700 border-slate-400 shadow-sm' : 'bg-white/60 text-slate-400 border-transparent hover:bg-white'
+            } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+              <input type="radio" value="no" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
+              No IEP
+            </label>
+            <label className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md border text-[11px] font-bold cursor-pointer transition-all ${
+              watchedIep === 'yes' ? 'bg-white text-amber-700 border-amber-400 shadow-sm' : 'bg-white/60 text-slate-400 border-transparent hover:bg-white'
+            } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}>
+              <input type="radio" value="yes" {...register('iepStatus')} disabled={isSaving} className="sr-only" />
+              Has IEP
+            </label>
+            {watchedIep === 'yes' && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-amber-700">Due:</span>
+                <input type="date" {...register('iepDueDate')} disabled={isSaving}
+                  className={`px-2 py-1 rounded-md border text-xs font-medium text-slate-800 focus:ring-2 focus:border-amber-400 bg-white outline-none transition-all disabled:opacity-50 w-32 ${
+                    iepDueSoon ? 'border-rose-400 focus:ring-rose-300/40' : 'border-amber-300 focus:ring-amber-300/40'
+                  }`} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -705,77 +704,6 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     </>
   ) : null;
 
-  // --- MTP Notes Tab Content ---
-  const notesContent = (
-    <div className="space-y-4">
-      {/* Header + Add Button */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <StickyNote className="w-4 h-4 text-amber-500" />
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">MTP Notes</span>
-          <span className="text-xs text-slate-400 font-medium">Monthly Treatment Progress</span>
-        </div>
-        <button type="button" onClick={() => setShowMtpInput(prev => !prev)} disabled={isSaving}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition disabled:opacity-50">
-          <Plus className="w-3.5 h-3.5" />
-          Add Note
-        </button>
-      </div>
-
-      {/* Composition Area */}
-      {showMtpInput && (
-        <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-4 space-y-3">
-          <textarea
-            value={newMtpNote}
-            onChange={e => setNewMtpNote(e.target.value)}
-            disabled={isSaving}
-            placeholder="Describe the student's academic, behavioral, and social progress this month..."
-            className="w-full px-3 py-3 rounded-lg border border-amber-200 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-amber-300/40 focus:border-amber-400 bg-white outline-none transition-all disabled:opacity-50 resize-vertical min-h-[120px]"
-            rows={5}
-          />
-          <div className="flex gap-2">
-            <button type="button" onClick={addMtpNote} disabled={isSaving || !newMtpNote.trim()}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition disabled:opacity-50 shadow-sm">
-              Save Note
-            </button>
-            <button type="button" onClick={() => { setShowMtpInput(false); setNewMtpNote(''); }} disabled={isSaving}
-              className="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition disabled:opacity-50">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Notes List */}
-      {mtpNotes.length === 0 ? (
-        <div className="text-center py-8">
-          <StickyNote className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-400 font-medium">No monthly progress notes yet.</p>
-        </div>
-      ) : (
-        <div className={`space-y-3 overflow-y-auto ${mode === 'detail' ? '' : mode === 'panel' ? 'max-h-[50vh]' : 'max-h-60'}`}>
-          {[...mtpNotes].reverse().map((note) => (
-            <div key={note.id} className="bg-white rounded-xl p-4 border border-slate-200/60 shadow-sm group/note">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-700">
-                    {new Date(note.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  </span>
-                  <span className="text-xs text-slate-400">&middot;</span>
-                  <span className="text-xs text-slate-400 font-medium">{note.author}</span>
-                </div>
-                <button type="button" onClick={() => removeMtpNote(note.id)} disabled={isSaving}
-                  className="opacity-0 group-hover/note:opacity-100 p-1 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all disabled:opacity-50">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <p className="text-sm text-slate-700 leading-relaxed">{note.note}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
   // --- Document Upload Helpers ---
   const generatePasscode = async () => {
@@ -946,116 +874,6 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     </div>
   );
 
-  // --- Collapsible MTP Sticky Note Panel (detail mode) ---
-  const stickyNotePanel = (
-    <div className={`shrink-0 border-t md:border-t-0 md:border-l border-slate-200/60 bg-amber-50 flex flex-col transition-all duration-300 ease-in-out ${
-      isMtpOpen ? 'w-full md:w-72 xl:w-80 h-64 md:h-auto' : 'w-full md:w-10 h-auto'
-    }`}>
-      {/* Panel Header */}
-      <div className="px-2.5 py-2.5 bg-amber-100/80 border-b border-amber-200/40 flex items-center justify-between shrink-0">
-        {isMtpOpen ? (
-          <div className="flex items-center gap-1.5 overflow-hidden">
-            <StickyNote className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-            <span className="text-xs font-bold text-amber-800 whitespace-nowrap">MTP Notes</span>
-            {mtpNotes.length > 0 && (
-              <span className="text-[10px] font-bold min-w-[16px] h-[16px] inline-flex items-center justify-center rounded-full bg-amber-400/40 text-amber-800">
-                {mtpNotes.length}
-              </span>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center w-full gap-1">
-            <StickyNote className="w-3.5 h-3.5 text-amber-600" />
-            {mtpNotes.length > 0 && (
-              <span className="text-[9px] font-black text-amber-700">{mtpNotes.length}</span>
-            )}
-          </div>
-        )}
-        <div className={`flex items-center gap-1 shrink-0 ${isMtpOpen ? '' : 'w-full justify-center mt-1'}`}>
-          {isMtpOpen && (
-            <button type="button" onClick={() => setShowMtpInput(prev => !prev)} disabled={isSaving}
-              className="p-1 rounded-md text-amber-600 hover:bg-amber-200/60 transition disabled:opacity-50"
-              title="Add MTP note">
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setIsMtpOpen(prev => !prev)}
-            className="p-1 rounded-md text-amber-600 hover:bg-amber-200/60 transition"
-            title={isMtpOpen ? 'Collapse notes panel' : 'Expand notes panel'}
-          >
-            {isMtpOpen
-              ? <ChevronDown className="w-3.5 h-3.5 md:hidden" />
-              : <ChevronRight className="w-3.5 h-3.5 hidden md:block" />}
-            {isMtpOpen
-              ? <ChevronRight className="w-3.5 h-3.5 hidden md:block" />
-              : <ChevronDown className="w-3.5 h-3.5 md:hidden" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Notes List — only visible when open */}
-      {isMtpOpen && (
-        <>
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
-            {mtpNotes.length === 0 && !showMtpInput ? (
-              <div className="text-center py-6">
-                <StickyNote className="w-6 h-6 text-amber-300 mx-auto mb-1.5" />
-                <p className="text-[11px] text-amber-600/60 font-medium">No notes yet</p>
-                <button type="button" onClick={() => setShowMtpInput(true)} disabled={isSaving}
-                  className="mt-2 text-[10px] font-bold text-amber-600 hover:text-amber-800 underline-offset-2 underline transition">
-                  Add first note
-                </button>
-              </div>
-            ) : (
-              [...mtpNotes].reverse().map((note) => (
-                <div key={note.id} className="bg-white/90 rounded-lg p-2.5 border border-amber-200/60 shadow-sm group/note">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold text-amber-800">
-                        {new Date(note.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                      </span>
-                      <span className="text-[10px] text-amber-500 font-medium">{note.author}</span>
-                    </div>
-                    <button type="button" onClick={() => removeMtpNote(note.id)} disabled={isSaving}
-                      className="opacity-0 group-hover/note:opacity-100 p-0.5 rounded text-amber-300 hover:text-rose-500 hover:bg-rose-50 transition-all disabled:opacity-50">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <p className="text-xs text-slate-700 leading-relaxed">{note.note}</p>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Compose Area */}
-          {showMtpInput && (
-            <div className="border-t border-amber-200/60 bg-white/80 px-3 py-2 shrink-0 space-y-1.5">
-              <textarea
-                value={newMtpNote}
-                onChange={e => setNewMtpNote(e.target.value)}
-                disabled={isSaving}
-                placeholder="Monthly progress..."
-                className="w-full px-2 py-1.5 rounded-md border border-amber-200 text-xs text-slate-800 focus:ring-2 focus:ring-amber-300/40 focus:border-amber-400 bg-white outline-none resize-none disabled:opacity-50"
-                rows={3}
-              />
-              <div className="flex gap-1.5">
-                <button type="button" onClick={addMtpNote} disabled={isSaving || !newMtpNote.trim()}
-                  className="px-2.5 py-1 rounded-md bg-amber-600 text-white text-[11px] font-bold hover:bg-amber-700 transition disabled:opacity-50">
-                  Save Note
-                </button>
-                <button type="button" onClick={() => { setShowMtpInput(false); setNewMtpNote(''); }} disabled={isSaving}
-                  className="px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 text-[11px] font-bold hover:bg-amber-200 transition disabled:opacity-50">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
 
   // --- Shared Header ---
   const header = (
@@ -1103,24 +921,26 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         Profile
       </button>
       <button type="button"
-        onClick={() => setDetailTab('notes')}
+        onClick={() => setDetailTab('documents')}
         className={`px-5 py-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-          detailTab === 'notes'
+          detailTab === 'documents'
             ? 'border-indigo-600 text-indigo-600'
             : 'border-transparent text-slate-400 hover:text-slate-600'
         }`}
       >
-        MTP Notes
-        {mtpNotes.length > 0 && (
+        Documents
+        {uploadedDocuments.length > 0 && (
           <span className={`text-xs min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-full font-bold ${
-            detailTab === 'notes'
+            detailTab === 'documents'
               ? 'bg-indigo-100 text-indigo-700'
               : 'bg-slate-100 text-slate-500'
           }`}>
-            {mtpNotes.length}
+            {uploadedDocuments.length}
           </span>
         )}
       </button>
+    </div>
+  );
       <button type="button"
         onClick={() => setDetailTab('documents')}
         className={`px-5 py-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
