@@ -150,6 +150,9 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         uploadedDocuments: uploadedDocuments,
         lastModified: new Date().toISOString(),
       };
+      // Explicitly remove any lingering MTP data
+      delete updatePayload.mtpNotes;
+      
       await databaseService.upsertStudent(updatePayload);
       if (user) {
         await databaseService.logAudit(user, 'UpdateStudent', `Updated profile for ${studentData.studentName} (ID: ${studentData.id})`);

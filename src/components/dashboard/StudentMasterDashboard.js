@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, StickyNote, Search, FileCheck } from 'lucide-react';
+import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, Search, FileCheck } from 'lucide-react';
 import ClassGradebook from '../grading/ClassGradebook';
 import EnrollmentManager from './EnrollmentManager';
 import IntakeForm from './IntakeForm';
@@ -161,9 +161,9 @@ const UnitRoster = ({ defaultUnit, user }) => {
                 guardianName: formData.guardian1Name || '',
                 guardianPhone: formData.guardian1Phone || '',
                 iepDueDate: '',
-                mtpNotes: [],
                 uploadPasscode: '',
                 uploadedDocuments: [],
+                lastModified: new Date().toISOString(),
             };
             await databaseService.upsertStudent(newStudent);
             if (user) {
@@ -427,7 +427,7 @@ const StudentCard = ({ student, onSelect, isSelected, user }) => {
         iepDueUrgent = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24)) <= 30;
     }
 
-    const noteCount = student.mtpNotes?.length || 0;
+
 
     const handleAutoEnroll = async (e) => {
         e.stopPropagation();
@@ -496,12 +496,7 @@ const StudentCard = ({ student, onSelect, isSelected, user }) => {
                             {student.district}
                         </span>
                     )}
-                    {noteCount > 0 && (
-                        <span className="ml-auto inline-flex items-center gap-0.5 text-[10px] text-amber-500 font-semibold">
-                            <StickyNote className="w-3 h-3" />
-                            {noteCount}
-                        </span>
-                    )}
+
                 </div>
 
                 {/* Auto-Enroll (compact, only visible on hover) */}
