@@ -70,8 +70,11 @@ const gradeColor = (g) => {
 
 // localStorage key for remembering last-used bulk export type (Task 7)
 const EXPORT_PREF_KEY = 'gradeCardPreview_lastExportType';
+const LS_KEY = 'gradeCardPreview_data';
+const UNIT_ORDER = Object.keys(UNIT_COLORS);
 
 const GradeCardPreview = ({ formData, onClose, onEditStudent, onCreateCard }) => {
+  const [data, setData]                   = useState(null);
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState('');
   const [downloading, setDownloading]     = useState(false);
