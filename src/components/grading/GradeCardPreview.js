@@ -87,6 +87,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent, onCreateCard }) =>
   const [actionMenuOpenId, setActionMenuOpenId] = useState(null);
   const actionMenuRef = useRef(null);
   const [createCardMenuOpen, setCreateCardMenuOpen] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [gradeCardModalType, setGradeCardModalType] = useState(null);
 
   // Task 4: per-row save flash state
@@ -194,7 +195,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent, onCreateCard }) =>
       localStorage.setItem(LS_KEY, JSON.stringify(data));
       localStorage.setItem('gradebook_last_saved', new Date().toLocaleTimeString());
     }
-  }, [data, LS_KEY]);
+  }, [data]);
 
   // ---------- Inline edit with per-row save flash (Task 4) ----------
   const handleCellChange = (unitName, rowIdx, key, value) => {
@@ -429,6 +430,7 @@ const GradeCardPreview = ({ formData, onClose, onEditStudent, onCreateCard }) =>
     setGradeCardModalType(type);
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleCloseGradeCardModal = () => {
     setGradeCardModalType(null);
   };
