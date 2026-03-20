@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAutoSave } from '../hooks/useAutoSave';
 import { useForm } from 'react-hook-form';
-import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, StickyNote, Plus, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users, Check, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { X, Save, Loader2, GraduationCap, Calendar, Building2, FileCheck, MapPin, Clock, UserCheck, Phone, CalendarClock, Trash2, Mail, Globe, Heart, School, Upload, Link2, Copy, Download, FileText, Users, Check } from 'lucide-react';
 import { databaseService } from '../services/databaseService';
 import { STATE_OPTIONS } from '../data/stateGraduationRequirements';
 import { UNIT_CONFIG } from '../config/unitConfig';
@@ -57,11 +57,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [mtpNotes, setMtpNotes] = useState(studentData?.mtpNotes || []);
-  const [newMtpNote, setNewMtpNote] = useState('');
-  const [showMtpInput, setShowMtpInput] = useState(false);
   const [detailTab, setDetailTab] = useState('profile');
-  const [isMtpOpen, setIsMtpOpen] = useState(true);
   const [uploadedDocuments, setUploadedDocuments] = useState(studentData?.uploadedDocuments || []);
   const [uploadPasscode, setUploadPasscode] = useState(studentData?.uploadPasscode || '');
   const [copiedLink, setCopiedLink] = useState(false);
@@ -116,22 +112,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
     daysRemaining = Math.max(0, Math.ceil((dischargeDate - today) / (1000 * 60 * 60 * 24)));
   }
 
-  const addMtpNote = () => {
-    if (!newMtpNote.trim()) return;
-    const note = {
-      id: `mtp-${Date.now()}`,
-      date: new Date().toISOString(),
-      note: newMtpNote.trim(),
-      author: user?.name || 'Unknown',
-    };
-    setMtpNotes(prev => [...prev, note]);
-    setNewMtpNote('');
-    setShowMtpInput(false);
-  };
 
-  const removeMtpNote = (noteId) => {
-    setMtpNotes(prev => prev.filter(n => n.id !== noteId));
-  };
 
   const onSubmit = async (formData) => {
     setIsSaving(true);
@@ -165,7 +146,6 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         guardian1Email: formData.guardian1Email || '',
         homeSchoolName: formData.homeSchoolName || '',
         homeSchoolAddress: formData.homeSchoolAddress || '',
-        mtpNotes: mtpNotes,
         uploadPasscode: uploadPasscode,
         uploadedDocuments: uploadedDocuments,
         lastModified: new Date().toISOString(),
@@ -217,9 +197,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   };
 
   // Auto-save integration
-  // Determine if form is dirty
-  const isDirty = Object.keys(dirtyFields).length > 0 || 
-    JSON.stringify(mtpNotes) !== JSON.stringify(studentData?.mtpNotes || []) || 
+  const isDirty = Object.keys(dirtyFields).length > 0 ||
     JSON.stringify(uploadedDocuments) !== JSON.stringify(studentData?.uploadedDocuments || []);
 
   // Save function for auto-save
