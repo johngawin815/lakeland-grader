@@ -2,7 +2,6 @@ import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { GraduationCap, FileDown, TrendingUp, ArrowDown } from 'lucide-react';
 import { useGridKeyboard } from '../../hooks/useGridKeyboard';
 import { UNIT_CONFIG } from '../../config/unitConfig';
-import { useVirtualizer } from '@tanstack/react-virtual';
 
 const GradeCell = React.memo(({ 
   studentId, studentName, assignmentId, assignmentName, maxScore, 
@@ -93,19 +92,10 @@ const GradebookTable = ({
     return unitGroups.filter(g => g.type === 'student');
   }, [unitGroups]);
 
-  // Setup TanStack Virtualizer
-  const rowVirtualizer = useVirtualizer({
-    count: displayGroups.length,
-    getScrollElement: () => tableRef.current,
-    estimateSize: (index) => displayGroups[index]?.type === 'header' ? 44 : 64, 
-    overscan: 10,
-  });
-
   const { handleKeyDown, onCellFocus: rawOnCellFocus } = useGridKeyboard({
     rows,
     cols,
     tableRef,
-    rowVirtualizer,
     unitGroups: displayGroups,
   });
 
@@ -129,9 +119,9 @@ const GradebookTable = ({
     );
   }
 
-  const virtualItems = rowVirtualizer.getVirtualItems();
-  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
-  const paddingBottom = virtualItems.length > 0 ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end : 0;
+  const virtualItems = displayGroups.map((g, index) => ({ index }));
+  const paddingTop = 0;
+  const paddingBottom = 0;
 
   return (
     <div 
