@@ -125,7 +125,7 @@ const GradebookTable = ({
 
   return (
     <div 
-      className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent" 
+      className="overflow-x-auto w-full scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent" 
       ref={tableRef} 
       onKeyDown={handleKeyDown} 
       role="grid"

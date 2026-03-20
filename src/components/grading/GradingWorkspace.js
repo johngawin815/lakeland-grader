@@ -14,7 +14,7 @@ const GradingWorkspace = ({ user, activeStudent }) => {
   }), [user]);
 
   return (
-    <div className="w-full h-full box-border flex flex-col font-sans max-w-7xl mx-auto relative cursor-default">
+    <div className="w-full min-h-full box-border flex flex-col font-sans max-w-7xl mx-auto relative cursor-default">
       {/* Header */}
       <div className="flex justify-between items-center px-6 pt-5 pb-2 shrink-0">
         <div>
@@ -50,7 +50,7 @@ const GradingWorkspace = ({ user, activeStudent }) => {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-slate-50/80 backdrop-blur-xl border border-slate-200/40 rounded-b-2xl rounded-tr-2xl shadow-xl shadow-slate-200/40 flex-1 flex flex-col overflow-hidden relative z-0">
+      <div className="bg-slate-50/80 backdrop-blur-xl border border-slate-200/40 rounded-b-2xl rounded-tr-2xl shadow-xl shadow-slate-200/40 flex-1 flex flex-col relative z-0">
         {activeTab === 'gradebook' && (
           <ClassGradebook 
             course={teacherCourse} 

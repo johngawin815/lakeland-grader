@@ -220,7 +220,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
   const statusDisplay = getSaveStatusDisplay();
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-50 p-0 font-sans text-slate-800">
+    <div className="flex flex-col min-h-full w-full bg-slate-50 p-0 font-sans text-slate-800">
       {!course ? (
         <div className="flex flex-col items-center justify-center h-full text-center p-10">
           <BookOpen className="w-16 h-16 text-slate-300 mb-4" />
@@ -372,7 +372,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
         </div>
 
         {/* MAIN CONTENT CARD */}
-        <div className="mx-8 mb-8 flex-1 bg-white border border-slate-200 rounded-b-2xl rounded-tr-2xl shadow-xl shadow-slate-200/40 overflow-hidden flex flex-col min-h-0 relative">
+        <div className="mx-8 mb-8 flex-1 bg-white border border-slate-200 rounded-b-2xl rounded-tr-2xl shadow-xl shadow-slate-200/40 flex flex-col relative">
 
           {/* GRADES TAB - UNIT CARD MENU + GRADEBOOK TABLE */}
           {activeTab === 'grades' && (
@@ -380,7 +380,7 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
               <div className="w-full px-8 pt-6">
                 <UnitCardMenu selectedUnit={selectedUnit} onSelect={setSelectedUnit} />
               </div>
-              <div className="w-full flex-1 flex flex-col min-h-0 overflow-hidden border-t border-slate-200">
+              <div className="w-full flex flex-col border-t border-slate-200">
                 <GradebookTable
                   students={students.filter(s => s.unitName === selectedUnit)}
                   assignments={assignments}
