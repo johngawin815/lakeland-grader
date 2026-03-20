@@ -940,28 +940,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         )}
       </button>
     </div>
-  );
-      <button type="button"
-        onClick={() => setDetailTab('documents')}
-        className={`px-5 py-3 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-          detailTab === 'documents'
-            ? 'border-indigo-600 text-indigo-600'
-            : 'border-transparent text-slate-400 hover:text-slate-600'
-        }`}
-      >
-        Documents
-        {uploadedDocuments.length > 0 && (
-          <span className={`text-xs min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-full font-bold ${
-            detailTab === 'documents'
-              ? 'bg-indigo-100 text-indigo-700'
-              : 'bg-slate-100 text-slate-500'
-          }`}>
-            {uploadedDocuments.length}
-          </span>
-        )}
-      </button>
-    </div>
-  );
+
 
   // --- Status Messages ---
   const statusMessages = (
