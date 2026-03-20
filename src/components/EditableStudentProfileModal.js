@@ -1073,16 +1073,10 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           </div>
         </div>
 
-        {/* Side-by-side content: Profile (left) + Sticky Notes (right) */}
-        <div className="flex flex-col md:flex-row overflow-hidden flex-1">
-          {/* Profile Column — scrollable */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-            {statusMessages}
-            {compactProfileContent}
-          </div>
-
-          {/* Sticky Note Column */}
-          {stickyNotePanel}
+        {/* Full-width profile column — no-scroll layout */}
+        <div className="flex-1 px-4 py-3 space-y-2 overflow-y-auto">
+          {statusMessages}
+          {compactProfileContent}
         </div>
 
         {/* Compact Footer */}
@@ -1114,7 +1108,6 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {statusMessages}
           {detailTab === 'profile' && profileContent}
-          {detailTab === 'notes' && notesContent}
           {detailTab === 'documents' && documentsContent}
         </div>
         {footer}
@@ -1134,7 +1127,6 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-4 space-y-4 overflow-y-auto flex-1">
           {statusMessages}
           {profileContent}
-          {notesContent}
           {documentsContent}
 
           {/* Action Buttons */}
