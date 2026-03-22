@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   NotebookPen, Key, Sparkles, ArrowLeft, Printer,
   Save, Loader2, Plus, AlertTriangle, Settings, Wrench,
-  Layers, LayoutTemplate, MonitorPlay, Network, FileText, GalleryHorizontalEnd, CheckSquare, Table, UploadCloud, ChevronDown, ChevronRight
+  Layers, LayoutTemplate, MonitorPlay, Network, FileText, GalleryHorizontalEnd, CheckSquare, Table, UploadCloud, ChevronDown, ChevronRight, Trash2, Search
 } from 'lucide-react';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { saveAs } from 'file-saver';
@@ -121,6 +121,8 @@ const WorkbookGenerator = ({ user }) => {
   const [allWorkbooks, setAllWorkbooks] = useState([]);
   const [libSearch, setLibSearch] = useState('');
   const [libLoading, setLibLoading] = useState(true);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [expandedUnits, setExpandedUnits] = useState({});
 
   // Form Base
   const [modality, setModality] = useState('single');
@@ -423,10 +425,26 @@ const WorkbookGenerator = ({ user }) => {
       const key = wb.unitTopic || 'Untitled';
       if (!map[key]) map[key] = { unit: [], single: [] };
       if (wb.generationMode === 'unit') map[key].unit.push(wb);
-      else map[key].single.push(wb); // group all singles/reports
+      else map[key].single.push(wb);
     }
-    return map;
+    
+    // Sort units internally
+    Object.values(map).forEach(group => {
+      group.unit.sort((a, b) => (a.dayNumber || 0) - (b.dayNumber || 0));
+      group.single.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    });
+
+    // Sort Unit Keys Alphabetically
+    const sortedKeys = Object.keys(map).sort((a, b) => a.localeCompare(b));
+    return sortedKeys.map(key => ({
+      unitTopic: key,
+      ...map[key]
+    }));
   }, [allWorkbooks, libSearch]);
+
+  const toggleUnitExpanded = (unitTopic) => {
+    setExpandedUnits(prev => ({ ...prev, [unitTopic]: prev[unitTopic] === false ? true : false }));
+  };
 
   // ─── RENDER BLOCKS ────────────────────────────────────────────────────────
 
@@ -458,41 +476,118 @@ const WorkbookGenerator = ({ user }) => {
   if (view === 'library') {
     return (
       <div className="h-full flex flex-col bg-slate-50/30">
-        <div className="shrink-0 px-6 py-4 bg-white border-b flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-             <NotebookPen className="w-5 h-5 text-blue-600" />
-          </div>
-          <div className="flex-1">
-             <h1 className="text-lg font-extrabold text-slate-900 leading-tight">Notebook Generator</h1>
-             <p className="text-[11px] text-slate-500">Curricula & Artifacts via Gemini</p>
-          </div>
-          <button onClick={() => { setKeyInput(getApiKey()); setShowSettings(true); }} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><Settings className="w-4 h-4"/></button>
-          <button onClick={() => setView('form')} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 flex items-center gap-1.5 shadow-sm"><Plus className="w-3.5 h-3.5" /> Create New</button>
-        </div>
-        <div className="flex-1 overflow-auto p-6 space-y-5">
-           {libLoading ? <Loader2 className="animate-spin text-blue-500 mx-auto" /> : Object.keys(grouped).length === 0 ? <p className="text-center text-slate-500 text-sm mt-10">No artifacts generated yet.</p> : Object.entries(grouped).map(([u, blocks]) => (
-             <div key={u} className="bg-white border rounded-xl p-4 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-800 border-b pb-2 mb-3">{u}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                   {blocks.unit.map(w => (
-                     <div key={w.id} onClick={() => handleOpenSaved(w)} className="border rounded-lg p-2 cursor-pointer hover:border-blue-400 bg-slate-50 group">
-                       <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-1 py-0.5 rounded">Day {w.dayNumber} (Unit)</span>
-                       <p className="text-xs font-medium text-slate-700 mt-1 truncate">{w.dayFocus}</p>
-                     </div>
-                   ))}
-                   {document && blocks.unit.length > 0 && blocks.unit.length < 8 && (
-                     <div onClick={() => { setUnitTopic(u); setModality('unit'); setDayNumber(blocks.unit.length+1); setView('form'); }} className="border border-dashed rounded-lg p-2 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 group"><Plus className="w-4 h-4 text-slate-400"/></div>
-                   )}
-                   {blocks.single.map(w => (
-                     <div key={w.id} onClick={() => handleOpenSaved(w)} className="border border-purple-200 rounded-lg p-2 cursor-pointer hover:border-purple-400 bg-purple-50 group">
-                        <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-1 py-0.5 rounded">{w.generationMode?.toUpperCase()}</span>
-                        <p className="text-xs font-medium text-slate-700 mt-1 truncate">{w.dayFocus}</p>
-                     </div>
-                   ))}
-                </div>
+        <div className="shrink-0 px-6 py-4 bg-white border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100">
+                <NotebookPen className="w-5 h-5 text-blue-600" />
              </div>
-           ))}
+             <div>
+                <h1 className="text-lg font-extrabold text-slate-900 leading-tight">Teacher Library</h1>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Curricula & Artifacts</p>
+             </div>
+          </div>
+          
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+             <div className="relative flex-1 sm:w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input type="text" placeholder="Search topics..." value={libSearch} onChange={e => setLibSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-sm font-medium bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all" />
+             </div>
+             <button onClick={() => { setKeyInput(getApiKey()); setShowSettings(true); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg shrink-0 transition-colors"><Settings className="w-5 h-5"/></button>
+             <button onClick={() => setView('form')} className="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow hover:shadow-md transition-all shrink-0"><Plus className="w-4 h-4" /> Create</button>
+          </div>
         </div>
+        <div className="flex-1 overflow-auto p-4 sm:p-6 space-y-4">
+           {libLoading ? <div className="flex flex-col items-center justify-center h-40"><Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" /><p className="text-sm font-medium text-slate-500">Loading Library...</p></div> : grouped.length === 0 ? <div className="flex flex-col items-center justify-center h-40 bg-white border border-slate-200 border-dashed rounded-xl"><Layers className="w-10 h-10 text-slate-300 mb-3" /><p className="text-slate-500 font-medium">No artifacts found.</p></div> : grouped.map((group) => {
+             const isExpanded = expandedUnits[group.unitTopic] !== false; // Default true
+             const totalItems = group.unit.length + group.single.length;
+             return (
+               <div key={group.unitTopic} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all hover:border-slate-300">
+                  <button onClick={() => toggleUnitExpanded(group.unitTopic)} className="w-full px-5 py-3.5 flex items-center justify-between bg-slate-50/50 hover:bg-slate-50 focus:bg-slate-50 border-b border-slate-100 transition-colors outline-none">
+                     <div className="flex items-center gap-3">
+                        <div className="text-slate-400">
+                           {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                        </div>
+                        <h3 className="text-[15px] font-extrabold text-slate-800">{group.unitTopic}</h3>
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2.5 py-0.5 rounded-full">{totalItems} {totalItems === 1 ? 'Item' : 'Items'}</span>
+                     </div>
+                  </button>
+                  {isExpanded && (
+                     <div className="p-5 bg-white">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                           {group.unit.map(w => (
+                             <div key={w.id} className="relative flex flex-col border border-slate-200 rounded-xl bg-white shadow-sm hover:shadow-md hover:border-blue-300 transition-all group/card overflow-hidden">
+                               <div onClick={() => handleOpenSaved(w)} className="flex-1 p-4 cursor-pointer">
+                                 <div className="flex items-start justify-between mb-3 gap-2">
+                                   <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                                      <Layers className="w-5 h-5" />
+                                   </div>
+                                   <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 whitespace-nowrap">Day {w.dayNumber} Unit</span>
+                                 </div>
+                                 <p className="text-sm font-bold text-slate-800 line-clamp-2 leading-snug mb-1">{w.dayFocus}</p>
+                                 <p className="text-xs text-slate-500 truncate mb-3">Topic: {group.unitTopic}</p>
+                                 <div className="flex flex-wrap gap-1.5 mt-auto">
+                                   {w.readingLevel && <span className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded truncate max-w-full">Lexile: {w.readingLevel.split('(')[0].trim()}</span>}
+                                   {w.standard && <span className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{w.standard}</span>}
+                                 </div>
+                               </div>
+                               <div className="h-10 border-t border-slate-100 bg-slate-50 flex items-center justify-end px-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                  <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(w.id); }} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete Artifact"><Trash2 className="w-4 h-4" /></button>
+                               </div>
+                             </div>
+                           ))}
+                           {group.single.map(w => (
+                             <div key={w.id} className="relative flex flex-col border border-slate-200 rounded-xl bg-white shadow-sm hover:shadow-md hover:border-purple-300 transition-all group/card overflow-hidden">
+                               <div onClick={() => handleOpenSaved(w)} className="flex-1 p-4 cursor-pointer">
+                                 <div className="flex items-start justify-between mb-3 gap-2">
+                                   <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
+                                      {w.generationMode === 'report' ? <FileText className="w-5 h-5" /> : w.generationMode === 'mindmap' ? <Network className="w-5 h-5" /> : w.generationMode === 'slide' ? <MonitorPlay className="w-5 h-5" /> : w.generationMode === 'quiz' ? <CheckSquare className="w-5 h-5" /> : w.generationMode === 'table' ? <Table className="w-5 h-5" /> : <LayoutTemplate className="w-5 h-5" />}
+                                   </div>
+                                   <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded-md border border-purple-100 whitespace-nowrap">{w.generationMode?.toUpperCase()}</span>
+                                 </div>
+                                 <p className="text-sm font-bold text-slate-800 line-clamp-2 leading-snug mb-1">{w.dayFocus || w.unitTopic}</p>
+                                 <p className="text-xs text-slate-500 truncate mb-3">Topic: {group.unitTopic}</p>
+                                 <div className="flex flex-wrap gap-1.5 mt-auto">
+                                   {w.standard && <span className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{w.standard}</span>}
+                                 </div>
+                               </div>
+                               <div className="h-10 border-t border-slate-100 bg-slate-50 flex items-center justify-end px-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                  <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(w.id); }} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete Artifact"><Trash2 className="w-4 h-4" /></button>
+                               </div>
+                             </div>
+                           ))}
+                           {document && group.unit.length > 0 && group.unit.length < 8 && (
+                             <div onClick={() => { setUnitTopic(group.unitTopic); setModality('unit'); setDayNumber(group.unit.length+1); setView('form'); }} className="border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-blue-300 transition-all group/add min-h-[160px]">
+                                <div className="w-12 h-12 rounded-full bg-slate-100 group-hover/add:bg-blue-50 flex items-center justify-center mb-3 transition-colors">
+                                   <Plus className="w-6 h-6 text-slate-400 group-hover/add:text-blue-500" />
+                                </div>
+                                <span className="text-sm font-bold text-slate-500 group-hover/add:text-blue-600 transition-colors">Add to Unit</span>
+                                <span className="text-[10px] text-slate-400 mt-1">Day {group.unit.length + 1}</span>
+                             </div>
+                           )}
+                        </div>
+                     </div>
+                  )}
+               </div>
+             );
+           })}
+        </div>
+
+        {/* Safe Delete Modal Context */}
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-slate-200 animate-in zoom-in-95 duration-200">
+               <div className="w-14 h-14 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 ring-4 ring-red-50">
+                  <AlertTriangle className="w-7 h-7" />
+               </div>
+               <h3 className="text-xl font-extrabold text-slate-900 mb-2">Delete Artifact?</h3>
+               <p className="text-sm text-slate-500 mb-6 leading-relaxed">This will permanently remove the workbook from your library and the database. This action cannot be undone.</p>
+               <div className="flex gap-3">
+                  <button onClick={() => setDeleteConfirmId(null)} className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors focus:ring-2 focus:ring-slate-300 outline-none">Cancel</button>
+                  <button onClick={() => { handleDelete(deleteConfirmId); setDeleteConfirmId(null); }} className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm focus:ring-2 focus:ring-red-500 outline-none">Delete</button>
+               </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
