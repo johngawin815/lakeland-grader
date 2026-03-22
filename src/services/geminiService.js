@@ -75,8 +75,7 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
   display: flex !important;
   flex-direction: column !important;
   width: 8.5in !important;
-  height: 11in !important;
-  overflow: hidden !important;
+  min-height: 11in !important;
   box-sizing: border-box !important;
   position: relative !important;
 }
@@ -118,48 +117,7 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
     fixes.push('Wrapped raw HTML in a .print-page container');
   }
 
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i];
-    let estimatedHeight = 150; 
-    
-    const children = Array.from(page.children);
-    let splitIndex = -1;
-
-    for (let c = 0; c < children.length; c++) {
-      const child = children[c];
-      if (child.classList.contains('header-row') || child.classList.contains('page-footer')) continue;
-      
-      let childHeight = 40; 
-      const tag = child.tagName.toLowerCase();
-      if (['h1', 'h2', 'h3'].includes(tag)) childHeight += 50;
-      else if (child.classList.contains('ruled-input') || tag === 'textarea') childHeight += parseInt(child.style.height || '90');
-      else if (tag === 'table') childHeight += 250;
-      else if (tag === 'ul' || tag === 'ol') childHeight += (child.children.length * 30);
-      else childHeight += Math.max(30, (child.textContent.length / 80) * 24); 
-      
-      estimatedHeight += childHeight;
-      if (estimatedHeight > 950 && splitIndex === -1) {
-         if (c > 1) { 
-            splitIndex = c;
-         }
-      }
-    }
-
-    if (splitIndex !== -1) {
-      const newPage = doc.createElement('div');
-      newPage.className = 'print-page';
-      const elementsToMove = children.slice(splitIndex);
-      elementsToMove.forEach(el => newPage.appendChild(el));
-      
-      if (page.nextSibling) {
-        page.parentNode.insertBefore(newPage, page.nextSibling);
-      } else {
-        page.parentNode.appendChild(newPage);
-      }
-      pages.splice(i + 1, 0, newPage); 
-      fixes.push('Auto-paginated oversized page');
-    }
-  }
+  // (Auto-pagination DOM slicer has been removed to preserve dynamic grid layouts)
 
   pages.forEach((page, i) => {
     // Remove any inline styles that might conflict with CSS
@@ -214,6 +172,11 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
   while ((node = walker.nextNode())) textNodes.push(node);
   textNodes.forEach(tn => {
     if (/\*\*[^*]+\*\*/.test(tn.textContent)) {
+      // Prevent injecting HTML into <textarea> elements
+      if (tn.parentNode && (tn.parentNode.tagName === 'TEXTAREA' || tn.parentNode.classList.contains('ruled-input'))) {
+        tn.textContent = tn.textContent.replace(/\*\*([^*]+?)\*\*/g, '$1');
+        return;
+      }
       const span = doc.createElement('span');
       span.innerHTML = tn.textContent.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
       tn.parentNode.replaceChild(span, tn);

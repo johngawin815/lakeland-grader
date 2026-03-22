@@ -19,16 +19,16 @@ body { margin: 0; padding: 0; background-color: #f2f2f7; -webkit-print-color-adj
 
 /* PAGE CONTAINER & PRINT STRESS-TEST SAFETIES */
 .print-page {
-    width: 8.5in; height: 11in; margin: 0 auto 20px auto; background: white;
+    width: 8.5in; min-height: 11in; margin: 0 auto 20px auto; background: white;
     position: relative; display: flex; flex-direction: column;
     padding: 0.4in 0.5in;
-    box-sizing: border-box; overflow: hidden; 
+    box-sizing: border-box; 
     page-break-after: always; break-after: page;
 }
 @media print { 
     @page { margin: 0; size: letter; }
     body { background: white; } 
-    .print-page { margin: 0; box-shadow: none; height: 11in; border-radius: 0; padding: 0.4in 0.5in; page-break-after: always; } 
+    .print-page { margin: 0; box-shadow: none; min-height: 11in; border-radius: 0; padding: 0.4in 0.5in; page-break-after: always; } 
 }
 
 /* TYPOGRAPHY OVERHAUL */
