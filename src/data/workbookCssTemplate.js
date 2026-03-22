@@ -142,7 +142,9 @@ However, you MUST strictly adhere to the following print rules for EVERY SINGLE 
 
 3. NO HTML TAGS IN TEXTAREAS: NEVER put HTML tags (such as <strong>, <b>, <i>) inside <textarea> tags. Textareas only render plain text. If you want a bold label before a writing area, place it OUTSIDE the textarea (e.g., <span class="prompt-label"><strong>Word:</strong></span><textarea class="ruled-input"></textarea>).
 
-4. CREATIVE FREEDOM: Inside each <div class="print-page">, you have full creative control. 
+4. NO INVENTED IMAGES / HALLUCINATIONS: DO NOT tell the student to "analyze the photo", "look at the graphic", or refer to any diagrams. You cannot generate or display actual images. All generated activities MUST rely strictly on enclosed text. Do not output <img> tags.
+
+5. CREATIVE FREEDOM: Inside each <div class="print-page">, you have full creative control. 
 - Use standard HTML elements (h1, h2, p, ul, table) creatively combined with the provided CSS classes (e.g., .card, .highlight-box, .apple-table, .slide-box, .flashcard-grid, .vocab-grid, .checkpoint-box, .narrative-container, .ruled-input, etc.) dynamically.
 - You DO NOT need to use every class on every page. You SHOULD mix and match them depending on the task (e.g., Flash Cards should use .flashcard-grid, Reading Passages should use .narrative-container).
 - Think spatially: chunk information logically so as not to overwhelm a student. Use whitespace.

@@ -104,8 +104,63 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
     fixes.push('Replaced CSS with canonical Print Engine + repair overrides');
   }
 
-  // ── 2. PAGE STRUCTURE — enforce flex column on every page ─────────────────
-  const pages = doc.querySelectorAll('.print-page');
+  // ── 2. PAGE STRUCTURE & AUTO-PAGINATION ──────────────────────────────────
+  let pages = Array.from(doc.querySelectorAll('.print-page'));
+  
+  if (pages.length === 0) {
+    const wrapper = doc.createElement('div');
+    wrapper.className = 'print-page';
+    while (doc.body.firstChild) {
+      wrapper.appendChild(doc.body.firstChild);
+    }
+    doc.body.appendChild(wrapper);
+    pages = [wrapper];
+    fixes.push('Wrapped raw HTML in a .print-page container');
+  }
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    let estimatedHeight = 150; 
+    
+    const children = Array.from(page.children);
+    let splitIndex = -1;
+
+    for (let c = 0; c < children.length; c++) {
+      const child = children[c];
+      if (child.classList.contains('header-row') || child.classList.contains('page-footer')) continue;
+      
+      let childHeight = 40; 
+      const tag = child.tagName.toLowerCase();
+      if (['h1', 'h2', 'h3'].includes(tag)) childHeight += 50;
+      else if (child.classList.contains('ruled-input') || tag === 'textarea') childHeight += parseInt(child.style.height || '90');
+      else if (tag === 'table') childHeight += 250;
+      else if (tag === 'ul' || tag === 'ol') childHeight += (child.children.length * 30);
+      else childHeight += Math.max(30, (child.textContent.length / 80) * 24); 
+      
+      estimatedHeight += childHeight;
+      if (estimatedHeight > 950 && splitIndex === -1) {
+         if (c > 1) { 
+            splitIndex = c;
+         }
+      }
+    }
+
+    if (splitIndex !== -1) {
+      const newPage = doc.createElement('div');
+      newPage.className = 'print-page';
+      const elementsToMove = children.slice(splitIndex);
+      elementsToMove.forEach(el => newPage.appendChild(el));
+      
+      if (page.nextSibling) {
+        page.parentNode.insertBefore(newPage, page.nextSibling);
+      } else {
+        page.parentNode.appendChild(newPage);
+      }
+      pages.splice(i + 1, 0, newPage); 
+      fixes.push('Auto-paginated oversized page');
+    }
+  }
+
   pages.forEach((page, i) => {
     // Remove any inline styles that might conflict with CSS
     page.style.removeProperty('position');
