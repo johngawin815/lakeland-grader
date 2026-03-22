@@ -121,148 +121,25 @@ li { margin-bottom: 6px; }
 .page-footer { margin-top: auto; border-top: 2px solid black; padding-top: 6px; display: flex; justify-content: space-between; font-family: var(--font-heading); font-size: 9pt; text-transform: uppercase; font-weight: 800; flex-shrink: 0; color: #444; }
 `;
 
-export const STRUCTURAL_REFERENCE = `
-MANDATORY HTML STRUCTURE REFERENCE — You MUST follow this exact DOM structure for EVERY PAGE.
-CRITICAL: All bold formatting MUST use <strong> HTML tags. NEVER use markdown ** syntax.
+export const DYNAMIC_LAYOUT_REFERENCE = `
+MANDATORY HTML STRUCTURE REFERENCE — DYNAMIC GENERATIVE LAYOUT
+CRITICAL INSTRUCTION: You are an expert in Curriculum and Instruction with a specialization in brain-friendly worksheet development. You MUST dynamically design the layout of the worksheet or workbook to best fit the subject matter, reading level, and chosen activities.
 
-EVERY PAGE STARTS & ENDS EXACTLY LIKE THIS:
+*** DO NOT MAKE EVERY OUTPUT FORMAT THE SAME. VARY THE LAYOUT. ***
+
+However, you MUST strictly adhere to the following print rules for EVERY SINGLE PAGE:
+
+1. EVERY PAGE MUST BEGIN AND END WITH THE EXACT FOLLOWING BOUNDARIES:
 <div class="print-page">
-  <div class="header-row"><span>STUDENT: <span class="student-line"></span></span><span>[PAGE LABEL]</span></div>
-  ... content ...
-  <div class="page-footer"><span>Unit: [UNIT]</span><span>Day [N]</span><span>Page [X] of [T]</span></div>
-</div>
-
-PAGE 1: VOCABULARY
-<h1>DAY [N]: [TITLE]</h1>
-<div class="highlight-box"><strong>MISSION OBJECTIVE:</strong> ...</div>
-<div class="vocab-grid"> ... (5 .vocab-item blocks) ... </div>
-
-PAGES 2-7: NARRATIVE CHAPTERS
-<h1>[CHAPTER TITLE]</h1>
-<div class="narrative-container"><div class="narrative-text"><p>...</p></div></div>
-<div class="scriptorium-notes">... (Active Analysis & Terms) ...</div>
-<div class="checkpoint-box">... (Question) ...</div>
-`;
-
-export const SINGLE_ACTIVITY_REFERENCE = `
-MANDATORY HTML STRUCTURE FOR SINGLE ACTIVITY. 
-<div class="print-page">
-  <div class="header-row"><span>STUDENT: <span class="student-line"></span></span><span>[STANDARD]</span></div>
-  <h1>[TITLE]</h1>
-  <div class="highlight-box"><strong>OBJECTIVE:</strong> ...</div>
-  <div class="narrative-container"><div class="narrative-text"><p>...</p></div></div>
-  <div class="card">
-    <div class="card-title">ANALYSIS</div>
-    <span class="prompt-label">1. [Q]</span><textarea class="ruled-input" style="height: 76px;"></textarea>
-  </div>
-  <div class="page-footer"><span>[ACTIVITY]</span><span>[STD]</span><span>Page [X]</span></div>
-</div>
-`;
-
-export const SLIDE_DECK_REFERENCE = `
-MANDATORY HTML STRUCTURE FOR SLIDE DECK (TEACHER PLANNING).
-<div class="print-page">
-  <div class="header-row"><span>TEACHER GUIDE: SLIDE DECK</span><span>[TOPIC]</span></div>
-  <!-- Usually 2-3 slide-boxes per printed page -->
-  <div class="slide-box">
-    <div class="slide-title">Slide 1: [Title]</div>
-    <ul class="slide-bullets">
-      <li>[Bullet point 1]</li>
-      <li>[Bullet point 2]</li>
-    </ul>
-    <div class="slide-speaker-notes">Speaker Notes: [Instructions for the teacher]</div>
-  </div>
-  <div class="page-footer"><span>Source-Aligned</span><span>[TOPIC]</span><span>Page [X]</span></div>
-</div>
-`;
-
-export const FLASH_CARD_REFERENCE = `
-MANDATORY HTML STRUCTURE FOR FLASH CARDS. Maximize grid per page.
-<div class="print-page">
-  <div class="header-row"><span>FLASH CARDS</span><span>[TOPIC]</span></div>
-  <div class="flashcard-grid">
-    <div class="flashcard">
-      <div class="flashcard-front">[Term or Concept]</div>
-      <div class="flashcard-back">[Definition, Context, or Answer]</div>
-    </div>
-    <!-- 8 or 10 flashcards per page to fill the grid -->
-  </div>
-  <div class="page-footer"><span>Cut-out Grid</span><span>[TOPIC]</span><span>Page [X]</span></div>
-</div>
-`;
-
-export const MIND_MAP_REFERENCE = `
-MANDATORY HTML STRUCTURE FOR MIND MAP / CONCEPT STRUCTURE.
-<div class="print-page">
-  <div class="header-row"><span>CONCEPT MAP</span><span>[TOPIC]</span></div>
-  <h1>[Core Central Theme]</h1>
-  <div class="mindmap-level-1">[Primary Category/Branch]</div>
-    <div class="mindmap-level-2">[Sub-Concept A]</div>
-      <div class="mindmap-level-3">[Detail / Fact / Connection]</div>
-      <div class="mindmap-level-3">[Detail / Fact / Connection]</div>
-    <div class="mindmap-level-2">[Sub-Concept B]</div>
-      <div class="mindmap-level-3">[Detail / Fact / Connection]</div>
-  <div class="mindmap-level-1">[Second Primary Category/Branch]</div>
-  <!-- Repeat for all branches -->
-  <div class="page-footer"><span>Hierarchy Outline</span><span>[TOPIC]</span><span>Page [X]</span></div>
-</div>
-`;
-
-export const TABLE_INFOGRAPHIC_REFERENCE = `
-MANDATORY HTML STRUCTURE FOR DATA TABLES / INFOGRAPHICS.
-<div class="print-page">
-  <div class="header-row"><span>DATA / INFOGRAPHIC</span><span>[TOPIC]</span></div>
-  <h1>[Table Title]</h1>
-  <p>[Summary context paragraph]</p>
-  <table class="apple-table">
-    <thead>
-      <tr><th>[Col 1]</th><th>[Col 2]</th><th>[Col 3]</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>[Data]</td><td>[Data]</td><td>[Data]</td></tr>
-      <!-- Generate sufficient rows -->
-    </tbody>
-  </table>
-  <div class="page-footer"><span>Data Presentation</span><span>[TOPIC]</span><span>Page [X]</span></div>
-</div>
-`;
-
-export const QUIZ_REFERENCE = `
-MANDATORY HTML STRUCTURE FOR MULTIPLE CHOICE / ASSESSMENT QUIZ.
-<div class="print-page">
-  <div class="header-row"><span>STUDENT: <span class="student-line"></span></span><span>ASSESSMENT</span></div>
-  <h1>[Quiz Title]</h1>
-  <div class="highlight-box"><strong>INSTRUCTIONS:</strong> Select the best answer for each question based on the text.</div>
+  <div class="header-row"><span>STUDENT: <span class="student-line"></span></span><span>[TOPIC OR PAGE LABEL]</span></div>
   
-  <div class="card">
-    <div class="prompt-label">1. [Question Text]</div>
-    <div class="quiz-option"><span class="quiz-bubble"></span> A) [Option]</div>
-    <div class="quiz-option"><span class="quiz-bubble"></span> B) [Option]</div>
-    <div class="quiz-option"><span class="quiz-bubble"></span> C) [Option]</div>
-    <div class="quiz-option"><span class="quiz-bubble"></span> D) [Option]</div>
-  </div>
-  <!-- Repeat cards for questions -->
+  [YOUR DYNAMICALLY DESIGNED CONTENT GOES HERE]
   
-  <!-- If writing portion is needed, use standard ruled-input -->
-  <div class="checkpoint-box">
-    <div class="question-stem">SHORT ANSWER</div>
-    <div class="scaffold"><strong>Prompt:</strong> [DBQ/Short Answer]</div>
-    <textarea class="ruled-input" style="height: 150px;"></textarea>
-  </div>
-  
-  <div class="page-footer"><span>Assessment</span><span>[TOPIC]</span><span>Page [X]</span></div>
+  <div class="page-footer"><span>[UNIT OR MODALITY NAME]</span><span>[TOPIC]</span><span>Page [Number] of [Total]</span></div>
 </div>
-`;
 
-export const REPORT_REFERENCE = `
-MANDATORY HTML STRUCTURE FOR TEACHER REPORT / ANALYTICAL SUMMARY.
-<div class="print-page">
-  <div class="header-row"><span>ANALYTICAL REPORT</span><span>[TOPIC]</span></div>
-  <h1>[Report Title]</h1>
-  <h2>EXECUTIVE SUMMARY</h2>
-  <div class="highlight-box">[High-level synthesis]</div>
-  <h2>[Section Heading]</h2>
-  <div class="narrative-container"><div class="narrative-text"><p>...</p></div></div>
-  <div class="page-footer"><span>Teacher Prep</span><span>[TOPIC]</span><span>Page [X]</span></div>
-</div>
+2. CREATIVE FREEDOM: Inside each <div class="print-page">, you have full creative control. 
+- Use standard HTML elements (h1, h2, p, ul, table) creatively combined with the provided CSS classes (e.g., .card, .highlight-box, .apple-table, .slide-box, .flashcard-grid, .vocab-grid, .checkpoint-box, .narrative-container, .ruled-input, etc.) dynamically.
+- You DO NOT need to use every class on every page. You SHOULD mix and match them depending on the task (e.g., Flash Cards should use .flashcard-grid, Reading Passages should use .narrative-container).
+- Think spatially: chunk information logically so as not to overwhelm a student. Use whitespace.
 `;

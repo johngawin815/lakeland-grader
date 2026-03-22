@@ -12,9 +12,7 @@ import {
   generateWorkbook, repairWorkbook, testConnection
 } from '../../services/geminiService';
 import { 
-  PRINT_ENGINE_CSS, STRUCTURAL_REFERENCE, SINGLE_ACTIVITY_REFERENCE,
-  SLIDE_DECK_REFERENCE, FLASH_CARD_REFERENCE, MIND_MAP_REFERENCE, 
-  TABLE_INFOGRAPHIC_REFERENCE, QUIZ_REFERENCE, REPORT_REFERENCE
+  PRINT_ENGINE_CSS, DYNAMIC_LAYOUT_REFERENCE
 } from '../../data/workbookCssTemplate';
 import { MLS_STANDARDS } from '../../data/missouriStandards';
 import { MISSOURI_TOPICS } from '../../data/missouriTopics';
@@ -60,14 +58,14 @@ const EDITING_ACTIVITIES = ['Auto (AI Chooses)', 'Rubric-Aligned Error Correctio
 
 
 const MODALITIES = [
-  { id: 'unit', label: 'Independent Unit (10-pg)', icon: Layers, template: STRUCTURAL_REFERENCE, group: 'Student Facing' },
-  { id: 'single', label: 'Flexible Worksheet (1-10 pg)', icon: LayoutTemplate, template: SINGLE_ACTIVITY_REFERENCE, group: 'Student Facing' },
-  { id: 'flashcards', label: 'Printable Flash Cards', icon: GalleryHorizontalEnd, template: FLASH_CARD_REFERENCE, group: 'Student Facing' },
-  { id: 'quiz', label: 'Quiz / Assessment', icon: CheckSquare, template: QUIZ_REFERENCE, group: 'Student Facing' },
-  { id: 'slide', label: 'Slide Deck Outline', icon: MonitorPlay, template: SLIDE_DECK_REFERENCE, group: 'Teacher Tools' },
-  { id: 'mindmap', label: 'Concept Mind Map', icon: Network, template: MIND_MAP_REFERENCE, group: 'Teacher Tools' },
-  { id: 'report', label: 'Analytical Report', icon: FileText, template: REPORT_REFERENCE, group: 'Teacher Tools' },
-  { id: 'table', label: 'Data Table Organizers', icon: Table, template: TABLE_INFOGRAPHIC_REFERENCE, group: 'Teacher Tools' }
+  { id: 'unit', label: 'Independent Unit (10-pg)', icon: Layers, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Student Facing' },
+  { id: 'single', label: 'Flexible Worksheet (1-10 pg)', icon: LayoutTemplate, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Student Facing' },
+  { id: 'flashcards', label: 'Printable Flash Cards', icon: GalleryHorizontalEnd, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Student Facing' },
+  { id: 'quiz', label: 'Quiz / Assessment', icon: CheckSquare, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Student Facing' },
+  { id: 'slide', label: 'Slide Deck Outline', icon: MonitorPlay, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Teacher Tools' },
+  { id: 'mindmap', label: 'Concept Mind Map', icon: Network, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Teacher Tools' },
+  { id: 'report', label: 'Analytical Report', icon: FileText, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Teacher Tools' },
+  { id: 'table', label: 'Data Table Organizers', icon: Table, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Teacher Tools' }
 ];
 
 const DAY_SCOPE_SEQUENCE = [
@@ -280,8 +278,8 @@ const WorkbookGenerator = ({ user }) => {
         '\n\n=== MANDATORY CSS (THE MIT PRINT ENGINE V70 PLATINUM B&W APPLE STYLE) ===',
         'You MUST embed this EXACT CSS inside a <style> tag in the <head> of the HTML. Do NOT modify or omit any part of it.\n',
         PRINT_ENGINE_CSS,
-        '\n\n=== MANDATORY HTML STRUCTURE REFERENCE ===',
-        'You MUST follow this exact DOM structure. Do NOT deviate from these class names or nesting patterns.\n',
+        '\n\n=== DYNAMIC HTML STRUCTURE RULES ===',
+        'You MUST respect the print boundary rules, but you must construct the internal layout creatively using the CSS classes. DO NOT output uniform identical pages.\n',
         htmlRef,
       ].join('\n');
 
