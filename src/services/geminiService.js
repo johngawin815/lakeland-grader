@@ -90,12 +90,7 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
 .header-row {
   flex-shrink: 0 !important;
 }
-/* Force content children to shrink so footer stays on-page */
-.print-page > *:not(.header-row):not(.page-footer) {
-  min-height: 0 !important;
-  flex-shrink: 1 !important;
-  overflow: hidden !important;
-}
+/* (Removed aggressive flex-shrink override for dynamic layouts) */
 /* Shield canvas must stay fixed-size — override the blanket shrink rule */
 .shield-canvas {
   height: 340px !important;
@@ -171,21 +166,7 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
     }
   });
 
-  // ── 9. TEXTAREA HEIGHTS — enforce correct sizes by page position ──────────
-  pages.forEach((page, i) => {
-    const textareas = page.querySelectorAll('textarea.ruled-input');
-    if (i === 0) {
-      textareas.forEach(ta => { ta.style.height = '58px'; });
-    }
-    if (i === 9) {
-      textareas.forEach(ta => {
-        if (!ta.style.height || parseInt(ta.style.height) > 128) {
-          ta.style.height = '128px';
-        }
-      });
-    }
-  });
-
+  // ── 9. TEXTAREA HEIGHTS — (Removed hardcoded height enforcement for dynamic layout compatibility) ──
   // ── 10. INVISIBLE HEADERS ─────────────────────────────────────────────────
   doc.querySelectorAll('h1, h2, h3').forEach(h => {
     if (h.style.display === 'none' || h.style.visibility === 'hidden' || h.style.opacity === '0') {
@@ -263,13 +244,13 @@ export function repairWorkbook(htmlContent, mandatoryCss) {
       }
     });
 
-    // C. Remove excessive explicit heights on content elements that push footer off-page
+    // C. Remove excessive explicit heights on content elements that push footer off-page (Relaxed limit for dynamic layouts)
     Array.from(page.children).forEach(child => {
       if (child.classList.contains('header-row') || child.classList.contains('page-footer')) return;
       const h = parseInt(child.style.height);
-      if (h > 600) {
+      if (h > 1200) {
         child.style.removeProperty('height');
-        fixes.push('Page ' + (i + 1) + ': Removed oversized height (' + h + 'px) from content');
+        fixes.push('Page ' + (i + 1) + ': Removed extremely oversized height (' + h + 'px) from content');
       }
       // Remove absolute/fixed positioning that causes overlap
       const pos = child.style.position;
