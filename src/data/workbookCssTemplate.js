@@ -121,7 +121,7 @@ li { margin-bottom: 6px; }
 .page-footer { margin-top: auto; border-top: 2px solid black; padding-top: 6px; display: flex; justify-content: space-between; font-family: var(--font-heading); font-size: 9pt; text-transform: uppercase; font-weight: 800; flex-shrink: 0; color: #444; }
 `;
 
-export const STRUCTURAL_REFERENCE = \`
+export const STRUCTURAL_REFERENCE = `
 MANDATORY HTML STRUCTURE REFERENCE — You MUST follow this exact DOM structure for EVERY PAGE.
 CRITICAL: All bold formatting MUST use <strong> HTML tags. NEVER use markdown ** syntax.
 
@@ -142,9 +142,9 @@ PAGES 2-7: NARRATIVE CHAPTERS
 <div class="narrative-container"><div class="narrative-text"><p>...</p></div></div>
 <div class="scriptorium-notes">... (Active Analysis & Terms) ...</div>
 <div class="checkpoint-box">... (Question) ...</div>
-\`;
+`;
 
-export const SINGLE_ACTIVITY_REFERENCE = \`
+export const SINGLE_ACTIVITY_REFERENCE = `
 MANDATORY HTML STRUCTURE FOR SINGLE ACTIVITY. 
 <div class="print-page">
   <div class="header-row"><span>STUDENT: <span class="student-line"></span></span><span>[STANDARD]</span></div>
@@ -157,9 +157,9 @@ MANDATORY HTML STRUCTURE FOR SINGLE ACTIVITY.
   </div>
   <div class="page-footer"><span>[ACTIVITY]</span><span>[STD]</span><span>Page [X]</span></div>
 </div>
-\`;
+`;
 
-export const SLIDE_DECK_REFERENCE = \`
+export const SLIDE_DECK_REFERENCE = `
 MANDATORY HTML STRUCTURE FOR SLIDE DECK (TEACHER PLANNING).
 <div class="print-page">
   <div class="header-row"><span>TEACHER GUIDE: SLIDE DECK</span><span>[TOPIC]</span></div>
@@ -174,9 +174,9 @@ MANDATORY HTML STRUCTURE FOR SLIDE DECK (TEACHER PLANNING).
   </div>
   <div class="page-footer"><span>Source-Aligned</span><span>[TOPIC]</span><span>Page [X]</span></div>
 </div>
-\`;
+`;
 
-export const FLASH_CARD_REFERENCE = \`
+export const FLASH_CARD_REFERENCE = `
 MANDATORY HTML STRUCTURE FOR FLASH CARDS. Maximize grid per page.
 <div class="print-page">
   <div class="header-row"><span>FLASH CARDS</span><span>[TOPIC]</span></div>
@@ -189,9 +189,9 @@ MANDATORY HTML STRUCTURE FOR FLASH CARDS. Maximize grid per page.
   </div>
   <div class="page-footer"><span>Cut-out Grid</span><span>[TOPIC]</span><span>Page [X]</span></div>
 </div>
-\`;
+`;
 
-export const MIND_MAP_REFERENCE = \`
+export const MIND_MAP_REFERENCE = `
 MANDATORY HTML STRUCTURE FOR MIND MAP / CONCEPT STRUCTURE.
 <div class="print-page">
   <div class="header-row"><span>CONCEPT MAP</span><span>[TOPIC]</span></div>
@@ -206,9 +206,9 @@ MANDATORY HTML STRUCTURE FOR MIND MAP / CONCEPT STRUCTURE.
   <!-- Repeat for all branches -->
   <div class="page-footer"><span>Hierarchy Outline</span><span>[TOPIC]</span><span>Page [X]</span></div>
 </div>
-\`;
+`;
 
-export const TABLE_INFOGRAPHIC_REFERENCE = \`
+export const TABLE_INFOGRAPHIC_REFERENCE = `
 MANDATORY HTML STRUCTURE FOR DATA TABLES / INFOGRAPHICS.
 <div class="print-page">
   <div class="header-row"><span>DATA / INFOGRAPHIC</span><span>[TOPIC]</span></div>
@@ -225,9 +225,9 @@ MANDATORY HTML STRUCTURE FOR DATA TABLES / INFOGRAPHICS.
   </table>
   <div class="page-footer"><span>Data Presentation</span><span>[TOPIC]</span><span>Page [X]</span></div>
 </div>
-\`;
+`;
 
-export const QUIZ_REFERENCE = \`
+export const QUIZ_REFERENCE = `
 MANDATORY HTML STRUCTURE FOR MULTIPLE CHOICE / ASSESSMENT QUIZ.
 <div class="print-page">
   <div class="header-row"><span>STUDENT: <span class="student-line"></span></span><span>ASSESSMENT</span></div>
@@ -252,9 +252,9 @@ MANDATORY HTML STRUCTURE FOR MULTIPLE CHOICE / ASSESSMENT QUIZ.
   
   <div class="page-footer"><span>Assessment</span><span>[TOPIC]</span><span>Page [X]</span></div>
 </div>
-\`;
+`;
 
-export const REPORT_REFERENCE = \`
+export const REPORT_REFERENCE = `
 MANDATORY HTML STRUCTURE FOR TEACHER REPORT / ANALYTICAL SUMMARY.
 <div class="print-page">
   <div class="header-row"><span>ANALYTICAL REPORT</span><span>[TOPIC]</span></div>
@@ -265,4 +265,4 @@ MANDATORY HTML STRUCTURE FOR TEACHER REPORT / ANALYTICAL SUMMARY.
   <div class="narrative-container"><div class="narrative-text"><p>...</p></div></div>
   <div class="page-footer"><span>Teacher Prep</span><span>[TOPIC]</span><span>Page [X]</span></div>
 </div>
-\`;
+`;
