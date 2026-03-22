@@ -17,6 +17,7 @@ import {
   TABLE_INFOGRAPHIC_REFERENCE, QUIZ_REFERENCE, REPORT_REFERENCE
 } from '../../data/workbookCssTemplate';
 import { MLS_STANDARDS } from '../../data/missouriStandards';
+import { MISSOURI_TOPICS } from '../../data/missouriTopics';
 import { generatePdfBlob } from '../../services/pdfService';
 import { uploadToOneDrive } from '../../services/oneDriveService';
 import { isMsalConfigured } from '../../config/msalInstance';
@@ -608,9 +609,36 @@ const WorkbookGenerator = ({ user }) => {
              
              {/* TOPIC & MODE BLOCK */}
              <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
-                <div>
-                   <label className="block text-xs font-bold text-slate-600 mb-1">Topic / Title</label>
-                   <input type="text" value={unitTopic} onChange={e => setUnitTopic(e.target.value)} placeholder="e.g. The Gilded Age, Cellular Mitosis..." className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none" />
+                <div className="flex flex-col md:flex-row gap-4">
+                   <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Topic / Title</label>
+                      <input type="text" value={unitTopic} onChange={e => setUnitTopic(e.target.value)} placeholder="e.g. The Gilded Age, Cellular Mitosis..." className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-colors" />
+                   </div>
+                   <div className="flex-1">
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Official Missouri Course Topic (Optional)</label>
+                      <select onChange={(e) => {
+                          const topic = e.target.value;
+                          if (!topic) return;
+                          setUnitTopic(topic);
+                          setSelectedGradeBand('9-12'); // Snap Grade Band
+                          const eLA = ['English Language Arts'];
+                          const subjKey = Object.keys(MISSOURI_TOPICS).find(k => MISSOURI_TOPICS[k].includes(topic));
+                          if (eLA.includes(subjKey)) {
+                            setSelectedSubject('ELA'); // Snap Subject
+                          } else if (subjKey) {
+                            setSelectedSubject('SocialStudies');
+                          }
+                          e.target.value = ''; // reset after selection
+                        }} 
+                        className="w-full px-3 py-2 border border-blue-200 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 focus:bg-blue-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors cursor-pointer shadow-sm">
+                        <option value="">-- Choose High School Topic --</option>
+                        {Object.entries(MISSOURI_TOPICS).map(([category, topics]) => (
+                           <optgroup key={category} label={category}>
+                             {topics.map(t => <option key={t} value={t}>{t}</option>)}
+                           </optgroup>
+                        ))}
+                      </select>
+                   </div>
                 </div>
                 <div>
                    <label className="block text-xs font-bold text-slate-600 mb-1">Output Modality</label>

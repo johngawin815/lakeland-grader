@@ -1,0 +1,72 @@
+export const MISSOURI_TOPICS = {
+  "English Language Arts": [
+    "Reading comprehension of complex literary texts",
+    "Analysis of foundational documents and informational texts",
+    "Development of argumentative writing with cited evidence",
+    "Production of informative and explanatory essays",
+    "Crafting narrative writing and personal essays",
+    "Application of standard English grammar and usage",
+    "Acquisition of academic and domain specific vocabulary",
+    "Execution of the research process and source evaluation",
+    "Participation in collaborative academic discussions",
+    "Delivery of formal oral presentations"
+  ],
+  "Government": [
+    "Foundations and purposes of government systems",
+    "Principles and creation of the United States Constitution",
+    "Structure and function of the Missouri Constitution",
+    "Powers and processes of the legislative branch",
+    "Roles and responsibilities of the executive branch",
+    "Structure and jurisdiction of the judicial branch",
+    "Landmark Supreme Court decisions and legal precedents",
+    "Protection of civil liberties and civil rights",
+    "Development and impact of political parties",
+    "Mechanisms of electoral processes and voting",
+    "Formulation of domestic and foreign policy"
+  ],
+  "American History": [
+    "Consequences of the Post Reconstruction era",
+    "Westward expansion and Native American relations",
+    "Industrialization and the Gilded Age",
+    "Social and political reforms of the Progressive Era",
+    "American imperialism and global emergence",
+    "Causes and domestic impact of World War I",
+    "Cultural shifts of the Roaring Twenties",
+    "Economic collapse during the Great Depression",
+    "Federal expansion through the New Deal",
+    "Global and domestic impacts of World War II",
+    "Geopolitical strategies of the Cold War",
+    "Key figures and victories of the Civil Rights Movement",
+    "Social conflicts of the Vietnam War era",
+    "Contemporary political and economic developments"
+  ],
+  "World History": [
+    "Intellectual shifts of the Renaissance and Reformation",
+    "Global impacts of the Age of Exploration",
+    "Rise and fall of absolute monarchies",
+    "Innovations of the Scientific Revolution",
+    "Philosॉपhical concepts of the Enlightenment",
+    "Causes and outcomes of the French Revolution",
+    "Economic transformations of the Industrial Revolution",
+    "Motives and consequences of global imperialism",
+    "Alliances and destruction of World War I",
+    "Causes and impacts of the Russian Revolution",
+    "Economic instability of the Interwar Period",
+    "Global conflict and atrocities of World War II",
+    "Ideological division during the Cold War",
+    "Processes and challenges of decolonization",
+    "Modern globalization and international relations"
+  ],
+  "Civics": [
+    "Definitions and pathways of United States citizenship",
+    "Rights and responsibilities of active citizens",
+    "Mechanisms of local, state, and national elections",
+    "Evaluation of political media and propaganda",
+    "Structure and function of municipal and county governance",
+    "Dynamics of federalism and state power",
+    "Role of the justice system and rule of law",
+    "Formation and influence of public policy",
+    "Civic duty through community service and engagement",
+    "Preparation for the mandatory state civics examination"
+  ]
+};
