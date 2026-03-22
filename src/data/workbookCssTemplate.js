@@ -119,9 +119,9 @@ li { margin-bottom: 6px; }
 .header-row { display: flex; justify-content: space-between; align-items: flex-end; font-family: var(--font-heading); font-size: 10.5pt; border-bottom: 3px solid black; padding-bottom: 6px; margin-bottom: 12px; font-weight: 800; flex-shrink: 0; }
 .student-line { display: inline-block; width: 300px; border-bottom: 1px solid black; margin-left: 8px; }
 .page-footer { margin-top: auto; border-top: 2px solid black; padding-top: 6px; display: flex; justify-content: space-between; font-family: var(--font-heading); font-size: 9pt; text-transform: uppercase; font-weight: 800; flex-shrink: 0; color: #444; }
-\`;
+`;
 
-export const DYNAMIC_LAYOUT_REFERENCE = \`
+export const DYNAMIC_LAYOUT_REFERENCE = `
 MANDATORY HTML STRUCTURE REFERENCE — DYNAMIC GENERATIVE LAYOUT
 CRITICAL INSTRUCTION: You are an expert in Curriculum and Instruction with a specialization in brain-friendly worksheet development. You MUST dynamically design the layout of the worksheet or workbook to best fit the subject matter, reading level, and chosen activities.
 
@@ -146,4 +146,4 @@ However, you MUST strictly adhere to the following print rules for EVERY SINGLE 
 - Use standard HTML elements (h1, h2, p, ul, table) creatively combined with the provided CSS classes (e.g., .card, .highlight-box, .apple-table, .slide-box, .flashcard-grid, .vocab-grid, .checkpoint-box, .narrative-container, .ruled-input, etc.) dynamically.
 - You DO NOT need to use every class on every page. You SHOULD mix and match them depending on the task (e.g., Flash Cards should use .flashcard-grid, Reading Passages should use .narrative-container).
 - Think spatially: chunk information logically so as not to overwhelm a student. Use whitespace.
-\`;
+`;
