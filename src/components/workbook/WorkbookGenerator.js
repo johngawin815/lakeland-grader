@@ -20,7 +20,7 @@ import { MLS_STANDARDS } from '../../data/missouriStandards';
 import { generatePdfBlob } from '../../services/pdfService';
 import { uploadToOneDrive } from '../../services/oneDriveService';
 import { isMsalConfigured } from '../../config/msalInstance';
-import * as mammoth from 'mammoth/mammoth.browser.js';
+import * as mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Configure PDF.js worker
