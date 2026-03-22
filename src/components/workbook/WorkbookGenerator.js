@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   NotebookPen, Key, Sparkles, ArrowLeft, Printer,
-  Save, Loader2, Plus, AlertTriangle, Settings, Wrench,
+  Loader2, Plus, AlertTriangle, Settings, Wrench,
   Layers, LayoutTemplate, MonitorPlay, Network, FileText, GalleryHorizontalEnd, CheckSquare, Table, UploadCloud, ChevronDown, ChevronRight, Trash2, Search
 } from 'lucide-react';
 import { useAutoSave } from '../../hooks/useAutoSave';
@@ -18,9 +18,6 @@ import {
 } from '../../data/workbookCssTemplate';
 import { MLS_STANDARDS } from '../../data/missouriStandards';
 import { MISSOURI_TOPICS } from '../../data/missouriTopics';
-import { generatePdfBlob } from '../../services/pdfService';
-import { uploadToOneDrive } from '../../services/oneDriveService';
-import { isMsalConfigured } from '../../config/msalInstance';
 import * as mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -96,14 +93,7 @@ function buildPreviousDaysContext(savedWorkbooks) {
   return savedWorkbooks.map(w => `- Day ${w.dayNumber}`).join('\n');
 }
 
-function combineUnitHtml(workbooks) {
-  const bodies = workbooks.map(wb => {
-    const match = wb.htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    return match ? match[1] : wb.htmlContent;
-  });
-  const title = workbooks[0]?.unitTopic || 'Unit';
-  return `<!DOCTYPE html>\n<html lang="en"><head><meta charset="UTF-8">\n<title>${title} — Full Unit</title>\n<style>${PRINT_ENGINE_CSS}</style>\n</head><body>${bodies.join('\n')}</body></html>`;
-}
+// combineUnitHtml removed
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
@@ -114,7 +104,7 @@ const WorkbookGenerator = ({ user }) => {
 
   // API key setup
   const [keyInput, setKeyInput] = useState('');
-  const [showKey, setShowKey] = useState(false);
+  const [showKey] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
@@ -234,9 +224,9 @@ const WorkbookGenerator = ({ user }) => {
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewMeta, setPreviewMeta] = useState(null);
   const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(null);
-  const [repairMsg, setRepairMsg] = useState(null);
+  const [, setSaving] = useState(false);
+  const [, setSaveError] = useState(null);
+  const [, setRepairMsg] = useState(null);
   const [repairing, setRepairing] = useState(false);
   const iframeRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -828,7 +818,7 @@ const WorkbookGenerator = ({ user }) => {
          </div>
          <div className="flex-1 overflow-hidden bg-slate-200 p-2 sm:p-4">
             <div className="w-full h-full max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl border border-slate-300">
-               <iframe ref={iframeRef} srcDoc={previewHtml} className="w-full h-full border-0 bg-white" />
+               <iframe title="Workbook Preview" ref={iframeRef} srcDoc={previewHtml} className="w-full h-full border-0 bg-white" />
             </div>
          </div>
       </div>

@@ -163,7 +163,6 @@ const UnitRoster = ({ defaultUnit, user }) => {
                 iepDueDate: '',
                 uploadPasscode: '',
                 uploadedDocuments: [],
-                lastModified: new Date().toISOString(),
             };
             await databaseService.upsertStudent(newStudent);
             if (user) {
