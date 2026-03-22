@@ -316,7 +316,7 @@ const WorkbookGenerator = ({ user }) => {
 
       // NotebookLM Logic:
       if (sourceText.trim()) {
-        userPrompt += `\n\n=== STRICT SOURCE MATERIAL ANCHOR ===\nCRITICAL DIRECTIVE: You MUST base all generated content, worksheets, questions, facts, and slide information STRICTLY on the text provided below. Do not invent external historical facts or contexts outside of this text.\n\n[SOURCE TEXT START]\n${sourceText.trim()}\n[SOURCE TEXT END]`;
+        userPrompt += `\n\n=== STRICT SOURCE MATERIAL ANCHOR ===\nCRITICAL DIRECTIVE: You MUST base all generated content, worksheets, questions, facts, and slide information STRICTLY on the text provided below. \n1. CAREFULLY READ AND ANALYZE the context of the text.\n2. ALL VOCABULARY words must be selected directly from this text.\n3. ALL QUESTIONS (multiple choice, short answer, etc.) must test comprehension of THIS SPECIFIC text.\n4. DO NOT invent external historical facts, characters, or contexts outside of this text.\n\n[SOURCE TEXT START]\n${sourceText.trim()}\n[SOURCE TEXT END]`;
       }
 
       // Advanced Pedagogical Modulator
