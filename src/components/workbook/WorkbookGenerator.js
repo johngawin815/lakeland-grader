@@ -148,6 +148,7 @@ const WorkbookGenerator = ({ user }) => {
   // Handle File Upload (Securely Local)
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
+    const targetElement = e.target;
     if (!file) return;
     setFileStatus(`Parsing ${file.name}...`);
     
@@ -163,7 +164,8 @@ const WorkbookGenerator = ({ user }) => {
         setFileStatus(`Added ${file.name}`);
       } else if (file.type === 'application/pdf') {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(new Uint8Array(arrayBuffer)).promise;
+        const pdfParams = { data: new Uint8Array(arrayBuffer) };
+        const pdf = await pdfjsLib.getDocument(pdfParams).promise;
         let pdfText = '';
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
@@ -177,10 +179,13 @@ const WorkbookGenerator = ({ user }) => {
         setFileStatus('Unsupported file type. Use TXT, PDF, or DOCX.');
       }
     } catch (err) {
-      console.error(err);
-      setFileStatus('Error reading file.');
+      console.error('File Upload Error:', err);
+      // Fails securely, log actual error silently and show generic or sanitized message
+      setFileStatus('System Error securely reading the file.');
     } finally {
-      e.target.value = null; // reset
+      if (targetElement) {
+        targetElement.value = ''; // Correct way to reset an <input type="file"> component
+      }
     }
   };
 
