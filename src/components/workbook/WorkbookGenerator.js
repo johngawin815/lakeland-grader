@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   NotebookPen, Key, Sparkles, ArrowLeft, Printer,
   Save, Loader2, Plus, AlertTriangle, Settings, Wrench,
-  Layers, LayoutTemplate, MonitorPlay, Network, FileText, GalleryHorizontalEnd, CheckSquare, Table, UploadCloud
+  Layers, LayoutTemplate, MonitorPlay, Network, FileText, GalleryHorizontalEnd, CheckSquare, Table, UploadCloud, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { saveAs } from 'file-saver';
@@ -56,9 +56,14 @@ const QUESTION_STYLES = [
   'Short Answer Analytical', 'Extended Essay Scaffold'
 ];
 
+const VOCAB_ACTIVITIES = ['Auto (AI Chooses)', 'Semantic Gradients', 'Frayer Models', 'Morphology Matrices', 'Contextual Guessing Labs'];
+const GRAMMAR_ACTIVITIES = ['Auto (AI Chooses)', 'Sentence Combining (Hochman Method)', 'Mentor Sentence Analysis', 'Syntax Parsing'];
+const EDITING_ACTIVITIES = ['Auto (AI Chooses)', 'Rubric-Aligned Error Correction', 'Revising for Tone & Register', 'Peer-Review Scaffolds'];
+
+
 const MODALITIES = [
   { id: 'unit', label: 'Independent Unit (10-pg)', icon: Layers, template: STRUCTURAL_REFERENCE, group: 'Student Facing' },
-  { id: 'single', label: 'Single Activity (1-2 pg)', icon: LayoutTemplate, template: SINGLE_ACTIVITY_REFERENCE, group: 'Student Facing' },
+  { id: 'single', label: 'Flexible Worksheet (1-10 pg)', icon: LayoutTemplate, template: SINGLE_ACTIVITY_REFERENCE, group: 'Student Facing' },
   { id: 'flashcards', label: 'Printable Flash Cards', icon: GalleryHorizontalEnd, template: FLASH_CARD_REFERENCE, group: 'Student Facing' },
   { id: 'quiz', label: 'Quiz / Assessment', icon: CheckSquare, template: QUIZ_REFERENCE, group: 'Student Facing' },
   { id: 'slide', label: 'Slide Deck Outline', icon: MonitorPlay, template: SLIDE_DECK_REFERENCE, group: 'Teacher Tools' },
@@ -123,6 +128,7 @@ const WorkbookGenerator = ({ user }) => {
   const [readingLevel, setReadingLevel] = useState(READING_LEVELS[6].value);
   const [sourceText, setSourceText] = useState('');
   const [fileStatus, setFileStatus] = useState('');
+  const [targetPages, setTargetPages] = useState(2);
   
   // Specifics
   const [dayNumber, setDayNumber] = useState(1);
@@ -132,6 +138,12 @@ const WorkbookGenerator = ({ user }) => {
   const [selectedStandard, setSelectedStandard] = useState('');
   const [textStyle, setTextStyle] = useState(TEXT_STYLES[0]);
   const [questionStyle, setQuestionStyle] = useState(QUESTION_STYLES[0]);
+  
+  // Advanced Pedagogical Modulator
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [vocabActivity, setVocabActivity] = useState(VOCAB_ACTIVITIES[0]);
+  const [grammarActivity, setGrammarActivity] = useState(GRAMMAR_ACTIVITIES[0]);
+  const [editingActivity, setEditingActivity] = useState(EDITING_ACTIVITIES[0]);
   const fileInputRef = useRef(null);
 
   // Set initial standard when subject/grade band changes
@@ -184,15 +196,24 @@ const WorkbookGenerator = ({ user }) => {
   const saveFn = useCallback(async () => {
     await databaseService.saveWorkbookDraft({
       unitTopic, dayNumber, readingLevel, sourceText,
-      modality, selectedSubject, selectedGradeBand, selectedStandard, textStyle, questionStyle,
+      modality, targetPages, selectedSubject, selectedGradeBand, selectedStandard, textStyle, questionStyle,
+      vocabActivity, grammarActivity, editingActivity,
       lastModified: new Date().toISOString(),
       modifiedBy: user?.name || 'Unknown',
     });
     setIsDirty(false);
-  }, [unitTopic, dayNumber, readingLevel, sourceText, modality, selectedSubject, selectedGradeBand, selectedStandard, textStyle, questionStyle, user]);
+  }, [
+    unitTopic, dayNumber, readingLevel, sourceText, modality, targetPages, 
+    selectedSubject, selectedGradeBand, selectedStandard, textStyle, questionStyle, 
+    vocabActivity, grammarActivity, editingActivity, user
+  ]);
 
   useAutoSave(isDirty, saveFn, { delay: 3000, enabled: !!unitTopic });
-  useEffect(() => { if (unitTopic) setIsDirty(true); }, [unitTopic, dayNumber, readingLevel, modality, selectedStandard, textStyle, questionStyle, sourceText]);
+  useEffect(() => { if (unitTopic) setIsDirty(true); }, [
+    unitTopic, dayNumber, readingLevel, modality, targetPages,
+    selectedStandard, textStyle, questionStyle, sourceText, 
+    vocabActivity, grammarActivity, editingActivity
+  ]);
 
   // Generation
   const [streamText, setStreamText] = useState('');
@@ -280,20 +301,36 @@ const WorkbookGenerator = ({ user }) => {
         ].filter(Boolean).join('\n');
       } else {
         const stdText = MLS_STANDARDS[selectedSubject]?.gradeBands[selectedGradeBand]?.find(s => s.id === selectedStandard)?.text || '';
+        let lengthConstraint = '';
+        if (modality === 'single') {
+          lengthConstraint = `\n[TARGET PAGE LENGTH]: EXACTLY ${targetPages} PAGES. You MUST fulfill this by outputting exactly ${targetPages} <div class="print-page"> blocks separated properly.`;
+        }
+
         userPrompt = [
           `[OUTPUT MODALITY REQUIRED]: ${modConfig.label}`,
           `[Topic]: ${unitTopic.trim()}`,
           `[Standard Alignment]: ${selectedStandard} - ${stdText}`,
           `[Target Audience Reading Level]: ${readingLevel}`,
-          document && (modality === 'single' || modality === 'quiz') ? `[Text Style]: ${textStyle}` : '',
-          document && (modality === 'single' || modality === 'quiz') ? `[Question Format]: ${questionStyle}` : '',
+          lengthConstraint,
+          (modality === 'single' || modality === 'quiz') ? `[Text Style]: ${textStyle}` : '',
+          (modality === 'single' || modality === 'quiz') ? `[Question Format]: ${questionStyle}` : '',
           `\n${AUDIENCE_DIRECTIVE}`,
         ].filter(Boolean).join('\n');
       }
 
-      // NotebookLM Logic: If source text is provided, enforce strictly using it.
+      // NotebookLM Logic:
       if (sourceText.trim()) {
         userPrompt += `\n\n=== STRICT SOURCE MATERIAL ANCHOR ===\nCRITICAL DIRECTIVE: You MUST base all generated content, worksheets, questions, facts, and slide information STRICTLY on the text provided below. Do not invent external historical facts or contexts outside of this text.\n\n[SOURCE TEXT START]\n${sourceText.trim()}\n[SOURCE TEXT END]`;
+      }
+
+      // Advanced Pedagogical Modulator
+      const pedagogyOverrides = [];
+      if (vocabActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- VOCABULARY OVERRIDE: Center vocabulary instruction around the [${vocabActivity}] format.`);
+      if (grammarActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- GRAMMAR OVERRIDE: Focus grammar exercises on the [${grammarActivity}] framework.`);
+      if (editingActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- EDITING OVERRIDE: Utilize a [${editingActivity}] approach for revising and editing tasks.`);
+      
+      if (pedagogyOverrides.length > 0) {
+        userPrompt += `\n\n=== ADVANCED PEDAGOGICAL OVERRIDES ===\nCRITICAL DIRECTIVE: You MUST utilize the following specific frameworks instead of your default strategies:\n` + pedagogyOverrides.join('\n');
       }
 
       let html = await generateWorkbook({
@@ -472,7 +509,7 @@ const WorkbookGenerator = ({ user }) => {
            </button>
         </div>
         <div className="flex-1 overflow-auto p-4 md:p-6">
-           <div className="max-w-2xl mx-auto space-y-6">
+           <div className="max-w-2xl mx-auto space-y-6 pb-20">
              
              {/* TOPIC & MODE BLOCK */}
              <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
@@ -494,6 +531,17 @@ const WorkbookGenerator = ({ user }) => {
                      })}
                    </div>
                 </div>
+                {/* PAGE LENGTH SLIDER */}
+                {modality === 'single' && (
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-xs font-bold text-slate-800">Target Worksheet Length</label>
+                      <span className="text-xs font-extrabold text-blue-600 bg-blue-100 px-2 py-1 rounded-md">{targetPages} {targetPages === '1' ? 'Page' : 'Pages'}</span>
+                    </div>
+                    <input type="range" min="1" max="10" value={targetPages} onChange={e => setTargetPages(e.target.value)} className="w-full accent-blue-600 cursor-pointer" />
+                    <p className="text-[10px] text-slate-500 mt-2">Gemini will algorithmically expand or condense the generated content to adhere exactly to this page count.</p>
+                  </div>
+                )}
              </div>
 
              {/* SOURCE / NOTEBOOK LM BLOCK */}
@@ -573,6 +621,40 @@ const WorkbookGenerator = ({ user }) => {
                        </div>
                      )}
                   </div>
+                )}
+             </div>
+
+             {/* ADVANCED PEDAGOGY ACCORDION */}
+             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full px-5 py-4 flex justify-between items-center text-left hover:bg-slate-50">
+                   <div>
+                     <span className="block text-sm font-extrabold text-slate-800">Advanced Pedagogical Modulator</span>
+                     <span className="block text-[10px] text-slate-500">Force specific vocabulary, grammar, and editing frameworks (Optional)</span>
+                   </div>
+                   {showAdvanced ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                </button>
+                
+                {showAdvanced && (
+                   <div className="p-5 border-t bg-slate-50/50 space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Vocabulary Modulator</label>
+                        <select value={vocabActivity} onChange={e => setVocabActivity(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none">
+                           {VOCAB_ACTIVITIES.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Grammar Modulator</label>
+                        <select value={grammarActivity} onChange={e => setGrammarActivity(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none">
+                           {GRAMMAR_ACTIVITIES.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Editing & Revision Modulator</label>
+                        <select value={editingActivity} onChange={e => setEditingActivity(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none">
+                           {EDITING_ACTIVITIES.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+                   </div>
                 )}
              </div>
 
