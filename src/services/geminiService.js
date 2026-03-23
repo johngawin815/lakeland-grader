@@ -18,20 +18,25 @@ export const setModel = (m) => localStorage.setItem(MODEL_KEY, m);
 // ─── ZOD SCHEMAS ─────────────────────────────────────────────────────────────
 
 export const WorkbookSchema = z.object({
-  tier: z.string(),
-  teacher_key: z.object({
-    expected_answers: z.array(z.string()),
-    grading_rubric_notes: z.string()
+  document_metadata: z.object({
+    topic: z.string(),
+    tier_level: z.string()
   }),
+  teacher_key: z.array(z.object({
+    question_id: z.string(),
+    answer: z.string(),
+    dok_level: z.number()
+  })),
   student_workbook: z.object({
-    reading_passage_blocks: z.array(z.object({
-      text: z.string(),
-      bold_vocab_words: z.array(z.string())
-    })),
-    tasks: z.array(z.object({
-      dok_level: z.number(),
-      prompt: z.string(),
-      sentence_starter_scaffold: z.string().optional().nullable()
+    reading_passage: z.string(),
+    activities: z.array(z.object({
+      activity_title: z.string(),
+      required_image_description: z.string().nullable().optional(),
+      questions: z.array(z.object({
+        question_id: z.string(),
+        prompt: z.string(),
+        sentence_starter: z.string().nullable().optional()
+      }))
     }))
   })
 });
@@ -61,7 +66,7 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onProgress, s
 
   if (onProgress) onProgress('Generating JSON workload across Tiers (30-60s)...');
 
-  const enrichedPrompt = userPrompt + '\\n\\nCRITICAL: You MUST respond in pure JSON matching the EXACT schema layout below. Do NOT use markdown code blocks.\\n```json\\n{ "workbooks": [ { "tier": "Tier 1", "teacher_key": { "expected_answers": ["string"], "grading_rubric_notes": "string" }, "student_workbook": { "reading_passage_blocks": [ { "text": "string", "bold_vocab_words": ["string"] } ], "tasks": [ { "dok_level": 2, "prompt": "string", "sentence_starter_scaffold": "string (optional)" } ] } } ] }\\n```\\n';
+  const enrichedPrompt = userPrompt + '\\n\\nCRITICAL: You MUST respond in pure JSON matching the EXACT schema layout below. Do NOT use markdown code blocks.\\n```json\\n{ "workbooks": [ { "document_metadata": { "topic": "string", "tier_level": "string" }, "teacher_key": [ { "question_id": "1", "answer": "string", "dok_level": 2 } ], "student_workbook": { "reading_passage": "string (Markdown with **bold** instead of HTML)", "activities": [ { "activity_title": "string", "required_image_description": "string or null", "questions": [ { "question_id": "1a", "prompt": "string", "sentence_starter": "string ending in a blank or null" } ] } ] } } ] }\\n```\\n';
 
   const result = await model.generateContentStream(enrichedPrompt);
 

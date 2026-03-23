@@ -78,24 +78,18 @@ const styles = StyleSheet.create({
   }
 });
 
-const renderPassageWithBoldWords = (text, boldWords) => {
-  if (!boldWords || boldWords.length === 0) return <Text>{text}</Text>;
-  
-  // Create a safe regex pattern that matches any of the bold words
-  const escapedWords = boldWords.map(w => w.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'));
-  const regex = new RegExp(`(${escapedWords.join('|')})`, 'gi');
-  
-  const parts = text.split(regex);
+const renderMarkdownPassage = (text) => {
+  if (!text) return null;
+  // Splits by **bold** tags and captures them
+  const parts = text.split(/(\*\*.*?\*\*)/g);
   return (
     <Text>
       {parts.map((part, index) => {
-        // Checking if the part matches any bold word (case insensitive)
-        const isBold = boldWords.some(w => w.toLowerCase() === part.toLowerCase());
-        return (
-          <Text key={index} style={isBold ? styles.bold : styles.normal}>
-            {part}
-          </Text>
-        );
+        if (part.startsWith('**') && part.endsWith('**')) {
+          // Slice off the ** from the start and end
+          return <Text key={index} style={styles.bold}>{part.slice(2, -2)}</Text>;
+        }
+        return <Text key={index} style={styles.normal}>{part}</Text>;
       })}
     </Text>
   );
@@ -104,56 +98,65 @@ const renderPassageWithBoldWords = (text, boldWords) => {
 export const WorkbookPdfDocument = ({ data, primarySourceImage, meta }) => {
   if (!data) return null;
 
+  const tierLevel = data.document_metadata?.tier_level || 'General';
+  const topic = data.document_metadata?.topic || meta?.unitTopic || 'Topic Overview';
+
   return (
     <Document>
       {/* TEACHER KEY PAGE */}
       <Page style={styles.page}>
-        <Text style={styles.header}>Teacher Key - {data.tier}</Text>
-        <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 14 }}>{meta?.unitTopic || 'Topic Overview'}</Text>
+        <Text style={styles.header}>Teacher Key - {tierLevel}</Text>
+        <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 14 }}>{topic}</Text>
         
         <Text style={styles.sectionTitle}>Expected Answers</Text>
         <View style={styles.list}>
-          {data.teacher_key.expected_answers.map((ans, i) => (
-            <Text key={i} style={styles.listItem}>• {ans}</Text>
+          {data.teacher_key && data.teacher_key.map((ans, i) => (
+            <Text key={i} style={styles.listItem}>• {ans.question_id}: (DOK {ans.dok_level}) {ans.answer}</Text>
           ))}
         </View>
-        
-        <Text style={styles.sectionTitle}>Grading Rubric & Notes</Text>
-        <Text style={styles.teacherNotes}>{data.teacher_key.grading_rubric_notes}</Text>
       </Page>
 
       {/* STUDENT WORKBOOK PAGE(S) */}
       <Page style={styles.page}>
-        <Text style={styles.header}>Student Workbook - {data.tier}</Text>
-        <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 14 }}>{meta?.unitTopic || 'Topic Overview'}</Text>
+        <Text style={styles.header}>Student Workbook - {tierLevel}</Text>
+        <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 14 }}>{topic}</Text>
         
         {primarySourceImage && (
           <Image src={primarySourceImage} style={styles.image} />
         )}
 
-        {data.student_workbook.reading_passage_blocks && data.student_workbook.reading_passage_blocks.length > 0 && (
+        {data.student_workbook?.reading_passage && (
           <View>
             <Text style={styles.sectionTitle}>Reading Passage</Text>
-            {data.student_workbook.reading_passage_blocks.map((block, i) => (
-              <View key={i} style={styles.paragraph}>
-                {renderPassageWithBoldWords(block.text, block.bold_vocab_words)}
-              </View>
-            ))}
+            <View style={styles.paragraph}>
+              {renderMarkdownPassage(data.student_workbook.reading_passage)}
+            </View>
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Tasks & Activities</Text>
-        {data.student_workbook.tasks.map((task, i) => (
-          <View key={i} style={styles.taskContainer} wrap={false}>
-            <Text style={styles.taskPrompt}>{i + 1}. (DOK {task.dok_level}) {task.prompt}</Text>
-            {task.sentence_starter_scaffold && (
-              <Text style={styles.taskScaffold}>Sentence Starter: {task.sentence_starter_scaffold}</Text>
+        {data.student_workbook?.activities && data.student_workbook.activities.map((activity, actIdx) => (
+          <View key={actIdx} wrap={false}>
+            <Text style={styles.sectionTitle}>{activity.activity_title}</Text>
+            
+            {activity.required_image_description && (
+              <Text style={{ fontStyle: 'italic', marginBottom: 10 }}>[Image Description: {activity.required_image_description}]</Text>
             )}
-            <View style={styles.lines}></View>
-            <View style={styles.lines}></View>
-            <View style={styles.lines}></View>
-            <View style={styles.lines}></View>
-            <View style={{ marginBottom: 10 }}></View>
+
+            {activity.questions && activity.questions.map((q, qIdx) => (
+              <View key={qIdx} style={styles.taskContainer} wrap={false}>
+                <Text style={styles.taskPrompt}>{q.question_id}. {q.prompt}</Text>
+                {q.sentence_starter ? (
+                  <Text style={styles.taskScaffold}>{q.sentence_starter} _______________</Text>
+                ) : (
+                  <>
+                    <View style={styles.lines}></View>
+                    <View style={styles.lines}></View>
+                    <View style={styles.lines}></View>
+                  </>
+                )}
+                <View style={{ marginBottom: 10 }}></View>
+              </View>
+            ))}
           </View>
         ))}
       </Page>
