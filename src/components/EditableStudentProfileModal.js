@@ -148,6 +148,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
         homeSchoolAddress: formData.homeSchoolAddress || '',
         uploadPasscode: uploadPasscode,
         uploadedDocuments: uploadedDocuments,
+        active: formData.expectedDischargeDate ? false : (studentData.active !== undefined ? studentData.active : true),
         lastModified: new Date().toISOString(),
       };
       // Explicitly remove any lingering MTP data
@@ -474,9 +475,30 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
 
       {/* Status Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${studentData.active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' : 'bg-slate-100 text-slate-500 border border-slate-200/60'}`}>
-          {studentData.active !== false ? 'Active' : 'Discharged'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${studentData.active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' : 'bg-slate-100 text-slate-500 border border-slate-200/60'}`}>
+            {studentData.active !== false ? 'Active' : 'Discharged'}
+          </span>
+          <button
+            type="button"
+            onClick={async () => {
+              if (window.confirm(`Are you sure you want to delete ${studentData.studentName}? This cannot be undone.`)) {
+                try {
+                  await databaseService.deleteStudent(studentData.id);
+                  if (user) await databaseService.logAudit(user, 'DeleteStudent', `Deleted student: ${studentData.studentName}`);
+                  onClose();
+                  if (onSaved) onSaved();
+                } catch (err) {
+                  alert('Failed to delete student.');
+                }
+              }
+            }}
+            className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-400 hover:text-rose-600 px-2 py-1 rounded hover:bg-rose-50 transition-colors"
+          >
+            <Trash2 className="w-3 h-3" />
+            Delete Student
+          </button>
+        </div>
         <span className="text-xs text-slate-400 font-mono">{studentData.id}</span>
       </div>
     </>
@@ -699,9 +721,31 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
 
       {/* Status Footer */}
       <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
-        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${studentData.active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' : 'bg-slate-100 text-slate-500 border border-slate-200/60'}`}>
-          {studentData.active !== false ? '● Active' : '○ Discharged'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${studentData.active !== false ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' : 'bg-slate-100 text-slate-500 border border-slate-200/60'}`}>
+            {studentData.active !== false ? '● Active' : '○ Discharged'}
+          </span>
+          <button
+            type="button"
+            onClick={async () => {
+              if (window.confirm(`Are you sure you want to delete ${studentData.studentName}? This cannot be undone.`)) {
+                try {
+                  await databaseService.deleteStudent(studentData.id);
+                  if (user) await databaseService.logAudit(user, 'DeleteStudent', `Deleted student: ${studentData.studentName}`);
+                  onClose();
+                  if (onSaved) onSaved();
+                } catch (err) {
+                  alert('Failed to delete student.');
+                }
+              }
+            }}
+            className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-400 hover:text-rose-600 px-1.5 py-0.5 rounded hover:bg-rose-50 transition-colors"
+          >
+            <Trash2 className="w-3 h-3" />
+            Delete
+          </button>
+        </div>
+
         <span className="text-[10px] text-slate-400 font-mono">{studentData.id}</span>
       </div>
     </>

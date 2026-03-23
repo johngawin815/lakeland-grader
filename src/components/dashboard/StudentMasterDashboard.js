@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, Search, FileCheck } from 'lucide-react';
+import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, Search, FileCheck, Trash2 } from 'lucide-react';
+
 import ClassGradebook from '../grading/ClassGradebook';
 import EnrollmentManager from './EnrollmentManager';
 import IntakeForm from './IntakeForm';
@@ -199,6 +200,23 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
     const iepCount = filteredRoster.filter(s => s.iep === 'Yes').length;
 
+    const handleDeleteStudent = async (e, student) => {
+        e.stopPropagation();
+        if (window.confirm(`Are you sure you want to delete ${student.studentName}? This action cannot be undone.`)) {
+            try {
+                await databaseService.deleteStudent(student.id);
+                if (user) {
+                    await databaseService.logAudit(user, 'DeleteStudent', `Deleted student: ${student.studentName} (ID: ${student.id})`);
+                }
+                fetchRoster();
+                loadCounts();
+            } catch (err) {
+                console.error('Failed to delete student:', err);
+                alert('System Error: Failed to delete student.');
+            }
+        }
+    };
+
     return (
         <div className="flex-1 flex flex-col overflow-hidden h-full">
             {/* Unit Selector + Search + Add Student */}
@@ -306,6 +324,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                         student={student}
                                         isSelected={selectedStudentProfile?.id === student.id}
                                         onSelect={() => setSelectedStudentProfile(student)}
+                                        onDelete={(e) => handleDeleteStudent(e, student)}
                                     />
                                 ))}
                             </div>
@@ -317,6 +336,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                         student={student}
                                         isSelected={selectedStudentProfile?.id === student.id}
                                         onSelect={() => setSelectedStudentProfile(student)}
+                                        onDelete={(e) => handleDeleteStudent(e, student)}
                                         user={user}
                                     />
                                 ))}
@@ -354,7 +374,8 @@ const UnitRoster = ({ defaultUnit, user }) => {
     );
 };
 
-const StudentListItem = ({ student, onSelect, isSelected }) => {
+const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
+
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
     const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
 
@@ -385,7 +406,7 @@ const StudentListItem = ({ student, onSelect, isSelected }) => {
             </div>
             <div className="flex-1 min-w-0">
                 <div className={`text-sm font-semibold truncate ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
-                    {student.studentName}
+                    {initials}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-[11px] text-slate-400">Gr {student.gradeLevel}</span>
@@ -405,11 +426,19 @@ const StudentListItem = ({ student, onSelect, isSelected }) => {
             <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-colors ${
                 isSelected ? 'text-indigo-500' : 'text-slate-300'
             }`} />
+            <button
+                onClick={onDelete}
+                className="p-1.5 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
+                title="Delete Student"
+            >
+                <Trash2 className="w-3.5 h-3.5" />
+            </button>
         </button>
     );
 };
 
-const StudentCard = ({ student, onSelect, isSelected, user }) => {
+const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
+
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
     const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
     const Icon = unitStyle?.icon || UserCheck;
@@ -461,7 +490,7 @@ const StudentCard = ({ student, onSelect, isSelected, user }) => {
                     </div>
                     <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm text-slate-800 leading-tight truncate group-hover:text-indigo-600 transition-colors">
-                            {student.studentName}
+                            {initials}
                         </h3>
                         <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-[11px] text-slate-500 font-medium">Gr {student.gradeLevel}</span>
@@ -472,6 +501,13 @@ const StudentCard = ({ student, onSelect, isSelected, user }) => {
                     <ChevronRight className={`w-4 h-4 text-slate-300 shrink-0 transition-all ${
                         isSelected ? 'text-indigo-500' : 'opacity-0 group-hover:opacity-100 group-hover:text-indigo-400'
                     }`} />
+                    <button
+                        onClick={onDelete}
+                        className="p-1.5 rounded-md text-slate-200 hover:text-rose-500 hover:bg-rose-50 transition-all group-hover:opacity-100 opacity-0"
+                        title="Delete Student"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                 </div>
 
                 {/* Row 2: Badges */}
