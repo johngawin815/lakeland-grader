@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   NotebookPen, Key, Sparkles, ArrowLeft, Printer,
-  Loader2, Plus, AlertTriangle, Settings, Wrench,
+  Loader2, Plus, AlertTriangle, Settings,
   Layers, LayoutTemplate, MonitorPlay, Network, FileText, GalleryHorizontalEnd, CheckSquare, Table, UploadCloud, ChevronDown, ChevronRight, Trash2, Search
 } from 'lucide-react';
 import { useAutoSave } from '../../hooks/useAutoSave';
@@ -9,7 +9,7 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import {
   hasApiKey, getApiKey, setApiKey,
-  generateWorkbook, repairWorkbook, testConnection
+  generateWorkbook, testConnection
 } from '../../services/geminiService';
 import { MLS_STANDARDS } from '../../data/missouriStandards';
 import { MISSOURI_TOPICS } from '../../data/missouriTopics';
@@ -275,9 +275,6 @@ const WorkbookGenerator = ({ user }) => {
   const [saved, setSaved] = useState(false);
   const [, setSaving] = useState(false);
   const [, setSaveError] = useState(null);
-  const [, setRepairMsg] = useState(null);
-  const [repairing, setRepairing] = useState(false);
-  const iframeRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
 
   // ─── LOAD LIBRARY ────────────────────────────────────────────────────────
@@ -417,11 +414,7 @@ const WorkbookGenerator = ({ user }) => {
     } catch (err) { setSaveError(err.message); } finally { setSaving(false); }
   };
 
-  const handleRepair = () => {
-    // Repair not applicable for strict Zod JSON unless extending AI calls
-    setRepairMsg({ type: 'success', text: 'Zod JSON logic is strictly verified on generation.' });
-    setTimeout(() => setRepairMsg(null), 3000);
-  };
+
 
   const handleDownload = () => {
     if (!previewData || !previewMeta) return;

@@ -75,7 +75,7 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onProgress, s
   if (onProgress) onProgress(accumulated + '\\n\\n[SYSTEM]: Validating Schema with Zod...');
   
   try {
-    const cleanJson = accumulated.replace(/\`\`\`(json)?/gi, '').trim();
+    const cleanJson = accumulated.replace(/```(json)?/gi, '').trim();
     const parsed = JSON.parse(cleanJson);
     const validated = BatchWorkbookSchema.parse(parsed);
     if (onProgress) onProgress('Rendering PDF...');
