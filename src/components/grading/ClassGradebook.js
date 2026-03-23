@@ -25,11 +25,12 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
   // --- CENTRAL STATE via custom hook ---
   const {
-    students, assignments, categories, grades, attendance,
+    students, assignments, categories, grades, gradeNotes, attendance,
     finalGrades, loading, dirty, previousGrades,
     getCategoryPercentage, getTotalAbsences,
     handleGradeChange: rawGradeChange,
-    handleAddAssignment, handleBulkFill,
+    handleGradeNoteChange,
+    handleAddAssignment, handleUpdateAssignment, handleBulkFill,
     handleAttendanceUpdate, handleUpdateCategories,
     markClean,
   } = useGradebook(course?.id, user?.units);
@@ -122,13 +123,14 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
       categories,
       attendance,
       grades,
+      gradeNotes,
       lastUpdated: new Date().toISOString(),
     });
 
     markClean();
     databaseService.logAudit(user, 'SaveGrades', `Auto-saved ${students.length} student grades for ${course.courseName}.`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [course, user, students, finalGrades, assignments, categories, attendance, grades, markClean]);
+  }, [course, user, students, finalGrades, assignments, categories, attendance, grades, gradeNotes, markClean]);
 
   const { saveStatus, lastSavedAt, forceSave } = useAutoSave(dirty, saveFn, {
     delay: 2500,
@@ -383,12 +385,15 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
                   assignments={assignments}
                   categories={categories}
                   grades={grades}
+                  gradeNotes={gradeNotes}
                   finalGrades={finalGrades}
                   onGradeChange={handleGradeChange}
+                  onGradeNoteChange={handleGradeNoteChange}
                   onStudentClick={setSelectedStudentForPanel}
                   onExportClick={() => {}}
                   onGradeCardClick={handleGenerateGradeCard}
                   onBulkFill={handleBulkFill}
+                  onEditAssignment={(a) => setActiveModal({ type: 'assignment', data: a })}
                 />
               </div>
             </div>
@@ -478,10 +483,11 @@ const ClassGradebook = ({ course, user, onExit, onNavigateToGradeCards, backLabe
 
       {/* EXTRACTED MODALS */}
       <NewAssignmentModal
-        isOpen={activeModal === 'assignment'}
+        isOpen={activeModal === 'assignment' || activeModal?.type === 'assignment'}
         onClose={() => setActiveModal(null)}
         categories={categories}
-        onSave={handleAddAssignment}
+        onSave={activeModal?.type === 'assignment' ? handleUpdateAssignment : handleAddAssignment}
+        initialData={activeModal?.type === 'assignment' ? activeModal.data : null}
       />
 
       <WeightSettingsModal

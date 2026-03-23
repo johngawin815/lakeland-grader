@@ -21,6 +21,7 @@ export function useGradebook(courseId, userUnits) {
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState(false);
   const [previousGrades, setPreviousGrades] = useState({});
+  const [gradeNotes, setGradeNotes] = useState({});
 
   // --- DATA FETCHING ---
   useEffect(() => {
@@ -143,6 +144,7 @@ export function useGradebook(courseId, userUnits) {
           if (savedGradebook.categories?.length > 0) setCategories(savedGradebook.categories);
           if (savedGradebook.attendance) setAttendance(savedGradebook.attendance);
           if (savedGradebook.grades) setGrades(savedGradebook.grades);
+          if (savedGradebook.gradeNotes) setGradeNotes(savedGradebook.gradeNotes);
         }
       } catch (error) {
         console.error("Failed to load gradebook data:", error);
@@ -230,12 +232,18 @@ export function useGradebook(courseId, userUnits) {
     setDirty(true);
   }, []);
 
+  const handleUpdateAssignment = useCallback((updatedAssignment) => {
+    setAssignments(prev => prev.map(a => a.id === updatedAssignment.id ? updatedAssignment : a));
+    setDirty(true);
+  }, []);
+
   const handleDeleteAssignment = useCallback((assignmentId) => {
     setAssignments(prev => prev.filter(a => a.id !== assignmentId));
     setDirty(true);
   }, []);
 
   const handleBulkFill = useCallback((assignmentId, value) => {
+    if (value === undefined || value === null) return;
     setGrades(prev => {
       const newGrades = { ...prev };
       students.forEach(student => {
@@ -246,6 +254,14 @@ export function useGradebook(courseId, userUnits) {
     });
     setDirty(true);
   }, [students]);
+
+  const handleGradeNoteChange = useCallback((studentId, assignmentId, note) => {
+    setGradeNotes(prev => ({
+      ...prev,
+      [studentId]: { ...(prev[studentId] || {}), [assignmentId]: note },
+    }));
+    setDirty(true);
+  }, []);
 
   const handleAttendanceUpdate = useCallback((date, studentId, status) => {
     setAttendance(prev => ({
@@ -270,6 +286,7 @@ export function useGradebook(courseId, userUnits) {
     assignments,
     categories,
     grades,
+    gradeNotes,
     attendance,
     loading,
     dirty,
@@ -285,7 +302,9 @@ export function useGradebook(courseId, userUnits) {
 
     // Handlers
     handleGradeChange,
+    handleGradeNoteChange,
     handleAddAssignment,
+    handleUpdateAssignment,
     handleDeleteAssignment,
     handleBulkFill,
     handleAttendanceUpdate,
