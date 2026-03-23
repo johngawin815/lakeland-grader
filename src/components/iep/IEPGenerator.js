@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   FileCheck, Search, Loader2, CheckCircle, AlertTriangle,
   Sparkles, Target, BookOpen, Plus, Download, Save,
-  Users, Trash2, Star, X, ChevronRight, RefreshCw,
+  Users, Trash2, Star, X,
   ChevronDown, ChevronUp, User, Calendar, ClipboardList, Settings, Briefcase, GraduationCap,
 } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, Search, FileCheck, Trash2 } from 'lucide-react';
 
 import ClassGradebook from '../grading/ClassGradebook';
@@ -77,7 +77,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
     const [unitCounts, setUnitCounts] = useState({});
     const { refreshTrigger } = useStudent();
 
-    const loadCounts = async () => {
+    const loadCounts = useCallback(async () => {
         try {
             const all = await databaseService.getAllStudents();
             const counts = {};
@@ -91,13 +91,13 @@ const UnitRoster = ({ defaultUnit, user }) => {
             });
             setUnitCounts(counts);
         } catch (err) { console.error('Failed to load unit counts:', err); }
-    };
+    }, []);
 
     useEffect(() => {
         loadCounts();
-    }, [refreshTrigger]);
+    }, [refreshTrigger, loadCounts]);
 
-    const fetchRoster = async () => {
+    const fetchRoster = useCallback(async () => {
         setLoading(true);
         try {
             let students;
@@ -112,12 +112,12 @@ const UnitRoster = ({ defaultUnit, user }) => {
             setRoster([]);
         }
         setLoading(false);
-    };
+    }, [selectedUnit]);
 
     useEffect(() => {
         fetchRoster();
         loadCounts();
-    }, [selectedUnit, refreshTrigger]);
+    }, [selectedUnit, refreshTrigger, fetchRoster, loadCounts]);
 
     useEffect(() => {
         if (selectedStudentProfile) {

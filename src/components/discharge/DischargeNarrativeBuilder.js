@@ -3,7 +3,7 @@ import {
   FileText, Search, Loader2, CheckCircle, AlertTriangle,
   Sparkles, Download, Printer, ChevronDown, ChevronUp,
   ArrowRight, TrendingUp, TrendingDown, ClipboardList,
-  MessageSquare, StickyNote, BookOpen, User, Calendar, GraduationCap, Save, Edit2
+  MessageSquare, StickyNote, BookOpen, User, Calendar, GraduationCap, Save
 } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
 import { getStudentInitials } from '../../utils/studentUtils';
