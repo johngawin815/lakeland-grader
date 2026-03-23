@@ -99,8 +99,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
   const unitStyle = UNIT_OPTIONS.find(u => u.key === (watchedUnit || studentData?.unitName))
     || { bg: 'bg-slate-400', badge: 'bg-slate-100 text-slate-600', light: 'bg-slate-50', text: 'text-slate-700' };
 
-  const initials = (studentData?.firstName?.[0] || studentData?.studentName?.[0] || '') +
-    (studentData?.lastName?.[0] || studentData?.studentName?.split(' ')[1]?.[0] || '');
+  const initials = (studentData?.studentName || '').split(/\s+/).map(p => p[0] || '').join('').toUpperCase();
 
   const admitDate = studentData?.admitDate ? new Date(studentData.admitDate) : null;
   const today = new Date();

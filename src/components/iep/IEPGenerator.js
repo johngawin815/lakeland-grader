@@ -793,7 +793,7 @@ const IEPGenerator = ({ user }) => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white bg-slate-400">
-                        {s.firstName?.[0]}{s.lastName?.[0]}
+                        {(s.studentName || '').split(/\s+/).map(p => p[0] || '').join('').toUpperCase()}
                       </div>
                       <div>
                         <div className="font-bold text-slate-800">{s.studentName}</div>

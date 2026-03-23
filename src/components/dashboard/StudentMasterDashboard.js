@@ -377,7 +377,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
 const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
 
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
-    const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
+    const initials = (student.studentName || '').split(/\s+/).map(part => part[0] || '').join('').toUpperCase();
 
     let iepDueUrgent = false;
     if (student.iepDueDate) {
@@ -440,7 +440,7 @@ const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
 const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
 
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
-    const initials = (student.firstName?.[0] || '') + (student.lastName?.[0] || '');
+    const initials = (student.studentName || '').split(/\s+/).map(part => part[0] || '').join('').toUpperCase();
     const Icon = unitStyle?.icon || UserCheck;
     const [enrolling, setEnrolling] = useState(false);
     const [enrollResult, setEnrollResult] = useState(null);
