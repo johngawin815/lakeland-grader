@@ -295,7 +295,17 @@ const WorkbookGenerator = ({ user }) => {
 
   useEffect(() => {
     if (modality === 'unit' && unitTopic.trim()) {
-      const handleGenerate = async () => {
+      (async () => {
+        const existing = await databaseService.getWorkbooksByUnit(unitTopic.trim());
+        setUnitWorkbooks(existing);
+        if (existing.length > 0) setDayNumber(Math.min(Math.max(...existing.map(w => w.dayNumber || 0)) + 1, 8));
+      })();
+    } else { setUnitWorkbooks([]); }
+  }, [unitTopic, modality]);
+
+  // ─── GENERATE ─────────────────────────────────────────────────────────────
+
+  const handleGenerate = async () => {
     setView('generating');
     setStreamText('');
     setGenError('');
