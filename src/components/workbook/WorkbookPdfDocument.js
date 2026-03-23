@@ -60,7 +60,8 @@ const styles = StyleSheet.create({
   activityTitleBlock: {
     backgroundColor: '#334155',
     borderRadius: 8,
-    padding: '8 16',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     marginTop: 20,
     marginBottom: 12,
   },

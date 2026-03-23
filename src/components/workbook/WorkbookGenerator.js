@@ -21,6 +21,37 @@ import { WorkbookPdfDocument } from './WorkbookPdfDocument';
 // Configure PDF.js worker (Updated for pdfjs-dist v4/v5 which uses .mjs)
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
+// ─── ERROR BOUNDARY ──────────────────────────────────────────────────────────
+
+class PDFErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, errorInfo) { console.error("PDF Rendering Error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-12 text-center bg-white rounded-xl">
+          <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
+          <h3 className="text-lg font-bold text-slate-900 mb-2">PDF Preview Failed</h3>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+            There was a technical issue rendering the visual preview. However, your data is safe and you can still try downloading the JSON.
+          </p>
+          <div className="text-[10px] font-mono bg-slate-100 p-3 rounded border text-slate-600 overflow-auto max-w-full">
+            {this.state.error?.message}
+          </div>
+          <button onClick={() => window.location.reload()} className="mt-6 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold">
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const READING_LEVELS = [
@@ -581,7 +612,7 @@ const WorkbookGenerator = ({ user }) => {
                                </div>
                              </div>
                            ))}
-                           {document && group.unit.length > 0 && group.unit.length < 8 && (
+                           {group.unit.length > 0 && group.unit.length < 8 && (
                              <div onClick={() => { setUnitTopic(group.unitTopic); setModality('unit'); setDayNumber(group.unit.length+1); setView('form'); }} className="border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-blue-300 transition-all group/add min-h-[160px]">
                                 <div className="w-12 h-12 rounded-full bg-slate-100 group-hover/add:bg-blue-50 flex items-center justify-center mb-3 transition-colors">
                                    <Plus className="w-6 h-6 text-slate-400 group-hover/add:text-blue-500" />
@@ -883,9 +914,11 @@ const WorkbookGenerator = ({ user }) => {
          <div className="flex-1 overflow-hidden bg-slate-200 p-2 sm:p-4">
             <div className="w-full h-full mx-auto rounded-xl overflow-hidden drop-shadow-2xl border border-slate-300 bg-white flex flex-col">
                {previewData?.workbooks && previewData.workbooks[activeTierIndex] ? (
-                 <PDFViewer width="100%" height="100%" className="border-0">
-                   <WorkbookPdfDocument data={previewData.workbooks[activeTierIndex]} primarySourceImage={primarySourceImage} meta={previewMeta} />
-                 </PDFViewer>
+                 <PDFErrorBoundary>
+                   <PDFViewer width="100%" height="100%" className="border-0">
+                     <WorkbookPdfDocument data={previewData.workbooks[activeTierIndex]} primarySourceImage={primarySourceImage} meta={previewMeta} />
+                   </PDFViewer>
+                 </PDFErrorBoundary>
                ) : (
                  <div className="flex items-center justify-center p-12 text-slate-400">Loading PDF Data...</div>
                )}
