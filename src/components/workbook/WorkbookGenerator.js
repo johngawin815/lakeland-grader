@@ -57,14 +57,14 @@ const EDITING_ACTIVITIES = ['Auto (AI Chooses)', 'Rubric-Aligned Error Correctio
 
 
 const MODALITIES = [
-  { id: 'unit', label: 'Independent Unit (10-pg)', icon: Layers, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Student Facing' },
-  { id: 'single', label: 'Flexible Worksheet (1-10 pg)', icon: LayoutTemplate, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Student Facing' },
-  { id: 'flashcards', label: 'Printable Flash Cards', icon: GalleryHorizontalEnd, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Student Facing' },
-  { id: 'quiz', label: 'Quiz / Assessment', icon: CheckSquare, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Student Facing' },
-  { id: 'slide', label: 'Slide Deck Outline', icon: MonitorPlay, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Teacher Tools' },
-  { id: 'mindmap', label: 'Concept Mind Map', icon: Network, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Teacher Tools' },
-  { id: 'report', label: 'Analytical Report', icon: FileText, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Teacher Tools' },
-  { id: 'table', label: 'Data Table Organizers', icon: Table, template: DYNAMIC_LAYOUT_REFERENCE, group: 'Teacher Tools' }
+  { id: 'unit', label: 'Independent Unit (10-pg)', icon: Layers, group: 'Student Facing' },
+  { id: 'single', label: 'Flexible Worksheet (1-10 pg)', icon: LayoutTemplate, group: 'Student Facing' },
+  { id: 'flashcards', label: 'Printable Flash Cards', icon: GalleryHorizontalEnd, group: 'Student Facing' },
+  { id: 'quiz', label: 'Quiz / Assessment', icon: CheckSquare, group: 'Student Facing' },
+  { id: 'slide', label: 'Slide Deck Outline', icon: MonitorPlay, group: 'Teacher Tools' },
+  { id: 'mindmap', label: 'Concept Mind Map', icon: Network, group: 'Teacher Tools' },
+  { id: 'report', label: 'Analytical Report', icon: FileText, group: 'Teacher Tools' },
+  { id: 'table', label: 'Data Table Organizers', icon: Table, group: 'Teacher Tools' }
 ];
 
 const DAY_SCOPE_SEQUENCE = [
