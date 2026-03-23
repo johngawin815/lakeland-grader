@@ -83,7 +83,7 @@ const renderPassageWithBoldWords = (text, boldWords) => {
   
   // Create a safe regex pattern that matches any of the bold words
   const escapedWords = boldWords.map(w => w.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'));
-  const regex = new RegExp(\`(\${escapedWords.join('|')})\`, 'gi');
+  const regex = new RegExp(`(${escapedWords.join('|')})`, 'gi');
   
   const parts = text.split(regex);
   return (
