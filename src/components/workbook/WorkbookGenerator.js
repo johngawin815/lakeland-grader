@@ -429,9 +429,7 @@ const WorkbookGenerator = ({ user }) => {
     saveAs(blob, `${previewMeta.unitTopic.replace(/\\s+/g, '_')}_${previewMeta.generationMode}.json`);
   };
 
-  const handlePrint = () => {
-    alert('Please use the React-PDF built-in print or download button on the PDF viewer.');
-  };
+
   
   const handleDelete = async (id) => {
     await databaseService.deleteWorkbook(id);
