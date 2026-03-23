@@ -69,9 +69,10 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onProgress, s
   for await (const chunk of result.stream) {
     if (signal?.aborted) throw new DOMException('Generation cancelled', 'AbortError');
     accumulated += chunk.text();
+    if (onProgress) onProgress(accumulated);
   }
 
-  if (onProgress) onProgress('Validating Schema with Zod...');
+  if (onProgress) onProgress(accumulated + '\\n\\n[SYSTEM]: Validating Schema with Zod...');
   
   try {
     const cleanJson = accumulated.replace(/\`\`\`(json)?/gi, '').trim();

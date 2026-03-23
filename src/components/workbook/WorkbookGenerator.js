@@ -848,9 +848,9 @@ const WorkbookGenerator = ({ user }) => {
              <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4"/>
              <h2 className="text-xl font-extrabold">Drafting JSON {m?.label}...</h2>
              <p className="text-[10px] text-slate-500 mt-2 font-bold px-4 py-1 bg-slate-100 rounded-full inline-block uppercase tracking-wider">{isBatchTiered ? 'Multi-Tier Batching Active' : 'Single Tier Mode'}</p>
-             <div className="mt-6 text-[12px] font-bold text-slate-600 bg-slate-100 p-4 rounded-lg flex items-center justify-center gap-3">
-               <Loader2 className="w-4 h-4 animate-spin"/> {streamText || 'Initiating connection...'}
-             </div>
+             <pre ref={streamContainerRef} className="mt-6 text-[10px] text-left bg-slate-900 text-green-400 p-4 rounded-lg h-48 overflow-auto whitespace-pre-wrap font-mono shadow-inner">
+               {streamText || 'Initiating connection...'}
+             </pre>
              <button onClick={handleCancel} className="mt-6 text-xs text-slate-400 hover:text-slate-600 font-bold">Cancel</button>
            </div>
         )}
