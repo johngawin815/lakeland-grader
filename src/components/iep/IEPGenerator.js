@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
 import { getStudentInitials } from '../../utils/studentUtils';
-import GoalBankModal from './GoalBankModal';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
@@ -878,7 +877,17 @@ const IEPGenerator = ({ user }) => {
         <SectionCard id="demographics" title="Student Demographics" icon={User} status={sectionStatus.demographics} isOpen={openSections.demographics} onToggle={toggleSection}>
           <div className="space-y-4 pt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FInput label="Student Name" value={d.studentName} onChange={v => setDraft(prev => ({ ...prev, studentName: v }))} placeholder="Full name" />
+              <div className="w-full">
+                <label className="block text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1.5">
+                  <User className="w-3 h-3" /> Student Name (Syncs Globally)
+                </label>
+                <div className="p-2 border border-slate-200 rounded-lg bg-slate-50/50">
+                  <EditableStudentName 
+                    studentId={selectedStudent.id} 
+                    studentName={d.studentName} 
+                  />
+                </div>
+              </div>
               <FInput label="Disability Category" value={d.disabilityCategory} onChange={v => setDraft(prev => ({ ...prev, disabilityCategory: v }))} placeholder="e.g. Emotional Disturbance" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
