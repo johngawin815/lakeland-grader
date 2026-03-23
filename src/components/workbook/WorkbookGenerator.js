@@ -713,19 +713,33 @@ const WorkbookGenerator = ({ user }) => {
                 <div className="flex items-center gap-3">
                    <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.doc,.docx,.txt,.csv,.md" onChange={handleFileUpload} />
                    <button onClick={() => fileInputRef.current?.click()} className="px-3 py-1.5 border border-dashed border-slate-300 rounded-md text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5">
-                     <UploadCloud className="w-4 h-4 text-blue-500"/> Upload PDF, DOCX, or TXT
+                     <UploadCloud className="w-4 h-4 text-blue-500"/> Upload Text (PDF/DOCX)
                    </button>
-                   <span className="text-[10px] text-slate-500 font-medium">{fileStatus}</span>
+                   
+                   <input type="file" ref={imageInputRef} className="hidden" accept="image/png, image/jpeg, image/jpg" onChange={handleImageUpload} />
+                   <button onClick={() => imageInputRef.current?.click()} className="px-3 py-1.5 border border-dashed border-slate-300 rounded-md text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5">
+                     <UploadCloud className="w-4 h-4 text-emerald-500"/> Source Image/Map
+                   </button>
+                   <span className="text-[10px] text-slate-500 font-medium">{fileStatus || imageProcessStatus}</span>
                 </div>
              </div>
 
              {/* SETTINGS BLOCK */}
              <div className="bg-white p-5 rounded-2xl border shadow-sm space-y-4">
-                <div>
-                   <label className="block text-xs font-bold text-slate-600 mb-1">Reading / Lexile Target</label>
-                   <select value={readingLevel} onChange={e => setReadingLevel(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:bg-white outline-none">
-                     {READING_LEVELS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                   </select>
+                <div className="flex gap-4">
+                   <div className="flex-1">
+                     <label className="block text-xs font-bold text-slate-600 mb-1">Reading / Lexile Target</label>
+                     <select value={readingLevel} onChange={e => setReadingLevel(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50 focus:bg-white outline-none">
+                       {READING_LEVELS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                     </select>
+                   </div>
+                   <div className="flex-1">
+                     <label className="block text-xs font-bold text-slate-600 mb-1">Batch Tiered Workbooks</label>
+                     <div className="flex items-center h-10 px-3 bg-slate-50 border rounded-lg gap-2 cursor-pointer" onClick={() => setIsBatchTiered(!isBatchTiered)}>
+                       <input type="checkbox" checked={isBatchTiered} readOnly className="w-4 h-4 text-blue-600 rounded" />
+                       <span className="text-sm font-medium text-slate-700">Generate Tiers 1-3</span>
+                     </div>
+                   </div>
                 </div>
 
                 {modality === 'unit' && (
@@ -834,11 +848,11 @@ const WorkbookGenerator = ({ user }) => {
         ) : (
            <div className="bg-white p-8 rounded-2xl shadow-sm border max-w-lg w-full">
              <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4"/>
-             <h2 className="text-xl font-extrabold">Drafting {m?.label}...</h2>
-             <p className="text-[10px] text-slate-500 mt-2 font-bold px-4 py-1 bg-slate-100 rounded-full inline-block uppercase tracking-wider">{sourceText.length > 0 ? 'NotebookLM Mode Active' : 'Generative Concept Mode Active'}</p>
-             <pre ref={streamContainerRef} className="mt-6 text-[10px] text-left bg-slate-900 text-green-400 p-3 rounded-lg h-40 overflow-auto truncate font-mono">
-               {streamText || 'Initiating connection...'}
-             </pre>
+             <h2 className="text-xl font-extrabold">Drafting JSON {m?.label}...</h2>
+             <p className="text-[10px] text-slate-500 mt-2 font-bold px-4 py-1 bg-slate-100 rounded-full inline-block uppercase tracking-wider">{isBatchTiered ? 'Multi-Tier Batching Active' : 'Single Tier Mode'}</p>
+             <div className="mt-6 text-[12px] font-bold text-slate-600 bg-slate-100 p-4 rounded-lg flex items-center justify-center gap-3">
+               <Loader2 className="w-4 h-4 animate-spin"/> {streamText || 'Initiating connection...'}
+             </div>
              <button onClick={handleCancel} className="mt-6 text-xs text-slate-400 hover:text-slate-600 font-bold">Cancel</button>
            </div>
         )}
@@ -850,19 +864,40 @@ const WorkbookGenerator = ({ user }) => {
     return (
       <div className="h-full flex flex-col">
          <div className="shrink-0 p-3 bg-white border-b flex gap-2 items-center flex-wrap">
-            <button onClick={() => { setView('library'); setPreviewHtml(''); }} className="p-2 mr-2 border rounded-lg hover:bg-slate-50"><ArrowLeft className="w-4 h-4"/></button>
+            <button onClick={() => { setView('library'); setPreviewData(null); }} className="p-2 mr-2 border rounded-lg hover:bg-slate-50"><ArrowLeft className="w-4 h-4"/></button>
             <div className="flex-1 min-w-0 mr-4">
               <h2 className="text-sm font-bold truncate">{previewMeta?.unitTopic}</h2>
               <p className="text-[10px] text-slate-500 truncate">{previewMeta?.dayFocus}</p>
             </div>
+            
+            {previewData?.workbooks && previewData.workbooks.length > 1 && (
+              <div className="flex bg-slate-100 p-1 rounded-lg mr-4">
+                {previewData.workbooks.map((wb, idx) => (
+                  <button key={idx} onClick={() => setActiveTierIndex(idx)} className={`px-4 py-1 text-xs font-bold rounded-md ${activeTierIndex === idx ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-800'}`}>
+                    {wb.tier || `Tier ${idx + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {!saved && <button onClick={handleSave} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold hover:bg-blue-700">Save Artifact</button>}
-            <button onClick={handleRepair} className="px-3 py-1.5 border rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700"><Wrench className="w-3.5 h-3.5 inline mr-1"/> Check Logic</button>
-            <button onClick={handleDownload} className="px-3 py-1.5 border rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700">Download HTML</button>
-            <button onClick={handlePrint} className="px-3 py-1.5 border rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700"><Printer className="w-3.5 h-3.5 inline mr-1"/> Print</button>
+            <button onClick={handleDownload} className="px-3 py-1.5 border rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700">Download JSON</button>
+            
+            {previewData?.workbooks && previewData.workbooks[activeTierIndex] && (
+               <PDFDownloadLink document={<WorkbookPdfDocument data={previewData.workbooks[activeTierIndex]} primarySourceImage={primarySourceImage} meta={previewMeta} />} fileName="workbook.pdf" className="px-3 py-1.5 border rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700 ml-2">
+                 {({ loading }) => loading ? 'Preparing PDF...' : <><Printer className="w-3.5 h-3.5 inline mr-1"/> Download PDF</>}
+               </PDFDownloadLink>
+            )}
          </div>
          <div className="flex-1 overflow-hidden bg-slate-200 p-2 sm:p-4">
-            <div className="w-full h-full max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl border border-slate-300">
-               <iframe title="Workbook Preview" ref={iframeRef} srcDoc={previewHtml} className="w-full h-full border-0 bg-white" />
+            <div className="w-full h-full mx-auto rounded-xl overflow-hidden drop-shadow-2xl border border-slate-300 bg-white flex flex-col">
+               {previewData?.workbooks && previewData.workbooks[activeTierIndex] ? (
+                 <PDFViewer width="100%" height="100%" className="border-0">
+                   <WorkbookPdfDocument data={previewData.workbooks[activeTierIndex]} primarySourceImage={primarySourceImage} meta={previewMeta} />
+                 </PDFViewer>
+               ) : (
+                 <div className="flex items-center justify-center p-12 text-slate-400">Loading PDF Data...</div>
+               )}
             </div>
          </div>
       </div>
