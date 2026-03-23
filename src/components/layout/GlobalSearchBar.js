@@ -3,6 +3,8 @@ import { Search, X, CheckCircle, Loader2 } from 'lucide-react';
 
 import { databaseService } from '../../services/databaseService';
 import { useStudent } from '../../context/StudentContext';
+import EditableStudentName from '../EditableStudentName';
+import { getStudentInitials } from '../../utils/studentUtils';
 
 const GlobalSearchBar = () => {
   const { activeStudent, selectStudent, clearStudent } = useStudent();
@@ -84,8 +86,8 @@ const GlobalSearchBar = () => {
                 className="p-4 hover:bg-indigo-50 cursor-pointer border-b border-slate-100/80 last:border-0 flex justify-between items-center group transition"
               >
                 <div>
-                  <span className="font-bold text-slate-800 group-hover:text-indigo-700">{student.studentName}</span>
-                  <span className="text-sm text-slate-500 ml-3">Grade: {student.gradeLevel || "N/A"}</span>
+                  <span className="font-bold text-slate-800 group-hover:text-indigo-700">{getStudentInitials(student.studentName)}</span>
+                  <span className="text-sm text-slate-500 ml-3 uppercase tracking-tighter font-black">Grade {student.gradeLevel || "N/A"}</span>
                 </div>
                 <span className="text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-lg group-hover:bg-indigo-100 group-hover:text-indigo-700 font-bold transition-all">Load</span>
               </div>
@@ -102,8 +104,12 @@ const GlobalSearchBar = () => {
         <div className="bg-slate-900 text-white px-4 py-2 flex justify-center items-center gap-4 text-sm shadow-inner relative z-40 transition-all duration-300">
            <div className="flex items-center gap-2">
               <CheckCircle size={16} className="text-emerald-400" />
-              <span className="opacity-80 uppercase text-xs font-bold tracking-wider">Active:</span>
-              <span className="font-bold text-white">{activeStudent.studentName}</span>
+              <span className="opacity-80 uppercase text-xs font-bold tracking-wider">Active Student:</span>
+              <EditableStudentName 
+                studentId={activeStudent.id} 
+                studentName={activeStudent.studentName} 
+                size="sm"
+              />
            </div>
            
            <div className="hidden sm:flex items-center gap-4 text-slate-300 text-xs">

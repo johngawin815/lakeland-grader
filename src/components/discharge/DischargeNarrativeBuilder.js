@@ -3,8 +3,10 @@ import {
   FileText, Search, Loader2, CheckCircle, AlertTriangle,
   Sparkles, Download, Printer, ChevronDown, ChevronUp,
   ArrowRight, TrendingUp, TrendingDown, ClipboardList,
-  MessageSquare, StickyNote, BookOpen, User, Calendar, GraduationCap, Save,
+  MessageSquare, StickyNote, BookOpen, User, Calendar, GraduationCap, Save, Edit2
 } from 'lucide-react';
+import EditableStudentName from '../EditableStudentName';
+import { getStudentInitials } from '../../utils/studentUtils';
 import { databaseService } from '../../services/databaseService';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import {
@@ -344,7 +346,7 @@ const DischargeNarrativeBuilder = ({ user }) => {
   // ── Sentence starter helper
   const renderSentenceStarters = (section, targetField) => {
     if (showStarters !== section) return null;
-    const firstName = draft.firstName || draft.studentName?.split(' ')[0] || 'The student';
+    const firstName = getStudentInitials(draft.firstName || draft.studentName?.split(' ')[0] || 'The student');
     return (
       <div className="bg-rose-50/50 border border-rose-100 rounded-lg p-3 space-y-1">
         <div className="text-xs font-bold text-rose-600 mb-2">Click to insert at cursor:</div>
@@ -407,10 +409,10 @@ const DischargeNarrativeBuilder = ({ user }) => {
                     className="w-full text-left px-4 py-3.5 hover:bg-rose-50/50 transition-colors flex items-center gap-3 group"
                   >
                     <div className="w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs shrink-0 group-hover:bg-rose-100 group-hover:text-rose-700 transition-colors">
-                      {(s.studentName || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
+                      {getStudentInitials(s.studentName)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-slate-800 truncate">{s.studentName}</div>
+                      <div className="font-bold text-sm text-slate-800 truncate">{getStudentInitials(s.studentName)}</div>
                       <div className="text-xs text-slate-400">
                         Grade {s.gradeLevel} &middot; {s.unitName || 'Unassigned'}
                       </div>
@@ -466,9 +468,14 @@ const DischargeNarrativeBuilder = ({ user }) => {
             <span className="p-1.5 bg-rose-100 rounded-lg text-rose-600 shrink-0">
               <FileText className="w-4 h-4" />
             </span>
-            <span className="font-bold text-slate-800 text-sm truncate">
-              Discharge: {draft.studentName}
+            <span className="font-bold text-slate-800 text-sm shrink-0">
+              Discharge:
             </span>
+            <EditableStudentName 
+              studentId={selectedStudent.id} 
+              studentName={draft.studentName} 
+              size="sm"
+            />
             <button
               type="button"
               onClick={() => { setSelectedStudent(null); setDraft(createEmptyDraft()); setKteaData(null); setEnrollments([]); setDbRecord(null); setIsDirty(false); }}
@@ -533,8 +540,13 @@ const DischargeNarrativeBuilder = ({ user }) => {
         >
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className={LABEL_CLASS}><User className="w-3 h-3" />Student Name</label>
-              <input type="text" value={draft.studentName} onChange={e => updateDraft('studentName', e.target.value)} className={INPUT_CLASS} />
+              <label className={LABEL_CLASS}><User className="w-3 h-3" />Student Name (Syncs Globally)</label>
+              <div className="p-1 px-3 bg-slate-50 border border-slate-200 rounded-lg">
+                <EditableStudentName 
+                  studentId={selectedStudent.id} 
+                  studentName={draft.studentName} 
+                />
+              </div>
             </div>
             <div>
               <label className={LABEL_CLASS}><GraduationCap className="w-3 h-3" />Grade Level</label>

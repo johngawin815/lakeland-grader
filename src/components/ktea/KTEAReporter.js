@@ -3,7 +3,9 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers } from 'lucide-react';
+import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers, Edit2 } from 'lucide-react';
+import EditableStudentName from '../EditableStudentName';
+import { getStudentInitials } from '../../utils/studentUtils';
 
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", icon: Target },
@@ -597,7 +599,13 @@ function KTEAReporter({ user, activeStudent }) {
                             <tbody>
                               {students.map((s, idx) => (
                                 <tr key={s.id || idx} className="hover:bg-indigo-50/30 text-center border-b border-slate-100 text-[11px] transition-colors group">
-                                  <td className="border-r border-slate-200/50 p-1.5 text-left font-bold text-slate-700 truncate max-w-[160px]">{s.studentName}</td>
+                                   <td className="border-r border-slate-200/50 p-1.5 text-left font-bold text-slate-700 truncate max-w-[160px]">
+                                     <EditableStudentName 
+                                       studentId={s.id} 
+                                       studentName={s.studentName} 
+                                       size="sm"
+                                     />
+                                   </td>
                                   <td className="border-r border-slate-200/50 p-1.5 font-medium">{s.gradeLevel}</td>
                                   <td className="border-r border-slate-200/50 p-1.5 text-left text-slate-500 truncate max-w-[80px]">{s.unitName || unit}</td>
                                   <td className="p-1 bg-blue-50/30 border-r border-blue-100/30">{s.preReadingRaw || '-'}</td>
@@ -726,7 +734,7 @@ function KTEAReporter({ user, activeStudent }) {
             <div className="flex-1 overflow-y-auto mb-4 space-y-2 pr-1">
                 {queue.map((item) => (
                   <div key={item.tempId} className="bg-slate-100/80 p-3 rounded-lg flex justify-between items-center border border-slate-200/50 group hover:border-slate-300/80 transition-colors">
-                    <div><div className="font-bold text-xs text-slate-700">{item.studentName}</div></div>
+                     <div><div className="font-bold text-xs text-slate-700">{getStudentInitials(item.studentName)}</div></div>
                     <button onClick={() => setQueue(queue.filter(q => q.tempId !== item.tempId))} className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-50 group-hover:opacity-100"><X className="w-4 h-4" /></button>
                   </div>
                 ))}
@@ -742,7 +750,10 @@ function KTEAReporter({ user, activeStudent }) {
              <div className="p-3 border-b border-slate-200/50 text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50/50">DB Search Results</div>
              {searchResults.map(s => (
                <div key={s.id} onClick={() => loadStudent(s)} className="p-3 border-b border-slate-100/80 cursor-pointer flex justify-between items-center hover:bg-indigo-50 transition-colors group">
-                 <div className="text-sm text-slate-700"><strong className="group-hover:text-indigo-600 transition-colors">{s.studentName}</strong> <span className="text-xs text-slate-400">({s.gradeLevel}th)</span></div>
+                  <div className="text-sm text-slate-700">
+                    <strong className="group-hover:text-indigo-600 transition-colors">{getStudentInitials(s.studentName)}</strong> 
+                    <span className="text-xs text-slate-400 ml-2">({s.gradeLevel}th)</span>
+                  </div>
                  <button onClick={(e) => handleDelete(s.id, s.studentName, e)} className="text-slate-400 hover:text-red-500 hover:bg-red-100/50 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4" /></button>
                </div>
              ))}

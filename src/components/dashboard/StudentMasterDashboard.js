@@ -6,6 +6,9 @@ import EnrollmentManager from './EnrollmentManager';
 import IntakeForm from './IntakeForm';
 import { databaseService } from '../../services/databaseService';
 import EditableStudentProfileModal from '../EditableStudentProfileModal';
+import EditableStudentName from '../EditableStudentName';
+import { useStudent } from '../../context/StudentContext';
+import { getStudentInitials } from '../../utils/studentUtils';
 import { UNIT_CONFIG } from '../../config/unitConfig';
 import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
@@ -72,6 +75,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
     const [showIntakeForm, setShowIntakeForm] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [unitCounts, setUnitCounts] = useState({});
+    const { refreshTrigger } = useStudent();
 
     const loadCounts = async () => {
         try {
@@ -91,7 +95,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
     useEffect(() => {
         loadCounts();
-    }, []);
+    }, [refreshTrigger]);
 
     const fetchRoster = async () => {
         setLoading(true);
@@ -113,8 +117,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
     useEffect(() => {
         fetchRoster();
         loadCounts();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedUnit]);
+    }, [selectedUnit, refreshTrigger]);
 
     useEffect(() => {
         if (selectedStudentProfile) {
@@ -375,9 +378,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
 };
 
 const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
-
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
-    const initials = (student.studentName || '').split(/\s+/).map(part => part[0] || '').join('').toUpperCase();
 
     let iepDueUrgent = false;
     if (student.iepDueDate) {
@@ -398,15 +399,14 @@ const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
                 }
             `}
         >
-            <div className={`
-                w-8 h-8 rounded-full ${unitStyle?.avatarBg || 'bg-slate-400'}
-                flex items-center justify-center text-white text-[10px] font-bold shrink-0
-            `}>
-                {initials}
-            </div>
+            <EditableStudentName
+                studentId={student.id}
+                studentName={student.studentName}
+                size="sm"
+            />
             <div className="flex-1 min-w-0">
                 <div className={`text-sm font-semibold truncate ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
-                    {initials}
+                    {getStudentInitials(student.studentName)}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-[11px] text-slate-400">Gr {student.gradeLevel}</span>
@@ -438,9 +438,7 @@ const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
 };
 
 const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
-
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
-    const initials = (student.studentName || '').split(/\s+/).map(part => part[0] || '').join('').toUpperCase();
     const Icon = unitStyle?.icon || UserCheck;
     const [enrolling, setEnrolling] = useState(false);
     const [enrollResult, setEnrollResult] = useState(null);
@@ -485,12 +483,13 @@ const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
             <div className="px-4 py-3.5">
                 {/* Row 1: Avatar + Name + Grade + Days */}
                 <div className="flex items-center gap-3 mb-2.5">
-                    <div className={`w-9 h-9 rounded-full ${unitStyle?.avatarBg || 'bg-slate-400'} flex items-center justify-center text-white font-bold text-[10px] tracking-wide shrink-0`}>
-                        {initials}
-                    </div>
+                    <EditableStudentName
+                        studentId={student.id}
+                        studentName={student.studentName}
+                    />
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm text-slate-800 leading-tight truncate group-hover:text-indigo-600 transition-colors">
-                            {initials}
+                        <h3 className="font-semibold text-xs text-slate-400 leading-tight uppercase tracking-widest mt-1">
+                            Student Initialized
                         </h3>
                         <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-[11px] text-slate-500 font-medium">Gr {student.gradeLevel}</span>

@@ -4,6 +4,8 @@ import {
   CheckCircle2, Download, Save, Loader2, UserPlus, GraduationCap, Info, Pencil, Trash2,
   ChevronDown, ChevronRight, ExternalLink, Plus, ClipboardList, XCircle, UploadCloud, X
 } from 'lucide-react';
+import EditableStudentName from '../EditableStudentName';
+import { getStudentInitials } from '../../utils/studentUtils';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import toast from 'react-hot-toast';
@@ -153,11 +155,7 @@ function computeGaps(earned, requirements) {
   return gaps;
 }
 
-const getInitials = (name) => {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return (parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '');
-};
+// getInitials removed in favor of getStudentInitials from studentUtils
 
 // ─── NEW HELPERS ─────────────────────────────────────────────────────────────
 
@@ -549,10 +547,10 @@ const VirtualizedStudentList = React.memo(({ students, onSelect }) => {
               <button onClick={() => onSelect(s)}
                 className="w-full h-full flex items-center gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-white hover:border-orange-300 hover:shadow-md hover:shadow-orange-100/50 transition-all group text-left">
                 <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-orange-700">{getInitials(s.studentName)}</span>
+                  <span className="text-sm font-bold text-orange-700">{getStudentInitials(s.studentName)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800 text-sm truncate">{s.studentName}</p>
+                  <p className="font-semibold text-slate-800 text-sm truncate">{getStudentInitials(s.studentName)}</p>
                   <p className="text-xs text-slate-400">Grade {s.gradeLevel} &middot; Class of {gradYear} &middot; {s.unitName}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -1048,7 +1046,7 @@ const TranscriptGenerator = ({ user }) => {
       const headerFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
       const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: orange } };
 
-      ws1.addRow(['Student Name', selectedStudent.studentName]);
+      ws1.addRow(['Student Name', getStudentInitials(selectedStudent.studentName)]);
       ws1.addRow(['Grade Level', selectedStudent.gradeLevel]);
       ws1.addRow(['Home State', stateReqs ? stateReqs.name : (selectedStudent.homeState || 'Not set')]);
       ws1.addRow(['District', selectedStudent.district || '']);
@@ -1081,7 +1079,7 @@ const TranscriptGenerator = ({ user }) => {
       ws1.columns = [{ width: 16 }, { width: 28 }, { width: 14 }, { width: 12 }, { width: 10 }, { width: 12 }];
 
       const ws2 = workbook.addWorksheet('Graduation Plan');
-      ws2.addRow(['GRADUATION PLAN — ' + selectedStudent.studentName]);
+      ws2.addRow(['GRADUATION PLAN — ' + getStudentInitials(selectedStudent.studentName)]);
       ws2.getRow(1).font = { bold: true, size: 14, color: { argb: orange } };
       ws2.addRow([]);
 
@@ -1127,7 +1125,7 @@ const TranscriptGenerator = ({ user }) => {
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const today = new Date().toISOString().split('T')[0];
-      saveAs(blob, `${selectedStudent.studentName.replace(/\s+/g, '_')}_Transcript_${today}.xlsx`);
+      saveAs(blob, `${getStudentInitials(selectedStudent.studentName).replace(/\s+/g, '_')}_Transcript_${today}.xlsx`);
       if (user) await databaseService.logAudit(user, 'ExportTranscript', `Exported transcript for ${selectedStudent.studentName}`);
     } catch (e) {
       console.error('Export failed:', e);
@@ -1323,10 +1321,16 @@ const TranscriptGenerator = ({ user }) => {
                 Back
               </button>
               <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center shrink-0 shadow-inner">
-                <span className="text-sm font-extrabold text-white">{getInitials(selectedStudent.studentName)}</span>
+                <span className="text-sm font-extrabold text-white">{getStudentInitials(selectedStudent.studentName)}</span>
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-extrabold text-white leading-tight truncate">{selectedStudent.studentName}</h2>
+                <div className="flex items-center gap-2">
+                  <EditableStudentName 
+                    studentId={selectedStudent.id} 
+                    studentName={selectedStudent.studentName} 
+                    size="sm"
+                  />
+                </div>
                 <p className="text-[11px] text-orange-100 leading-tight">
                   Grade {selectedStudent.gradeLevel}&ensp;·&ensp;Class of {gradYear}
                   {selectedStudent.homeState && <>&ensp;·&ensp;{selectedStudent.homeState}</>}

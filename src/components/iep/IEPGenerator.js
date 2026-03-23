@@ -2,9 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   FileCheck, Search, Loader2, CheckCircle, AlertTriangle,
   Sparkles, Target, BookOpen, Plus, Download, Save,
-  Users, Trash2, Star, X,
+  Users, Trash2, Star, X, ChevronRight, RefreshCw,
   ChevronDown, ChevronUp, User, Calendar, ClipboardList, Settings, Briefcase, GraduationCap,
 } from 'lucide-react';
+import EditableStudentName from '../EditableStudentName';
+import { getStudentInitials } from '../../utils/studentUtils';
+import GoalBankModal from './GoalBankModal';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
@@ -792,11 +795,13 @@ const IEPGenerator = ({ user }) => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white bg-slate-400">
-                        {(s.studentName || '').split(/\s+/).map(p => p[0] || '').join('').toUpperCase()}
-                      </div>
+                      <EditableStudentName 
+                        studentId={s.id} 
+                        studentName={s.studentName} 
+                        size="sm"
+                      />
                       <div>
-                        <div className="font-bold text-slate-800">{s.studentName}</div>
+                        <div className="font-bold text-slate-800">{getStudentInitials(s.studentName)}</div>
                         <div className="text-xs text-slate-400">Grade {s.gradeLevel} &middot; {s.unitName}</div>
                       </div>
                     </div>
@@ -833,7 +838,7 @@ const IEPGenerator = ({ user }) => {
         goals={goalSuggestions}
         draft={draft}
         onAddGoal={handleAddGoal}
-        studentName={selectedStudent?.firstName}
+        studentName={getStudentInitials(selectedStudent?.studentName || selectedStudent?.firstName)}
       />
 
       {/* ─── STICKY TOOLBAR ─── */}
@@ -842,7 +847,11 @@ const IEPGenerator = ({ user }) => {
           <div className="flex items-center gap-2 mr-auto">
             <FileCheck className="w-5 h-5 text-cyan-600" />
             <span className="font-bold text-sm text-slate-800">IEP:</span>
-            <span className="font-bold text-sm text-cyan-700">{d.studentName}</span>
+            <EditableStudentName 
+              studentId={selectedStudent.id} 
+              studentName={d.studentName || selectedStudent.studentName} 
+              size="sm"
+            />
             <button onClick={() => { setSelectedStudent(null); setDraft(createEmptyDraft()); }} className="text-xs text-slate-400 hover:text-slate-600 ml-1">(change)</button>
           </div>
           {saveMessage && (

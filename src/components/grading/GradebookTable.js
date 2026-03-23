@@ -3,6 +3,8 @@ import { GraduationCap, FileDown, TrendingUp, ArrowDown, Edit2, StickyNote, Mess
 import { useGridKeyboard } from '../../hooks/useGridKeyboard';
 import { UNIT_CONFIG } from '../../config/unitConfig';
 import GradeNoteModal from './modals/GradeNoteModal';
+import EditableStudentName from '../EditableStudentName';
+import { getStudentInitials } from '../../utils/studentUtils';
 
 const GradeCell = React.memo(({ 
   studentId, studentName, assignmentId, assignmentName, maxScore, 
@@ -24,7 +26,7 @@ const GradeCell = React.memo(({
           }}
           data-row={rowIndex}
           data-col={colIndex}
-          aria-label={`${studentName} - ${assignmentName}`}
+          aria-label={`${getStudentInitials(studentName)} - ${assignmentName}`}
           className={`w-20 p-1.5 text-center border rounded-xl outline-none transition-all duration-300 font-mono text-sm ${
             isWarning
               ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300/50'
@@ -241,11 +243,15 @@ const GradebookTable = ({
                 data-index={virtualRow.index}
               >
                 <td className={`p-3 font-bold border-r border-slate-100 sticky left-0 z-20 transition-all duration-200 shadow-[4px_0_10px_-5px_rgba(0,0,0,0.05)] ${isRowFocused ? 'bg-indigo-50 shadow-indigo-100/50' : 'bg-white group-even:bg-slate-50/50 group-hover:bg-slate-50'}`}>
-                  <div className="flex justify-between items-center">
-                    <button onClick={() => onStudentClick(student)} className="text-left group/name flex flex-col">
-                      <span className={`text-sm tracking-tight transition-colors ${isRowFocused ? 'text-indigo-700' : 'text-slate-900 group-hover/name:text-indigo-600'}`}>{student.name}</span>
-                      {student.gradeLevel && <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Grade {student.gradeLevel}</span>}
-                    </button>
+                  <div className="flex justify-between items-center text-left">
+                    <div className="flex flex-col">
+                      <EditableStudentName 
+                        studentId={student.id} 
+                        studentName={student.name} 
+                        size="sm"
+                      />
+                      {student.gradeLevel && <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Grade {student.gradeLevel}</span>}
+                    </div>
                     <div className="flex gap-1">
                       <button onClick={() => onGradeCardClick(student)} className="text-slate-300 opacity-0 group-hover:opacity-100 hover:text-emerald-600 hover:scale-110 transition-all p-1.5 bg-white shadow-sm rounded-lg border border-slate-100" title="Generate Grade Card"><GraduationCap className="w-4 h-4" /></button>
                       <button onClick={() => onExportClick(student)} className="text-slate-300 opacity-0 group-hover:opacity-100 hover:text-indigo-600 hover:scale-110 transition-all p-1.5 bg-white shadow-sm rounded-lg border border-slate-100" title="Export Report Card"><FileDown className="w-4 h-4" /></button>

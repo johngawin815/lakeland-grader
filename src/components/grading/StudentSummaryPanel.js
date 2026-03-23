@@ -3,6 +3,8 @@ import { X, GraduationCap, Check, XCircle, Clock, RefreshCw } from 'lucide-react
 import { calculateLetterGrade } from '../../utils/gradeCalculator';
 import { generateSmartComment } from '../../utils/commentGenerator';
 import { useGrading } from '../../context/GradingContext';
+import EditableStudentName from '../EditableStudentName';
+import { getStudentInitials } from '../../utils/studentUtils';
 
 const TONE_OPTIONS = [
   { key: 'encouraging', label: 'Encouraging' },
@@ -50,8 +52,9 @@ const StudentSummaryPanel = ({ student, grades, assignments, categories, attenda
 
   const autoComment = useMemo(() => {
     if (finalGrade === null || finalGrade === undefined) return '';
+    const studentInitials = getStudentInitials(student.studentName || student.name);
     return generateSmartComment({
-      studentName: student.name,
+      studentName: studentInitials,
       overallPercentage: finalGrade,
       categoryBreakdown: categoryBreakdown.filter(c => c.percentage !== null),
       totalAbsences: attendanceStats.absent,
@@ -104,7 +107,10 @@ const StudentSummaryPanel = ({ student, grades, assignments, categories, attenda
               <GraduationCap className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight">{student.name}</h2>
+              <EditableStudentName 
+                studentId={student.id} 
+                studentName={student.studentName || student.name} 
+              />
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">ID: {student.id}</span>
                 {student.iep === 'Yes' && (
@@ -189,7 +195,7 @@ const StudentSummaryPanel = ({ student, grades, assignments, categories, attenda
                                   value={score}
                                   onChange={(e) => handleScoreChange(a.id, e.target.value)}
                                   className="w-16 text-xs text-center font-black py-1.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
-                                  aria-label={`${student.name} - ${a.name}`}
+                                  aria-label={`${getStudentInitials(student.studentName || student.name)} - ${a.name}`}
                                 />
                                 <span className="text-[10px] font-bold text-slate-400">/ {Number(a.maxScore)}</span>
                               </div>
