@@ -11,13 +11,12 @@ import {
   hasApiKey, getApiKey, setApiKey,
   generateWorkbook, repairWorkbook, testConnection
 } from '../../services/geminiService';
-import { 
-  PRINT_ENGINE_CSS, DYNAMIC_LAYOUT_REFERENCE
-} from '../../data/workbookCssTemplate';
 import { MLS_STANDARDS } from '../../data/missouriStandards';
 import { MISSOURI_TOPICS } from '../../data/missouriTopics';
 import * as mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import { WorkbookPdfDocument } from './WorkbookPdfDocument';
 
 // Configure PDF.js worker (Updated for pdfjs-dist v4/v5 which uses .mjs)
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -130,12 +129,17 @@ const WorkbookGenerator = ({ user }) => {
   const [textStyle, setTextStyle] = useState(TEXT_STYLES[0]);
   const [questionStyle, setQuestionStyle] = useState(QUESTION_STYLES[0]);
   
-  // Advanced Pedagogical Modulator
+  // Advanced Pedagogical Modulator & Batching
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [vocabActivity, setVocabActivity] = useState(VOCAB_ACTIVITIES[0]);
   const [grammarActivity, setGrammarActivity] = useState(GRAMMAR_ACTIVITIES[0]);
   const [editingActivity, setEditingActivity] = useState(EDITING_ACTIVITIES[0]);
+  const [isBatchTiered, setIsBatchTiered] = useState(false);
+  const [primarySourceImage, setPrimarySourceImage] = useState(null);
+  const [imageProcessStatus, setImageProcessStatus] = useState('');
+  
   const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
 
   // Set initial standard when subject/grade band changes
   useEffect(() => {
@@ -187,6 +191,47 @@ const WorkbookGenerator = ({ user }) => {
     }
   };
 
+  // Handle Image Formatting locally via Canvas
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageProcessStatus('Processing image layout...');
+    
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        const contrast = 1.3;
+        const intercept = 128 * (1 - contrast);
+        
+        for (let i = 0; i < data.length; i += 4) {
+          const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+          let finalVal = gray * contrast + intercept;
+          if (finalVal > 255) finalVal = 255;
+          if (finalVal < 0) finalVal = 0;
+          data[i] = data[i+1] = data[i+2] = finalVal;
+        }
+        
+        ctx.putImageData(imgData, 0, 0);
+        setPrimarySourceImage(canvas.toDataURL('image/jpeg', 0.8));
+        setImageProcessStatus('Map/Source attached.');
+        e.target.value = '';
+      };
+      img.onerror = () => setImageProcessStatus('File corrupt.');
+      img.src = ev.target.result;
+    };
+    reader.onerror = () => setImageProcessStatus('Read error.');
+    reader.readAsDataURL(file);
+  };
+
   // Auto-save integration
   const [isDirty, setIsDirty] = useState(false);
   const saveFn = useCallback(async () => {
@@ -224,8 +269,9 @@ const WorkbookGenerator = ({ user }) => {
   }, [streamText, view]);
 
   // Preview
-  const [previewHtml, setPreviewHtml] = useState('');
+  const [previewData, setPreviewData] = useState(null); // The raw JSON
   const [previewMeta, setPreviewMeta] = useState(null);
+  const [activeTierIndex, setActiveTierIndex] = useState(0);
   const [saved, setSaved] = useState(false);
   const [, setSaving] = useState(false);
   const [, setSaveError] = useState(null);
@@ -249,17 +295,7 @@ const WorkbookGenerator = ({ user }) => {
 
   useEffect(() => {
     if (modality === 'unit' && unitTopic.trim()) {
-      (async () => {
-        const existing = await databaseService.getWorkbooksByUnit(unitTopic.trim());
-        setUnitWorkbooks(existing);
-        if (existing.length > 0) setDayNumber(Math.min(Math.max(...existing.map(w => w.dayNumber || 0)) + 1, 8));
-      })();
-    } else { setUnitWorkbooks([]); }
-  }, [unitTopic, modality]);
-
-  // ─── GENERATE ─────────────────────────────────────────────────────────────
-
-  const handleGenerate = async () => {
+      const handleGenerate = async () => {
     setView('generating');
     setStreamText('');
     setGenError('');
@@ -271,17 +307,16 @@ const WorkbookGenerator = ({ user }) => {
       const agentSpec = await agentResp.text();
 
       const modConfig = MODALITIES.find(m => m.id === modality);
-      const htmlRef = modConfig.template;
 
       const fullSystemPrompt = [
         agentSpec,
-        '\n\n=== MANDATORY CSS (THE MIT PRINT ENGINE V70 PLATINUM B&W APPLE STYLE) ===',
-        'You MUST embed this EXACT CSS inside a <style> tag in the <head> of the HTML. Do NOT modify or omit any part of it.\n',
-        PRINT_ENGINE_CSS,
-        '\n\n=== DYNAMIC HTML STRUCTURE RULES ===',
-        'You MUST respect the print boundary rules, but you must construct the internal layout creatively using the CSS classes. DO NOT output uniform identical pages.\n',
-        htmlRef,
-      ].join('\n');
+        '\\n\\n=== STRICT JSON ARCHITECTURE ===',
+        'You MUST respond in pure JSON. Do not output HTML. Follow the specified Zod schema strictly.',
+      ].join('\\n');
+
+      let batchInstruction = isBatchTiered 
+        ? `\\n[DIFFERENTIATION]: Generate AN ARRAY OF 3 WORKBOOKS (Tier 1 Support, Tier 2 Core, Tier 3 Challenge). Keeping visual intent the same but scaling Lexile, scaffolding, and DOK depth.`
+        : `\\n[DIFFERENTIATION]: Generate AN ARRAY containing EXACTLY 1 WORKBOOK tailored to the specified Lexile reading level: ${readingLevel}. The tier name should be "Core Material".`;
 
       let userPrompt = '';
       if (modality === 'unit') {
@@ -291,55 +326,48 @@ const WorkbookGenerator = ({ user }) => {
           `[MODE]: Complex 10-page Independent Study Unit`,
           `[Unit Topic]: ${unitTopic.trim()}`,
           `[Day Sequence]: Day ${dayNumber} — ${scope?.label} (${scope?.directive})`,
-          `[Target Audience Reading Level]: ${readingLevel}`,
-          `\n${AUDIENCE_DIRECTIVE}`,
-          prevContext ? `\n--- PREVIOUS DAYS:\\n${prevContext}` : '',
-        ].filter(Boolean).join('\n');
+          `[Target Audience Reading Level Guideline]: ${readingLevel}`,
+          batchInstruction,
+          `\\n${AUDIENCE_DIRECTIVE}`,
+          prevContext ? `\\n--- PREVIOUS DAYS:\\n${prevContext}` : '',
+        ].filter(Boolean).join('\\n');
       } else {
         const stdText = MLS_STANDARDS[selectedSubject]?.gradeBands[selectedGradeBand]?.find(s => s.id === selectedStandard)?.text || '';
-        let lengthConstraint = '';
-        if (modality === 'single') {
-          lengthConstraint = `\n[TARGET PAGE LENGTH]: EXACTLY ${targetPages} PAGES. You MUST fulfill this by outputting exactly ${targetPages} <div class="print-page"> blocks separated properly.`;
-        }
-
         userPrompt = [
           `[OUTPUT MODALITY REQUIRED]: ${modConfig.label}`,
           `[Topic]: ${unitTopic.trim()}`,
           `[Standard Alignment]: ${selectedStandard} - ${stdText}`,
-          `[Target Audience Reading Level]: ${readingLevel}`,
-          lengthConstraint,
+          `[Target Audience Reading Level Guideline]: ${readingLevel}`,
+          batchInstruction,
           (modality === 'single' || modality === 'quiz') ? `[Text Style]: ${textStyle}` : '',
           (modality === 'single' || modality === 'quiz') ? `[Question Format]: ${questionStyle}` : '',
-          `\n${AUDIENCE_DIRECTIVE}`,
-        ].filter(Boolean).join('\n');
+          `\\n${AUDIENCE_DIRECTIVE}`,
+        ].filter(Boolean).join('\\n');
       }
 
-      // NotebookLM Logic:
+      // NotebookLM & Image Check
       if (sourceText.trim()) {
-        userPrompt += `\n\n=== STRICT SOURCE MATERIAL ANCHOR ===\nCRITICAL DIRECTIVE: You MUST base all generated content, worksheets, questions, facts, and slide information STRICTLY on the text provided below. \n1. CAREFULLY READ AND ANALYZE the context of the text.\n2. ALL VOCABULARY words must be selected directly from this text.\n3. ALL QUESTIONS (multiple choice, short answer, etc.) must test comprehension of THIS SPECIFIC text.\n4. DO NOT invent external historical facts, characters, or contexts outside of this text.\n\n[SOURCE TEXT START]\n${sourceText.trim()}\n[SOURCE TEXT END]`;
+        userPrompt += `\\n\\n=== STRICT SOURCE MATERIAL ANCHOR ===\\nCRITICAL DIRECTIVE: You MUST base all generated content, worksheets, questions, facts, and slide information STRICTLY on the text provided below.\\n[SOURCE TEXT START]\\n${sourceText.trim()}\\n[SOURCE TEXT END]`;
+      }
+      if (primarySourceImage) {
+        userPrompt += `\\n\\n[NOTE]: A primary source or map image will be attached to the top of the generated document. Refer to it as the 'Source Image' implicitly in your tasks if DOK level supports it.`;
       }
 
       // Advanced Pedagogical Modulator
       const pedagogyOverrides = [];
-      if (vocabActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- VOCABULARY OVERRIDE: Center vocabulary instruction around the [${vocabActivity}] format.`);
-      if (grammarActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- GRAMMAR OVERRIDE: Focus grammar exercises on the [${grammarActivity}] framework.`);
-      if (editingActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- EDITING OVERRIDE: Utilize a [${editingActivity}] approach for revising and editing tasks.`);
-      
+      if (vocabActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- VOCABULARY OVERRIDE: ${vocabActivity}`);
+      if (grammarActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- GRAMMAR OVERRIDE: ${grammarActivity}`);
+      if (editingActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- EDITING OVERRIDE: ${editingActivity}`);
       if (pedagogyOverrides.length > 0) {
-        userPrompt += `\n\n=== ADVANCED PEDAGOGICAL OVERRIDES ===\nCRITICAL DIRECTIVE: You MUST utilize the following specific frameworks instead of your default strategies:\n` + pedagogyOverrides.join('\n');
+        userPrompt += `\\n\\n=== ADVANCED OVERRIDES ===\\n` + pedagogyOverrides.join('\\n');
       }
 
-      let html = await generateWorkbook({
+      let generatedJsonData = await generateWorkbook({
         systemPrompt: fullSystemPrompt,
         userPrompt,
-        onChunk: (text) => setStreamText(text),
+        onProgress: (status) => setStreamText(status),
         signal: controller.signal,
       });
-
-      if (!html.trimStart().startsWith('<!DOCTYPE') && !html.trimStart().startsWith('<html')) {
-        const title = `${unitTopic.trim()} - ${modConfig.label}`;
-        html = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>${title}</title>\n<style>\n${PRINT_ENGINE_CSS}\n</style>\n</head>\n<body>\n${html}\n</body>\n</html>`;
-      }
 
       const meta = {
         unitTopic: unitTopic.trim(),
@@ -350,7 +378,7 @@ const WorkbookGenerator = ({ user }) => {
         standard: selectedStandard
       };
 
-      setPreviewHtml(html); setPreviewMeta(meta); setSaved(false); setView('preview');
+      setPreviewData(generatedJsonData); setPreviewMeta(meta); setSaved(false); setActiveTierIndex(0); setView('preview');
     } catch (err) {
       if (err.name === 'AbortError') setView('form');
       else setGenError(err.message || 'Generation failed.');
@@ -362,11 +390,11 @@ const WorkbookGenerator = ({ user }) => {
   // ─── SAVE / REPAIR / EXPORT ─────────────────────────────────────────────
   
   const handleSave = async () => {
-    if (!previewMeta || !previewHtml) return;
+    if (!previewMeta || !previewData) return;
     setSaving(true); setSaveError(null);
     try {
       const savedRecord = await databaseService.saveWorkbook({
-        ...previewMeta, htmlContent: previewHtml,
+        ...previewMeta, jsonContent: previewData, primarySourceImage
       });
       setSaved(true);
       if (savedRecord) {
@@ -375,32 +403,25 @@ const WorkbookGenerator = ({ user }) => {
           return exists ? prev.map(w => w.id === savedRecord.id ? savedRecord : w) : [...prev, savedRecord];
         });
       }
-      await databaseService.logAudit(user, 'WORKBOOK_GENERATED', `${previewMeta.unitTopic} - ${previewMeta.generationMode}`);
+      await databaseService.logAudit(user, 'WORKBOOK_GENERATED_JSON', `${previewMeta.unitTopic} - ${previewMeta.generationMode}`);
     } catch (err) { setSaveError(err.message); } finally { setSaving(false); }
   };
 
   const handleRepair = () => {
-    if (!previewHtml || repairing) return;
-    setRepairing(true); setRepairMsg(null);
-    setTimeout(() => {
-      try {
-        const { html, fixes } = repairWorkbook(previewHtml, PRINT_ENGINE_CSS);
-        setPreviewHtml(html); setSaved(false);
-        setRepairMsg({ type: 'success', text: fixes.length === 0 ? 'No structural issues.' : `Repaired ${fixes.length} issues.` });
-      } catch (err) { setRepairMsg({ type: 'error', text: 'Repair failed: ' + err.message }); }
-      finally { setRepairing(false); setTimeout(() => setRepairMsg(null), 4000); }
-    }, 50);
+    // Repair not applicable for strict Zod JSON unless extending AI calls
+    setRepairMsg({ type: 'success', text: 'Zod JSON logic is strictly verified on generation.' });
+    setTimeout(() => setRepairMsg(null), 3000);
   };
 
   const handleDownload = () => {
-    if (!previewHtml || !previewMeta) return;
-    let html = previewHtml;
-    try { const { html: rep } = repairWorkbook(previewHtml, PRINT_ENGINE_CSS); html = rep; } catch { }
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    saveAs(blob, `${previewMeta.unitTopic.replace(/\s+/g, '_')}_${previewMeta.generationMode}.html`);
+    if (!previewData || !previewMeta) return;
+    const blob = new Blob([JSON.stringify(previewData, null, 2)], { type: 'application/json;charset=utf-8' });
+    saveAs(blob, `${previewMeta.unitTopic.replace(/\\s+/g, '_')}_${previewMeta.generationMode}.json`);
   };
 
-  const handlePrint = () => iframeRef.current?.contentWindow?.print();
+  const handlePrint = () => {
+    alert('Please use the React-PDF built-in print or download button on the PDF viewer.');
+  };
   
   const handleDelete = async (id) => {
     await databaseService.deleteWorkbook(id);
@@ -408,7 +429,17 @@ const WorkbookGenerator = ({ user }) => {
   };
 
   const handleOpenSaved = (wb) => {
-    setPreviewHtml(wb.htmlContent); setPreviewMeta(wb); setSaved(true); setView('preview');
+    // Fallback if opening older HTML versions
+    if (wb.htmlContent && !wb.jsonContent) {
+      alert("This is an older HTML format workbook not supported in the new visual engine. Cannot load.");
+      return;
+    }
+    setPreviewData(wb.jsonContent); 
+    setPrimarySourceImage(wb.primarySourceImage || null);
+    setPreviewMeta(wb); 
+    setSaved(true); 
+    setActiveTierIndex(0);
+    setView('preview');
   };
 
   // ─── FILTERED LIBRARY ────────────────────────────────────────────────────
