@@ -780,7 +780,7 @@ function ScoreRow({ label, type, register, errors }) {
                     {rawError && <span className="absolute -bottom-4 left-0 w-full text-center text-[10px] text-red-500 font-bold">{rawError.message}</span>}
                 </div>
                 <div className="w-full relative">
-                    <input {...register(`${type}Std`, { min: { value: 40, message: "Min 40" }, max: { value: 160, message: "Max 160" } })} placeholder="Std" type="number" className={`w-full p-2.5 rounded-lg text-sm text-center outline-none transition-all ${stdError ? errorRing : defaultRing }`} />
+                    <input {...register(`${type}Std`, { min: { value: 40, message: "Min 40" } })} placeholder="Std" type="number" className={`w-full p-2.5 rounded-lg text-sm text-center outline-none transition-all ${stdError ? errorRing : defaultRing }`} />
                     {stdError && <span className="absolute -bottom-4 left-0 w-full text-center text-[10px] text-red-500 font-bold">{stdError.message}</span>}
                 </div>
                 <input {...register(`${type}GE`)} placeholder="GE" type="text" className={`w-full p-2.5 rounded-lg border-2 border-amber-400 bg-amber-50 text-sm text-center font-bold outline-none transition-all focus:ring-4 focus:ring-amber-400/30`} />
