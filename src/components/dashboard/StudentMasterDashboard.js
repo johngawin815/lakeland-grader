@@ -8,7 +8,7 @@ import { databaseService } from '../../services/databaseService';
 import EditableStudentProfileModal from '../EditableStudentProfileModal';
 import EditableStudentName from '../EditableStudentName';
 import { useStudent } from '../../context/StudentContext';
-import { getStudentInitials } from '../../utils/studentUtils';
+import { getStudentInitials, generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
 import { UNIT_CONFIG } from '../../config/unitConfig';
 import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
@@ -156,6 +156,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                 studentName: proposedName,
                 firstName: proposedFirst,
                 lastName: proposedLast,
+                studentNumber: generateStudentNumber(),
                 gradeLevel: parseInt(formData.gradeLevel, 10) || 9,
                 unitName: formData.unitName,
                 admitDate: formData.admitDate || new Date().toISOString().split('T')[0],
@@ -419,11 +420,12 @@ const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
             <EditableStudentName
                 studentId={student.id}
                 studentName={student.studentName}
+                studentNumber={student.studentNumber}
                 size="sm"
             />
             <div className="flex-1 min-w-0">
                 <div className={`text-sm font-semibold truncate ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
-                    {getStudentInitials(student.studentName)}
+                    {formatStudentLabel(student)}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-[11px] text-slate-400">Gr {student.gradeLevel}</span>
@@ -503,10 +505,11 @@ const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
                     <EditableStudentName
                         studentId={student.id}
                         studentName={student.studentName}
+                        studentNumber={student.studentNumber}
                     />
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-xs text-slate-400 leading-tight uppercase tracking-widest mt-1">
-                            Student Initialized
+                        <h3 className="font-semibold text-xs text-slate-700 leading-tight tracking-wide mt-1 font-mono">
+                            {formatStudentLabel(student)}
                         </h3>
                         <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-[11px] text-slate-500 font-medium">Gr {student.gradeLevel}</span>

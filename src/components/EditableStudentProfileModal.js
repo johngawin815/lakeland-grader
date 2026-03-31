@@ -498,7 +498,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
             Delete Student
           </button>
         </div>
-        <span className="text-xs text-slate-400 font-mono">{studentData.id}</span>
+        <span className="text-xs text-slate-400 font-mono">{studentData.studentNumber ? `#${studentData.studentNumber}` : studentData.id}</span>
       </div>
     </>
   ) : null;
@@ -745,7 +745,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           </button>
         </div>
 
-        <span className="text-[10px] text-slate-400 font-mono">{studentData.id}</span>
+        <span className="text-[10px] text-slate-400 font-mono">{studentData.studentNumber ? `#${studentData.studentNumber}` : studentData.id}</span>
       </div>
     </>
   ) : null;

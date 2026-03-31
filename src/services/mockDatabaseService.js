@@ -8,6 +8,7 @@ import {
   GRADEBOOK_CATEGORIES, STUDENT_PROFILES, MOCK_KTEA_REPORTS, ATTENDANCE_DATES,
   Q3_MIDTERM_GRADES,
 } from '../data/mockData';
+import { generateStudentNumber } from '../utils/studentUtils';
 
 // ─── localStorage HELPERS ────────────────────────────────────────────────────
 
@@ -265,9 +266,47 @@ if (!hasPersistedData) {
     }
   }
   if (removedDuplicates > 0) {
+    // Also clean orphaned records in other collections
+    const remainingStudentIds = new Set([...students.keys()]);
+    for (const [id, r] of kteaReports.entries()) {
+      if (r.studentId && !remainingStudentIds.has(r.studentId)) kteaReports.delete(id);
+    }
+    for (const [id, d] of iepDrafts.entries()) {
+      if (d.studentId && !remainingStudentIds.has(d.studentId)) iepDrafts.delete(id);
+    }
+    for (const [id, p] of transcriptPlans.entries()) {
+      if (p.studentId && !remainingStudentIds.has(p.studentId)) transcriptPlans.delete(id);
+    }
+    for (const [id, w] of workbooks.entries()) {
+      if (w.studentId && !remainingStudentIds.has(w.studentId)) workbooks.delete(id);
+    }
     saveMap('students', students);
     saveMap('enrollments', enrollments);
-    console.info(`[mockDB] Removed ${removedDuplicates} duplicate student(s).`);
+    saveMap('kteaReports', kteaReports);
+    saveMap('iepDrafts', iepDrafts);
+    saveMap('transcriptPlans', transcriptPlans);
+    saveMap('workbooks', workbooks);
+    console.info(`[mockDB] Removed ${removedDuplicates} duplicate student(s) and orphaned records.`);
+  }
+
+  // 1c) Assign 6-digit studentNumber to any student missing one
+  const usedNumbers = new Set();
+  for (const s of students.values()) {
+    if (s.studentNumber) usedNumbers.add(s.studentNumber);
+  }
+  let assignedNumbers = 0;
+  for (const [id, s] of students.entries()) {
+    if (!s.studentNumber) {
+      const num = generateStudentNumber(usedNumbers);
+      s.studentNumber = num;
+      usedNumbers.add(num);
+      students.set(id, s);
+      assignedNumbers++;
+    }
+  }
+  if (assignedNumbers > 0) {
+    saveMap('students', students);
+    console.info(`[mockDB] Assigned student numbers to ${assignedNumbers} student(s).`);
   }
 
   // 2) Courses — add new, update existing course details
@@ -408,6 +447,14 @@ export const mockDatabaseService = {
   upsertStudent: async (data) => {
     const id = data.id || `student-${Date.now()}`;
     const record = { ...data, id };
+    // Auto-assign a 6-digit student number if missing
+    if (!record.studentNumber) {
+      const usedNumbers = new Set();
+      for (const s of students.values()) {
+        if (s.studentNumber) usedNumbers.add(s.studentNumber);
+      }
+      record.studentNumber = generateStudentNumber(usedNumbers);
+    }
     students.set(id, record);
     saveMap('students', students);
     return record;

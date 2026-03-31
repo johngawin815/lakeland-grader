@@ -1,5 +1,6 @@
 import { CosmosClient } from "@azure/cosmos";
 import { mockDatabaseService } from "./mockDatabaseService";
+import { generateStudentNumber } from "../utils/studentUtils";
 
 const ENDPOINT = process.env.REACT_APP_COSMOS_ENDPOINT;
 const KEY = process.env.REACT_APP_COSMOS_KEY;
@@ -88,6 +89,12 @@ function buildRealService() {
       }
     },
     upsertStudent: async (studentData) => {
+      // Auto-assign a 6-digit student number if missing
+      if (!studentData.studentNumber) {
+        const { resources: allStudents } = await studentsContainer.items.query("SELECT c.studentNumber FROM c WHERE IS_DEFINED(c.studentNumber)").fetchAll();
+        const usedNumbers = new Set(allStudents.map(s => s.studentNumber).filter(Boolean));
+        studentData.studentNumber = generateStudentNumber(usedNumbers);
+      }
       const { resource } = await studentsContainer.items.upsert(studentData);
       return resource;
     },

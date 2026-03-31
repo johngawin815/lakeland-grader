@@ -13,7 +13,7 @@ import { getStudentInitials } from '../utils/studentUtils';
  * @param {string} [props.className] - Optional extra CSS classes for the container
  * @param {string} [props.size] - size of the circle: 'sm', 'md', 'lg' (default 'md')
  */
-const EditableStudentName = ({ studentId, studentName, className = '', size = 'md' }) => {
+const EditableStudentName = ({ studentId, studentName, studentNumber, className = '', size = 'md' }) => {
   const { updateStudentName } = useStudent();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(studentName || '');
@@ -125,8 +125,11 @@ const EditableStudentName = ({ studentId, studentName, className = '', size = 'm
         <Edit2 size={12} />
       </button>
 
-      {/* Optional: Add a subtle overlay or tooltip for the teacher if needed, 
-          but per instructions: "ONLY see student initials at any given time" */}
+      {studentNumber && (
+        <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded" title={`Student #${studentNumber}`}>
+          #{studentNumber}
+        </span>
+      )}
     </div>
   );
 };
