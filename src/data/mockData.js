@@ -168,6 +168,7 @@ export const MOCK_KTEA_REPORTS = [
     id: 'ktea-kendra-b-q1',
     studentId: 'student-harmony-04',
     studentName: 'Kendra B.',
+    studentNumber: '482917',
     unitName: 'Harmony',
     gradeLevel: 12,
     admitDate: '2025-09-01',
