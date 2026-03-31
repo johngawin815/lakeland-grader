@@ -289,6 +289,7 @@ function KTEAReporter({ user, activeStudent }) {
         id: `ktea-${Date.now()}`,
         studentId: newStudent.id,
         studentName: newStudent.studentName,
+        studentNumber: newStudent.studentNumber,
         unitName: unitName,
         gradeLevel: newStudent.gradeLevel,
         admitDate: newStudent.admitDate,
@@ -750,8 +751,9 @@ function KTEAReporter({ user, activeStudent }) {
                                 <tr key={s.id || idx} className="hover:bg-indigo-50/30 text-center border-b border-slate-100 text-[11px] transition-colors group">
                                    <td className="border-r border-slate-200/50 p-1.5 text-left font-bold text-slate-700 truncate max-w-[160px]">
                                      <EditableStudentName 
-                                       studentId={s.id} 
+                                       studentId={s.studentId || s.id} 
                                        studentName={s.studentName} 
+                                       studentNumber={s.studentNumber}
                                        size="sm"
                                      />
                                    </td>
