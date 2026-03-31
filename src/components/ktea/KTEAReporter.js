@@ -3,10 +3,11 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers } from 'lucide-react';
+import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
+import { getCurrentSchoolYear } from '../../utils/smartUtils';
+import { generateStudentNumber, formatStudentLabel, getStudentInitials } from '../../utils/studentUtils';
+import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers, Plus, Save, UserPlus, AlertTriangle } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
-import { getStudentInitials } from '../../utils/studentUtils';
-
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", icon: Target },
   { key: "Discovery", label: "Discovery", icon: Telescope },
@@ -67,8 +68,16 @@ function KTEAReporter({ user, activeStudent }) {
   const [showSpreadsheet, setShowSpreadsheet] = useState(false);
   const [spreadsheetData, setSpreadsheetData] = useState({});
   const [loadingSpreadsheet, setLoadingSpreadsheet] = useState(false);
-  const [filterQuarter, setFilterQuarter] = useState('');
-  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  // Spreadsheet Addition State
+  const [isAddingStudent, setIsAddingStudent] = useState(false);
+  const [addingToUnit, setAddingToUnit] = useState(null);
+  const [newStudentData, setNewStudentData] = useState({
+    studentName: '',
+    gradeLevel: 9,
+    admitDate: new Date().toISOString().split('T')[0]
+  });
+
+  const [deleteChoice, setDeleteChoice] = useState(null); // { reportId, studentId, studentName }
   const [spreadsheetMode, setSpreadsheetMode] = useState('all'); // 'all' or 'discharged'
 
   // SEARCH STATE
@@ -211,6 +220,7 @@ function KTEAReporter({ user, activeStudent }) {
         const q = QUARTERS.find(q => q.value === parseInt(quarter));
         if (q) {
           filtered = allStudents.filter(s => {
+            // CRITICAL: Per user request, only show students who have a discharge date in this quarter
             if (!s.dischargeDate) return false;
             const bq = getBusinessQuarter(s.dischargeDate);
             if (!bq) return false;
@@ -241,6 +251,98 @@ function KTEAReporter({ user, activeStudent }) {
       setSpreadsheetData(sorted);
     } catch (e) { console.error(e); }
     setLoadingSpreadsheet(false);
+  };
+
+  const handleCreateStudent = async (unitName) => {
+    if (!newStudentData.studentName.trim()) {
+      alert("Please enter a student name.");
+      return;
+    }
+
+    try {
+      setLoadingSpreadsheet(true);
+      const nameParts = newStudentData.studentName.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+
+      const newStudent = {
+        id: `student-${Date.now()}`,
+        studentName: newStudentData.studentName.trim(),
+        firstName,
+        lastName,
+        studentNumber: generateStudentNumber(),
+        gradeLevel: parseInt(newStudentData.gradeLevel, 10),
+        unitName: unitName,
+        admitDate: newStudentData.admitDate,
+        active: true,
+        lastModified: new Date().toISOString()
+      };
+
+      // 1. Create Student
+      await databaseService.upsertStudent(newStudent);
+
+      // 2. Auto-enroll
+      await autoEnrollStudent(newStudent, "System", getCurrentSchoolYear());
+
+      // 3. Create initial KTEA report for this student
+      const initialReport = {
+        id: `ktea-${Date.now()}`,
+        studentId: newStudent.id,
+        studentName: newStudent.studentName,
+        unitName: unitName,
+        gradeLevel: newStudent.gradeLevel,
+        admitDate: newStudent.admitDate,
+        teacherName: 'John Gawin',
+        preReadingRaw: '', preReadingStd: '', preReadingGE: '',
+        preMathRaw: '', preMathStd: '', preMathGE: '',
+        preWritingRaw: '', preWritingStd: '', preWritingGE: '',
+        postReadingRaw: '', postReadingStd: '', postReadingGE: '',
+        postMathRaw: '', postMathStd: '', postMathGE: '',
+        postWritingRaw: '', postWritingStd: '', postWritingGE: '',
+        timestamp: new Date().toISOString(),
+        lastUpdatedBy: 'john.gawin@lakeland.edu'
+      };
+      await databaseService.updateKteaReport(initialReport.id, initialReport);
+
+      // 4. Audit Log
+      await databaseService.logAudit({ name: 'System' }, 'CreateStudentViaKTEA', `Created student: ${newStudent.studentName} via KTEA spreadsheet.`);
+
+      setMsg("Student Created Successfully!");
+      setIsAddingStudent(false);
+      setAddingToUnit(null);
+      setNewStudentData({ studentName: '', gradeLevel: 9, admitDate: new Date().toISOString().split('T')[0] });
+      loadSpreadsheetData(spreadsheetMode, filterQuarter, filterYear);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create student: " + err.message);
+    } finally {
+      setLoadingSpreadsheet(false);
+    }
+  };
+
+  const handleDeleteStudentChoice = async (choice) => {
+    // choice: 'report_only' or 'full_student'
+    if (!deleteChoice) return;
+
+    try {
+      setLoadingSpreadsheet(true);
+      if (choice === 'full_student') {
+        await databaseService.deleteStudent(deleteChoice.studentId);
+        await databaseService.logAudit({ name: 'System' }, 'DeleteStudentViaKTEA', `Deleted student: ${deleteChoice.studentName} entirely.`);
+      } else {
+        await databaseService.deleteKteaReport(deleteChoice.reportId);
+        await databaseService.logAudit({ name: 'System' }, 'DeleteKTEAViaKTEA', `Deleted KTEA report for: ${deleteChoice.studentName}.`);
+      }
+
+      setMsg(choice === 'full_student' ? "Student Deleted Entirely" : "KTEA Record Deleted");
+      setDeleteChoice(null);
+      loadSpreadsheetData(spreadsheetMode, filterQuarter, filterYear);
+    } catch (err) {
+      console.error(err);
+      alert("Delete failed: " + err.message);
+    } finally {
+      setLoadingSpreadsheet(false);
+    }
   };
 
   const toggleSpreadsheet = async () => {
@@ -555,9 +657,20 @@ function KTEAReporter({ user, activeStudent }) {
                           <table className="w-full border-collapse text-sm">
                             <thead>
                               <tr>
-                                <th colSpan="25" className={`${colors.bg} text-white text-sm font-bold py-3 px-4 text-left tracking-wide`}>
-                                  {unit}
-                                  <span className="ml-3 text-white/70 font-medium text-xs">({students.length} student{students.length !== 1 ? 's' : ''})</span>
+                                <th colSpan="25" className={`${colors.bg} text-white text-sm font-bold py-3 px-4 text-left tracking-wide flex items-center justify-between`}>
+                                  <div className="flex items-center gap-3">
+                                    {unit}
+                                    <span className="text-white/70 font-medium text-xs">({students.length} student{students.length !== 1 ? 's' : ''})</span>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      setAddingToUnit(unit);
+                                      setIsAddingStudent(true);
+                                    }}
+                                    className="bg-white/20 hover:bg-white/30 text-white text-[10px] uppercase tracking-wider font-bold py-1 px-3 rounded-lg flex items-center gap-1.5 transition-all"
+                                  >
+                                    <Plus className="w-3 h-3" /> Add Student
+                                  </button>
                                 </th>
                               </tr>
                               <tr>
@@ -598,6 +711,41 @@ function KTEAReporter({ user, activeStudent }) {
                               </tr>
                             </thead>
                             <tbody>
+                              {/* INLINE ADD STUDENT ROW */}
+                              {isAddingStudent && addingToUnit === unit && (
+                                <tr className="bg-indigo-50/50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  <td className="border border-slate-200 p-2">
+                                    <input
+                                      autoFocus
+                                      type="text"
+                                      placeholder="Full Student Name..."
+                                      className="w-full bg-white border border-indigo-200 rounded px-2 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      value={newStudentData.studentName}
+                                      onChange={e => setNewStudentData({...newStudentData, studentName: e.target.value})}
+                                    />
+                                  </td>
+                                  <td className="border border-slate-200 p-2">
+                                    <select
+                                      className="w-full bg-white border border-indigo-200 rounded px-1 py-1 text-xs font-bold"
+                                      value={newStudentData.gradeLevel}
+                                      onChange={e => setNewStudentData({...newStudentData, gradeLevel: e.target.value})}
+                                    >
+                                      {[1,2,3,4,5,6,7,8,9,10,11,12].map(g => <option key={g} value={g}>{g}</option>)}
+                                    </select>
+                                  </td>
+                                  <td className="border border-slate-200 p-2 text-xs font-bold text-slate-500">{unit}</td>
+                                  <td colSpan="18" className="border border-slate-200 bg-slate-50/30"></td>
+                                  <td className="border border-slate-200 p-2" colSpan="3">
+                                    <div className="flex gap-1.5 justify-end">
+                                      <button onClick={() => setIsAddingStudent(false)} className="px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-[10px] font-bold transition-all">Cancel</button>
+                                      <button onClick={() => handleCreateStudent(unit)} className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-1 transition-all">
+                                        <UserPlus className="w-3 h-3" /> Save Student
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+
                               {students.map((s, idx) => (
                                 <tr key={s.id || idx} className="hover:bg-indigo-50/30 text-center border-b border-slate-100 text-[11px] transition-colors group">
                                    <td className="border-r border-slate-200/50 p-1.5 text-left font-bold text-slate-700 truncate max-w-[160px]">
@@ -630,11 +778,11 @@ function KTEAReporter({ user, activeStudent }) {
                                   <td className="p-1.5 text-slate-500 border-r border-slate-200/50 whitespace-nowrap">{s.admitDate || '-'}</td>
                                   <td className={`p-1.5 border-r border-slate-200/50 whitespace-nowrap ${s.dischargeDate ? 'text-slate-700 font-semibold' : 'text-slate-300'}`}>{s.dischargeDate || '-'}</td>
                                   <td className="p-1.5 text-slate-500 border-r border-slate-200/50 truncate max-w-[80px]">{s.teacherName || '-'}</td>
-                                  <td className="p-1">
-                                    <button
-                                      onClick={() => handleSpreadsheetDelete(s.id, s.studentName)}
-                                      className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-all opacity-0 group-hover:opacity-100"
-                                      title="Delete record"
+                                  <td className="border border-slate-200 p-1 text-center">
+                                    <button 
+                                      onClick={() => setDeleteChoice({ reportId: s.id, studentId: s.studentId, studentName: s.studentName })}
+                                      className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                                      title="Delete Options"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -650,6 +798,54 @@ function KTEAReporter({ user, activeStudent }) {
                 </div>
               )}
             </div>
+            {/* DELETE CHOICE MODAL */}
+            {deleteChoice && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+                   <div className="p-6">
+                      <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
+                        <AlertTriangle className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">Delete Selection</h3>
+                      <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                        You are deleting records for <span className="font-bold text-slate-900">{deleteChoice.studentName}</span>. How would you like to proceed?
+                      </p>
+
+                      <div className="space-y-3">
+                        <button 
+                          onClick={() => handleDeleteStudentChoice('report_only')}
+                          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all group"
+                        >
+                          <div className="text-left">
+                            <div className="font-bold text-slate-900 text-sm">Delete KTEA Record Only</div>
+                            <div className="text-[11px] text-slate-400">Removes this line from the spreadsheet. Student remains in roster.</div>
+                          </div>
+                          <Trash2 className="w-4 h-4 text-slate-300 group-hover:text-amber-600" />
+                        </button>
+
+                        <button 
+                          onClick={() => handleDeleteStudentChoice('full_student')}
+                          className="w-full flex items-center justify-between p-4 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-all group"
+                        >
+                          <div className="text-left">
+                            <div className="font-bold text-rose-900 text-sm italic">Delete Student Entirely</div>
+                            <div className="text-[11px] text-rose-400">Global removal from Roster, Gradebook, and all Assessments.</div>
+                          </div>
+                          <Trash2 className="w-4 h-4 text-rose-300 group-hover:text-rose-600" />
+                        </button>
+                      </div>
+                   </div>
+                   <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end">
+                      <button 
+                        onClick={() => setDeleteChoice(null)}
+                        className="px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                   </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

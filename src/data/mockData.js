@@ -163,7 +163,27 @@ export const STUDENT_PROFILES = {};
 // ─── KTEA ASSESSMENT REPORTS ───────────────────────────────────────────────────
 // Pre-test for all, post-test only for students admitted before Oct 2024
 
-export const MOCK_KTEA_REPORTS = [];
+export const MOCK_KTEA_REPORTS = [
+  {
+    id: 'ktea-kendra-b-q1',
+    studentId: 'student-harmony-04',
+    studentName: 'Kendra B.',
+    unitName: 'Harmony',
+    gradeLevel: 12,
+    admitDate: '2025-09-01',
+    dischargeDate: '2026-03-31',
+    teacherName: 'John Gawin',
+    preReadingRaw: 80, preReadingStd: 120, preReadingGE: '11.2',
+    preMathRaw: 70, preMathStd: 108, preMathGE: '10.0',
+    preWritingRaw: 78, preWritingStd: 118, preWritingGE: '11.0',
+    postReadingRaw: 84, postReadingStd: 125, postReadingGE: '12.0',
+    postMathRaw: 73, postMathStd: 112, postMathGE: '10.5',
+    postWritingRaw: 82, postWritingStd: 122, postWritingGE: '11.8',
+    timestamp: '2026-03-31T10:00:00.000Z',
+    lastUpdatedBy: 'john.gawin@lakeland.edu'
+  }
+];
+
 
 // ─── ATTENDANCE DATES ──────────────────────────────────────────────────────────
 // 15 school days (3 weeks) for generating attendance records

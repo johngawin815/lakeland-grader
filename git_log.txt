@@ -1,0 +1,418 @@
+﻿be11c81 feat: implement StudentMasterDashboard component for unit-based student management and intake tracking
+8aeb05b feat: implement persistent mock database service and student management components
+6d56ae3 feat: implement student context and Cosmos DB service with cascading name updates
+9667671 feat: Add KTEA Reporter component for managing, viewing, and exporting KTEA assessment data.
+c4f79ed Gradebook & Student Initials Privacy Enhancements  Gradebook Core Enhancements  Fixed "Fill All" functionality with interactive prompt  Implemented Assignment Editing (Name, Category, Max Score)  Added Individual Grade Notes (with persistence in Cosmos DB)  Global Student Privacy & Initials Display  Created EditableStudentName.js  for HIPAA/FERPA-compliant editing  Updated StudentContext.js  for global refresh synchronization  Refactored StudentMasterDashboard.js  (Initials + Editable)  Refactored StudentSummaryPanel.js  (Initials + Editable)  Refactored GlobalSearchBar.js  (Initials + Editable)  Refactored GradebookTable.js  (Initials + Editable)  Refactored IEPGenerator.js  (Initials + Editable)  Refactored KTEAReporter.js  (Initials + Editable)  Refactored DischargeNarrativeBuilder.js  (Initials + Editable)  Refactored TranscriptGenerator.js  (Initials + Editable)  Verification & Documentation  Verified privacy enforcement across all core modules  Resolved all ESLint build warnings and verified clean compilation  Finalized walkthrough.md  with UI demonstrations
+74a44ad commit
+45fcefd I have completed the student privacy refactor and gradebook enhancements. All core modules now prioritize initials-only display and provide a global sync for name editing. Gradebook features for "Fill All", Assignment Editing, and Grade Notes are fully functional. Please review the final walkthrough for details.
+4f26284 Key Changes: Gradebook: Fill All: Now prompts for a value (e.g., 100) before applying it to all students. Edit Assignments: Added an edit icon to assignment headers to update name, category, or max score. Grade Notes: Added a note icon to each grade cell to store individual student/assignment notes. Student Initials: Updated the initials logic to show full initials (e.g., JJS for John Jacob Smith) instead of just the first and last (JJ). Applied this change to the Dashboard, Student Profile, and IEP Generator. Please review the walkthrough.md  for more details.
+6569fb2 Gradebook Enhancements Task List  Planning & Design  Analyze existing gradebook code  Create implementation plan  Core Logic Updates ( useGradebook.js )  Add gradeNotes state and persistence  Implement handleUpdateAssignment  Implement handleGradeNoteChange  Verify handleBulkFill logic  UI Enhancements  Implement Edit Assignment flow  Update NewAssignmentModal.js to handle editing  Add edit button to GradebookTable.js  headers  Implement Fill All value prompt  Add a simple UI for entering the fill value  Implement Grade Notes UI  Add note indicator/toggle in GradeCell  Create/Integrate a note entry mechanism  Verification  Test assignment editing  Test "Fill All" with value  Test grade notes persistence and display
+2a5c003 I have completed the student management updates. The student roster now shows initials for privacy, students can be deleted from the dashboard (with audit logging), and students are automatically moved to the "Discharged Residents" list when a discharge date is assigned. Please review the walkthrough for details on the implementation.
+f3df643 feat: implement workbook generation feature with a dedicated UI and PDF document rendering.
+1f8122a workbook generator
+7442229 Walkthrough: Trauma-Informed PDF Layout Upgrade The PDF generation has been upgraded to meet "Trauma-Informed Design" standards, providing a modern, professional, clinical-grade educational workbook for Lakeland Regional School.
+55fe5b4 Goal Description] Refactor the workbook generator to use a strict JSON schema for Structured Output, preventing HTML bleeding into the UI, updating the backend LLM service to use Markdown over HTML, and updating the frontend PDF renderer to map the new nested activities array cleanly.
+449d0c0 All ESLint warnings have been cleared out! I've removed the unused variables (Wrench, repairWorkbook, etc.) that were left over from the old HTML-repair architecture, and fixed the unnecessary backslashes in the regex.
+5fb8b77 Viewed geminiService.js:134-134 Viewed geminiService.js:1-134 Edited WorkbookGenerator.js Edited geminiService.js
+772121f I have completed the system architecture rewrite! The Workbook Generator is now entirely powered by a strict JSON format via Zod schemas, offering greatly improved reliability and a structured React PDF viewer rather than the glitchy HTML iframe.
+137424b workbook updates
+1df12a2 workbook update
+025005c feat: introduce WorkbookGenerator component for AI-powered educational workbook creation, including file parsing and extensive customization.
+3de3bf4 feat: Add component for generating PDF workbooks with teacher key and student pages.
+bf850ee feat: Implement WorkbookGenerator component for creating educational workbooks with various customization options and file upload capabilities.
+4398783 feat: Add Gemini service for AI interactions.
+ac3f754 feat: add `@react-pdf/renderer` and `zod` dependencies.
+b8ef47c feat: Introduce an Apple-inspired CSS print engine for workbooks and a Gemini service.
+754d600 I've successfully updated the core generation engine in
+cec9230 I have successfully implemented and compiled the final bug fixes!
+5eb5c1b feat: Add Apple-inspired minimalist print engine CSS template for workbook generation.
+d47365f feat: Add MIT Print Engine V70 Platinum CSS and dynamic layout reference for workbook generation.
+b315a12 feat: Add `WorkbookGenerator` component for creating educational workbooks, featuring file upload, pedagogical settings, and print CSS templates.
+f5095f2 workbook updates
+af5901f test: Add workbook generator artifact testing PDF.
+2a24e11 feat: create WorkbookGenerator component to generate and manage educational workbooks with various customization options and file upload capabilities.
+22c3569 feat: implement WorkbookGenerator component for creating educational workbooks with configurable options and file upload capabilities.
+25f75fa feat: introduce WorkbookGenerator component and Missouri educational topics data.
+3bdb220 feat: introduce WorkbookGenerator component and Missouri educational topics data.
+0492066 feat: Add PDF template for major Missouri topics by subject.
+173e70f feat: implement WorkbookGenerator component for creating educational workbooks.
+2f61d7e docs: Add pull workflow documentation.
+72cfbb9 feat: add WorkbookGenerator component for AI-powered educational content generation, including form management, file processing, and API integration.
+cc3e5b8 feat: add workbook generation component and its associated print CSS template.
+6da25fa feat: implement WorkbookGenerator component for creating educational workbooks with various customization options and file upload capabilities.
+2c778a5 feat: add WorkbookGenerator component for creating workbooks, handling file uploads, and integrating auto-save functionality.
+c90b503 feat: Add MIT Print Engine V70 Platinum CSS template for consistent workbook styling and structure.
+897d598 feat: Add `mammoth` and `pdfjs-dist` dependencies.
+c28a701 feat: implement WorkbookGenerator component for creating educational workbooks
+7f600bb feat: Add Missouri Learning Standards data and a print engine CSS template.
+b54878f feat: create editable student profile modal for comprehensive student data management and document uploads
+e871e5d feat: Create `EditableStudentProfileModal` component for editing student profiles, including new contact and health fields, with auto-save functionality.
+6fe125d feat: add EditableStudentProfileModal component for comprehensive student profile management and editing.
+8c23061 feat: implement EditableStudentProfileModal component for student profile editing.
+94a6813 feat: Implement EditableStudentProfileModal component for editing and managing student profiles.
+4049cb2 feat: implement EditableStudentProfileModal component for managing student profiles with auto-save and document upload capabilities.
+a5ca138 feat: Create EditableStudentProfileModal component for managing student details, MTP notes, and documents.
+78fc24f feat: implement IEP generation functionality with React components, data services, and goal bank integration.
+ac56012 feat: implement gradebook table and grading workspace components for managing student grades.
+b98c2e1 feat: implement GradeCardPreview component for displaying, editing, and exporting student grade data.
+d9c6ed0 feat: Add GradeCardPreview component for displaying, editing, and exporting student grade data.
+ec93da1 feat: implement comprehensive class gradebook system with grading table, student summaries, and analytics.
+90f07eb feat: Implement GradebookTable component with interactive grade input, student unit grouping, and keyboard navigation.
+074760a feat: introduce GradebookTable component for managing student grades, assignments, and overall performance.
+62f77af feat: implement interactive gradebook table with grade cell editing, keyboard navigation, and student unit grouping.
+cad9b38 feat: Implement the HubShell component to provide the main application layout, navigation, and module management.
+00dad5f feat: Introduce `HubShell` component as the main application layout, handling navigation, user state, and lazy-loaded module rendering.
+7e9f6d4 feat: Add main application shell with navigation and a new grading module, including an error boundary.
+a6de48f feat: add elementary grade card management, grade card preview, new assignment modal, transcript generation, and student master dashboard components.
+284ff80 feat: implement class gradebook feature including grade table, student summary panel, and assignment management.
+ed3460a feat: implement student summary panel and core gradebook components.
+ff8fe43 The white screen crash is officially fixed!
+46a3d41 I have analyzed the screenshot and entirely fixed both of those frustrating UI issues!
+cfa3fb1 Per-Teacher Gradebook Architecture & Smart Grade Mapping Currently, the system is designed like a traditional high school: every subject (Algebra I, English 9, etc.) is a separate "Course" with its own gradebook.
+7302dde Unified Grading Workspace Walkthrough We have successfully overhauled the disparate grading tools into a cohesive, single-pane-of-glass experience located under "Grades" on the HubShell.
+b8a47b0 Grade Card Creator Implementation Walkthrough The logic to create "Elementary" and "Upper Level" grade cards was already fully developed in the app via the GradeGenerator.js  component, but it was inaccessible because the navigation tile was missing from the dashboard. This walkthrough outlines the steps taken to restore access and provide the correct active-student state propagation.
+b8d3c9b The errors are occurring because createCardMenuOpen and gradeCardModalType are being used without being defined as state variables in the GradeCardPreview component, and handleOpenGradeCardModal and handleCloseGradeCardModal were accidentally placed outside the component scope (at the bottom of the file).
+28a5d6a The grade card creation modal now renders the correct form/component for Upper Level or Elementary cards, reusing your existing robust logic:
+8e79034 The sticky header implementation has started:
+d797fb2 This ensures that no matter how fast a teacher scrolls downwards using the Enter or ArrowDown keys, the DOM and standard focus behaviors gracefully handle generating the offscreen rows before focusing them.
+55bde30 Because the DOM only physically contains the visible rows (plus our overscan buffer of 5 rows), if a user is at the bottom of the visible screen and presses the ArrowDown key, document.querySelector inside your useGridKeyboard hook might return null because that cell hasn't been painted yet.
+84e27e0 Introducing schema validation via zod is a massive upgrade for form resilience. By validating the inputs before saving or generating documents, we ensure that the database never receives malformed data (like "150%" or invalid date strings).
+ac9f1d6 These isolated changes will tangibly uplift the responsiveness of the app when testing on larger cohorts. As the architecture scales further, extracting CSV imports via papaparse could be our next logical win.
+01b2199 These isolated changes will tangibly uplift the responsiveness of the app when testing on larger cohorts. As the architecture scales further, extracting CSV imports via papaparse could be our next logical win.
+0b0ffdf In the final test, you'll see jest.spyOn(window, 'confirm'). This is incredibly useful for testing native browser dialogs (like alert or confirm). By mocking it to return false, we can programmatically simulate the user clicking "Cancel", verifying that your safety checks (if (!window.confirm(...)) return;) behave exactly as intended!
+44aaefe This properly loads React Testing Library, overrides your database imports using jest.mock, and adds two new tests that verify your standard submission flow and the new batching logic.
+1304c2b CHUNK_SIZE configuration: Defines how many requests are executed simultaneously. We set it to 5, but you can easily tweak this higher or lower depending on Azure's throttling thresholds. Promise.all: Replaces the sequential await by mapping over the current chunk and returning an array of promises, executing that specific chunk concurrently. Non-blocking Throttle: await new Promise(res => setTimeout(res, 500)) introduces a 500ms delay between chunk executions, gracefully spacing out your payload.
+47e4d90 o effectively unit test the Grade Equivalent (GE) parsing logic, we first need to extract the inline calc function out of your component and export it as a standalone utility. This makes it a "pure function" that is extremely easy to test in isolation.
+4ac8960 Key Takeaways from the Diff:
+dadb4db This diff effectively resolves all performance issues related to rendering:
+9878cdb Here is how that affects your application:
+7f88a65 The Fix We can completely decouple this dependency chain. We should:
+189510f This establishes an upper height bound (240px) to prevent massive category blocks when many courses are returned in a given subject, and strictly renders only a few courses dynamically as the user scrolls within that bounded box.
+7c526f7 This is the perfect next step. To debounce the undo stack, we need to separate the real-time visual updates (onChange) from the structural history tracking.
+c0874f1 The build error occurs because the mass selection code uses React hooks (useState and useMemo) outside of the TranscriptGenerator function component. React hooks must always be called at the top level of a React functional component.
+633ab26 All React hooks and variables are now correctly placed inside the TranscriptGenerator component, and the mass selection logic is defined after enrollmentsBySubject to ensure all dependencies are in scope. This resolves all previous hook and undefined variable errors.
+0f8414a All mass selection state and logic are now correctly placed inside the TranscriptGenerator component, making the variables and functions accessible where needed. The undefined variable errors are resolved, and your file now compiles with no errors.
+64fd5e8 The errors are because the block for mass selection state and logic is still outside the TranscriptGenerator component function. React hooks and references to editedEnrollments and handleDeleteEnrollment must be inside the component function, not at the top level of the file.
+cc94957 The errors were caused by React hooks (useState, useMemo) and variables being used outside the TranscriptGenerator component. I have moved these hooks and related logic inside the component, and ensured all variables and functions are properly defined in scope.
+9a51d15 The following improvements have been made:
+c01c794 The "Term" column layout has been fixed:
+0de2ff7 Unexported or undefined imports: SUBJECT_AREAS is imported from stateGraduationRequirements. If this happens to be undefined (perhaps it wasn't exported as an array properly), the for (const area of SUBJECT_AREAS) inside useMemo will throw an is not iterable error during render and immediately crash the app. Missing fallback states for Hooks: Destructuring returned objects from custom hooks like useAutoSave() or useUndoStack() will instantly crash the app if those hooks happen to return undefined under certain edge cases. Database return types: In the useEffect that fetches getAllStudents(), if the database returns null or undefined instead of an array on an empty state, studs.filter(...) will throw a TypeError. Here is the diff that applies safe fallbacks and boundaries to fix these potential crashes and keep the UI stable.
+a71f4bb Critical Issues Discovered Fatal Runtime Exception (TypeError: deduped.map is not a function) In handleSelectStudent, you are calling deduplicateEnrollments(merged). This helper returns an object signature { kept, removed }. However, on the immediate next line, you iterate over it as if it were an array (deduped.map(...)). This will immediately crash the React application the moment a user selects a student.
+d9e7cc3 These changes will automatically fix all 5 of those ESLint warnings so your build complies perfectly! Let me know if you run into any other warnings while compiling.
+7787e21 WIP on main: 42a1bfb The "Exports" button has been removed from the sidebar, and each sidebar button/menu choice is now larger (increased icon and text size, more padding) to better utilize the vertical space and reduce blank space at the bottom.
+7c788e8 index on main: 42a1bfb The "Exports" button has been removed from the sidebar, and each sidebar button/menu choice is now larger (increased icon and text size, more padding) to better utilize the vertical space and reduce blank space at the bottom.
+f96def7 security updates to transcript generator
+97ce250 I have implemented the security protocols directly into your TranscriptGenerator.js component.
+9619048 It looks like there is a significant duplication of code at the very end of your TranscriptGenerator.js file. A chunk of JSX and the export default TranscriptGenerator; statement were accidentally pasted twice, leaving invalid code outside of the component definition. This usually causes the parser to fail and can result in multiple (often around 18) syntax errors.
+a94cf94 transcript updates
+1c157d9 Smart term auto-detect is now fully implemented for transcript course entry:
+f427ea2 Replace mock OCR with real Gemini Vision call in processImportFile
+b4f4e29 All six tasks are done. Here's a full summary of everything that changed and the broader plan:
+f321d5f No more unused-variable warnings ΓÇö all five handlers and fileInputRef/dragOver are now wired to the drop zone. Here's what changed:
+3f49667 Done. Here's what changed:
+42a1bfb The "Exports" button has been removed from the sidebar, and each sidebar button/menu choice is now larger (increased icon and text size, more padding) to better utilize the vertical space and reduce blank space at the bottom.
+df7618f The following improvements have been fully implemented in your dashboard:
+df9861c The unused variables saveStatus and lastSavedAt have been removed from both NewAssignmentModal.js and WeightSettingsModal.js, resolving the ESLint warnings.
+ad1e3da All requested cleanups are complete:
+0f1629f Here is the React implementation for the frontend UX of the "Import Past Transcript" feature. It adds a modal overlay for the document dropzone, a loading state simulating the OCR extraction, and a dedicated verification table that lets the teacher adjust the mapped Subject Areas before injecting the data into the main transcript view.
+1a2ed2d The issue happens because the application is hiding subject areas that don't have any courses yet. When a student has an empty transcript, all subject areas are hidden, leaving you with no "Add" buttons to click!
+99bf12a The error is caused by a duplicate declaration of the dayFocus state variable in WorkbookGenerator.js.
+51baaa0 cleaned up warnings
+8a7a66f Addressing the remaining files (Not currently in context) For the other files mentioned in your build output, you can easily clean those up with these quick adjustments:
+643794b Many Gemini updates to the grading.
+7ca3013 Now fix deduplicateEnrollments ΓÇö use courseName + subjectArea + term as fallback key when courseId is absent, so "English 9" enrolled twice under the same subject+term collapses to one:
+0dc7e04 1. Duplicate courses ΓÇö Enroll button removed handleQuickEnroll and the enrolling state are gone. The Plan tab still shows available courses with checkboxes to mark them as recommended, but clicking them no longer creates real enrollments (which was the source of duplicates).
+19d0a42 What Changed TranscriptGenerator.js Student Picker ΓÇö cards now show Class of {year} and a chevron arrow instead of dead space. Cleaner at a glance.
+1ecdf2a transcript generator upload
+06323b5 workbook generator
+9f9911e Clean build ΓÇö no errors or warnings. Here's a summary of everything that's now in place:
+23e1728 Both done. Here's what changed:
+9352224 All 8 tasks done. Here's what shipped across the three files:
+4370cc2 The whole export flow (studentToExport, isExportModalOpen, generateReportCard, ReportCardExportModal) is dead since the trigger was removed. Removing it all, along with the now-unnecessary pizzip/docxtemplater/file-saver imports:
+6e5b1ed Resolve merge conflict: remove legacy gradebook UI, keep full-screen spreadsheet and UnitCardMenu
+8b00ec2 The JSX fragment and parent element issues in ClassGradebook are now fixed. The "Grades" tab displays the UnitCardMenu at the top and the full-sized, editable Grade Spreadsheet below, wrapped in a single parent element for valid JSX.
+de52bfb The Q3 GradeSpreadsheet JSON has been moved to src/data, and ClassGradebook now imports it from the correct location. This resolves the build error and enables production builds.
+f009fbf ClassGradebook now loads and displays data from the Q3 GradeSpreadsheet for Harmony and Integrity units. The gradebook will show students and grades from the spreadsheet as the active source.
+34d69cd The unit filtering logic in ClassGradebook now uses the correct property (unitName). The UnitCardMenu should now display and filter students by unit as expected.
+2ac7485 The floating UnitCardMenu is now integrated at the top of ClassGradebook, styled like the Curriculum Hub. Gradebook content is filtered by the selected unit for seamless navigation. No errors were found in the updated files.
+085b2f4 Lakeland_Hub
+ac01171 The code near the bottom of the file contains a broken section where StudentSummaryPanel props are orphaned (floating outside of a component tag) and FloatingSubjectCard is used without being imported or properly implemented. Additionally, there are some unused variables and undefined state references (openUnit).
+f96b593 All grading entry points are now deprecated and redirect to the unified Quarter Spreadsheet Preview. The preview is the primary grading dashboard for grade entry, editing, bulk actions, and exports. Other gradebook, grade card, and elementary grade card components are no longer accessible from the main navigation.
+1493efe The spreadsheet preview in GradeCardPreview now loads the most updated Harmony and Integrity unit data from Q3_GradeSpreadsheet_2025-2026. The preview will reflect the new roster and grades as soon as you open it.
+1ab5a01 file shuffle
+baf5feb Yes, the workbook generator will prompt you to enter or update your Claude API key. When you first open the generator (or if no key is set), you'll see the "API Key Settings" screen with the label "Claude API Key." You can enter your Claude API key, test the connection, and update/save the key directly in the UI.
+86856b9 API screenshot
+c10ec0e Fixes the max_tokens value to 4096 (the limit for Claude 3 Sonnet), as the previous value of 65536 would cause API calls to fail.
+5690452 The fix is to update the import statement in src/components/workbook/WorkbookGenerator.js to use geminiService.
+bfa4e4d unused variables
+804f4ce The WorkbookGenerator component is attempting to import generic API key functions (hasApiKey, getApiKey, setApiKey) from ClaudeService, but that service currently only exports them with a "Claude" prefix.
+0eb98fa SyntaxError: C:\Users\Jennifer and Jim\Desktop\lakeland-grader\src\components\grading\GradeCardPreview.js: Unexpected token (553:4)   551 |   // Clear all grades for all students shown   552 |   const handleClearAll = async () => { > 553 |     if (!window.confirm('Are you sure you want to clear all grades for all students currently shown? This cannot be undone.')) return;       |     ^   554 |     setLoading(true);   555 |     try {   556 |       const allRows = Object.values(data || {}).flat();
+4444c20 I have reviewed src/components/discharge/DischargeNarrativeBuilder.js and confirmed that there are no other syntax errors.
+6a6827b The syntax error in DischargeNarrativeBuilder.js is fixed. The localStorage auto-save logic is now correctly placed inside a useEffect, and the build passes with no errors. All other form components (IntakeForm, CourseFormModal, DocumentUploadPortal) also show no errors.
+09625af Creating an optimized production build... Failed to compile.
+61f144f 75 x 10 CHAT PROBLEMS GRADE CARD TOOL OUTPUT ISSUE WITH WORD DOCUMENT Restore Checkpoint Could you help me update my workbook generator tool to use Claude AI instead of Gemini
+35d0493 All four forms (intake, course, document upload, discharge narrative) now auto-save data to local storage after every edit and restore it on reload. No errors were found. Data will only be sent to the database when you explicitly approve or click "Save."
+cc67ea0 Spreadsheet preview data will now be auto-saved to local storage after each edit and restored when you reopen the app. No errors were found in the update.
+73aa731 Elementary grade cards generated from the spreadsheet preview will now use the correct template: grade_card_elementary_grand.docx. The change is complete and no errors were found.
+ffaa5c1 grade card view
+caf7995 The "Clear All" button now appears above the preview table, inside the preview section, for better visibility and usability. Please check the modal to confirm the new placement meets your needs. Let me know if you want further adjustments!
+787b546 A "Clear All" button has been added to the grade spreadsheet modal. This button will clear all grades for the currently filtered students. The UI and logic are implemented, and there are no errors in the file. Please open the modal and test the new button to confirm it works as expected. Let me know if you need any adjustments!
+969b223 header footer upload
+9894cd9 screen shot
+b398baa The Unit Generator UI in WorkbookGenerator.js now offers the new, reduced-load vocabulary sort and alternative activities as selectable options for Page 8. Teachers/users can choose from Sort (6ΓÇô9 words, 2 categories), Matching, Grouping, Fill-in-the-Blank, Word-Picture Association, True/False Sorting, and Word of the Day Focus.
+8f1e58a The Unit Generator UI now includes a dropdown for teachers/users to select the vocabulary activity type for page 8. The options are designed for reduced cognitive load and include: Sort (6ΓÇô9 words, 2 categories), Matching, Grouping, Fill-in-the-Blank, Word-Picture Association, True/False Sorting, and Word of the Day Focus.
+d08939c The variables saveStatus and lastSavedAt are being referenced in the fetchStudents function, but they are not defined there. Since React hooks like useAutoSave cannot be used inside non-component functions, you must remove all references to saveStatus and lastSavedAt from inside fetchStudents and its returned JSX.
+ac8991f The duplicate import of HonorRollCard at the bottom of GradeGenerator.js has been removed. This resolves the "Identifier has already been declared" syntax error.
+e9d596f All ESLint and build errors are resolved:
+c52722e The duplicate import for useAutoSave inside the function body has been removed from TranscriptGenerator.js. All imports are now at the top level, resolving the syntax error.
+1dd54b8 The duplicate import for useAutoSave inside the function body has been removed. All imports are now at the top level, resolving the syntax error.
+694eda0 The syntax error is fixed. The useAutoSave import is now at the top of IEPGenerator.js, as required by JavaScript module rules.
+09271bd All errors have been resolved:
+d1adf67 fixed syntax error
+4a02e46 I've added a visual indicator for the auto-save status next to the save buttons in all three modes (modal, panel, and detail). I also removed the redundant auto-save messages from the top status area to keep the UI clean.
+a4fcb52 The SyntaxError is caused by placing variable declarations (const ...) and logic inside the defaultValues object literal of the useForm hook. This is invalid JavaScript.
+a7506bd The syntax error in EditableStudentProfileModal.js has been fixed by moving variable declarations outside the useForm call. The file now compiles without errors. Let me know if you need to address any other build issues.
+293842b The Honor Roll button has been added to the Grade Generator UI. Clicking it displays a floating card listing students who earned all As and/or Bs for the selected quarter. The feature is complete and ready for use. Let me know if you want any design or logic adjustments.
+1948f9c Auto-save is now implemented for all requested features:
+c96d5cb Auto save is now implemented for the gradebook and grading components:
+3e539b3 Auto-save features have been implemented for all requested editable forms and modals:
+a8a1b95 Summary New Files Created src/components/grading/elementaryGradeCardData.js ΓÇö Constants and utilities:
+07676aa src/data/workbookCssTemplate.js STRUCTURAL_REFERENCE: Merged the two vocabulary pages into a single Page 1 with 5 vocab terms (was 4+6 across two pages). Textarea height set to 58px (a middle ground between the old 76px and 38px). Brevity constraints adjusted (definitions max 18 words, examples max 14 words, task prompts max 22 words). Removed the entire Page 2 vocabulary extension template. All subsequent pages renumbered: Narrative chapters are now Pages 2-7 (was 3-8), Synthesis is Page 8 (was 9), Scenario is Page 9 (was 10), Creative is Page 10 (was 11). Footer reference updated from "Page [X] of 11" to "Page [X] of 10". src/services/geminiService.js Removed the Page 2 h1/mission-objective cleanup logic (no longer needed). Updated textarea height enforcement: Page 1 now uses 58px, removed the old Page 2 (38px) rule. Creative page textarea cap index changed from i === 10 to i === 9. Header-row and footer fallback text updated from "of 11" to "of 10". public/curriculum_generator_agent.md Updated description, objective, and blueprint heading to reference 10 pages. Changed vocabulary section from "PAGES 1 & 2" with 4+6 terms to "PAGE 1" with 5 terms. Updated brevity constraints for the single vocabulary page. Renumbered all page references throughout (narrative, synthesis, scenario, creative). Updated variety mandate to reference Pages 1, 8, 9, 10. src/components/workbook/WorkbookGenerator.js ACTIVITY_SECTION_LABELS: vocabulary pages changed from "Pages 1ΓÇô2" to "Page 1", synthesis/scenario/creative updated to pages 8/9/10. buildPreviousDaysContext: framework tracking references updated. UI text and progress bar calculations updated from 11 to 10 pages.
+77de9d1 Changes already in the working tree (WorkbookGenerator.js):
+077e9fe Fix (DischargeNarrativeBuilder.js:199-225) The handleSelectStudent function now tries up to three search strategies:
+49fcacb 36 x 10 Claude Let me start by reading both referenced files to understand the current implementation.
+6cd2d3f All four issues are fixed. Here's a summary of the changes made to KTEAReporter.js:
+72954f5 Done. Here's what was added to DischargeNarrativeBuilder.js:
+e48ab74 ranscriptGenerator.js - Complete rewrite with all fixes 1. Duplicate classes fixed - Added deduplicateEnrollments() helper that groups enrollment records by courseId and keeps the best record (preferring ones with grades, then most recently modified). This eliminates the root cause where different code paths created enrollment records with different ID formats for the same student+course.
+4742a53 deleted unused files
+309f5cf All done. Here's what was changed:
+8df6df1 deleted duplicate files
+c0d6a31 screenshotfolder added
+60e9110 All changes are in place and the build compiles cleanly. Here's a summary of what was changed:
+79d258f Changes Made 1. src/data/mockData.js ΓÇö Added Q3 Mid-Term Grade Data
+c99c790 Students (MOCK_STUDENTS) Grade level updates:
+1bbf62c The problem: The else branch (when localStorage already had data) only merged brand-new students. It ignored:
+c3b0bd6 Changes Summary 1. Grade Level Updates (src/data/mockData.js) Updated grade levels for Integrity students to match the spreadsheet:
+a5da917 39 x 10 The classes studnets are enrolled are highlighted in yellow. If students have a random class like novels for example it's because they have already earned all their English or Math credits and needed to take extra electives
+9d34208 enroll
+dbee6ae Build is clean ΓÇö no warnings, no eslint errors. Here are the results:
+4cb53ce he results are significant. Here's the before/after comparison:
+c219e6e Changes made 1. New imports: Added useRef, ChevronDown, FileArchive from lucide-react, and JSZip for ZIP archive creation.
+8ec7a14 All done. Here's a summary of what was changed in src/components/grading/GradeCardPreview.js:
+834052c commit the spread
+60cac7b Let me start by understanding how elective courses are currently defined in the codebase.
+5ddee94 Here's a summary of everything that was changed:
+60d9efe Summary Template mapping is correct. The getUpperLevelMappedData() function at GradeGenerator.js:319 properly maps all form data to the exact placeholders in Upper Level Grade Card.docx:
+f5bc10e Problem: In exportToSpreadsheet() at GradeGenerator.js:476-495, student data started writing at column 2 (B), leaving column 1 (A) blank for every student row. This produced the empty column to the left of the Name column in the exported spreadsheet.
+ca67035 Changes Made to GradeGenerator.js Reduced from 985 lines to 884 lines (101 lines of Quick mode removed).
+08a7383 1. EditableStudentProfileModal.js - Removed Guardian 2 entirely (form fields, form state, and save logic). Relabeled Guardian 1 fields to just "Name", "Phone", "Email", "Address". Section header changed from "Guardians" to "Guardian".
+e8672b7 Summary of Changes 3 New Files Created File	Purpose src/config/unitConfig.js	Shared UNIT_CONFIG, default course definitions by grade band (elementary/middle/high), getDefaultCourses() and getGradeBand() helpers src/components/settings/TeacherSettings.js	Self-service settings page where teachers select which residential unit(s) they manage, persists to the Teachers DB container src/services/defaultEnrollmentService.js	getOrCreateDefaultCourses() and autoEnrollStudent() -- creates placeholder courses per grade level and enrolls students in them 9 Files Modified File	What Changed src/services/databaseService.js	Added Teachers container, upsertTeacher(), getTeacher() methods src/services/mockDatabaseService.js	Added teachers Map with localStorage persistence, matching upsertTeacher(), getTeacher() methods src/components/layout/HubShell.js	user.unit ΓåÆ user.units (array), loads teacher record on login, added Settings sidebar button + settings view src/components/dashboard/StudentMasterDashboard.js	Imports shared UNIT_CONFIG, imports auto-enrollment service, user.unit ΓåÆ user.units, auto-enroll at intake, "Default Enroll" button on every student card src/components/dashboard/IntakeForm.js	Added "Auto-enroll in default courses" checkbox (checked by default) src/hooks/useGradebook.js	Signature changed to useGradebook(courseId, userUnits), auto-populates students from teacher's units on gradebook load, adds unitName to student objects, sorts by unit then name src/components/grading/ClassGradebook.js	Passes user?.units to useGradebook() src/components/grading/GradebookTable.js	Groups students by unit with colored section header rows when multiple units are present src/components/EditableStudentProfileModal.js	Derives UNIT_OPTIONS from shared UNIT_CONFIG instead of hard-coding Key Behaviors Teacher Settings: Click "Settings" in the sidebar to select which unit(s) you manage. Selections persist to the Teachers DB collection.
+737f2e2 Read [](file:///workspaces/lakeland-grader/src/components/dashboard/StudentMasterDashboard.js)
+57a88c4 All changes are complete and the build passes. Here's a summary of what was changed in WorkbookGenerator.js:
+49eb7d0 All three features are implemented and the build passes. Here's a summary of the changes made to KTEAReporter.js:
+5088879 Data Flow Save button ΓåÆ finds student ΓåÆ upserts enrollment records (with letter grade + percentage + credits) ΓåÆ also saves KTEA audit record ΓåÆ Stacked preview and XLSX export read from the same enrollment data ΓåÆ everything stays in sync.
+809bd10 Summary of Changes 1. Template Tag Injection (New Scripts) scripts/inspect-upper-level.js -- Inspects the .docx XML structure to identify table indices and cell layout scripts/inject-upper-level-tags.js -- Injects 125 template tags into Upper Level Grade Card.docx: 5 header tags: {student_name}, {school_year}, {grade}, {admit_date}, {discharge_date} 120 quarterly table tags: {qN_rM_credits}, {qN_rM_course}, {qN_rM_grade}, {qN_rM_instructor} for N=1-5, M=1-6 2. Modified Template public/templates/Upper Level Grade Card.docx -- Now contains all 125 template tags in the correct cells (backup saved as .bak) 3. GradeGenerator.js Changes New template config upper_level registered in TEMPLATES with flags for hasInstructors, hasAdmitDischarge, hasSummerQuarter New form fields: admitDate, dischargeDate, 6 instructor fields (engInstructor, mathInstructor, etc.) Auto-selection: useEffect watches gradeLevel -- grades 9-12 auto-select "Upper Level Grade Card", grades 1-8 revert to "Quarter Card" getUpperLevelMappedData(): Maps the 6 subjects to the correct quarter section (Q1-Q4 or Summer) using the {qN_rM_*} tag pattern generateDocx(): Now branches on template type and uses nullGetter: () => '' so unused quarter tags render as blank Form UI: Quarter is now a dropdown (Q1-Q4 + Summer when Upper Level), Admit/Discharge date inputs shown for Upper Level, Instructor field on each ClassRow when Upper Level is active 4. BatchExportModal.js Changes Auto-detects Upper Level based on gradeLevel in formData Pre-fetches both templates in parallel Builds the correct data mapping (upper level or standard) per student
+0b4b9c5 upper level grade card added
+3f64b8e Done. Here's what changed:
+e53cd6d Done. Here's what changed:
+e71ed9c Done. Here's what was added to src/components/grading/GradeGenerator.js:
+16bf643 Since docxtemplater couldn't find values for the _cred tags, those placeholders were left unresolved in the output document ΓÇö showing up as "unverified" (likely the raw {eng_cred} text being rendered).
+dcb30b8 Build passes. The fix was straightforward ΓÇö the codebase already had a getCurrentSchoolYear() utility in src/utils/smartUtils.js (used on the home dashboard) that computes the academic year with a July 1st cutover. The Curriculum Maps header had the year hardcoded as "2024-2025". Now it dynamically displays the correct academic year (currently "2025-2026" since we're past July 2025).
+ddd6698 91 x 10 Claude Queued Let me thoroughly explore the current Grade Cards UI to understand everything that needs to fit on screen.
+a82fd6a Build succeeds. Here's a summary of the two changes:
+c372ae0 84 x 10 Claude Let me look at the screenshot and the current code to fully understand the issues.
+4cb50b8 commit
+b6a2bf5 Fix Grade Card Creator Layout ΓÇö Insufficient Space for Course Dropdowns Context The ClassRow component in the grade card form currently renders the course dropdown and grade/percentage inputs on a single horizontal row (md:flex-row). The dropdown is constrained to md:w-56 (224px), which truncates longer course names like "AP Environmental Science" or "Physical Science 8". When the live preview panel is active, the form is further compressed into a 2-column grid layout, making it worse.
+c1b42ee 1. Students Added (src/data/mockData.js) Harmony Unit (9 students):
+a20214c Fix serve command not found by using npx serve
+3d8f10e new bat
+3f44cb2 start lakeland
+ed68fef Key fixes:
+8410b4e git -C "$env:USERPROFILE\Desktop\lakeland-grader" pull
+ddaa541 Done. Students in the roster are now sorted alphabetically by first name at StudentMasterDashboard.js:218. The .sort() is chained after the filter so it applies to both the card grid and the compact list views.
+30d1edc Add app icon and desktop shortcut creator
+4739ac2 start-lakeland.bat
+2965e10 Done. Added 8th grade as an option in the Intake Form's grade level dropdown at src/components/dashboard/IntakeForm.js:32. The choices are now 8, 9, 10, 11, 12.
+92f14d1 All done. Here's a summary of the changes made to src/components/dashboard/StudentMasterDashboard.js:
+ef34b8f student count error screenshot
+41f747e New Activities Added (by section) Vocabulary (Pages 1-2) ΓÇö 6 new frameworks Activity	Pedagogical Foundation	Population Served Visual Vocabulary Map	Dual-coding theory (Paivio) ΓÇö sketch + caption	ELL, visual learners Vocab Meme Creator	Culturally sustaining pedagogy (Paris & Alim)	High-risk, disengaged teens Bilingual Bridge	Translanguaging theory (Garc├¡a & Wei)	ELL, multilingual students Word Sort & Categorize	Schema-building classification (Marzano)	ELL, low writing confidence My Life Dictionary	Funds of Knowledge (Moll et al.)	High-risk, community validation Emoji-to-Word Translator	Multimodal entry point, reduces writing anxiety	Newcomer ELL, writing-avoidant Synthesis (Page 9) ΓÇö 5 new frameworks Activity	Pedagogical Foundation	Population Served Diamond Ranking	Visual prioritization scaffold	ELL, low writing demand Concept Sketch Map	Concept mapping (Novak & Ca├▒as)	ELL, visual learners Community Connection Web	Funds of Knowledge, culturally sustaining	High-risk, community as asset Gallery Walk Response Cards	Structured academic discourse	ELL, builds discussion skills Think-Pair-Share Matrix	Structured peer interaction	Trauma-informed, trust-building Scenario (Page 10) ΓÇö 5 new frameworks Activity	Pedagogical Foundation	Population Served Community Action Plan	Critical pedagogy (Freire)	High-risk, builds agency Letter to My Future Self	Future orientation (protective factor)	Trauma-informed, residential Social Media Campaign	Digital-native culture as currency	Disengaged, culturally relevant Public Service Announcement	Civic engagement, universal conventions	ELL, multimodal scaffold Restorative Circle Prep	Restorative justice practices	Residential treatment, empathy-building Creative Canvas (Page 11) ΓÇö 5 new modalities Activity	Pedagogical Foundation	Population Served Spoken Word / Rap Lyrics	Hip-hop pedagogy (Emdin)	High-risk, identity-affirming Vision Board	Trauma-informed therapeutic practice	Residential, future-oriented Graphic Novel Page	Sequential art (McCloud), minimal text	ELL, reluctant writers Album Cover Design	Culturally sustaining, music as bridge	Disengaged teens Photo Essay Storyboard	Multimodal narrative planning	ELL, writing-avoidant Files modified: src/components/workbook/WorkbookGenerator.js ΓÇö ACTIVITY_OPTIONS expanded (24 new entries), FRAMEWORK_KEYWORDS updated for rotation detection public/curriculum_generator_agent.md ΓÇö Detailed pedagogical implementation descriptions added for each new framework so Gemini knows exactly how to generate them
+9ec9ab5 Claude Let me re-read the current state of the files and continue from where I left off.
+e99658b commit goole drive connect
+48b81ae SS repair overrides (applied to every repaired workbook):
+f7b41ec Found the bug. Here's the problem:
+b1e1951 png for workbook
+cab1cb7 Build passes clean. Here's what I changed to make all sidebar tools fit without scrolling:
+26925e5 Found the problem. On line 306, when a button is active:
+9d8d9c6 ChevronRight was used in the old day cards but no longer needed after the redesign.
+1fe51a8 Clean build, no warnings. Here's what changed in WorkbookGenerator.js:
+be1c3cd Done. Changed the nav from overflow-y-auto with hidden scrollbar to overflow-hidden (no scrolling at all), reduced button gap from gap-1 to gap-0.5, and tightened button padding from py-2.5 to py-1.5 so all 10 modules fit within the viewport without any scrolling.
+aafc733 I'll clean up the dead code left over from removing the Quick Actions bar.
+9cd539b Build passes. Here's a summary of the changes to HubShell.js:
+8921e6e Build succeeds. Here's what was added to geminiService.js as repair step 12 (lines 212-243):
+ef67af6 4 changes, all in one file:
+2efce6b I found multiple serious problems with the current repair:
+0c4d198 I see the problem. The current approach sends the entire HTML as a single blob to the AI and asks it to return the entire fixed document. This is unreliable because:
+156440b Add repair function, add fix button, reparing state, and handle repair, update imports
+dd5af81 cleaned up day focus logic
+c0dba6d standard documents
+28aa52f 1. WorkbookGenerator.js ΓÇö 8-Day Scope & Sequence constant:
+f4ae6bb Build passes. The fix replaces the vague "Same structure as Page 1" instruction with explicit Page 2 HTML that matches the exemplar:
+bb619f0 Two changes made in workbookCssTemplate.js:
+d769910 Both issues are fixed. Here's what changed in workbookCssTemplate.js:
+d862a92 Build passes. Here's what happened and the fix:
+e5a859d I'll audit both files page by page to find all formatting inconsistencies. Let me read both files in parallel.
+9a555f8 How it triggers:
+68f068e fdsaf
+1593b4e How it triggers:
+960aa93 Claude Agent Read the_labor_movement.html
+c17c9af The Curriculum Workbook Generator is fully implemented and builds clean. Here's a summary:
+d90f768 Claude Agent I already added the expanded contact fields to defaultValues. Now I need to add them to the updatePayload in onSubmit, then wrap the JSX blocks conditionally, then fix the whitespace. Let me read the current state of the file at the relevant sections.
+dcfc48f curriculum agent
+5e1a64a Claude Agent (no content)
+0a38868 I now have a complete understanding of both issues. Let me write the plan.
+860ad82 The Transcript Generator feature is fully implemented and the build is clean (zero errors, zero warnings). Here's a summary of everything that was done:
+8ece5e3 Claude Agent (no content)
+2cfd6c8 What was done I updated src/services/mockDatabaseService.js to back all in-memory data with localStorage. The changes:
+dea46ca 66 x 13 Can you remove the "fake students" I want to be able to test this app locally from point zero so to speak.
+9d3244a removed fake students
+be82121 You can manually input real or fake student data using the "New Student Intake" form in the app (IntakeForm.js). This form allows you to enter student name, grade, unit, admit date, and expected discharge date. Use initials or pseudonyms for student names to avoid PHI.
+8747312 deleted screenshots
+6020625 The compile error is fixed: the Mail icon is now properly imported. Your code should now compile and display the expanded Home School Contact fields as intended. Let me know if you need any further adjustments!
+8c5c5e2 The student data input section has been expanded to utilize available white space. There are now clear fields for Home School Contact Name, Position, Contact number, and email. If you need further layout adjustments or want these fields to be required, just let me know!
+c0ae14b The main page layout has been made more compact by reducing padding, spacing, and grid gaps. This adjustment ensures all contentΓÇöincluding quick actions and module cardsΓÇöfits within the viewport on a standard laptop or desktop, with nothing cut off or overflowing. If you need further tweaks for even tighter fit or want to test on other screen sizes, let me know!
+fba8907 All vertical scrolling has been removed from the main page. The content now fits within the viewport height, ensuring that teachers on standard laptops or desktops will see everythingΓÇöquick actions and modulesΓÇöwithout needing to scroll. If you need further adjustments for even smaller screens or want to test edge cases, let me know!
+737f43f The quick actions section is now positioned above the module grid on your main page. This ensures that busy teachers will see the quick actions immediately without needing to scroll. If you need further adjustments or want to make the quick actions sticky or more prominent, let me know!
+6d54325 sidebar extension from 72 px to 96 px
+367fb30 plan.agent.md
+bc2c3bd images to reference
+e48178a Claude Agent Let me review the screenshot first.
+2ee436b hub_shell_choices.png
+2f77e1e All done. Here's a summary of everything implemented in src/components/layout/HubShell.js:
+3c7fc9d 1. Removed statistical counts:
+f1438f0 main_page.png
+6eb515a The plan is ready. Here's a summary of the fix:
+4330f38 I now have a complete diagnosis. Let me write the plan.Here is a summary of the diagnosis and plan:
+fbe62c7 All 5 changes are implemented and the build compiles cleanly. Here's a summary of what was done:
+1619978 All done. Here's what was implemented:
+132ea2a Let me look at the issue.
+9175076 const COMPACT_INPUT_CLASS = 'w-full px-2 py-1.5 rounded-md border border-slate-200 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white outline-none transition-all disabled:opacity-50 placeholder:text-slate-400';
+4caeab2 Claude Agent (no content)
+882ea0d Claude Agent I'll start by exploring the codebase to understand the current student dashboard implementation and the scrolling issues you're describing.
+d8d16b0 Claude Agent (no content)
+4cd6341 The plan is complete. It covers three targeted file changes to transform the side-panel detail view into a modern floating card overlay:
+e51a33a Changes Made Deleted src/pages/ResidentRoster.js -- Removed standalone roster page (212 lines). Zero references existed elsewhere. Redesigned: Student Cards (StudentMasterDashboard.js) Compact 2-zone layout: Header row (avatar + name + grade + days count + chevron) and badge row (unit tag, IEP status, district, MTP count) Removed: floating sticky note tab, contact section (guardian/phone/home school), footer with admit date Card height drops from ~200px to ~100px, fitting more students on screen IEP badge turns rose when due within 30 days ("IEP -- Due Soon") Added search bar with client-side filtering by name, district, or guardian Added per-unit student counts on unit selector pills Active pill gains shadow-md ring-1 for stronger visual weight Grid: 4 columns on XL screens, 2 columns when panel is open, gap-4 throughout Redesigned: MTP Notes (EditableStudentProfileModal.js) Note text: 14px (was 11px) with leading-relaxed Textarea: 5 rows with min-h-[120px] and resizable (was 3 rows, fixed) "Add Note" is a visible indigo pill button (was subtle amber text link) Notes render on clean white cards with borders (was amber background section) Empty state: centered icon + descriptive text Redesigned: Profile Panel Header Light unit-colored background (e.g., bg-purple-50) replaces dark gradient All text is dark-on-light for better readability Close button gets white background with border Metadata labels: "d in program" / "d remaining" (clearer than "d in" / "d left") Typography & Accessibility Fixes 0 instances of text-[10px] or text-[11px] remain in the profile modal Consistent label pattern: text-xs font-semibold text-slate-500 uppercase tracking-wide Input padding: py-2.5 for better touch targets throughout Unit radio buttons: 2-column grid (was 3-column) with px-3 py-2.5 IEP section: separate rows instead of cramming toggle + due date + status badge horizontally HubShell Navigation Nav buttons now show icons (icon-only on medium screens, icon + label on XL) Touch targets: py-2 (was py-1.5) Hero subtitle personalized with user's unit name Build Zero errors, zero new warnings Bundle size decreased by 254 bytes (simpler markup from card redesign)
+8157451 IEP Generator Redesign: Document Preview ΓåÆ Card-Based Data Entry Form Goal Replace the document-preview UI (8.5" wide page mimicking the printed IEP) with a modern card-based accordion form. Teachers enter data into clean form fields, then click "Export Word" to download a perfectly formatted DOCX. The DOCX template and export logic remain unchanged.
+4e339f6 Execution Complete - IEP Generator DOCX Export Fix Step 1+7: DOCX Template Variable Fragmentation Fix Created and ran scripts/fix-docx-fragmentation.js which: Backed up the original template to IEP Master Form.docx.bak Removed 8,944 bytes of <w:proofErr> tags that Word inserted between template variables Fixed 112 fragmented template variables where Word had split {variableName} across multiple XML <w:r> runs (e.g., { in one run, residentName in another, } in a third) All 102 unique template variables are now intact and renderable by docxtemplater Step 2: Dynamic UI for Sections 2, 7, 8 Section 2 (Special Considerations): Converted 3 hardcoded items into 9 fully interactive checkboxes covering behavior, blind/deaf, LEP, communication, assistive technology, ESY, transition, and transfer of rights Section 7 (Regular Ed): Made Yes/No toggleable with conditional explanation textarea Section 8 (Placement): Made the placement continuum table fully interactive - users can toggle Considered/Selected for each option (single-select for Selected) Step 3: Expanded createEmptyDraft() Added new state fields: behaviorImpedes, extendedSchoolYear, isBlind, isDeaf, isLEP, communicationNeeds, assistiveTechnology, transferOfRights, regularEdInRegular, regularEdExplanation, placementOptions[] Step 4: Updated handleExportDocx() Added nullGetter: () => '' to docxtemplater config so missing variables render as empty strings instead of throwing Goals array is now padded to 3 entries so template rows always render Added section comments for code clarity Step 5: Smart Lakeland Defaults New students auto-populate: meetingType: 'Annual Review', behaviorImpedes: true, Lakeland residential explanation, case manager name from logged-in user Auto-calculates age from birthDate Auto-enables transition plan for grade 9+ or age 14+ Step 6: Build Verification Build succeeds (795.91 KB gzipped, +805 bytes from our changes) Zero new warnings or errors One thing you'll need to verify: Open the modified DOCX template (public/templates/IEP Master Form.docx) in Microsoft Word to visually confirm the formatting is intact after the programmatic XML edits. The backup is at IEP Master Form.docx.bak if needed.
+e9bf672 IEP Master form
+0695e87 The IEP Generator UI redesign is complete. Here's a summary of everything that was done:
+76fb8bc Claude Agent Let me re-read the current export function and the full template to build a complete mapping, then enter plan mode.
+772571a updated IEP to the main document
+fb81e52 Claude Agent Completed: Final build verification (3/3)
+b08708f Everything is done. Here's a summary of what was completed:
+a5d5c38 Claude Agent (no content)
+84c8bad Changes Made 1. tailwind.config.js ΓÇö Added custom slide-in-right animation keyframes for the detail panel entrance.
+19bf3f8 1. Professional Inline Spreadsheet View (toggle-able) The old modal-based "Spreadsheet Preview" is replaced with an inline toggle view that slides into the page above the form when you click "Spreadsheet View" in the header Dark gradient toolbar with the title, filter controls, student count, and print button Data is organized by unit in the same order as UNIT_CONFIG (Determination, Discovery, Freedom, Harmony, Integrity, Serenity), each with its own unit icon and student count Professional table formatting: blue-tinted pre-test columns, green-tinted post-test columns, bold GE columns, hover highlighting Scrollable up to 60vh with sticky unit headers 2. Quarterly Auto-Populate Quarter buttons (Q1-Q4) in the spreadsheet toolbar with fiscal year business quarters: Q1 = Jul-Sep, Q2 = Oct-Dec, Q3 = Jan-Mar, Q4 = Apr-Jun Year selector dropdown (2023-2026) Clicking a quarter automatically filters to show only students who were discharged during that quarter+year The "All" button shows all records regardless of discharge status Title dynamically changes to "Quarterly Discharge Report" when filtering, with a count like "3 students discharged in Q3 2025" Empty state with a helpful message and "Show all records instead" link 3. Mock Data for Demos Added 8 additional KTEA reports with discharge dates distributed across quarters:
+f0fadbe Changes Made 1. IntakeForm is now accessible (StudentMasterDashboard.js)
+c0dc4a2 Compiles cleanly. Here's what changed:
+b3f6006 The dev server is running and the bundle compiles successfully. The compact EditableStudentProfileModal is in place with:
+8f2680a Everything compiles. Here's what clicking a student card does now:
+b4a6b39 Done. The student context feature is completely removed:
+9539fb1 (no content)Let me read the current state of the `StudentProfileModal` component.
+9e43ab6 Everything compiles cleanly. Here's what the StudentCard upgrade includes:
+8e26cb8 StudentMasterDashBoard
+a432e42 3 changes made:
+0e11a6c 3 changes made:
+5774a91 credits less than one decimals
+7d68f39 button and fix the mock user consistency.
+acb4850 azure.png
+c698fa4 Complete home view overhaul:
+892659e bye code citations
+fae7cb6 EnrollmentManager.js - Added eslint-disable-next-line for the fetchData dependency (intentional -- fetchData is stable and only needs to re-run when course.id changes) StudentMasterDashboard.js - Added eslint-disable-next-line for the fetchCourses dependency (same pattern -- only re-runs when teacherName changes) ClassGradebook.js - Removed the unused term variable on line 251 (getAcademicQuarter() is still used elsewhere in the file) GradeGenerator.js - Added eslint-disable-next-line for the formData dependencies in the auto-populate effect (intentional -- including formData would cause infinite re-renders since the effect itself updates formData) The remaining 5 warnings are pre-existing in files I didn't modify (DischargeGenerator, BatchExportModal, StudentSummaryPanel).
+cf78a76 Enrollment Management & Grade Aggregation Pipeline - Complete Phase A: Database Service (databaseService.js) Added 9 new methods: getAllCourses, addCourse, updateCourse, deleteCourse, enrollStudent, unenrollStudent, getEnrollmentsByCourse, getStudentEnrollments, getGradebook Phase B: Course Management UI CourseFormModal.js (created) - Modal form for creating/editing courses with Subject Area dropdown (English, Math, Science, Social Studies, Elective), Credits, Term fields StudentMasterDashboard.js (rewritten) - Replaced MOCK_COURSES with real getCoursesByTeacher() DB calls. Added Create Course button, CourseFormModal integration, and CourseCard with edit/delete buttons Phase C: Enrollment Management EnrollmentManager.js (created) - Two-panel layout: enrolled students (left, with remove) and available students (right, with search + enroll). Accessed via "Manage Students" button on each CourseCard Phase D: Gradebook Wired to Real Data (ClassGradebook.js) Removed all hardcoded INITIAL_STUDENTS/GRADES/ASSIGNMENTS/CATEGORIES/ATTENDANCE constants loadGradebookData() now fetches enrolled students via getEnrollmentsByCourse(), resolves names from Students container, and loads saved gradebook data (assignments, categories, attendance, grades) from the Gradebooks container Save now persists: enrollment grades (with subjectArea, courseName denormalized) + full gradebook data (grades object included) Empty state shown when no students enrolled Phase E: Cross-Course Grade Aggregation (GradeGenerator.js) Added SUBJECT_FIELD_MAP - maps subject areas to grade card template fields (English ΓåÆ eng_*, Math ΓåÆ math_*, etc.) Updated auto-populate from gradebook context to use subjectArea for proper slot mapping (no longer always puts data in elec1) Added fetchAllGrades() function - looks up student by name, fetches all active enrollments, maps each enrollment's subjectArea to the correct grade card slot Added "Fetch All Grades" button in the header actions bar Added aggregation banner (green for success, amber for warnings) HubShell Navigation Fix "Class Gradebook" nav button now redirects to Dashboard ΓåÆ My Classes tab (since a course must be selected first) Removed direct ClassGradebook rendering from HubShell (it's now accessed through StudentMasterDashboard) Added dashboardInitialTab state + initialTab prop on StudentMasterDashboard Grade card generation flow preserved: ClassGradebook ΓåÆ "Generate Grade Card" ΓåÆ navigates to GradeGenerator view All 7 modified files pass syntax verification.
+aeedde2 Key Features Auto-Populated Grade Cards - Click GraduationCap icon in gradebook to auto-fill grade card form Batch Export - Select students, download all grade cards as a ZIP Live Preview - Toggle preview pane to see grade card while editing Class Analytics - Distribution charts, failing alerts, assignment difficulty analysis, absence correlation Student Summary Panel - Slide-out with overall grade, category breakdown bars, attendance, smart comment Smart Comments - Auto-generated teacher comments based on grade data Quick Entry Mode - Simplified single-student grade entry (replacing old GradeReporter) Spreadsheet Redesign - Full filtering modal with preview table and XLSX export
+3c4b144 student master dashboard
+3d89a0e Editable Student Profile Modal
+fa55ec0 message
+42341e6 Claude Updates
+d9683b6 code citations
+1bd4898 'll implement a premium glassmorphism Student Profile Modal in
+33c6ec4 code citations.md
+713a400 claude data and key updates
+5ccc7ce Initial plan
+bfafee8 spreadsheet
+e5e44c4 rule of tree error
+c2be9a7 studentmaster dashboard
+332d3d1 duplication error solved
+777601a step 3 of grade book
+7cdda51 power school lite integration
+023e717 curriculum map restored for social studies
+4449a91 gradebook features
+ee867aa 23 problems
+de2b2fb student dashboard color and badge updates
+158e75c graduation cap icon
+95d59e3 gradebook update
+4fcdc50 smart utility
+f4854b4 GradeGenerator.js
+6630e39 restore the map
+c037899 color update
+9684cff Updated GradeGenerator and cleaned up repo
+51891e6 update to color scheme
+b0e5802 index is back
+7b00909 agent audit for visual consistentcy
+2baf053 phase 4
+8718331 reorganized docs into template folder
+2c1cf73 phase 3 of power school
+cb002a3 phase 2 of power school
+0ce8616 power school lite
+a773fe9 grade reporter
+7412fe3 print preview KTEA III
+c81cab7 color update to units
+3cf5415 sticky note feature
+75a341e white out issue fixed
+ae0489d IEP features
+c981d31 edit student feature
+1af7979 audit feature to discharage
+6936b28 discharge docx
+def8818 discharge narrative generator UI updates.
+9ce5ab6 wrapper update
+b991d6b brain friendly colors to the English curriculum.
+c98b9e1 student dashboard update
+e19191a keys
+563d3b6 color coded professional
+239dd4c added lakeland hub documents to the public folder
+4b7d2b3 updates to the student master dashboard to add unit filters and update the styling of the filter buttons. The filter buttons now have a background color that corresponds to the unit they represent when active, and a default style when inactive. The code also includes the necessary imports for the unit icons and configuration.
+a79f751 deleted units
+42ec911 units update
+1533d41 updates
+0988936 updates
+b147be5 error in npm start: "react-scripts" is not recognized as an internal or external command,
+f0037c6 various updates to curriculum maps, including adding a new map for the KTEA and updating the existing WISC map with new content and formatting. These changes enhance the functionality and user experience of the curriculum maps section of the application.
+6fb5403 auditlog updates
+f92df16 tailwind css updates
+a50465f general .md update
+c282b0d gemini.md
+4fe706b color change on curriculum maps
+d1194e4 31 changes by John G
+8196ea0 package-lock.json
+cbd773e EMPTY
+fce25a2 Add files via upload
+dbec7e1 package-lock.json
+6a31429 Merge branch 'main' of https://github.com/johngawin815/lakeland-grader
+4f0b671 update 10.15.0
+886ea00 Add Node.js CI workflow for testing and building
+c259a8e Add GitHub Actions workflow for npm package publishing
+c1aaae7 Add files via upload
+416dbe0 Add files via upload
+26c3f30 Add files via upload
+6dccb37 Add files via upload
+7440ab9 Add files via upload
+eff4073 Add files via upload
+59d8ab5 Add files via upload
+451d0f2 Add files via upload
+1409732 Add files via upload
+db14fcd Add files via upload
+4031670 Add files via upload
+8c5e980 Add files via upload
+f6369ea Add files via upload
+bd9bb95 Add files via upload
+15d9860 Add files via upload
