@@ -134,11 +134,28 @@ const UnitRoster = ({ defaultUnit, user }) => {
     const handleIntakeSave = async (formData) => {
         try {
             const nameParts = (formData.studentName || '').trim().split(/\s+/);
+            const proposedName = formData.studentName.trim();
+            const proposedFirst = nameParts[0] || '';
+            const proposedLast = nameParts.slice(1).join(' ') || '';
+
+            // Duplicate check
+            const existingStudents = await databaseService.getAllStudents();
+            const isDuplicate = existingStudents.some(s => 
+                s.studentName?.toLowerCase() === proposedName.toLowerCase() ||
+                (s.firstName?.toLowerCase() === proposedFirst.toLowerCase() && 
+                 s.lastName?.toLowerCase() === proposedLast.toLowerCase() && proposedFirst !== '')
+            );
+
+            if (isDuplicate) {
+                alert(`Student "${proposedName}" already exists in the system.\nPlease edit their existing profile from the Unit roster instead of creating a duplicate.`);
+                return; // Stop saving
+            }
+
             const newStudent = {
                 id: `student-${Date.now()}`,
-                studentName: formData.studentName,
-                firstName: nameParts[0] || '',
-                lastName: nameParts.slice(1).join(' ') || '',
+                studentName: proposedName,
+                firstName: proposedFirst,
+                lastName: proposedLast,
                 gradeLevel: parseInt(formData.gradeLevel, 10) || 9,
                 unitName: formData.unitName,
                 admitDate: formData.admitDate || new Date().toISOString().split('T')[0],

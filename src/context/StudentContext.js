@@ -29,6 +29,11 @@ export const StudentProvider = ({ children }) => {
       const updatedStudent = { ...student, studentName: newName };
       await databaseService.upsertStudent(updatedStudent);
       
+      // Cascade update to KTEA, IEPs, Workbooks, etc.
+      if (student.studentName !== newName) {
+        await databaseService.updateGlobalStudentName(studentId, student.studentName, newName);
+      }
+      
       // Update active student if it's the one we just edited
       if (activeStudent?.id === studentId) {
         setActiveStudent(updatedStudent);

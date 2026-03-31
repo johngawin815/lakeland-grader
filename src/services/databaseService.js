@@ -42,6 +42,51 @@ function buildRealService() {
         .fetchAll();
       return resources;
     },
+    updateGlobalStudentName: async (studentId, oldName, newName) => {
+      try {
+        const querySpec = {
+          query: "SELECT * FROM c WHERE c.studentName = @oldName OR c.studentId = @studentId",
+          parameters: [
+            { name: "@oldName", value: oldName },
+            { name: "@studentId", value: studentId }
+          ]
+        };
+
+        // KTEA Reports
+        const { resources: kteaReq } = await kteaContainer.items.query(querySpec).fetchAll();
+        for (const item of kteaReq) {
+          if (item.studentName !== newName) {
+            await kteaContainer.items.upsert({ ...item, studentName: newName });
+          }
+        }
+
+        // IEP Drafts
+        const { resources: iepReq } = await iepContainer.items.query(querySpec).fetchAll();
+        for (const item of iepReq) {
+          if (item.studentName !== newName) {
+            await iepContainer.items.upsert({ ...item, studentName: newName });
+          }
+        }
+
+        // Transcript Plans
+        const { resources: transReq } = await transcriptPlanContainer.items.query(querySpec).fetchAll();
+        for (const item of transReq) {
+          if (item.studentName !== newName) {
+            await transcriptPlanContainer.items.upsert({ ...item, studentName: newName });
+          }
+        }
+
+        // Workbooks
+        const { resources: wbReq } = await workbookContainer.items.query(querySpec).fetchAll();
+        for (const item of wbReq) {
+          if (item.studentName !== newName) {
+            await workbookContainer.items.upsert({ ...item, studentName: newName });
+          }
+        }
+      } catch (err) {
+        console.error("Failed executing global name update cascades:", err);
+      }
+    },
     upsertStudent: async (studentData) => {
       const { resource } = await studentsContainer.items.upsert(studentData);
       return resource;

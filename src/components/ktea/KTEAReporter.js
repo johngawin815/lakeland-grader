@@ -26,20 +26,21 @@ const UNIT_COLORS = {
 };
 
 const QUARTERS = [
-  { value: 1, label: 'Q1', months: 'Jul – Sep', range: [7, 8, 9] },
-  { value: 2, label: 'Q2', months: 'Oct – Dec', range: [10, 11, 12] },
-  { value: 3, label: 'Q3', months: 'Jan – Mar', range: [1, 2, 3] },
-  { value: 4, label: 'Q4', months: 'Apr – Jun', range: [4, 5, 6] },
+  { value: 1, label: 'Q1', months: 'Jan – Mar', range: [1, 2, 3] },
+  { value: 2, label: 'Q2', months: 'Apr – Jun', range: [4, 5, 6] },
+  { value: 3, label: 'Q3', months: 'Jul – Sep', range: [7, 8, 9] },
+  { value: 4, label: 'Q4', months: 'Oct – Dec', range: [10, 11, 12] },
 ];
 
 function getBusinessQuarter(dateStr) {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   const month = d.getMonth() + 1;
-  if (month >= 7 && month <= 9) return { quarter: 1, fiscalYear: d.getFullYear() };
-  if (month >= 10 && month <= 12) return { quarter: 2, fiscalYear: d.getFullYear() };
-  if (month >= 1 && month <= 3) return { quarter: 3, fiscalYear: d.getFullYear() };
-  if (month >= 4 && month <= 6) return { quarter: 4, fiscalYear: d.getFullYear() };
+  const fiscalYear = d.getFullYear();
+  if (month >= 1 && month <= 3) return { quarter: 1, fiscalYear };
+  if (month >= 4 && month <= 6) return { quarter: 2, fiscalYear };
+  if (month >= 7 && month <= 9) return { quarter: 3, fiscalYear };
+  if (month >= 10 && month <= 12) return { quarter: 4, fiscalYear };
   return null;
 }
 

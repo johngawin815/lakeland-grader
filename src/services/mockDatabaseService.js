@@ -367,6 +367,44 @@ export const mockDatabaseService = {
       s.studentName.toLowerCase().includes(name.toLowerCase())
     ),
 
+  updateGlobalStudentName: async (studentId, oldName, newName) => {
+    // Update KTEA Reports
+    for (const [id, r] of kteaReports.entries()) {
+      if ((r.studentId === studentId || r.studentName === oldName) && r.studentName !== newName) {
+        r.studentName = newName;
+        kteaReports.set(id, r);
+      }
+    }
+    saveMap('kteaReports', kteaReports);
+
+    // Update IEP Drafts
+    for (const [id, d] of iepDrafts.entries()) {
+      if ((d.studentId === studentId || d.studentName === oldName) && d.studentName !== newName) {
+        d.studentName = newName;
+        iepDrafts.set(id, d);
+      }
+    }
+    saveMap('iepDrafts', iepDrafts);
+
+    // Update Transcript Plans
+    for (const [id, p] of transcriptPlans.entries()) {
+      if ((p.studentId === studentId || p.studentName === oldName) && p.studentName !== newName) {
+        p.studentName = newName;
+        transcriptPlans.set(id, p);
+      }
+    }
+    saveMap('transcriptPlans', transcriptPlans);
+
+    // Update Workbooks
+    for (const [id, w] of workbooks.entries()) {
+      if ((w.studentId === studentId || w.studentName === oldName) && w.studentName !== newName) {
+        w.studentName = newName;
+        workbooks.set(id, w);
+      }
+    }
+    saveMap('workbooks', workbooks);
+  },
+
   upsertStudent: async (data) => {
     const id = data.id || `student-${Date.now()}`;
     const record = { ...data, id };
