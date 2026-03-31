@@ -8,7 +8,7 @@ import { databaseService } from '../../services/databaseService';
 import EditableStudentProfileModal from '../EditableStudentProfileModal';
 import EditableStudentName from '../EditableStudentName';
 import { useStudent } from '../../context/StudentContext';
-import { getStudentInitials, generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
+import { generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
 import { UNIT_CONFIG } from '../../config/unitConfig';
 import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
