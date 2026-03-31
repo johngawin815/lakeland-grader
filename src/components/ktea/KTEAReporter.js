@@ -79,6 +79,8 @@ function KTEAReporter({ user, activeStudent }) {
 
   const [deleteChoice, setDeleteChoice] = useState(null); // { reportId, studentId, studentName }
   const [spreadsheetMode, setSpreadsheetMode] = useState('all'); // 'all' or 'discharged'
+  const [filterQuarter, setFilterQuarter] = useState('');
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
 
   // SEARCH STATE
   const [searchResults, setSearchResults] = useState([]);
