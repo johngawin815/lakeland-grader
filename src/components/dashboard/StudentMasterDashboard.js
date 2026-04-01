@@ -241,7 +241,8 @@ const UnitRoster = ({ defaultUnit, user }) => {
     return (
         <div className="flex-1 flex flex-col overflow-hidden h-full">
             {/* Unit Selector + Search + Add Student */}
-            <div className="flex flex-wrap items-center gap-1.5 px-5 py-3 shrink-0 border-b border-slate-100 bg-slate-50/50">
+            <div className="flex flex-wrap items-center gap-2 px-6 py-4 shrink-0 border-b border-slate-200 bg-white/60 backdrop-blur-md">
+                <div className="flex flex-wrap gap-1.5 bg-slate-100/50 p-1 rounded-xl border border-slate-200/60">
                 {UNIT_CONFIG.map(unit => {
                     const Icon = unit.icon;
                     const isActive = selectedUnit === unit.key;
@@ -254,17 +255,17 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                 setSelectedStudentProfile(null);
                                 setSearchQuery('');
                             }}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${
                                 isActive
-                                    ? `${unit.badge} shadow-sm`
-                                    : 'bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                                    ? `${unit.badge} shadow-md ring-1 ring-inset ${unit.accentBorder ? unit.accentBorder.replace('border-l-','ring-') : 'ring-indigo-200'}`
+                                    : 'bg-transparent text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm'
                             }`}
                         >
                             <Icon className="w-3.5 h-3.5" />
                             <span>{unit.label}</span>
                             {count !== undefined && (
-                                <span className={`text-[10px] font-bold min-w-[16px] h-[16px] inline-flex items-center justify-center rounded-full ${
-                                    isActive ? 'bg-white/40' : 'bg-slate-100 text-slate-400'
+                                <span className={`text-[10px] font-black min-w-[18px] h-[18px] inline-flex items-center justify-center rounded-md ${
+                                    isActive ? 'bg-white/60 text-current' : 'bg-slate-200 text-slate-500'
                                 }`}>
                                     {count}
                                 </span>
@@ -272,22 +273,23 @@ const UnitRoster = ({ defaultUnit, user }) => {
                         </button>
                     );
                 })}
+                </div>
                 {!isDetailOpen && (
-                <div className="ml-auto flex items-center gap-2">
+                <div className="ml-auto flex items-center gap-3">
                     {iepCount > 0 && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200/60">
-                            <FileCheck className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200/60 shadow-sm">
+                            <FileCheck className="w-3.5 h-3.5" />
                             {iepCount} IEP
                         </span>
                     )}
                     <div className="relative">
-                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search..."
-                            className="pl-8 pr-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 outline-none transition-all w-40 focus:w-56"
+                            className="pl-9 pr-3 py-2 rounded-lg border border-slate-200 shadow-sm text-xs font-medium text-slate-700 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 outline-none transition-all w-48 focus:w-64"
                         />
                     </div>
                     <button
@@ -350,7 +352,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 p-2">
                                 {filteredRoster.map(student => (
                                     <StudentCard
                                         key={student.id}
@@ -397,6 +399,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
 const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
+    const colorClass = unitStyle?.avatarBg || 'bg-slate-400';
 
     let iepDueUrgent = false;
     if (student.iepDueDate) {
@@ -408,50 +411,57 @@ const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
         <button
             onClick={onSelect}
             className={`
-                w-full text-left px-4 py-3 flex items-center gap-3
-                transition-colors duration-150 outline-none
+                w-full text-left px-4 py-3 flex items-center gap-3 group
+                transition-all duration-200 outline-none
                 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500
                 ${isSelected
-                    ? `${unitStyle?.tagBg || 'bg-indigo-50'} border-l-[3px] ${unitStyle?.accentBorder || 'border-l-indigo-500'}`
-                    : 'hover:bg-slate-50/80 border-l-[3px] border-l-transparent'
+                    ? `${unitStyle?.tagBg || 'bg-indigo-50'} border-l-4 ${unitStyle?.accentBorder || 'border-l-indigo-500'}`
+                    : 'hover:bg-slate-50/80 border-l-4 border-l-transparent'
                 }
             `}
         >
-            <EditableStudentName
-                studentId={student.id}
-                studentName={student.studentName}
-                studentNumber={student.studentNumber}
-                size="sm"
-            />
+            <div className="relative">
+                <EditableStudentName
+                    studentId={student.id}
+                    studentName={student.studentName}
+                    size="md"
+                    colorClass={colorClass}
+                />
+            </div>
             <div className="flex-1 min-w-0">
-                <div className={`text-sm font-semibold truncate ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
-                    {formatStudentLabel(student)}
+                <div className={`flex flex-wrap items-baseline gap-2 mb-0.5`}>
+                    <span className={`text-[13px] font-black ${isSelected ? 'text-slate-900' : 'text-slate-800'}`}>
+                        #{student.studentNumber || 'TBD'}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 truncate">
+                        {formatStudentLabel(student)}
+                    </span>
                 </div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[11px] text-slate-400">Gr {student.gradeLevel}</span>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <span className="text-[10px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded shadow-sm border border-slate-100">Gr {student.gradeLevel}</span>
                     {student.iep === 'Yes' && (
-                        <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                            iepDueUrgent ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-700'
+                        <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm border ${
+                            iepDueUrgent ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
                             <FileCheck className="w-2.5 h-2.5" />
                             IEP{iepDueUrgent ? ' !' : ''}
                         </span>
                     )}
                     {student.district && (
-                        <span className="text-[10px] text-slate-400 truncate max-w-[80px]">{student.district}</span>
+                        <span className="text-[10px] text-slate-400 font-medium truncate max-w-[100px]">{student.district}</span>
                     )}
                 </div>
             </div>
-            <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                isSelected ? 'text-indigo-500' : 'text-slate-300'
+            <ChevronRight className={`w-4 h-4 shrink-0 transition-all ${
+                isSelected ? 'text-indigo-500 transform translate-x-1' : 'text-slate-300 group-hover:text-indigo-300'
             }`} />
-            <button
+            <div
                 onClick={onDelete}
-                className="p-1.5 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
+                className="p-1.5 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100 shrink-0"
                 title="Delete Student"
             >
                 <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            </div>
         </button>
     );
 };
@@ -472,7 +482,7 @@ const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
         iepDueUrgent = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24)) <= 30;
     }
 
-
+    const colorClass = unitStyle?.avatarBg || 'bg-slate-400';
 
     const handleAutoEnroll = async (e) => {
         e.stopPropagation();
@@ -493,86 +503,105 @@ const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
     return (
         <div
             onClick={onSelect}
-            className={`relative rounded-xl border ${unitStyle?.accentBorder ? `border-l-[3px] ${unitStyle.accentBorder}` : 'border-l-[3px] border-l-slate-300'} border-slate-200/60 bg-white cursor-pointer transition-all duration-200 group hover:shadow-md hover:-translate-y-px ${
-                isSelected
-                    ? 'ring-2 ring-indigo-400/30 border-indigo-200 shadow-sm'
-                    : 'shadow-sm hover:border-slate-300'
-            }`}
+            className={`
+                relative flex flex-col items-center justify-between
+                bg-white rounded-2xl border transition-all duration-300 group cursor-pointer overflow-hidden
+                ${isSelected 
+                    ? `border-indigo-300 ring-4 ring-indigo-500/20 shadow-md transform -translate-y-1`
+                    : `border-slate-200/80 shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-1`
+                }
+            `}
         >
-            <div className="px-4 py-3.5">
-                {/* Row 1: Avatar + Name + Grade + Days */}
-                <div className="flex items-center gap-3 mb-2.5">
+            {/* Top Color Accent Line */}
+            <div className={`h-1.5 w-full ${colorClass}`} />
+
+            <div className="p-5 flex flex-col items-center w-full z-10 bg-gradient-to-br from-white to-slate-50/50">
+                
+                {/* Header row: Days Admitted / Delete */}
+                <div className="w-full flex justify-between items-start mb-1 h-6">
+                    <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">
+                        {daysIn} Days
+                    </span>
+                    <button
+                        onClick={onDelete}
+                        className="p-1.5 rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100 translate-x-2 -translate-y-2"
+                        title="Delete Student"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Avatar Centerpiece */}
+                <div className="relative mb-3.5">
                     <EditableStudentName
                         studentId={student.id}
                         studentName={student.studentName}
-                        studentNumber={student.studentNumber}
+                        size="lg"
+                        colorClass={colorClass}
+                        className="shadow-md"
                     />
-                    <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-xs text-slate-700 leading-tight tracking-wide mt-1 font-mono">
-                            {formatStudentLabel(student)}
-                        </h3>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[11px] text-slate-500 font-medium">Gr {student.gradeLevel}</span>
-                            <span className="w-0.5 h-0.5 rounded-full bg-slate-300" />
-                            <span className="text-[11px] text-slate-400">{daysIn}d</span>
+                    {student.iep === 'Yes' && (
+                        <div className={`absolute -bottom-1 -right-2 p-1 rounded-full shadow-sm border-2 border-white ${iepDueUrgent ? 'bg-rose-500' : 'bg-amber-400'}`} title="IEP Active">
+                            <FileCheck className="w-3 h-3 text-white" />
                         </div>
-                    </div>
-                    <ChevronRight className={`w-4 h-4 text-slate-300 shrink-0 transition-all ${
-                        isSelected ? 'text-indigo-500' : 'opacity-0 group-hover:opacity-100 group-hover:text-indigo-400'
-                    }`} />
-                    <button
-                        onClick={onDelete}
-                        className="p-1.5 rounded-md text-slate-200 hover:text-rose-500 hover:bg-rose-50 transition-all group-hover:opacity-100 opacity-0"
-                        title="Delete Student"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    )}
                 </div>
 
-                {/* Row 2: Badges */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${unitStyle?.tagBg || 'bg-slate-100 text-slate-600'}`}>
-                        <Icon className="w-3 h-3" />
+                {/* Identity Header */}
+                <h3 className="font-mono text-[22px] font-black text-slate-800 tracking-tight leading-none mb-1 group-hover:text-indigo-600 transition-colors">
+                    #{student.studentNumber || 'TBD'}
+                </h3>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 truncate w-full text-center">
+                    {formatStudentLabel(student)}
+                </p>
+
+                {/* Badges/Tags */}
+                <div className="flex items-center justify-center gap-2 flex-wrap mb-4 w-full">
+                    <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border ${unitStyle?.tagBg || 'bg-slate-50 text-slate-600'} border-black/5 shadow-sm`}>
+                        <Icon className="w-3.5 h-3.5 opacity-80" />
                         {student.unitName}
                     </span>
-                    {student.iep === "Yes" && (
-                        <span className={`inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                            iepDueUrgent
-                                ? 'bg-rose-50 text-rose-600 border border-rose-200'
-                                : 'bg-amber-50 text-amber-600 border border-amber-200/60'
-                        }`}>
-                            <FileCheck className="w-3 h-3" />
-                            IEP{iepDueUrgent ? ' \u2013 Due Soon' : ''}
-                        </span>
-                    )}
-                    {student.district && (
-                        <span className="text-[10px] text-slate-400 font-medium truncate max-w-[100px]">
-                            {student.district}
-                        </span>
-                    )}
-
+                    <span className="inline-flex items-center text-[10px] font-bold px-3 py-1.5 rounded-lg bg-white text-slate-600 border border-slate-200 shadow-sm">
+                        Grade {student.gradeLevel}
+                    </span>
                 </div>
+                
+                {/* District Line */}
+                {student.district && (
+                    <div className="w-full text-center text-[11px] font-medium text-slate-400 truncate px-2 mb-1">
+                        {student.district}
+                    </div>
+                )}
+            </div>
 
-                {/* Auto-Enroll (compact, only visible on hover) */}
-                <div className="mt-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                        onClick={handleAutoEnroll}
-                        disabled={enrolling}
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-slate-50 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors disabled:opacity-50"
-                        title="Auto-enroll in default courses"
-                    >
-                        {enrolling ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookOpen className="w-3 h-3" />}
-                        Default Enroll
-                    </button>
-                    {enrollResult && !enrollResult.error && (
-                        <span className="text-[10px] text-emerald-600 font-medium">
-                            {enrollResult.enrolled.length > 0
-                                ? `+${enrollResult.enrolled.length} courses`
-                                : 'Already enrolled'}
-                        </span>
-                    )}
-                    {enrollResult?.error && (
-                        <span className="text-[10px] text-rose-600 font-medium">Failed</span>
+            {/* Footer / Auto Enroll (Hover Reveal) */}
+            <div className={`
+                w-full bg-slate-50 border-t border-slate-100 px-4 py-3 flex items-center justify-center
+                transition-colors duration-300
+                ${isSelected ? 'bg-indigo-50/50 border-indigo-100' : ''}
+            `}>
+                <div className="flex items-center gap-2 w-full justify-between relative overflow-hidden">
+                    <div className="flex-1 opacity-100 transition-opacity flex justify-center">
+                        <button
+                            onClick={handleAutoEnroll}
+                            disabled={enrolling}
+                            className="inline-flex w-full justify-center items-center gap-1.5 text-[11px] font-bold px-3 py-2 rounded-lg bg-white text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-100 hover:border-transparent transition-all shadow-sm disabled:opacity-50"
+                        >
+                            {enrolling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />}
+                            Auto-Enroll Default Courses
+                        </button>
+                    </div>
+                    {enrollResult && (
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-md flex items-center justify-center rounded-lg border border-slate-100 animate-in fade-in duration-200 z-10">
+                            {enrollResult.error ? (
+                                <span className="text-[11px] font-bold text-rose-600">Failed</span>
+                            ) : (
+                                <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 z-20">
+                                    <Check className="w-3.5 h-3.5" />
+                                    {enrollResult.enrolled.length > 0 ? `+${enrollResult.enrolled.length} classes` : 'Up to date'}
+                                </span>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
