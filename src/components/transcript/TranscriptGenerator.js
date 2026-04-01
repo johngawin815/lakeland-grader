@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
 import { getStudentInitials } from '../../utils/studentUtils';
+import { useStudent } from '../../context/StudentContext';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import toast from 'react-hot-toast';
@@ -217,7 +218,7 @@ const StatusBadge = ({ status }) => {
   const config = {
     'on-track':        { bg: 'bg-green-100', text: 'text-green-700',  border: 'border-green-200',  label: 'On Track',        Icon: CheckCircle2 },
     'needs-attention': { bg: 'bg-amber-100', text: 'text-amber-700',  border: 'border-amber-200',  label: 'Needs Attention', Icon: AlertTriangle },
-    // 'at-risk' intentionally omitted for student-facing kindness
+    'at-risk':         { bg: 'bg-red-100',   text: 'text-red-700',    border: 'border-red-200',    label: 'At Risk',         Icon: AlertTriangle },
   };
   const c = config[status] || config['on-track'];
   return (
@@ -701,6 +702,9 @@ const VirtualizedRecommendedCourseList = React.memo(({ courses, recommendedCours
 
 const TranscriptGenerator = ({ user }) => {
 
+  // --- Global student context integration ---
+  const { activeStudent: contextStudent } = useStudent() || {};
+
   // --- Role-based access ---
   // Admins and teachers can edit; viewer/read-only roles cannot.
   const readOnly = user?.role === 'viewer' || user?.role === 'readonly';
@@ -746,11 +750,10 @@ const TranscriptGenerator = ({ user }) => {
     for (const id of removedEnrollmentIds) {
       try { await databaseService.unenrollStudent(id); } catch (err) { console.warn('Delete enrollment failed:', id, err); }
     }
-    if (user) await databaseService.logAudit(user, 'AutoSaveTranscript', `Auto-saved transcript edits for ${selectedStudent.studentName}`);
+    if (user) await databaseService.logAudit(user, 'AutoSaveTranscript', `Auto-saved transcript edits for student ${selectedStudent.id}`);
     setStudentEnrollments(editedEnrollments.map(e => ({ ...e })));
     setRemovedEnrollmentIds([]);
     setTranscriptDirty(false);
-    toast.success('Transcript auto-saved');
   }, [editedEnrollments, removedEnrollmentIds, selectedStudent, user]);
 
   useAutoSave(transcriptDirty, saveFn, { delay: 3000, enabled: !!selectedStudent });
@@ -774,6 +777,15 @@ const TranscriptGenerator = ({ user }) => {
       }
     })();
   }, []);
+
+  // --- Auto-select student from global context (search bar integration) ---
+  const contextStudentIdRef = React.useRef(null);
+  useEffect(() => {
+    if (!contextStudent || contextStudent.id === contextStudentIdRef.current) return;
+    if (selectedStudent?.id === contextStudent.id) return;
+    contextStudentIdRef.current = contextStudent.id;
+    handleSelectStudent(contextStudent);
+  }, [contextStudent, selectedStudent, handleSelectStudent]);
 
   // --- Ctrl+Z / Ctrl+Y undo/redo keyboard handler ---
   useEffect(() => {
@@ -846,10 +858,9 @@ const TranscriptGenerator = ({ user }) => {
         setPlanNotes(plan.notes || '');
       }
 
-      // SECURITY PILLAR V: Granular Action Logging
+      // SECURITY PILLAR V: Granular Action Logging (use ID, not full name — FERPA)
       if (user) {
-        // Run asynchronously without blocking the UI
-        databaseService.logAudit(user, 'ViewStudentTranscript', `Viewed transcript for ${student.studentName}`).catch(console.error);
+        databaseService.logAudit(user, 'ViewStudentTranscript', `Viewed transcript for student ${student.id}`).catch(console.error);
       }
     } catch (e) {
       console.error('Failed to load student data:', e);
@@ -907,7 +918,7 @@ const TranscriptGenerator = ({ user }) => {
       for (const id of removedEnrollmentIds) {
         try { await databaseService.unenrollStudent(id); } catch (err) { console.warn('Delete enrollment failed:', id, err); }
       }
-      if (user) await databaseService.logAudit(user, 'SaveTranscript', `Saved transcript edits for ${selectedStudent.studentName}`);
+      if (user) await databaseService.logAudit(user, 'SaveTranscript', `Saved transcript edits for student ${selectedStudent.id}`);
       setStudentEnrollments(editedEnrollments.map(e => ({ ...e })));
       setRemovedEnrollmentIds([]);
       setTranscriptDirty(false);
@@ -951,14 +962,11 @@ const TranscriptGenerator = ({ user }) => {
   const handleDeleteSelected = useCallback(() => {
     if (selectedCourseIds.length === 0) return;
     if (!window.confirm(`Remove ${selectedCourseIds.length} selected course(s) from the transcript?`)) return;
-    selectedCourseIds.forEach(id => {
-      // Find the course by id in enrollmentsBySubject
-      const course = SAFE_SUBJECT_AREAS.map(area => (enrollmentsBySubject[area] || []).find(e => e.id === id)).find(Boolean)
-        || (enrollmentsBySubject['Elective'] || []).find(e => e.id === id);
-      if (course) handleDeleteEnrollment(id, course.courseName);
-    });
+    setRemovedEnrollmentIds(prev => [...prev, ...selectedCourseIds]);
+    setEditedEnrollments(prev => prev.filter(e => !selectedCourseIds.includes(e.id)));
+    setTranscriptDirty(true);
     setSelectedCourseIds([]);
-  }, [selectedCourseIds, enrollmentsBySubject, handleDeleteEnrollment]);
+  }, [selectedCourseIds]);
 
   // Optimization: Group all courses by subject ONCE, not on every keystroke
   const allCoursesGrouped = useMemo(() => {
@@ -1126,7 +1134,8 @@ const TranscriptGenerator = ({ user }) => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const today = new Date().toISOString().split('T')[0];
       saveAs(blob, `${getStudentInitials(selectedStudent.studentName).replace(/\s+/g, '_')}_Transcript_${today}.xlsx`);
-      if (user) await databaseService.logAudit(user, 'ExportTranscript', `Exported transcript for ${selectedStudent.studentName}`);
+      if (user) await databaseService.logAudit(user, 'ExportTranscript', `Exported transcript for student ${selectedStudent.id}`);
+      toast.success('Transcript exported successfully');
     } catch (e) {
       console.error('Export failed:', e);
     } finally {
@@ -1155,6 +1164,10 @@ const TranscriptGenerator = ({ user }) => {
 
   // --- Add new course (inline form) ---
   const handleAddNewCourse = (subjectArea) => {
+    if (!newCourseForm.courseId && !newCourseForm.term && !newCourseForm.grade) {
+      toast.error('Please select a course or enter details before adding.');
+      return;
+    }
     const course = allCourses.find(c => c.id === newCourseForm.courseId);
     const newEnrollment = {
       id: `manual-${Date.now()}`,
@@ -1448,7 +1461,7 @@ const TranscriptGenerator = ({ user }) => {
                             <React.Fragment key={area}>
                               {/* Subject section header */}
                               <tr className="bg-gradient-to-r from-orange-50 to-amber-50/30 border-t-2 border-orange-100">
-                                <td colSpan={7} className="px-3 py-2">
+                                <td colSpan={8} className="px-3 py-2">
                                   <div className="flex items-center justify-between">
                                     <button onClick={() => toggleSubjectCollapse(area)}
                                       className="flex items-center gap-1.5 text-[11px] font-extrabold text-orange-800 uppercase tracking-widest hover:text-orange-900 transition-colors">
@@ -1502,28 +1515,6 @@ const TranscriptGenerator = ({ user }) => {
                                 />
                               ))}
 
-                              {/* Mass delete button */}
-                              {!isCollapsed && courses.length > 0 && (
-                                <tr>
-                                  <td colSpan={8} className="px-3 py-2 text-left bg-orange-50/20 border-b border-slate-100">
-                                    <button
-                                      onClick={handleDeleteSelected}
-                                      disabled={noneSelected}
-                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                    >
-                                      <Trash2 className="w-4 h-4" /> Delete Selected
-                                    </button>
-                                    {!noneSelected && (
-                                      <button
-                                        onClick={clearAllSelected}
-                                        className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold transition"
-                                      >
-                                        Clear All
-                                      </button>
-                                    )}
-                                  </td>
-                                </tr>
-                              )}
 
                               {/* Inline Add Course form */}
                               {!isCollapsed && addingCourseToSubject === area && (
@@ -1583,7 +1574,7 @@ const TranscriptGenerator = ({ user }) => {
                         })}
                         {editedEnrollments.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="py-10">
+                            <td colSpan={8} className="py-10">
                               <div className="flex flex-col items-center gap-3 text-center px-4">
                                 <div className="w-12 h-12 rounded-full bg-orange-50 border-2 border-orange-100 flex items-center justify-center">
                                   <BookOpen className="w-6 h-6 text-orange-300" />
@@ -1598,6 +1589,24 @@ const TranscriptGenerator = ({ user }) => {
                         )}
                       </tbody>
                     </table>
+                    {/* Global mass delete bar — shown once below the table when courses are selected */}
+                    {!readOnly && !noneSelected && (
+                      <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border-t border-red-200">
+                        <button
+                          onClick={handleDeleteSelected}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold shadow transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete {selectedCourseIds.length} Selected
+                        </button>
+                        <button
+                          onClick={clearAllSelected}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition"
+                        >
+                          Clear Selection
+                        </button>
+                        <span className="text-[10px] text-red-600 font-medium ml-auto">{selectedCourseIds.length} of {allCourseIds.length} courses selected</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
