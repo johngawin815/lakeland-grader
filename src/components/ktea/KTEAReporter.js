@@ -390,19 +390,8 @@ function KTEAReporter({ user, activeStudent }) {
   };
 
   // --- 4. EXPORT ---
-  const downloadReport = async () => {
+  const generateExcelReport = async (unitsData, filename) => {
     try {
-      const allStudents = await databaseService.getAllKteaReports();
-      if (!allStudents || allStudents.length === 0) return alert(`No records found.`);
-
-      const units = {};
-      allStudents.forEach(s => {
-        const u = s.unitName || "Other";
-        if (!units[u]) units[u] = [];
-        units[u].push(s);
-      });
-
-      // Load the master template
       const response = await fetch('/templates/ktea_master.xlsx');
       if (!response.ok) throw new Error('Could not find template: ktea_master.xlsx');
       const templateBuffer = await response.arrayBuffer();
@@ -471,12 +460,12 @@ function KTEAReporter({ user, activeStudent }) {
       };
 
       // Use the template sheet for the first unit, duplicate for the rest
-      const unitNames = Object.keys(units).sort();
+      const unitNames = Object.keys(unitsData).sort();
 
       if (unitNames.length > 0) {
         // Rename the template sheet to the first unit
         templateSheet.name = unitNames[0];
-        fillSheet(templateSheet, unitNames[0], units[unitNames[0]]);
+        fillSheet(templateSheet, unitNames[0], unitsData[unitNames[0]]);
 
         // For additional units, duplicate the template approach:
         // ExcelJS doesn't have native sheet cloning, so we create new sheets
@@ -509,7 +498,7 @@ function KTEAReporter({ user, activeStudent }) {
             try { newSheet.mergeCells(merge); } catch (e) { /* skip if already merged */ }
           });
 
-          fillSheet(newSheet, unitName, units[unitName]);
+          fillSheet(newSheet, unitName, unitsData[unitName]);
         }
       }
 
@@ -522,8 +511,38 @@ function KTEAReporter({ user, activeStudent }) {
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      saveAs(blob, `LRS_Master_Report.xlsx`);
+      saveAs(blob, filename);
     } catch (e) { console.error(e); alert("Export Error"); }
+  };
+
+  const downloadReport = async () => {
+    try {
+      const allStudents = await databaseService.getAllKteaReports();
+      if (!allStudents || allStudents.length === 0) return alert(`No records found.`);
+
+      const units = {};
+      allStudents.forEach(s => {
+        const u = s.unitName || "Other";
+        if (!units[u]) units[u] = [];
+        units[u].push(s);
+      });
+
+      await generateExcelReport(units, `LRS_Master_Report.xlsx`);
+    } catch (e) { console.error(e); alert("Could not load data for export."); }
+  };
+
+  const downloadSpreadsheetView = async () => {
+    if (Object.keys(spreadsheetData).length === 0 || totalSpreadsheetStudents === 0) {
+      return alert("No records found in current view.");
+    }
+    
+    let filename = `LRS_KTEA_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    if (spreadsheetMode === 'discharged' && filterQuarter && filterYear) {
+       const qLabel = QUARTERS.find(q => q.value === parseInt(filterQuarter))?.label || `Q${filterQuarter}`;
+       filename = `LRS_Quarterly_Discharge_${qLabel}_${filterYear}.xlsx`;
+    }
+
+    await generateExcelReport(spreadsheetData, filename);
   };
 
   // Total students in current spreadsheet view
@@ -614,6 +633,9 @@ function KTEAReporter({ user, activeStudent }) {
                   {totalSpreadsheetStudents} student{totalSpreadsheetStudents !== 1 ? 's' : ''}
                   {filterQuarter && ` discharged in ${QUARTERS.find(q => q.value === parseInt(filterQuarter))?.label} ${filterYear}`}
                 </span>
+                <button onClick={downloadSpreadsheetView} className="bg-white/10 text-white/70 hover:text-white hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                  <Download className="w-3.5 h-3.5" /> Download
+                </button>
                 <button onClick={() => window.print()} className="bg-white/10 text-white/70 hover:text-white hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
                   <Printer className="w-3.5 h-3.5" /> Print
                 </button>
