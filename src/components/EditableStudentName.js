@@ -13,7 +13,7 @@ import { getStudentInitials } from '../utils/studentUtils';
  * @param {string} [props.className] - Optional extra CSS classes for the container
  * @param {string} [props.size] - size of the circle: 'sm', 'md', 'lg' (default 'md')
  */
-const EditableStudentName = ({ studentId, studentName, studentNumber, className = '', size = 'md' }) => {
+const EditableStudentName = ({ studentId, studentName, studentNumber, colorClass, className = '', size = 'md' }) => {
   const { updateStudentName } = useStudent();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(studentName || '');
@@ -111,7 +111,7 @@ const EditableStudentName = ({ studentId, studentName, studentNumber, className 
       onClick={(e) => e.stopPropagation()}
     >
       <div 
-        className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-black text-white bg-slate-400 border-2 border-white shadow-sm transition-all group-hover/initials:bg-indigo-500 group-hover/initials:scale-105 group-hover/initials:shadow-indigo-200`}
+        className={`${sizeClasses[size]} rounded-full flex items-center justify-center font-black text-white ${colorClass || 'bg-slate-400'} border-2 border-white shadow-sm transition-all ${!colorClass ? 'group-hover/initials:bg-indigo-500 group-hover/initials:shadow-indigo-200' : 'group-hover/initials:brightness-110 group-hover/initials:shadow-md'} group-hover/initials:scale-105`}
         title={`Student: ${initials}`}
       >
         {initials || '?'}
