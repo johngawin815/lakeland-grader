@@ -2,7 +2,7 @@
  * Mock Data — Fictional Character Residents with Rich Data
  */
 
-export const MOCK_DB_VERSION = '2026.04.01.v2';
+export const MOCK_DB_VERSION = '2026.04.01.v3';
 
 export const MOCK_STUDENTS = [
   {
@@ -4153,12 +4153,21 @@ export const COURSE_STUDENTS = {
   ]
 };
 
+const generateMockAssignments = (courseId) => [
+  { id: `${courseId}-a1`, name: 'Week 1 Homework', categoryId: 'cat-hw', maxScore: 100, dueDate: '2025-08-15' },
+  { id: `${courseId}-a2`, name: 'Week 2 Homework', categoryId: 'cat-hw', maxScore: 100, dueDate: '2025-08-22' },
+  { id: `${courseId}-a3`, name: 'Chapter 1 Quiz', categoryId: 'cat-quiz', maxScore: 50, dueDate: '2025-08-25' },
+  { id: `${courseId}-a4`, name: 'Week 3 Homework', categoryId: 'cat-hw', maxScore: 100, dueDate: '2025-08-29' },
+  { id: `${courseId}-a5`, name: 'Chapter 2 Quiz', categoryId: 'cat-quiz', maxScore: 50, dueDate: '2025-09-05' },
+  { id: `${courseId}-a6`, name: 'Unit 1 Test', categoryId: 'cat-test', maxScore: 100, dueDate: '2025-09-12' }
+];
+
 export const COURSE_ASSIGNMENTS = {
-  'mock-ela9': [], 'mock-ela10': [], 'mock-ela11': [], 'mock-ela12': [], 'mock-c07': [], 'mock-ms-eng': [],
-  'mock-amhist': [], 'mock-wldhist': [], 'mock-civics': [], 'mock-ms-hist': [],
-  'mock-intmath': [], 'mock-alg1': [], 'mock-geom': [], 'mock-alg2': [], 'mock-c09': [], 'mock-ms-math': [],
-  'mock-intsci': [], 'mock-physci': [], 'mock-bio': [], 'mock-earthsci': [], 'mock-spacesci': [], 'mock-c06': [], 'mock-physics': [], 'mock-chem': [], 'mock-envsci': [], 'mock-ms-sci': [],
-  'mock-c08': [], 'mock-elem-all': []
+  'mock-ela9': generateMockAssignments('mock-ela9'), 'mock-ela10': generateMockAssignments('mock-ela10'), 'mock-ela11': generateMockAssignments('mock-ela11'), 'mock-ela12': generateMockAssignments('mock-ela12'), 'mock-c07': generateMockAssignments('mock-c07'), 'mock-ms-eng': generateMockAssignments('mock-ms-eng'),
+  'mock-amhist': generateMockAssignments('mock-amhist'), 'mock-wldhist': generateMockAssignments('mock-wldhist'), 'mock-civics': generateMockAssignments('mock-civics'), 'mock-ms-hist': generateMockAssignments('mock-ms-hist'),
+  'mock-intmath': generateMockAssignments('mock-intmath'), 'mock-alg1': generateMockAssignments('mock-alg1'), 'mock-geom': generateMockAssignments('mock-geom'), 'mock-alg2': generateMockAssignments('mock-alg2'), 'mock-c09': generateMockAssignments('mock-c09'), 'mock-ms-math': generateMockAssignments('mock-ms-math'),
+  'mock-intsci': generateMockAssignments('mock-intsci'), 'mock-physci': generateMockAssignments('mock-physci'), 'mock-bio': generateMockAssignments('mock-bio'), 'mock-earthsci': generateMockAssignments('mock-earthsci'), 'mock-spacesci': generateMockAssignments('mock-spacesci'), 'mock-c06': generateMockAssignments('mock-c06'), 'mock-physics': generateMockAssignments('mock-physics'), 'mock-chem': generateMockAssignments('mock-chem'), 'mock-envsci': generateMockAssignments('mock-envsci'), 'mock-ms-sci': generateMockAssignments('mock-ms-sci'),
+  'mock-c08': generateMockAssignments('mock-c08'), 'mock-elem-all': generateMockAssignments('mock-elem-all')
 };
 
 export const Q3_MIDTERM_GRADES = {
