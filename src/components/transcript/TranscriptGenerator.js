@@ -21,11 +21,31 @@ const SAFE_SUBJECT_AREAS = Array.isArray(SUBJECT_AREAS) ? SUBJECT_AREAS : [];
 
 const isPassing = (grade) => grade && !['F', 'I', 'W', 'WF', 'NC', '', null, undefined].includes(String(grade).trim().toUpperCase());
 
-/** Return credit value based on term: quarter (Q1–Q4) = 0.25, everything else = 0.5 */
-const getTermCredits = (enrollment) => {
-  const term = (enrollment.term || '').toUpperCase().trim();
-  return /^Q[1-4]$/.test(term) ? 0.25 : 0.5;
+/** 
+ * Returns the base credit value for a term (Lakeland scale: 1.0 = full year).
+ * Standardizes: Quarter = 0.25, Semester = 0.5, Year = 1.0.
+ */
+const getTermBaseCredit = (termStr) => {
+  const { canonical, creditHint } = normaliseTermInput(termStr);
+  if (creditHint !== null) return creditHint;
+  
+  const u = (canonical || '').toUpperCase().trim();
+  if (/^Q[1-4]$/.test(u)) return 0.25;
+  if (/^SEM\s*[12]$/.test(u)) return 0.5;
+  if (u === 'YEAR') return 1.0;
+  
+  return 0.5; // Default fallback
 };
+
+/** 
+ * Returns credit value scaled to the student's home state (e.g. NJ scale 5, ID scale 2).
+ */
+const getScaledCredit = (baseCredit, stateAbbr) => {
+  const reqs = stateGraduationRequirements[stateAbbr];
+  const scale = reqs?.creditScale || 1;
+  return baseCredit * scale;
+};
+
 
 /**
  * Smart term normaliser — maps common free-text entries to canonical form.
@@ -77,14 +97,16 @@ const normaliseTermInput = (raw) => {
   return { canonical: t, creditHint: null }; // no mapping found — keep as-is
 };
 
-/** Auto-compute earned credits based on term length and passing grade */
-const getEarnedCredits = (enrollment) => {
-  const creditValue = getTermCredits(enrollment);
+/** Auto-compute earned credits based on term length, passing grade, and state scaling */
+const getEarnedCredits = (enrollment, stateAbbr) => {
+  const baseCredit = getTermBaseCredit(enrollment.term);
   const pct = parseFloat(enrollment.percentage);
-  if (!isNaN(pct) && pct >= 60) return creditValue;
-  if (isPassing(enrollment.letterGrade)) return creditValue;
-  return 0;
+  const passing = (!isNaN(pct) && pct >= 60) || isPassing(enrollment.letterGrade);
+  
+  if (!passing) return 0;
+  return getScaledCredit(baseCredit, stateAbbr);
 };
+
 
 /** Deduplicate enrollments. Key priority:
  *  1. courseId when set
@@ -123,38 +145,42 @@ function deduplicateEnrollments(enrollments) {
   return { kept, removed };
 }
 
-function computeCreditsEarned(enrollments) {
+function computeCreditsEarned(enrollments, stateAbbr) {
   const earned = {};
   for (const area of SAFE_SUBJECT_AREAS) earned[area] = 0;
   for (const e of enrollments) {
     const area = SAFE_SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
-    const cr = getEarnedCredits(e);
+    const cr = getEarnedCredits(e, stateAbbr);
     if (cr > 0) earned[area] = (earned[area] || 0) + cr;
   }
   return earned;
 }
 
-function computeCreditsInProgress(enrollments) {
+
+function computeCreditsInProgress(enrollments, stateAbbr) {
   const inProgress = {};
   for (const area of SAFE_SUBJECT_AREAS) inProgress[area] = 0;
   for (const e of enrollments) {
-    if (e.status === 'Active' && getEarnedCredits(e) === 0) {
+    if (e.status === 'Active' && getEarnedCredits(e, stateAbbr) === 0) {
       const area = SAFE_SUBJECT_AREAS.includes(e.subjectArea) ? e.subjectArea : 'Elective';
-      inProgress[area] = (inProgress[area] || 0) + getTermCredits(e);
+      inProgress[area] = (inProgress[area] || 0) + getScaledCredit(getTermBaseCredit(e.term), stateAbbr);
     }
   }
   return inProgress;
 }
 
-function computeGaps(earned, requirements) {
+
+function computeGaps(earned, requirements, stateAbbr) {
   const gaps = {};
+  const scale = stateGraduationRequirements[stateAbbr]?.creditScale || 1;
   for (const area of SAFE_SUBJECT_AREAS) {
-    const needed = requirements[area] || 0;
+    const needed = (requirements[area] || 0) * scale;
     const have = earned[area] || 0;
     gaps[area] = Math.max(0, needed - have);
   }
   return gaps;
 }
+
 
 // getInitials removed in favor of getStudentInitials from studentUtils
 
@@ -258,22 +284,19 @@ const CreditRing = ({ earned, required, size = 64 }) => {
 };
 
 const SubjectProgressCard = ({ subject, required, earned, inProgress }) => {
-  const met = earned >= required && required > 0;
-  const hasIp = inProgress > 0 && !met;
-  const neverStarted = !met && !hasIp && earned === 0 && required > 0;
-  const borderClass = met ? 'border-green-300' : hasIp ? 'border-amber-300' : neverStarted ? 'border-red-300' : 'border-slate-200';
-  const bgClass = met ? 'bg-green-50/40' : hasIp ? 'bg-amber-50/40' : neverStarted ? 'bg-red-50/40' : 'bg-white';
+  const pctEarned = required > 0 ? Math.min(100, (earned / required) * 100) : 0;
+  const pctInProgress = required > 0 ? Math.min(100 - pctEarned, (inProgress / required) * 100) : 0;
+
   return (
-    <div className={`flex flex-col items-center p-2.5 rounded-xl border ${borderClass} ${bgClass}`}>
-      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center mb-2 leading-tight">{subject}</p>
-      <CreditRing earned={earned} required={required} size={52} />
-      <p className="text-[10px] font-semibold text-slate-600 mt-1.5">{earned}/{required} cr</p>
-      {hasIp && (
-        <span className="mt-1 text-[9px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">+{inProgress} in prog.</span>
-      )}
-      {met && (
-        <span className="mt-1 text-[9px] font-bold text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">Met ✓</span>
-      )}
+    <div className="bg-slate-50/50 rounded-lg p-2.5 border border-slate-100 transition-all hover:bg-white hover:shadow-sm">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{subject}</span>
+        <span className="text-[10px] font-extrabold text-slate-700">{earned}<span className="text-slate-300 mx-0.5">/</span>{required}</span>
+      </div>
+      <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden flex shadow-inner">
+        <div className="h-full bg-orange-500 transition-all duration-500" style={{ width: `${pctEarned}%` }} />
+        <div className="h-full bg-orange-200 transition-all duration-500" style={{ width: `${pctInProgress}%` }} />
+      </div>
     </div>
   );
 };
@@ -382,9 +405,10 @@ const CourseRow = React.memo(({
   onEditField,
   onFocusField,
   onBlurField,
-  onDelete
+  onDelete,
+  stateAbbr
 }) => {
-  const cr = getEarnedCredits(course);
+  const cr = getEarnedCredits(course, stateAbbr);
   const isFailing = course.letterGrade === 'F' || (course.percentage !== '' && course.percentage != null && parseFloat(course.percentage) < 60);
   const isPassed = cr > 0 && course.status !== 'Active';
   const isActive = course.status === 'Active';
@@ -397,12 +421,21 @@ const CourseRow = React.memo(({
       </td>
       <td className="px-3 py-1.5 font-medium text-slate-700">
         <div className="flex items-center gap-2">
-          {course.courseName}
+          <input
+            type="text"
+            value={course.courseName || ''}
+            onFocus={() => onFocusField(course.id, 'courseName', course.courseName || '')}
+            onChange={ev => onEditField(course.id, 'courseName', ev.target.value, false)}
+            onBlur={ev => onBlurField(course.id, 'courseName', ev.target.value)}
+            readOnly={readOnly}
+            className={`w-full bg-transparent border-0 border-b text-xs font-semibold text-slate-700 outline-none px-0.5 py-0.5 transition-colors ${readOnly ? 'cursor-default' : 'border-transparent hover:border-slate-200 focus:border-orange-400 focus:bg-white'}`}
+          />
           {course.isImported && (
-            <span className="text-[9px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 tracking-wide" title="Imported from past transcript">IMPORTED</span>
+            <span className="text-[9px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 tracking-wide shrink-0" title="Imported from past transcript">IMPORTED</span>
           )}
         </div>
       </td>
+
       <td className="px-2 py-1.5 align-top">
         <div className="flex flex-col gap-1">
           <input
@@ -464,6 +497,7 @@ const CourseRow = React.memo(({
           {cr > 0 ? cr : '—'}
         </span>
       </td>
+
       <td className="px-2 py-1.5 text-center">
         <select value={course.status || 'Active'}
           onChange={ev => onEditField(course.id, 'status', ev.target.value, true)}
@@ -844,7 +878,7 @@ const TranscriptGenerator = ({ user }) => {
       const safeEnrollments = Array.isArray(enrollments) ? enrollments : [];
       const merged = safeMasterGrades.length > 0 ? safeMasterGrades : safeEnrollments;
       const deduped = deduplicateEnrollments(merged);
-      const withCredits = deduped.kept.map(e => ({ ...e, credits: getEarnedCredits(e) }));
+      const withCredits = deduped.kept.map(e => ({ ...e, credits: getEarnedCredits(e, student.homeState) }));
       setStudentEnrollments(withCredits);
       setEditedEnrollments(withCredits.map(e => ({ ...e })));
       if (plan) {
@@ -900,12 +934,15 @@ const TranscriptGenerator = ({ user }) => {
       return prev.map(e => {
         if (e.id !== enrollmentId) return e;
         const newE = { ...e, [field]: value };
-        if (field === 'letterGrade' || field === 'percentage') newE.credits = getEarnedCredits(newE);
+        if (field === 'letterGrade' || field === 'percentage' || field === 'term') {
+          newE.credits = getEarnedCredits(newE, selectedStudent?.homeState);
+        }
         return newE;
       });
     });
     setTranscriptDirty(true);
-  }, [pushUndo]);
+  }, [pushUndo, selectedStudent]);
+
 
   const handleDeleteEnrollment = useCallback((enrollmentId, courseName) => {
     if (!window.confirm(`Remove "${courseName}" from the transcript?`)) return;
@@ -1174,6 +1211,8 @@ const TranscriptGenerator = ({ user }) => {
     const course = allCourses.find(c => c.id === newCourseForm.courseId);
     const newEnrollment = {
       id: `manual-${Date.now()}`,
+      studentId: selectedStudent.id,
+      studentName: selectedStudent.studentName,
       courseId: newCourseForm.courseId || null,
       courseName: course?.courseName || 'Manual Entry',
       subjectArea,
@@ -1183,11 +1222,13 @@ const TranscriptGenerator = ({ user }) => {
       status: newCourseForm.status,
       isManual: true,
     };
+    newEnrollment.credits = getEarnedCredits(newEnrollment, selectedStudent?.homeState);
     setEditedEnrollments(prev => [...prev, newEnrollment]);
     setTranscriptDirty(true);
     setAddingCourseToSubject(null);
     setNewCourseForm({ courseId: '', term: '', grade: '', percentage: '', status: 'Active' });
   };
+
 
   const toggleSubjectCollapse = useCallback((area) => {
     setCollapsedSubjects(prev => {
@@ -1258,6 +1299,8 @@ const TranscriptGenerator = ({ user }) => {
   const handleMergeImport = () => {
     const toAdd = importedCourses.filter(c => c.selected).map(c => ({
       id: `imported-${Date.now()}-${c.id}`,
+      studentId: selectedStudent.id,
+      studentName: selectedStudent.studentName,
       courseId: null,
       courseName: c.courseName,
       subjectArea: c.subjectArea,
@@ -1268,6 +1311,7 @@ const TranscriptGenerator = ({ user }) => {
       isManual: true,
       isImported: true,
     }));
+
     setEditedEnrollments(prev => [...prev, ...toAdd]);
     setTranscriptDirty(true);
     setShowImportModal(false);
@@ -1476,13 +1520,14 @@ const TranscriptGenerator = ({ user }) => {
                                     <div className="flex items-center gap-2">
                                       {stateReqs && (
                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                          (creditsEarned[area] || 0) >= (stateReqs.requirements[area] || 0) && (stateReqs.requirements[area] || 0) > 0
+                                          (creditsEarned[area] || 0) >= ((stateReqs.requirements[area] || 0) * (stateReqs.creditScale || 1)) && ((stateReqs.requirements[area] || 0) > 0)
                                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                             : 'bg-orange-50 text-orange-600 border-orange-200'
                                         }`}>
-                                          {creditsEarned[area] || 0}/{stateReqs.requirements[area] || 0} cr
+                                          {creditsEarned[area] || 0}/{(stateReqs.requirements[area] || 0) * (stateReqs.creditScale || 1)} cr
                                         </span>
                                       )}
+
                                       {!stateReqs && (
                                         <span className="text-[10px] font-semibold text-slate-400">{creditsEarned[area] || 0} cr</span>
                                       )}
