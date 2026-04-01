@@ -4,7 +4,7 @@
  * All CRUD operations work against in-memory Maps backed by localStorage.
  */
 import {
-  MOCK_STUDENTS, MOCK_COURSES, COURSE_STUDENTS, COURSE_ASSIGNMENTS,
+  MOCK_DB_VERSION, MOCK_STUDENTS, MOCK_COURSES, COURSE_STUDENTS, COURSE_ASSIGNMENTS,
   GRADEBOOK_CATEGORIES, STUDENT_PROFILES, MOCK_KTEA_REPORTS, ATTENDANCE_DATES,
   Q3_MIDTERM_GRADES,
 } from '../data/mockData';
@@ -111,6 +111,15 @@ function calculateWeightedPct(studentId, assignments, grades, categories) {
 }
 
 // ─── IN-MEMORY COLLECTIONS (backed by localStorage) ──────────────────────────
+
+const currentVersion = localStorage.getItem(STORAGE_PREFIX + 'version');
+if (currentVersion !== MOCK_DB_VERSION) {
+  Object.keys(localStorage)
+    .filter(k => k.startsWith(STORAGE_PREFIX))
+    .forEach(k => localStorage.removeItem(k));
+  localStorage.setItem(STORAGE_PREFIX + 'version', MOCK_DB_VERSION);
+  console.info('[mockDB] Version reset — wiped old data to start fresh.');
+}
 
 const hasPersistedData = localStorage.getItem(STORAGE_PREFIX + 'initialized') !== null;
 
