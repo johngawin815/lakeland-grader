@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, Search, FileCheck, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, Search, FileCheck, Trash2, Check } from 'lucide-react';
 
 import ClassGradebook from '../grading/ClassGradebook';
 import EnrollmentManager from './EnrollmentManager';
