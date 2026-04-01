@@ -258,6 +258,7 @@ const StatusBadge = ({ status }) => {
 
 
 
+// eslint-disable-next-line no-unused-vars
 const CreditRing = ({ earned, required, size = 64 }) => {
   const strokeWidth = size < 50 ? 4 : 5;
   const r = (size - strokeWidth * 2) / 2;
