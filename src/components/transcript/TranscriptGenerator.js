@@ -779,13 +779,8 @@ const TranscriptGenerator = ({ user }) => {
   }, []);
 
   // --- Auto-select student from global context (search bar integration) ---
+  // NOTE: moved below handleSelectStudent definition to avoid use-before-define
   const contextStudentIdRef = React.useRef(null);
-  useEffect(() => {
-    if (!contextStudent || contextStudent.id === contextStudentIdRef.current) return;
-    if (selectedStudent?.id === contextStudent.id) return;
-    contextStudentIdRef.current = contextStudent.id;
-    handleSelectStudent(contextStudent);
-  }, [contextStudent, selectedStudent, handleSelectStudent]);
 
   // --- Ctrl+Z / Ctrl+Y undo/redo keyboard handler ---
   useEffect(() => {
@@ -868,6 +863,14 @@ const TranscriptGenerator = ({ user }) => {
       setLoading(false);
     }
   }, [clearUndo, transcriptDirty, user]);
+
+  // --- Auto-select student from global context (search bar integration) ---
+  useEffect(() => {
+    if (!contextStudent || contextStudent.id === contextStudentIdRef.current) return;
+    if (selectedStudent?.id === contextStudent.id) return;
+    contextStudentIdRef.current = contextStudent.id;
+    handleSelectStudent(contextStudent);
+  }, [contextStudent, selectedStudent, handleSelectStudent]);
 
   // --- Debounced Undo Stack ---
   const undoBufferRef = React.useRef(null);

@@ -5,8 +5,8 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
-import { generateStudentNumber, formatStudentLabel, getStudentInitials } from '../../utils/studentUtils';
-import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers, Plus, Save, UserPlus, AlertTriangle } from 'lucide-react';
+import { generateStudentNumber, getStudentInitials } from '../../utils/studentUtils';
+import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers, Plus, UserPlus, AlertTriangle } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
 const UNIT_CONFIG = [
   { key: "Determination", label: "Determination", icon: Target },
@@ -369,25 +369,7 @@ function KTEAReporter({ user, activeStudent }) {
     }
   };
 
-  const handleSpreadsheetDelete = async (id, name) => {
-    if (!window.confirm(`Delete KTEA record for "${name}"?`)) return;
-    try {
-      await databaseService.deleteKteaReport(id);
-      // Remove from local spreadsheet state
-      setSpreadsheetData(prev => {
-        const updated = {};
-        Object.keys(prev).forEach(unit => {
-          const filtered = prev[unit].filter(s => s.id !== id);
-          if (filtered.length > 0) updated[unit] = filtered;
-        });
-        return updated;
-      });
-      setMsg(`Deleted: ${name}`);
-      setTimeout(() => setMsg(''), 3000);
-    } catch (e) {
-      alert("Could not delete record.");
-    }
-  };
+
 
   // --- 4. EXPORT ---
   const generateExcelReport = async (unitsData, filename) => {
