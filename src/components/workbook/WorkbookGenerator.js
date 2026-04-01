@@ -9,7 +9,7 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import {
   hasApiKey, getApiKey, setApiKey,
-  generateWorkbook, testConnection
+  generateWorkbook, generateHtmlWorkbook, testConnection
 } from '../../services/geminiService';
 import { MLS_STANDARDS } from '../../data/missouriStandards';
 import { MISSOURI_TOPICS } from '../../data/missouriTopics';
@@ -113,6 +113,107 @@ function getDayScope(dayNum) {
   if (dayNum >= 1 && dayNum <= 8) return DAY_SCOPE_SEQUENCE[dayNum - 1];
   return null;
 }
+
+const V70_UNIT_PROMPT = `
+# ROLE & PHILOSOPHY
+You are "V.70.Unit.Generator", an elite Lead Curriculum Architect and Master Frontend Developer. 
+Your Design Philosophy: "Maximum Density, Zero Waste. High Drama, Deep Empathy." 
+Your Objective: Generate a single-file, 11-page HTML workbook for a specific "Day" of a unit, tailored perfectly to the requested reading level and audience.
+
+# CORE VARIABLES (Provided by User)
+When the user prompts you, they will provide:
+1. [Unit Topic]
+2. [Day Number & Specific Focus]
+3. [Target Audience & Reading Level]
+
+# I. THE PRINT ENGINE (STRICT CSS MANDATES)
+You MUST use this exact CSS structure in the <head>. NEVER deviate.
+
+<style>
+    :root {
+        --font-header: 'Georgia', serif;
+        --font-body: 'Verdana', sans-serif;
+        --line-height: 38px;
+        --border-heavy: 2px solid black;
+        --border-light: 1px solid #444;
+    }
+    body { margin: 0; padding: 0; background-color: #f5f5f5; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .print-page { width: 8.5in; height: 11in; margin: 0 auto 20px auto; background: white; position: relative; display: flex; flex-direction: column; padding: 0.3in 0.5in; box-sizing: border-box; overflow: hidden; page-break-after: always; }
+    @media print { body { background: white; } .print-page { margin: 0; box-shadow: none; page-break-after: always; height: 11in; } }
+    h1 { font-family: var(--font-header); font-weight: 900; font-size: 18pt; border-bottom: 4px solid black; margin: 0 0 4px 0; line-height: 1.1; text-transform: uppercase; }
+    h2 { font-family: var(--font-header); font-weight: bold; font-size: 12pt; margin: 4px 0 2px 0; border-bottom: 1px solid black; padding-bottom: 1px; }
+    h3 { font-family: var(--font-body); font-weight: bold; font-size: 11pt; text-transform: uppercase; margin: 0 0 4px 0; color: #444; letter-spacing: 1px; }
+    p { font-family: var(--font-body); font-size: 11.5pt; line-height: 1.5; margin-bottom: 6px; text-align: justify; }
+    .ruled-input { width: 100%; border: none; resize: none; outline: none; font-family: 'Verdana', sans-serif; font-size: 14px; line-height: var(--line-height); background-image: linear-gradient(to bottom, transparent 37px, #999 37px); background-size: 100% 38px; background-color: transparent; padding-top: 6px; box-sizing: border-box; color: #000; }
+    .vocab-grid { display: flex; flex-direction: column; gap: 3px; flex-grow: 1; padding-bottom: 0px; }
+    .vocab-item { border: var(--border-heavy); padding: 2px 6px; display: flex; flex-direction: column; background: #fff; flex-grow: 1; }
+    .vocab-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; border-bottom: 1px solid #000; padding-bottom: 1px; }
+    .term { font-weight: 900; font-size: 11pt; font-family: var(--font-body); text-transform: uppercase; }
+    .pos { font-style: italic; font-size: 9pt; color: #666; }
+    .vocab-details { font-size: 9pt; font-family: var(--font-body); background: #f9f9f9; padding: 2px 4px; margin-bottom: 2px; border-left: 3px solid #666; line-height: 1.2; }
+    .vocab-task { font-size: 9.5pt; font-family: var(--font-body); font-weight: bold; margin-top: 2px; color: #000; }
+    .narrative-container { border-left: 4px solid black; padding-left: 20px; margin-bottom: 8px; }
+    .scriptorium-notes { border: 1px dotted #666; background-color: #fdfdfd; padding: 6px 10px; margin-top: 8px; margin-bottom: 10px; font-family: var(--font-body); font-size: 10pt; display: flex; gap: 20px; }
+    .note-col { flex: 1; }
+    .note-header { font-weight: 900; text-transform: uppercase; font-size: 0.8em; border-bottom: 2px solid #ccc; margin-bottom: 4px; }
+    .note-list { list-style-type: none; padding: 0; margin: 0; }
+    .note-list li { margin-bottom: 2px; position: relative; padding-left: 12px; }
+    .note-list li::before { content: "•"; position: absolute; left: 0; font-weight: bold; }
+    .checkpoint-box { margin-top: 10px; border: var(--border-heavy); padding: 8px; background-color: #fff; flex-grow: 1; display: flex; flex-direction: column; margin-bottom: 5px; }
+    .question-stem { font-weight: bold; font-family: var(--font-header); font-size: 11pt; margin-bottom: 5px; }
+    .scaffold { font-weight: bold; font-size: 12pt; color: black; margin-bottom: 5px; font-style: normal; }
+    .checkpoint-box .ruled-input { flex-grow: 1; height: 100%; font-weight: 900; font-size: 13pt; color: #000; }
+    .job-deck-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; background: #eee; padding: 4px; border: var(--border-heavy); }
+    .job-tile { background: #fff; border: 1px solid #444; padding: 2px; text-align: center; font-size: 9pt; font-weight: bold; }
+    .pillar-container { display: flex; gap: 10px; height: 350px; margin-bottom: 12px; }
+    .pillar-column { flex: 1; border: var(--border-heavy); padding: 8px; display: flex; flex-direction: column; }
+    .pillar-header { text-align: center; font-weight: 900; border-bottom: 2px solid black; margin-bottom: 6px; padding-bottom: 6px; font-size: 9.5pt; text-transform: uppercase; }
+    .law-block { border: var(--border-heavy); margin-bottom: 10px; padding: 0; background: #fff; flex-grow: 1; display: flex; flex-direction: column; }
+    .law-header { background: black; color: white; padding: 4px 8px; font-weight: bold; font-family: var(--font-header); font-size: 10.5pt; text-transform: uppercase; }
+    .law-body { padding: 4px 8px; flex-grow: 1; }
+    .prompt-label { font-weight: bold; font-size: 9pt; margin-top: 2px; display: block; }
+    .shield-canvas { width: 320px; flex-grow: 1; min-height: 250px; margin: 10px auto; border: 4px solid black; border-radius: 0 0 160px 160px; position: relative; background: #fff; }
+    .page-footer { margin-top: 5px; border-top: 2px solid black; padding-top: 4px; display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 8pt; text-transform: uppercase; font-weight: bold; flex-shrink: 0; }
+    .header-row { display: flex; justify-content: space-between; font-family: var(--font-body); font-size: 9pt; border-bottom: var(--border-heavy); padding-bottom: 4px; margin-bottom: 8px; font-weight: bold; }
+</style>
+
+# II. THE PEDAGOGICAL BLUEPRINT (11-PAGE FLOW)
+
+**PAGES 1 & 2: THE VOCABULARY LAB**
+* **Format:** Page 1 has 4 terms (height: 76px inputs). Page 2 has 6 terms (height: 38px inputs).
+* **MANDATORY VARIETY:** DO NOT just ask for a sentence. You must invent a highly engaging, relatable activity theme for the day. **Crucially, you must switch up this format every single day of the unit.** If you are generating Day 3, do not use the formats you used for Days 1 and 2. 
+    * *Examples to rotate through:* "The 'Would You Rather' Lab", "The Advice Column Lab", "Word Detective", "The 'Imagine If' Lab", "The 'Agree or Disagree' Lab", "The Connection Lab", "Sentence Starters".
+* **Structure:** Inside \`.vocab-details\`, you MUST include exactly three lines: \`<div><strong>Definition:</strong> ...</div>\`, \`<div><strong>Forms:</strong> ...</div>\`, \`<div><strong>Example:</strong> ...</div>\`.
+* **Task Line:** Include \`<div class="vocab-task">TASK: [Your custom, varied prompt here]</div>\` right above the \`textarea\`. Provide a sentence starter in the textarea that perfectly matches your chosen format.
+
+**PAGES 3-8: THE NARRATIVE ARC (6 CHAPTERS)**
+* **Storytelling:** 150-200 words per page. Deeply emotional, dramatic, high-interest. Tailor strictly to the target reading level. Frame history as an active story with heroes, villains, and high stakes.
+* **Mandatory Bolding:** You must bold exactly 18 specific items/concepts throughout these 6 chapters. These 18 bolded words will become the "Job Deck" on Page 9.
+* **Scriptorium Notes:** * Column 1: "ACTIVE ANALYSIS" -> 2 action items (e.g., "Circle the...", "Highlight the..."). 
+    * Column 2: "TERMS" -> 2 tier-two vocabulary words defined simply.
+* **Checkpoint Box:** * \`.scaffold\`: The analytical prompt.
+    * \`.ruled-input\`: The sentence stem, pre-filled, bolded, and 13pt font. Make sure the box has \`flex-grow: 1\`.
+
+**PAGE 9: THE SYSTEM ANALYSIS (CATEGORIZATION)**
+* **Job Deck:** A grid of the 18 items you bolded in the narrative chapters. 
+* **Pillars:** 3 thematic columns based on the day's topic (e.g., "The Problem", "The Action", "The Goal"). Provide a \`<textarea class="ruled-input" style="flex-grow: 1;"></textarea>\` for each.
+* **Critical Thinking Box:** A deep-thinking prompt that requires the student to use two specific words from the word bank in their answer. Use \`flex-grow: 1\`.
+
+**PAGE 10: THE LEGISLATION (THE RULES)**
+* **Format:** 3 Rules/Laws. Establish a scenario (e.g., "You are the President writing the new laws...").
+* **Textareas:** Each rule MUST have two inputs. The "LAW" input must be \`style="height: 76px; font-weight: 900; font-size: 13pt;"\`. The "REASON" input must be \`style="height: 114px; font-weight: 900; font-size: 13pt;"\`. Provide sentence starters inside all of them.
+
+**PAGE 11: THE REFLECTION**
+* **The Canvas:** A creative drawing task inside \`.shield-canvas\`. Give them two specific things to draw that symbolize the day's theme.
+* **Personal Connection:** 2 profound reflection questions tying the historical theme to the student's actual modern life, feelings, or school environment. Both textareas must be \`height: 128px\`.
+
+# III. CRITICAL CONSTRAINTS & OUTPUT RULES
+1.  **Zero White Space:** Every page must end with a \`flex-grow: 1\` element to push the footer exactly to the bottom of the 11-inch page.
+2.  **Footer Sync:** Ensure \`<div class="page-footer">\` dynamically reflects the Unit Name, the Day Number, and the exact Page Number (1 of 11, 2 of 11, etc.).
+3.  **Readability:** Sentence stems inside text areas MUST be \`font-weight: 900\` and \`font-size: 13pt\`.
+4.  **No Format Repetition:** When generating multiple days in a sequence, always review the context window. Your Pages 1 & 2 Vocabulary Activity format MUST be different from the previous day's format.
+5.  **No Markdown Outside Code Block:** Output ONLY the raw HTML wrapped in a single HTML code block (\`\`\`html:Day_X_Topic.html ...\`\`\`). Do not add conversational filler before or after the code block.
+`;
 
 const AUDIENCE_DIRECTIVE = `CRITICAL AUDIENCE CONSTRAINT: All students are HIGH SCHOOL TEENAGERS (ages 14-18), regardless of the reading level selected. The reading level controls ONLY vocabulary complexity, sentence length, and syntactic sophistication. It does NOT change the target age group. References, examples, and narrative protagonists should reflect teenage life, concerns, and cultural awareness.`;
 
@@ -341,37 +442,53 @@ const WorkbookGenerator = ({ user }) => {
     abortRef.current = controller;
 
     try {
-      const agentResp = await fetch('/curriculum_generator_agent.md');
-      const agentSpec = await agentResp.text();
-
       const modConfig = MODALITIES.find(m => m.id === modality);
+      let payloadData;
 
-      const fullSystemPrompt = [
-        agentSpec,
-        '\\n\\n=== STRICT JSON ARCHITECTURE ===',
-        'You MUST respond in pure JSON. Do not output HTML. Follow the specified Zod schema strictly.',
-      ].join('\\n');
-
-      let batchInstruction = isBatchTiered 
-        ? `\\n[DIFFERENTIATION]: Generate AN ARRAY OF 3 WORKBOOKS (Tier 1 Support, Tier 2 Core, Tier 3 Challenge). Keeping visual intent the same but scaling Lexile, scaffolding, and DOK depth.`
-        : `\\n[DIFFERENTIATION]: Generate AN ARRAY containing EXACTLY 1 WORKBOOK tailored to the specified Lexile reading level: ${readingLevel}. The tier name should be "Core Material".`;
-
-      let userPrompt = '';
       if (modality === 'unit') {
         const prevContext = buildPreviousDaysContext(unitWorkbooks);
         const scope = getDayScope(dayNumber);
-        userPrompt = [
-          `[MODE]: Complex 10-page Independent Study Unit`,
+        
+        let userPrompt = [
+          `[MODE]: Complex 11-page Independent Study Unit`,
           `[Unit Topic]: ${unitTopic.trim()}`,
           `[Day Sequence]: Day ${dayNumber} — ${scope?.label} (${scope?.directive})`,
           `[Target Audience Reading Level Guideline]: ${readingLevel}`,
-          batchInstruction,
+          `\\n[DIFFERENTIATION]: Generate exactly 1 HTML workbook without JSON.`,
           `\\n${AUDIENCE_DIRECTIVE}`,
           prevContext ? `\\n--- PREVIOUS DAYS:\\n${prevContext}` : '',
         ].filter(Boolean).join('\\n');
+
+        if (sourceText.trim()) {
+          userPrompt += `\\n\\n=== STRICT SOURCE MATERIAL ANCHOR ===\\nCRITICAL DIRECTIVE: You MUST base all generated content, worksheets, questions, facts, and slide information STRICTLY on the text provided below.\\n[SOURCE TEXT START]\\n${sourceText.trim()}\\n[SOURCE TEXT END]`;
+        }
+        if (primarySourceImage) {
+           userPrompt += `\\n\\n[NOTE]: A primary source or map image will be attached to the top of the generated document. Refer to it as the 'Source Image' implicitly in your tasks.`;
+        }
+
+        payloadData = await generateHtmlWorkbook({
+          systemPrompt: V70_UNIT_PROMPT,
+          userPrompt,
+          onProgress: (status) => setStreamText(status),
+          signal: controller.signal,
+        });
+
       } else {
+        const agentResp = await fetch('/curriculum_generator_agent.md');
+        const agentSpec = await agentResp.text();
+
+        const fullSystemPrompt = [
+          agentSpec,
+          '\\n\\n=== STRICT JSON ARCHITECTURE ===',
+          'You MUST respond in pure JSON. Do not output HTML. Follow the specified Zod schema strictly.',
+        ].join('\\n');
+
+        let batchInstruction = isBatchTiered 
+          ? `\\n[DIFFERENTIATION]: Generate AN ARRAY OF 3 WORKBOOKS (Tier 1 Support, Tier 2 Core, Tier 3 Challenge). Keeping visual intent the same but scaling Lexile, scaffolding, and DOK depth.`
+          : `\\n[DIFFERENTIATION]: Generate AN ARRAY containing EXACTLY 1 WORKBOOK tailored to the specified Lexile reading level: ${readingLevel}. The tier name should be "Core Material".`;
+
         const stdText = MLS_STANDARDS[selectedSubject]?.gradeBands[selectedGradeBand]?.find(s => s.id === selectedStandard)?.text || '';
-        userPrompt = [
+        let userPrompt = [
           `[OUTPUT MODALITY REQUIRED]: ${modConfig.label}`,
           `[Topic]: ${unitTopic.trim()}`,
           `[Standard Alignment]: ${selectedStandard} - ${stdText}`,
@@ -381,31 +498,29 @@ const WorkbookGenerator = ({ user }) => {
           (modality === 'single' || modality === 'quiz') ? `[Question Format]: ${questionStyle}` : '',
           `\\n${AUDIENCE_DIRECTIVE}`,
         ].filter(Boolean).join('\\n');
-      }
 
-      // NotebookLM & Image Check
-      if (sourceText.trim()) {
-        userPrompt += `\\n\\n=== STRICT SOURCE MATERIAL ANCHOR ===\\nCRITICAL DIRECTIVE: You MUST base all generated content, worksheets, questions, facts, and slide information STRICTLY on the text provided below.\\n[SOURCE TEXT START]\\n${sourceText.trim()}\\n[SOURCE TEXT END]`;
-      }
-      if (primarySourceImage) {
-        userPrompt += `\\n\\n[NOTE]: A primary source or map image will be attached to the top of the generated document. Refer to it as the 'Source Image' implicitly in your tasks if DOK level supports it.`;
-      }
+        if (sourceText.trim()) {
+          userPrompt += `\\n\\n=== STRICT SOURCE MATERIAL ANCHOR ===\\nCRITICAL DIRECTIVE: You MUST base all generated content, worksheets, questions, facts, and slide information STRICTLY on the text provided below.\\n[SOURCE TEXT START]\\n${sourceText.trim()}\\n[SOURCE TEXT END]`;
+        }
+        if (primarySourceImage) {
+          userPrompt += `\\n\\n[NOTE]: A primary source or map image will be attached to the top of the generated document. Refer to it as the 'Source Image' implicitly in your tasks if DOK level supports it.`;
+        }
 
-      // Advanced Pedagogical Modulator
-      const pedagogyOverrides = [];
-      if (vocabActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- VOCABULARY OVERRIDE: ${vocabActivity}`);
-      if (grammarActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- GRAMMAR OVERRIDE: ${grammarActivity}`);
-      if (editingActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- EDITING OVERRIDE: ${editingActivity}`);
-      if (pedagogyOverrides.length > 0) {
-        userPrompt += `\\n\\n=== ADVANCED OVERRIDES ===\\n` + pedagogyOverrides.join('\\n');
-      }
+        const pedagogyOverrides = [];
+        if (vocabActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- VOCABULARY OVERRIDE: ${vocabActivity}`);
+        if (grammarActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- GRAMMAR OVERRIDE: ${grammarActivity}`);
+        if (editingActivity !== 'Auto (AI Chooses)') pedagogyOverrides.push(`- EDITING OVERRIDE: ${editingActivity}`);
+        if (pedagogyOverrides.length > 0) {
+          userPrompt += `\\n\\n=== ADVANCED OVERRIDES ===\\n` + pedagogyOverrides.join('\\n');
+        }
 
-      let generatedJsonData = await generateWorkbook({
-        systemPrompt: fullSystemPrompt,
-        userPrompt,
-        onProgress: (status) => setStreamText(status),
-        signal: controller.signal,
-      });
+        payloadData = await generateWorkbook({
+          systemPrompt: fullSystemPrompt,
+          userPrompt,
+          onProgress: (status) => setStreamText(status),
+          signal: controller.signal,
+        });
+      }
 
       const meta = {
         unitTopic: unitTopic.trim(),
@@ -416,7 +531,7 @@ const WorkbookGenerator = ({ user }) => {
         standard: selectedStandard
       };
 
-      setPreviewData(generatedJsonData); setPreviewMeta(meta); setSaved(false); setActiveTierIndex(0); setView('preview');
+      setPreviewData(payloadData); setPreviewMeta(meta); setSaved(false); setActiveTierIndex(0); setView('preview');
     } catch (err) {
       if (err.name === 'AbortError') setView('form');
       else setGenError(err.message || 'Generation failed.');
@@ -431,8 +546,12 @@ const WorkbookGenerator = ({ user }) => {
     if (!previewMeta || !previewData) return;
     setSaving(true); setSaveError(null);
     try {
+      const isHtml = previewMeta.generationMode === 'unit' && typeof previewData === 'string';
       const savedRecord = await databaseService.saveWorkbook({
-        ...previewMeta, jsonContent: previewData, primarySourceImage
+        ...previewMeta, 
+        jsonContent: isHtml ? null : previewData,
+        htmlContent: isHtml ? previewData : null,
+        primarySourceImage
       });
       setSaved(true);
       if (savedRecord) {
@@ -441,7 +560,7 @@ const WorkbookGenerator = ({ user }) => {
           return exists ? prev.map(w => w.id === savedRecord.id ? savedRecord : w) : [...prev, savedRecord];
         });
       }
-      await databaseService.logAudit(user, 'WORKBOOK_GENERATED_JSON', `${previewMeta.unitTopic} - ${previewMeta.generationMode}`);
+      await databaseService.logAudit(user, isHtml ? 'WORKBOOK_GENERATED_HTML' : 'WORKBOOK_GENERATED_JSON', `${previewMeta.unitTopic} - ${previewMeta.generationMode}`);
     } catch (err) { setSaveError(err.message); } finally { setSaving(false); }
   };
 
@@ -449,8 +568,15 @@ const WorkbookGenerator = ({ user }) => {
 
   const handleDownload = () => {
     if (!previewData || !previewMeta) return;
-    const blob = new Blob([JSON.stringify(previewData, null, 2)], { type: 'application/json;charset=utf-8' });
-    saveAs(blob, `${previewMeta.unitTopic.replace(/\\s+/g, '_')}_${previewMeta.generationMode}.json`);
+    const isHtml = previewMeta.generationMode === 'unit' && typeof previewData === 'string';
+    
+    if (isHtml) {
+      const blob = new Blob([previewData], { type: 'text/html;charset=utf-8' });
+      saveAs(blob, `${previewMeta.unitTopic.replace(/\\s+/g, '_')}_Day${previewMeta.dayNumber}.html`);
+    } else {
+      const blob = new Blob([JSON.stringify(previewData, null, 2)], { type: 'application/json;charset=utf-8' });
+      saveAs(blob, `${previewMeta.unitTopic.replace(/\\s+/g, '_')}_${previewMeta.generationMode}.json`);
+    }
   };
 
 
@@ -461,12 +587,15 @@ const WorkbookGenerator = ({ user }) => {
   };
 
   const handleOpenSaved = (wb) => {
-    // Fallback if opening older HTML versions
-    if (wb.htmlContent && !wb.jsonContent) {
+    if (wb.generationMode === 'unit' && wb.htmlContent) {
+      setPreviewData(wb.htmlContent);
+    } else if (wb.htmlContent && !wb.jsonContent) {
       alert("This is an older HTML format workbook not supported in the new visual engine. Cannot load.");
       return;
+    } else {
+      setPreviewData(wb.jsonContent); 
     }
-    setPreviewData(wb.jsonContent); 
+    
     setPrimarySourceImage(wb.primarySourceImage || null);
     setPreviewMeta(wb); 
     setSaved(true); 
@@ -870,8 +999,8 @@ const WorkbookGenerator = ({ user }) => {
         ) : (
            <div className="bg-white p-8 rounded-2xl shadow-sm border max-w-lg w-full">
              <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4"/>
-             <h2 className="text-xl font-extrabold">Drafting JSON {m?.label}...</h2>
-             <p className="text-[10px] text-slate-500 mt-2 font-bold px-4 py-1 bg-slate-100 rounded-full inline-block uppercase tracking-wider">{isBatchTiered ? 'Multi-Tier Batching Active' : 'Single Tier Mode'}</p>
+             <h2 className="text-xl font-extrabold">Drafting {modality === 'unit' ? 'V.70 HTML' : 'JSON'} {m?.label}...</h2>
+             <p className="text-[10px] text-slate-500 mt-2 font-bold px-4 py-1 bg-slate-100 rounded-full inline-block uppercase tracking-wider">{isBatchTiered && modality !== 'unit' ? 'Multi-Tier Batching Active' : 'Single Tier Mode'}</p>
              <pre ref={streamContainerRef} className="mt-6 text-[10px] text-left bg-slate-900 text-green-400 p-4 rounded-lg h-48 overflow-auto whitespace-pre-wrap font-mono shadow-inner">
                {streamText || 'Initiating connection...'}
              </pre>
@@ -883,6 +1012,16 @@ const WorkbookGenerator = ({ user }) => {
   }
 
   if (view === 'preview') {
+    const isHtml = previewMeta?.generationMode === 'unit' && typeof previewData === 'string';
+
+    const handlePrintHtml = () => {
+      const iframe = document.getElementById('print-iframe');
+      if (iframe) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+    };
+
     return (
       <div className="h-full flex flex-col">
          <div className="shrink-0 p-3 bg-white border-b flex gap-2 items-center flex-wrap">
@@ -892,7 +1031,7 @@ const WorkbookGenerator = ({ user }) => {
               <p className="text-[10px] text-slate-500 truncate">{previewMeta?.dayFocus}</p>
             </div>
             
-            {previewData?.workbooks && previewData.workbooks.length > 1 && (
+            {!isHtml && previewData?.workbooks && previewData.workbooks.length > 1 && (
               <div className="flex bg-slate-100 p-1 rounded-lg mr-4">
                 {previewData.workbooks.map((wb, idx) => (
                   <button key={idx} onClick={() => setActiveTierIndex(idx)} className={`px-4 py-1 text-xs font-bold rounded-md ${activeTierIndex === idx ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-800'}`}>
@@ -903,17 +1042,32 @@ const WorkbookGenerator = ({ user }) => {
             )}
 
             {!saved && <button onClick={handleSave} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-bold hover:bg-blue-700">Save Artifact</button>}
-            <button onClick={handleDownload} className="px-3 py-1.5 border rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700">Download JSON</button>
+            <button onClick={handleDownload} className="px-3 py-1.5 border rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700">
+               {isHtml ? 'Download HTML' : 'Download JSON'}
+            </button>
             
-            {previewData?.workbooks && previewData.workbooks[activeTierIndex] && (
+            {!isHtml && previewData?.workbooks && previewData.workbooks[activeTierIndex] && (
                <PDFDownloadLink document={<WorkbookPdfDocument data={previewData.workbooks[activeTierIndex]} primarySourceImage={primarySourceImage} meta={previewMeta} />} fileName="workbook.pdf" className="px-3 py-1.5 border rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700 ml-2">
                  {({ loading }) => loading ? 'Preparing PDF...' : <><Printer className="w-3.5 h-3.5 inline mr-1"/> Download PDF</>}
                </PDFDownloadLink>
             )}
+
+            {isHtml && (
+               <button onClick={handlePrintHtml} className="px-3 py-1.5 border border-slate-300 bg-white rounded-md text-xs font-bold hover:bg-slate-50 text-slate-700 ml-2 flex items-center">
+                 <Printer className="w-3.5 h-3.5 inline mr-1"/> Print Unit
+               </button>
+            )}
          </div>
          <div className="flex-1 overflow-hidden bg-slate-200 p-2 sm:p-4">
             <div className="w-full h-full mx-auto rounded-xl overflow-hidden drop-shadow-2xl border border-slate-300 bg-white flex flex-col">
-               {previewData?.workbooks && previewData.workbooks[activeTierIndex] ? (
+               {isHtml ? (
+                 <iframe 
+                   id="print-iframe"
+                   srcDoc={previewData}
+                   title="HTML Preview"
+                   className="w-full h-full border-0 bg-white"
+                 />
+               ) : previewData?.workbooks && previewData.workbooks[activeTierIndex] ? (
                  <PDFErrorBoundary>
                    <PDFViewer width="100%" height="100%" className="border-0">
                      <WorkbookPdfDocument data={previewData.workbooks[activeTierIndex]} primarySourceImage={primarySourceImage} meta={previewMeta} />

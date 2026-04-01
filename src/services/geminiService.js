@@ -91,6 +91,51 @@ export async function generateWorkbook({ systemPrompt, userPrompt, onProgress, s
   }
 }
 
+// ─── GENERATE HTML WORKBOOK (V.70) ──────────────────────────────────────────
+
+export async function generateHtmlWorkbook({ systemPrompt, userPrompt, onProgress, signal }) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('No Gemini API key configured.');
+
+  if (onProgress) onProgress('Connecting to Gemini API...');
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: getModel(),
+    systemInstruction: systemPrompt,
+    generationConfig: { 
+      temperature: 0.75, 
+      maxOutputTokens: 65536,
+      // responseMimeType: "text/html" is not standard, we just use default text text/plain
+    },
+  });
+
+  if (onProgress) onProgress('Generating V.70 Pure HTML Unit (30-90s)...');
+
+  const result = await model.generateContentStream(userPrompt);
+
+  let accumulated = '';
+  for await (const chunk of result.stream) {
+    if (signal?.aborted) throw new DOMException('Generation cancelled', 'AbortError');
+    accumulated += chunk.text();
+    if (onProgress) onProgress(accumulated);
+  }
+
+  if (onProgress) onProgress(accumulated + '\\n\\n[SYSTEM]: Formatting HTML Output...');
+  
+  // Extract strictly the HTML block 
+  let cleanHtml = accumulated;
+  const match = accumulated.match(/```html:?\\w*\\s*([\\s\\S]*?)```/i) || accumulated.match(/```html\\s*([\\s\\S]*?)```/i) || accumulated.match(/```\\s*([\\s\\S]*?)```/i);
+  if (match && match[1]) {
+    cleanHtml = match[1].trim();
+  } else {
+    // Attempt to just clean it if there are no backticks explicitly wrapping ALL of it
+    cleanHtml = cleanHtml.replace(/```(html)?/gi, '').trim();
+  }
+
+  return cleanHtml;
+}
+
 // ─── SUGGEST DAY FOCUS ──────────────────────────────────────────────────────
 
 export async function suggestDayFocus({ unitTopic, dayNumber, previousDays, dayDirective }) {
