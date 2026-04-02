@@ -297,24 +297,28 @@ const HubShell = () => {
         </div>
 
         {currentView === 'home' && (
-          <div className="hub-mesh-bg h-full flex flex-col">
-            <div className="max-w-6xl mx-auto px-4 py-2 flex-1 flex flex-col justify-start">
+          <div className="hub-mesh-bg h-full flex flex-col relative overflow-y-auto overflow-x-hidden bg-gradient-to-br from-slate-100/50 via-indigo-50/30 to-blue-100/40">
+            {/* Ambient glowing orbs for extra premium feel */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-300/20 rounded-full blur-3xl pointer-events-none mix-blend-multiply" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-300/20 rounded-full blur-3xl pointer-events-none mix-blend-multiply" />
+
+            <div className="max-w-5xl mx-auto px-6 py-4 flex-1 flex flex-col justify-start relative z-10 w-full">
 
               {/* === HERO SECTION === */}
-              <div className="text-center mb-6 animate-slide-up">
-                <h1 className="text-4xl font-extrabold text-slate-900 mb-2">
+              <div className="text-center mb-8 mt-6 animate-slide-up">
+                <h1 className="text-[2.75rem] font-black tracking-tight text-slate-900 mb-3 drop-shadow-sm leading-tight">
                   {getGreeting()},{' '}
-                  <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-br from-indigo-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
                     {user.name.split(' ')[0]}
                   </span>
                 </h1>
-                <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                <p className="text-[1.05rem] font-medium text-slate-500 max-w-2xl mx-auto leading-relaxed">
                   Manage your {user.units?.join(' & ')} unit roster, gradebooks, and student assessments.
                 </p>
               </div>
 
               {/* === MODULE GRID === */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1" style={{minHeight:0}}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 content-start pb-16">
                 {visibleModules.map((m, index) => (
                   <LaunchCard
                     key={m.id}
@@ -381,42 +385,52 @@ const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
 const LaunchCard = ({ icon: Icon, title, desc, color, onClick, delay, stats }) => (
   <div
     onClick={onClick}
-    className={`animate-slide-up bg-slate-50/80 backdrop-blur-lg shadow-lg shadow-slate-200/50 border ${color.border} rounded-2xl p-4 group cursor-pointer transition-all duration-300 hover:shadow-2xl ${color.hoverShadow} ${color.hoverBorder} hover:-translate-y-2 relative overflow-hidden`}
+    className={`animate-slide-up bg-white/70 backdrop-blur-2xl shadow-xl shadow-slate-200/40 border border-white/80 rounded-[1.5rem] p-5 group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1.5 relative overflow-hidden min-h-[13rem] flex flex-col justify-between`}
     style={{ animationDelay: `${delay}ms` }}
   >
-    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${color.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+    {/* Watermark Icon */}
+    <Icon size={140} className={`absolute -bottom-8 -right-8 opacity-5 group-hover:opacity-[0.08] group-hover:scale-110 transition-all duration-700 ${color.icon}`} strokeWidth={1} />
 
-    <div className="flex items-start justify-between">
-      <div className={`p-3 ${color.bg} rounded-xl border border-white/80`}>
-        <Icon size={28} className={color.icon} />
+    {/* Top accent line */}
+    <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${color.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+    
+    {/* Subtle glassy wash on hover */}
+    <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+    <div className="relative z-10 flex items-start justify-between">
+      <div className={`p-3.5 bg-white shadow-sm rounded-2xl border border-slate-100 group-hover:scale-105 group-hover:shadow-md transition-all duration-300`}>
+        <Icon size={30} className={color.icon} strokeWidth={2.5} />
       </div>
-      <ChevronRight className={`w-6 h-6 text-slate-300 ${color.chevronHover} group-hover:translate-x-1 transition-all duration-300`} />
+      <div className="mt-2 w-8 h-8 rounded-full flex items-center justify-center bg-slate-50 border border-slate-100/50 group-hover:bg-white group-hover:border-slate-200 transition-all duration-300 shadow-sm">
+        <ChevronRight className={`w-5 h-5 text-slate-400 ${color.chevronHover} group-hover:translate-x-0.5 transition-transform duration-300`} />
+      </div>
     </div>
-    <div className="mt-2">
-      <h3 className="text-lg font-bold text-slate-800 group-hover:text-slate-900 transition-colors">{title}</h3>
+    
+    <div className="relative z-10 mt-auto pt-6">
+      <h3 className="text-[1.1rem] font-bold text-slate-800 tracking-tight group-hover:text-slate-900 transition-colors duration-300">{title}</h3>
       {stats ? (
-        <div className="mt-1.5 space-y-1">
-          <p className="text-xs font-medium text-slate-500">
+        <div className="mt-2 text-[13px] space-y-1">
+          <p className="font-medium text-slate-500 leading-tight">
             {stats.quarter} &middot; {stats.studentCount} student{stats.studentCount !== 1 ? 's' : ''}
           </p>
           {stats.missingGrades > 0 && (
-            <p className="text-xs font-semibold text-amber-600 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+            <p className="font-semibold text-amber-600 flex items-center gap-1.5 leading-tight">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] shrink-0 animate-pulse" />
               {stats.missingGrades} missing grade{stats.missingGrades !== 1 ? 's' : ''}
             </p>
           )}
           {stats.missingGrades === 0 && (
-            <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+            <p className="font-semibold text-emerald-600 flex items-center gap-1.5 leading-tight">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] shrink-0" />
               All grades entered
             </p>
           )}
           {stats.lastSaved && (
-            <p className="text-xs text-slate-400">Last saved {stats.lastSaved}</p>
+            <p className="text-[11px] font-medium text-slate-400 mt-0.5 leading-tight">Last saved {stats.lastSaved}</p>
           )}
         </div>
       ) : (
-        <p className="text-sm text-slate-500 mt-1">{desc}</p>
+        <p className="text-[13px] font-medium text-slate-500 mt-1 leading-tight">{desc}</p>
       )}
     </div>
   </div>
