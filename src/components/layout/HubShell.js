@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FileText, Map, ChevronRight, School,
   ClipboardList, Shield, FileSpreadsheet,
   ScrollText,
-  FileCheck, NotebookPen, Upload, Settings, Loader2
+  FileCheck, Upload, Settings, Loader2
 } from 'lucide-react';
 import { getAcademicQuarter, getCurrentSchoolYear } from '../../utils/smartUtils';
 import { databaseService } from '../../services/databaseService';
@@ -18,7 +18,6 @@ const GradingWorkspace = lazy(() => import('../grading/GradingWorkspace'));
 const AuditLog = lazy(() => import('./AuditLog'));
 const IEPGenerator = lazy(() => import('../iep/IEPGenerator'));
 const TranscriptGenerator = lazy(() => import('../transcript/TranscriptGenerator'));
-const WorkbookGenerator = lazy(() => import('../workbook/WorkbookGenerator'));
 const TeacherSettings = lazy(() => import('../settings/TeacherSettings'));
 const DocumentUploadPortal = lazy(() => import('../upload/DocumentUploadPortal'));
 
@@ -103,15 +102,6 @@ const modules = [
       icon: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100',
       hoverShadow: 'hover:shadow-orange-200/50', hoverBorder: 'hover:border-orange-300/60',
       accent: 'from-orange-500 to-orange-600', chevronHover: 'group-hover:text-orange-600',
-    }
-  },
-  {
-    id: 'workbook', title: 'Unit Generator', desc: 'AI Workbooks',
-    icon: NotebookPen,
-    color: {
-      icon: 'text-lime-600', bg: 'bg-lime-50', border: 'border-lime-100',
-      hoverShadow: 'hover:shadow-lime-200/50', hoverBorder: 'hover:border-lime-300/60',
-      accent: 'from-lime-500 to-lime-600', chevronHover: 'group-hover:text-lime-600',
     }
   },
   {
@@ -228,10 +218,10 @@ const HubShell = () => {
     <div className="flex h-screen bg-slate-200 font-sans overflow-hidden">
 
       {/* 1. SIDEBAR NAVIGATION */}
-      <aside className={`transition-all duration-300 bg-slate-900 flex flex-col items-center py-3 shrink-0 border-r border-slate-700/50 z-20 ${sidebarCollapsed ? 'w-16' : 'w-48'}`}>
+      <aside className={`transition-all duration-300 bg-slate-900 flex flex-col items-center py-2 shrink-0 border-r border-slate-700/50 z-20 ${sidebarCollapsed ? 'w-16' : 'w-48'}`}>
         {/* Collapse/Expand Button */}
         <button
-          className="mb-2 p-1 rounded hover:bg-slate-800 text-slate-400 self-end mr-2"
+          className="mb-1 p-1 rounded hover:bg-slate-800 text-slate-400 self-end mr-2"
           onClick={() => setSidebarCollapsed(v => !v)}
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
@@ -241,13 +231,13 @@ const HubShell = () => {
         {/* Logo / Home */}
         <button
           onClick={() => setCurrentView('home')}
-          className={`w-full flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-200 ${
+          className={`w-full flex flex-col items-center gap-0.5 py-1.5 rounded-xl transition-all duration-200 ${
             currentView === 'home'
               ? 'bg-indigo-600/20 text-white'
               : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           }`}
         >
-          <School size={24} className="text-indigo-500" />
+          <School size={22} className="text-indigo-500" />
           {!sidebarCollapsed && <span className="text-[11px] font-bold tracking-tight">Home</span>}
         </button>
 
@@ -280,8 +270,8 @@ const HubShell = () => {
         <div className="w-8 h-px bg-slate-700/50 my-1" />
 
         {/* User */}
-        <div className="flex flex-col items-center gap-1 mb-2">
-          <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-sm border-2 border-slate-700/80">
+        <div className="flex flex-col items-center gap-0.5 mb-1">
+          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-sm border-2 border-slate-700/80">
             {user.name.charAt(0)}
           </div>
           {!sidebarCollapsed && <span className="text-[10px] font-medium text-slate-400 truncate w-full text-center px-1">{user.name.split(' ')[0]}</span>}
@@ -352,7 +342,6 @@ const HubShell = () => {
               {currentView === 'curriculum' && <CurriculumMaps />}
               {currentView === 'iep' && <IEPGenerator user={user} />}
               {currentView === 'transcript' && <TranscriptGenerator user={user} />}
-              {currentView === 'workbook' && <WorkbookGenerator user={user} />}
               {currentView === 'audit' && user.role === 'admin' && <AuditLog />}
               {currentView === 'settings' && <TeacherSettings user={user} onUpdateUser={setUser} />}
               {currentView === 'grades' && <GradingWorkspace user={user} activeStudent={activeStudent?.studentName || activeStudent || ''} />}
@@ -376,14 +365,14 @@ const SidebarButton = ({ label, icon: Icon, active, onClick, color }) => (
   <button
     onClick={onClick}
     title={label}
-    className={`w-full flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-200
+    className={`w-full flex flex-col items-center gap-0.5 py-1.5 rounded-xl transition-all duration-200
       ${active
         ? 'bg-white/10 ring-1 ring-white/10 text-white'
         : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
       }`}
   >
-    <Icon size={24} className={color?.icon || undefined} />
-    <span className="text-[12px] font-semibold leading-tight text-center px-1">
+    <Icon size={22} className={color?.icon || undefined} />
+    <span className="text-[11px] font-semibold leading-tight text-center px-1">
       {label}
     </span>
   </button>
