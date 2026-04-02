@@ -2,7 +2,7 @@
  * Mock Data — Fictional Character Residents with Rich Data
  */
 
-export const MOCK_DB_VERSION = '2026.04.01.v3';
+export const MOCK_DB_VERSION = '2026.04.01.v4';
 
 export const MOCK_STUDENTS = [
   {

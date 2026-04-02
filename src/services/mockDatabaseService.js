@@ -144,11 +144,24 @@ if (!hasPersistedData) {
       const assignments = COURSE_ASSIGNMENTS[courseId];
 
       const grades = {};
+      const gradeNotes = {};
       for (const sid of studentIds) {
         const profile = STUDENT_PROFILES[sid] || { level: 0.75, variance: 0.10, attendance: 0.85 };
         grades[sid] = {};
+        gradeNotes[sid] = {};
         for (const a of assignments) {
-          grades[sid][a.id] = generateScore(sid, a.id, a.maxScore, profile);
+          const score = generateScore(sid, a.id, a.maxScore, profile);
+          grades[sid][a.id] = score;
+
+          const rng = seededRandom(`${sid}-${a.id}-note`);
+          const roll = rng();
+          if (roll < 0.05) {
+            gradeNotes[sid][a.id] = "Turned in late.";
+          } else if (roll < 0.1 && score < (a.maxScore * 0.6)) {
+            gradeNotes[sid][a.id] = "Struggled with the back page. Needs review.";
+          } else if (roll < 0.15 && score > (a.maxScore * 0.95)) {
+            gradeNotes[sid][a.id] = "Excellent work! Really understood the concepts.";
+          }
         }
       }
 
@@ -174,6 +187,7 @@ if (!hasPersistedData) {
         assignments: [...assignments],
         categories: [...GRADEBOOK_CATEGORIES],
         grades,
+        gradeNotes,
         attendance,
       });
 
@@ -354,9 +368,22 @@ if (!hasPersistedData) {
         const assignments = COURSE_ASSIGNMENTS[courseId] || [];
         const profile = STUDENT_PROFILES[sid] || { level: 0.75, variance: 0.10, attendance: 0.85 };
         const grades = {};
+        const gradeNotes = {};
         for (const a of assignments) {
           grades[sid] = grades[sid] || {};
-          grades[sid][a.id] = generateScore(sid, a.id, a.maxScore, profile);
+          gradeNotes[sid] = gradeNotes[sid] || {};
+          const score = generateScore(sid, a.id, a.maxScore, profile);
+          grades[sid][a.id] = score;
+          
+          const rng = seededRandom(`${sid}-${a.id}-note`);
+          const roll = rng();
+          if (roll < 0.05) {
+            gradeNotes[sid][a.id] = "Turned in late.";
+          } else if (roll < 0.1 && score < (a.maxScore * 0.6)) {
+            gradeNotes[sid][a.id] = "Struggled with the back page. Needs review.";
+          } else if (roll < 0.15 && score > (a.maxScore * 0.95)) {
+            gradeNotes[sid][a.id] = "Excellent work! Really understood the concepts.";
+          }
         }
         const pct = assignments.length > 0
           ? calculateWeightedPct(sid, assignments, grades, GRADEBOOK_CATEGORIES)
