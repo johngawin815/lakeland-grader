@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, User, Calendar, ClipboardList, Settings, Briefcase, GraduationCap,
 } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
-import { getStudentInitials, formatStudentLabel } from '../../utils/studentUtils';
+import { formatStudentLabel } from '../../utils/studentUtils';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';

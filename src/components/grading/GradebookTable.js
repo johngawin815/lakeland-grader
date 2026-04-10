@@ -4,7 +4,7 @@ import { useGridKeyboard } from '../../hooks/useGridKeyboard';
 import { UNIT_CONFIG } from '../../config/unitConfig';
 import GradeNoteModal from './modals/GradeNoteModal';
 import EditableStudentName from '../EditableStudentName';
-import { formatStudentLabel } from '../../utils/studentUtils';
+
 
 const GradeCell = React.memo(({ 
   studentId, studentName, assignmentId, assignmentName, maxScore, 
