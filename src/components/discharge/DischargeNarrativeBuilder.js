@@ -853,8 +853,6 @@ const DischargeNarrativeBuilder = ({ user }) => {
         </div>
 
       </div>
-
-      </div>
       </div>
     </div>
   );
