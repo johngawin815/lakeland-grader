@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronRight, ExternalLink, Plus, ClipboardList, XCircle, UploadCloud, X
 } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
-import { getStudentInitials } from '../../utils/studentUtils';
+import { getStudentInitials, formatStudentLabel } from '../../utils/studentUtils';
 import { useStudent } from '../../context/StudentContext';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -586,7 +586,7 @@ const VirtualizedStudentList = React.memo(({ students, onSelect }) => {
                   <span className="text-sm font-bold text-orange-700">{getStudentInitials(s.studentName)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800 text-sm truncate">{getStudentInitials(s.studentName)}</p>
+                  <p className="font-semibold text-slate-800 text-sm truncate">{formatStudentLabel(s)}</p>
                   <p className="text-xs text-slate-400">Grade {s.gradeLevel} &middot; Class of {gradYear} &middot; {s.unitName}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -785,7 +785,7 @@ const TranscriptGenerator = ({ user }) => {
     for (const id of removedEnrollmentIds) {
       try { await databaseService.unenrollStudent(id); } catch (err) { console.warn('Delete enrollment failed:', id, err); }
     }
-    if (user) await databaseService.logAudit(user, 'AutoSaveTranscript', `Auto-saved transcript edits for student ${selectedStudent.id}`);
+    if (user) await databaseService.logAudit(user, 'AutoSaveTranscript', `Auto-saved transcript edits.`);
     setStudentEnrollments(editedEnrollments.map(e => ({ ...e })));
     setRemovedEnrollmentIds([]);
     setTranscriptDirty(false);
@@ -890,7 +890,7 @@ const TranscriptGenerator = ({ user }) => {
 
       // SECURITY PILLAR V: Granular Action Logging (use ID, not full name — FERPA)
       if (user) {
-        databaseService.logAudit(user, 'ViewStudentTranscript', `Viewed transcript for student ${student.id}`).catch(console.error);
+        databaseService.logAudit(user, 'ViewStudentTranscript', `Viewed student transcript.`).catch(console.error);
       }
     } catch (e) {
       console.error('Failed to load student data:', e);
@@ -959,7 +959,7 @@ const TranscriptGenerator = ({ user }) => {
       for (const id of removedEnrollmentIds) {
         try { await databaseService.unenrollStudent(id); } catch (err) { console.warn('Delete enrollment failed:', id, err); }
       }
-      if (user) await databaseService.logAudit(user, 'SaveTranscript', `Saved transcript edits for student ${selectedStudent.id}`);
+      if (user) await databaseService.logAudit(user, 'SaveTranscript', `Saved transcript edits.`);
       setStudentEnrollments(editedEnrollments.map(e => ({ ...e })));
       setRemovedEnrollmentIds([]);
       setTranscriptDirty(false);
@@ -1175,7 +1175,7 @@ const TranscriptGenerator = ({ user }) => {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const today = new Date().toISOString().split('T')[0];
       saveAs(blob, `${getStudentInitials(selectedStudent.studentName).replace(/\s+/g, '_')}_Transcript_${today}.xlsx`);
-      if (user) await databaseService.logAudit(user, 'ExportTranscript', `Exported transcript for student ${selectedStudent.id}`);
+      if (user) await databaseService.logAudit(user, 'ExportTranscript', `Exported student transcript.`);
       toast.success('Transcript exported successfully');
     } catch (e) {
       console.error('Export failed:', e);

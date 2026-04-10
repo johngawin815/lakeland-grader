@@ -155,7 +155,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
       
       await databaseService.upsertStudent(updatePayload);
       if (user) {
-        await databaseService.logAudit(user, 'UpdateStudent', `Updated profile for ${studentData.studentName} (ID: ${studentData.id})`);
+        await databaseService.logAudit(user, 'UpdateStudent', `Updated student profile.`);
       }
       // Reset form defaults to the saved data so the form stays in sync
       reset({
@@ -498,7 +498,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
             Delete Student
           </button>
         </div>
-        <span className="text-xs text-slate-400 font-mono">{studentData.studentNumber ? `#${studentData.studentNumber}` : studentData.id}</span>
+        <span className="text-xs text-slate-400">Day {daysIn}{daysRemaining !== null ? ` · ${daysRemaining}d remaining` : ''}</span>
       </div>
     </>
   ) : null;
@@ -745,7 +745,7 @@ const EditableStudentProfileModal = ({ studentData, onClose, onSaved, user, mode
           </button>
         </div>
 
-        <span className="text-[10px] text-slate-400 font-mono">{studentData.studentNumber ? `#${studentData.studentNumber}` : studentData.id}</span>
+        <span className="text-[10px] text-slate-400">Day {daysIn}{daysRemaining !== null ? ` · ${daysRemaining}d remaining` : ''}</span>
       </div>
     </>
   ) : null;

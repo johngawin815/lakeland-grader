@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
-import { generateStudentNumber, getStudentInitials } from '../../utils/studentUtils';
+import { generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
 import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers, Plus, UserPlus, AlertTriangle } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
 const UNIT_CONFIG = [
@@ -308,7 +308,7 @@ function KTEAReporter({ user, activeStudent }) {
       await databaseService.updateKteaReport(initialReport.id, initialReport);
 
       // 4. Audit Log
-      await databaseService.logAudit({ name: 'System' }, 'CreateStudentViaKTEA', `Created student: ${newStudent.studentName} via KTEA spreadsheet.`);
+      await databaseService.logAudit({ name: 'System' }, 'CreateStudentViaKTEA', `Created student via KTEA spreadsheet.`);
 
       setMsg("Student Created Successfully!");
       setIsAddingStudent(false);
@@ -331,10 +331,10 @@ function KTEAReporter({ user, activeStudent }) {
       setLoadingSpreadsheet(true);
       if (choice === 'full_student') {
         await databaseService.deleteStudent(deleteChoice.studentId);
-        await databaseService.logAudit({ name: 'System' }, 'DeleteStudentViaKTEA', `Deleted student: ${deleteChoice.studentName} entirely.`);
+        await databaseService.logAudit({ name: 'System' }, 'DeleteStudentViaKTEA', `Deleted student entirely.`);
       } else {
         await databaseService.deleteKteaReport(deleteChoice.reportId);
-        await databaseService.logAudit({ name: 'System' }, 'DeleteKTEAViaKTEA', `Deleted KTEA report for: ${deleteChoice.studentName}.`);
+        await databaseService.logAudit({ name: 'System' }, 'DeleteKTEAViaKTEA', `Deleted KTEA report.`);
       }
 
       setMsg(choice === 'full_student' ? "Student Deleted Entirely" : "KTEA Record Deleted");
@@ -759,7 +759,6 @@ function KTEAReporter({ user, activeStudent }) {
                                      <EditableStudentName 
                                        studentId={s.studentId || s.id} 
                                        studentName={s.studentName} 
-                                       studentNumber={s.studentNumber}
                                        size="sm"
                                      />
                                    </td>
@@ -939,7 +938,7 @@ function KTEAReporter({ user, activeStudent }) {
             <div className="flex-1 overflow-y-auto mb-4 space-y-2 pr-1">
                 {queue.map((item) => (
                   <div key={item.tempId} className="bg-slate-100/80 p-3 rounded-lg flex justify-between items-center border border-slate-200/50 group hover:border-slate-300/80 transition-colors">
-                     <div><div className="font-bold text-xs text-slate-700">{getStudentInitials(item.studentName)}</div></div>
+                     <div><div className="font-bold text-xs text-slate-700">{formatStudentLabel(item)}</div></div>
                     <button onClick={() => setQueue(queue.filter(q => q.tempId !== item.tempId))} className="text-slate-400 hover:text-red-500 p-1 transition-colors opacity-50 group-hover:opacity-100"><X className="w-4 h-4" /></button>
                   </div>
                 ))}
@@ -956,7 +955,7 @@ function KTEAReporter({ user, activeStudent }) {
              {searchResults.map(s => (
                <div key={s.id} onClick={() => loadStudent(s)} className="p-3 border-b border-slate-100/80 cursor-pointer flex justify-between items-center hover:bg-indigo-50 transition-colors group">
                   <div className="text-sm text-slate-700">
-                    <strong className="group-hover:text-indigo-600 transition-colors">{getStudentInitials(s.studentName)}</strong> 
+                    <strong className="group-hover:text-indigo-600 transition-colors">{formatStudentLabel(s)}</strong> 
                     <span className="text-xs text-slate-400 ml-2">({s.gradeLevel}th)</span>
                   </div>
                  <button onClick={(e) => handleDelete(s.id, s.studentName, e)} className="text-slate-400 hover:text-red-500 hover:bg-red-100/50 p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4" /></button>

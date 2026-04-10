@@ -4,7 +4,7 @@ import { Search, X, CheckCircle, Loader2 } from 'lucide-react';
 import { databaseService } from '../../services/databaseService';
 import { useStudent } from '../../context/StudentContext';
 import EditableStudentName from '../EditableStudentName';
-import { getStudentInitials } from '../../utils/studentUtils';
+import { formatStudentLabel } from '../../utils/studentUtils';
 
 const GlobalSearchBar = () => {
   const { activeStudent, selectStudent, clearStudent } = useStudent();
@@ -86,7 +86,7 @@ const GlobalSearchBar = () => {
                 className="p-4 hover:bg-indigo-50 cursor-pointer border-b border-slate-100/80 last:border-0 flex justify-between items-center group transition"
               >
                 <div>
-                  <span className="font-bold text-slate-800 group-hover:text-indigo-700">{getStudentInitials(student.studentName)}</span>
+                  <span className="font-bold text-slate-800 group-hover:text-indigo-700">{formatStudentLabel(student)}</span>
                   <span className="text-sm text-slate-500 ml-3 uppercase tracking-tighter font-black">Grade {student.gradeLevel || "N/A"}</span>
                 </div>
                 <span className="text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-lg group-hover:bg-indigo-100 group-hover:text-indigo-700 font-bold transition-all">Load</span>

@@ -9,6 +9,7 @@ import EditableStudentProfileModal from '../EditableStudentProfileModal';
 import EditableStudentName from '../EditableStudentName';
 import { useStudent } from '../../context/StudentContext';
 import { generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
+
 import { UNIT_CONFIG } from '../../config/unitConfig';
 import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
@@ -188,7 +189,7 @@ const UnitRoster = ({ defaultUnit, user }) => {
             };
             await databaseService.upsertStudent(newStudent);
             if (user) {
-                await databaseService.logAudit(user, 'CreateStudent', `Created new student: ${newStudent.studentName} (ID: ${newStudent.id})`);
+                await databaseService.logAudit(user, 'CreateStudent', `Created new student: ${formatStudentLabel(newStudent)}`);
             }
             if (formData.autoEnrollDefaults !== false) {
                 try {
@@ -223,11 +224,11 @@ const UnitRoster = ({ defaultUnit, user }) => {
 
     const handleDeleteStudent = async (e, student) => {
         e.stopPropagation();
-        if (window.confirm(`Are you sure you want to delete ${student.studentName}? This action cannot be undone.`)) {
+        if (window.confirm(`Are you sure you want to delete ${formatStudentLabel(student)}? This action cannot be undone.`)) {
             try {
                 await databaseService.deleteStudent(student.id);
                 if (user) {
-                    await databaseService.logAudit(user, 'DeleteStudent', `Deleted student: ${student.studentName} (ID: ${student.id})`);
+                    await databaseService.logAudit(user, 'DeleteStudent', `Deleted student: ${formatStudentLabel(student)}`);
                 }
                 fetchRoster();
                 loadCounts();
@@ -431,9 +432,6 @@ const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
             <div className="flex-1 min-w-0">
                 <div className={`flex flex-wrap items-baseline gap-2 mb-0.5`}>
                     <span className={`text-[13px] font-black ${isSelected ? 'text-slate-900' : 'text-slate-800'}`}>
-                        #{student.studentNumber || 'TBD'}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-500 truncate">
                         {formatStudentLabel(student)}
                     </span>
                 </div>
@@ -548,11 +546,11 @@ const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
                 </div>
 
                 {/* Identity Header */}
-                <h3 className="font-mono text-[22px] font-black text-slate-800 tracking-tight leading-none mb-1 group-hover:text-indigo-600 transition-colors">
-                    #{student.studentNumber || 'TBD'}
+                <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-1 group-hover:text-indigo-600 transition-colors">
+                    {formatStudentLabel(student)}
                 </h3>
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 truncate w-full text-center">
-                    {formatStudentLabel(student)}
+                    Grade {student.gradeLevel} &middot; {student.unitName}
                 </p>
 
                 {/* Badges/Tags */}

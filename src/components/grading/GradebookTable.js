@@ -4,7 +4,7 @@ import { useGridKeyboard } from '../../hooks/useGridKeyboard';
 import { UNIT_CONFIG } from '../../config/unitConfig';
 import GradeNoteModal from './modals/GradeNoteModal';
 import EditableStudentName from '../EditableStudentName';
-import { getStudentInitials } from '../../utils/studentUtils';
+import { formatStudentLabel } from '../../utils/studentUtils';
 
 const GradeCell = React.memo(({ 
   studentId, studentName, assignmentId, assignmentName, maxScore, 
@@ -26,7 +26,7 @@ const GradeCell = React.memo(({
           }}
           data-row={rowIndex}
           data-col={colIndex}
-          aria-label={`${getStudentInitials(studentName)} - ${assignmentName}`}
+          aria-label={`${studentName} - ${assignmentName}`}
           className={`w-20 p-1.5 text-center border rounded-xl outline-none transition-all duration-300 font-mono text-sm ${
             isWarning
               ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-300/50'

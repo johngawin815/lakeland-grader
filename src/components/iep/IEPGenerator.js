@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, User, Calendar, ClipboardList, Settings, Briefcase, GraduationCap,
 } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
-import { getStudentInitials } from '../../utils/studentUtils';
+import { getStudentInitials, formatStudentLabel } from '../../utils/studentUtils';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
@@ -800,7 +800,7 @@ const IEPGenerator = ({ user }) => {
                         size="sm"
                       />
                       <div>
-                        <div className="font-bold text-slate-800">{getStudentInitials(s.studentName)}</div>
+                        <div className="font-bold text-slate-800">{formatStudentLabel(s)}</div>
                         <div className="text-xs text-slate-400">Grade {s.gradeLevel} &middot; {s.unitName}</div>
                       </div>
                     </div>
@@ -837,7 +837,7 @@ const IEPGenerator = ({ user }) => {
         goals={goalSuggestions}
         draft={draft}
         onAddGoal={handleAddGoal}
-        studentName={getStudentInitials(selectedStudent?.studentName || selectedStudent?.firstName)}
+        studentName={formatStudentLabel(selectedStudent)}
       />
 
       {/* ─── STICKY TOOLBAR ─── */}

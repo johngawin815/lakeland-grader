@@ -6,7 +6,7 @@ import {
   MessageSquare, StickyNote, BookOpen, User, Calendar, GraduationCap, Save
 } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';
-import { getStudentInitials } from '../../utils/studentUtils';
+import { getStudentInitials, formatStudentLabel } from '../../utils/studentUtils';
 import { databaseService } from '../../services/databaseService';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import {
@@ -346,7 +346,7 @@ const DischargeNarrativeBuilder = ({ user }) => {
   // ── Sentence starter helper
   const renderSentenceStarters = (section, targetField) => {
     if (showStarters !== section) return null;
-    const firstName = getStudentInitials(draft.firstName || draft.studentName?.split(' ')[0] || 'The student');
+    const firstName = draft.firstName || draft.studentName?.split(' ')[0] || 'The student';
     return (
       <div className="bg-rose-50/50 border border-rose-100 rounded-lg p-3 space-y-1">
         <div className="text-xs font-bold text-rose-600 mb-2">Click to insert at cursor:</div>
@@ -412,7 +412,7 @@ const DischargeNarrativeBuilder = ({ user }) => {
                       {getStudentInitials(s.studentName)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-slate-800 truncate">{getStudentInitials(s.studentName)}</div>
+                      <div className="font-bold text-sm text-slate-800 truncate">{formatStudentLabel(s)}</div>
                       <div className="text-xs text-slate-400">
                         Grade {s.gradeLevel} &middot; {s.unitName || 'Unassigned'}
                       </div>

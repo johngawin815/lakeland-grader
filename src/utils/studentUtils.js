@@ -30,13 +30,30 @@ export const generateStudentNumber = (existingNumbers) => {
 };
 
 /**
- * Returns the canonical display label for a student: "482917 (NO)"
- * @param {{ studentNumber?: string, studentName?: string, firstName?: string, lastName?: string }} student
+ * Returns the canonical display label for a student: "Harry P."
+ * Uses firstName + first letter of lastName. Falls back to parsing studentName.
+ * @param {{ studentName?: string, firstName?: string, lastName?: string }} student
  * @returns {string}
  */
 export const formatStudentLabel = (student) => {
   if (!student) return '';
-  const initials = getStudentInitials(student.studentName || `${student.firstName || ''} ${student.lastName || ''}`);
-  const num = student.studentNumber || '------';
-  return `${num} (${initials})`;
+
+  let first = student.firstName;
+  let lastInitial = '';
+
+  if (student.lastName) {
+    lastInitial = student.lastName.charAt(0).toUpperCase();
+  }
+
+  // Fallback: parse from studentName if firstName missing
+  if (!first && student.studentName) {
+    const parts = student.studentName.trim().split(/\s+/);
+    first = parts[0] || '';
+    if (!lastInitial && parts.length > 1) {
+      lastInitial = (parts[parts.length - 1] || '').charAt(0).toUpperCase();
+    }
+  }
+
+  if (!first) return 'Unknown';
+  return lastInitial ? `${first} ${lastInitial}.` : first;
 };
