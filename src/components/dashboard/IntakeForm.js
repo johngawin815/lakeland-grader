@@ -102,13 +102,7 @@ const IntakeForm = ({ onSave, units, defaultUnit }) => {
                         <option>Yes</option>
                     </select>
                 </div>
-                <div className="flex items-center gap-2 md:col-span-3 mt-1">
-                    <input type="checkbox" id="autoEnrollDefaults" {...register("autoEnrollDefaults")} defaultChecked className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-                    <label htmlFor="autoEnrollDefaults" className="flex items-center gap-1.5 text-sm font-medium text-slate-600 cursor-pointer">
-                        <BookOpen className="w-4 h-4 text-indigo-500" />
-                        Auto-enroll in default courses (based on grade level)
-                    </label>
-                </div>
+
               </div>
             )}
 

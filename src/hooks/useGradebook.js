@@ -41,46 +41,8 @@ export function useGradebook(courseId, userUnits) {
 
         const enrolledStudentIds = new Set(enrollments.map(e => e.studentId));
 
-        // 2. Auto-populate from teacher's assigned units
-        if (userUnits && userUnits.length > 0) {
-          const course = enrollments[0] || {};
-          const currentTerm = getCurrentSchoolYear();
 
-          for (const unitName of userUnits) {
-            const unitStudents = allStudents.filter(
-              s => s.unitName === unitName && s.active !== false
-            );
-
-            for (const student of unitStudents) {
-              if (enrolledStudentIds.has(student.id)) continue;
-
-              // Auto-enroll this student
-              const enrollmentData = {
-                id: `${student.id}-${courseId}`,
-                studentId: student.id,
-                courseId,
-                courseName: course.courseName || '',
-                subjectArea: course.subjectArea || '',
-                teacherName: course.teacherName || '',
-                percentage: null,
-                letterGrade: null,
-                term: currentTerm,
-                enrollmentDate: new Date().toISOString().split('T')[0],
-                status: 'Active',
-              };
-
-              try {
-                await databaseService.enrollStudent(enrollmentData);
-                enrollments.push(enrollmentData);
-                enrolledStudentIds.add(student.id);
-              } catch (err) {
-                console.warn(`Auto-enroll failed for ${student.studentName}:`, err);
-              }
-            }
-          }
-        }
-
-        // 3. Build student list with unitName, sorted by unit then name
+        // 2. Build student list with unitName, sorted by unit then name
         if (enrollments.length > 0) {
           const enrolledStudents = enrollments.map(e => {
             const studentRecord = studentMap[e.studentId];

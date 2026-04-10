@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
-import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
+
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
 import { generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
 import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers, Plus, UserPlus, AlertTriangle } from 'lucide-react';
@@ -283,8 +283,7 @@ function KTEAReporter({ user, activeStudent }) {
       // 1. Create Student
       await databaseService.upsertStudent(newStudent);
 
-      // 2. Auto-enroll
-      await autoEnrollStudent(newStudent, "System", getCurrentSchoolYear());
+
 
       // 3. Create initial KTEA report for this student
       const initialReport = {

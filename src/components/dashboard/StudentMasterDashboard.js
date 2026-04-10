@@ -11,7 +11,6 @@ import { useStudent } from '../../context/StudentContext';
 import { generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
 
 import { UNIT_CONFIG } from '../../config/unitConfig';
-import { autoEnrollStudent } from '../../services/defaultEnrollmentService';
 import { getCurrentSchoolYear } from '../../utils/smartUtils';
 
 // Mock user, as requested. In a real app, this would come from an auth context.
@@ -190,16 +189,6 @@ const UnitRoster = ({ defaultUnit, user }) => {
             await databaseService.upsertStudent(newStudent);
             if (user) {
                 await databaseService.logAudit(user, 'CreateStudent', `Created new student: ${formatStudentLabel(newStudent)}`);
-            }
-            if (formData.autoEnrollDefaults !== false) {
-                try {
-                    const result = await autoEnrollStudent(newStudent, user.name, getCurrentSchoolYear());
-                    if (result.enrolled.length > 0) {
-                        console.info(`Auto-enrolled ${newStudent.studentName} in: ${result.enrolled.join(', ')}`);
-                    }
-                } catch (enrollErr) {
-                    console.error('Auto-enrollment failed:', enrollErr);
-                }
             }
             setShowIntakeForm(false);
             fetchRoster();
@@ -467,7 +456,6 @@ const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
 const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
     const Icon = unitStyle?.icon || UserCheck;
-    const [enrolling, setEnrolling] = useState(false);
     const [enrollResult, setEnrollResult] = useState(null);
 
     const admitDate = new Date(student.admitDate);
@@ -482,21 +470,6 @@ const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
 
     const colorClass = unitStyle?.avatarBg || 'bg-slate-400';
 
-    const handleAutoEnroll = async (e) => {
-        e.stopPropagation();
-        setEnrolling(true);
-        setEnrollResult(null);
-        try {
-            const result = await autoEnrollStudent(student, user?.name || 'Unknown', getCurrentSchoolYear());
-            setEnrollResult(result);
-            setTimeout(() => setEnrollResult(null), 4000);
-        } catch (err) {
-            console.error('Auto-enroll failed:', err);
-            setEnrollResult({ error: true });
-            setTimeout(() => setEnrollResult(null), 3000);
-        }
-        setEnrolling(false);
-    };
 
     return (
         <div
@@ -572,37 +545,6 @@ const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
                 )}
             </div>
 
-            {/* Footer / Auto Enroll (Hover Reveal) */}
-            <div className={`
-                w-full bg-slate-50 border-t border-slate-100 px-4 py-3 flex items-center justify-center
-                transition-colors duration-300
-                ${isSelected ? 'bg-indigo-50/50 border-indigo-100' : ''}
-            `}>
-                <div className="flex items-center gap-2 w-full justify-between relative overflow-hidden">
-                    <div className="flex-1 opacity-100 transition-opacity flex justify-center">
-                        <button
-                            onClick={handleAutoEnroll}
-                            disabled={enrolling}
-                            className="inline-flex w-full justify-center items-center gap-1.5 text-[11px] font-bold px-3 py-2 rounded-lg bg-white text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-100 hover:border-transparent transition-all shadow-sm disabled:opacity-50"
-                        >
-                            {enrolling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookOpen className="w-3.5 h-3.5" />}
-                            Auto-Enroll Default Courses
-                        </button>
-                    </div>
-                    {enrollResult && (
-                        <div className="absolute inset-0 bg-white/95 backdrop-blur-md flex items-center justify-center rounded-lg border border-slate-100 animate-in fade-in duration-200 z-10">
-                            {enrollResult.error ? (
-                                <span className="text-[11px] font-bold text-rose-600">Failed</span>
-                            ) : (
-                                <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 z-20">
-                                    <Check className="w-3.5 h-3.5" />
-                                    {enrollResult.enrolled.length > 0 ? `+${enrollResult.enrolled.length} classes` : 'Up to date'}
-                                </span>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
         </div>
     );
 };
