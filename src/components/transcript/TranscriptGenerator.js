@@ -1325,23 +1325,25 @@ const TranscriptGenerator = ({ user }) => {
   if (!selectedStudent) {
     return (
       <div className="h-full flex flex-col bg-gradient-to-b from-orange-50/40 to-slate-50">
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-5">
-          <h1 className="text-xl font-extrabold text-white tracking-tight">Transcript Generator</h1>
-          <p className="text-sm text-orange-100 mt-0.5">Analyze graduation requirements and build course plans</p>
+        <div className="flex items-center justify-between bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-3 shrink-0">
+          <div>
+            <h1 className="text-xl font-extrabold text-white tracking-tight">Transcript Generator</h1>
+            <p className="text-xs text-orange-100 mt-0.5">Analyze graduation requirements and build course plans</p>
+          </div>
         </div>
 
-        <div className="flex-1 flex flex-col p-6 min-h-0">
-          <div className="max-w-2xl mx-auto w-full flex flex-col h-full space-y-4">
+        <div className="flex-1 flex flex-col p-4 min-h-0">
+          <div className="max-w-2xl mx-auto w-full flex flex-col h-full space-y-3">
             {/* Search + Filter */}
             <div className="flex gap-3 shrink-0">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 outline-none"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 outline-none"
                   placeholder="Search students..." />
               </div>
               <select value={gradeFilter} onChange={e => setGradeFilter(e.target.value)}
-                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 outline-none">
+                className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 outline-none">
                 <option value="">All Grades</option>
                 {['K','1','2','3','4','5','6','7','8','9','10','11','12'].map(g => (
                   <option key={g} value={g}>Grade {g}</option>

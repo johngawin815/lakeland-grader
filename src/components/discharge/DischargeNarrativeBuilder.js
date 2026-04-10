@@ -370,32 +370,34 @@ const DischargeNarrativeBuilder = ({ user }) => {
 
   if (!selectedStudent) {
     return (
-      <div className="min-h-[calc(100vh-5rem)] bg-slate-100 flex items-start justify-center p-8 font-sans">
-        <div className="w-full max-w-xl animate-[float-card-in_0.4s_ease-out]">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="inline-flex p-3 bg-rose-100 rounded-2xl text-rose-600 mb-3">
-              <FileText className="w-8 h-8" />
+      <div className="h-full flex flex-col bg-slate-50 font-sans">
+        {/* Compact Header Row */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200/80 bg-white shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="p-2 bg-rose-100 rounded-xl text-rose-600">
+              <FileText className="w-5 h-5" />
+            </span>
+            <div>
+              <h1 className="text-xl font-extrabold text-slate-800 leading-tight">Discharge Narrative Builder</h1>
+              <p className="text-xs text-slate-400">Select a student to begin</p>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-800">Discharge Narrative Builder</h1>
-            <p className="text-sm text-slate-500 mt-1">Select a student to begin writing their discharge narrative</p>
           </div>
-
-          {/* Search */}
-          <div className="relative mb-4">
+          <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search by name, grade, or unit..."
-              className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl text-sm focus:ring-4 focus:ring-rose-500/20 focus:border-rose-400 bg-white outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-4 focus:ring-rose-500/20 focus:border-rose-400 bg-white outline-none transition-all"
             />
           </div>
+        </div>
 
-          {/* Student List */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
-            <div className="max-h-[60vh] overflow-y-auto divide-y divide-slate-100">
+        {/* Student List — fills remaining space */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="divide-y divide-slate-100">
               {filteredStudents.length === 0 ? (
                 <div className="text-center py-12 text-slate-400">
                   <User className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -406,9 +408,9 @@ const DischargeNarrativeBuilder = ({ user }) => {
                   <button
                     key={s.id}
                     onClick={() => handleSelectStudent(s)}
-                    className="w-full text-left px-4 py-3.5 hover:bg-rose-50/50 transition-colors flex items-center gap-3 group"
+                    className="w-full text-left px-4 py-2.5 hover:bg-rose-50/50 transition-colors flex items-center gap-3 group"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs shrink-0 group-hover:bg-rose-100 group-hover:text-rose-700 transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs shrink-0 group-hover:bg-rose-100 group-hover:text-rose-700 transition-colors">
                       {getStudentInitials(s.studentName)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -440,7 +442,7 @@ const DischargeNarrativeBuilder = ({ user }) => {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-5rem)] bg-slate-100 flex items-center justify-center font-sans">
+      <div className="h-full bg-slate-100 flex items-center justify-center font-sans">
         <div className="text-center animate-pulse">
           <Loader2 className="w-8 h-8 text-rose-500 animate-spin mx-auto mb-3" />
           <p className="text-sm font-bold text-slate-600">Loading student data...</p>
@@ -458,7 +460,7 @@ const DischargeNarrativeBuilder = ({ user }) => {
   const gradeNum = parseInt(draft.gradeLevel) || 10;
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-slate-100 font-sans">
+    <div className="h-full flex flex-col bg-slate-100 font-sans overflow-hidden">
 
       {/* ── STICKY TOOLBAR ─────────────────────────────────────────────── */}
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm print:hidden">
@@ -528,7 +530,8 @@ const DischargeNarrativeBuilder = ({ user }) => {
       </div>
 
       {/* ── MAIN CONTENT ───────────────────────────────────────────────── */}
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+      <div className="flex-1 overflow-y-auto">
+      <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
 
         {/* ── SECTION 1: DEMOGRAPHICS ─────────────────────────────────── */}
         <SectionCard
@@ -849,6 +852,9 @@ const DischargeNarrativeBuilder = ({ user }) => {
           </div>
         </div>
 
+      </div>
+
+      </div>
       </div>
     </div>
   );
