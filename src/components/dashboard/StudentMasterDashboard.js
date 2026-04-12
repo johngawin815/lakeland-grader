@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ChevronRight, ChevronLeft, BookOpen, UserCheck, Plus, Users, Loader2, Search, FileCheck, Trash2, Check } from 'lucide-react';
+import { ChevronRight, ChevronLeft, UserCheck, Plus, Users, Loader2, Search, FileCheck, Trash2 } from 'lucide-react';
 
 import ClassGradebook from '../grading/ClassGradebook';
 import EnrollmentManager from './EnrollmentManager';
@@ -11,7 +11,7 @@ import { useStudent } from '../../context/StudentContext';
 import { generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
 
 import { UNIT_CONFIG } from '../../config/unitConfig';
-import { getCurrentSchoolYear } from '../../utils/smartUtils';
+// unused import removed
 
 // Mock user, as requested. In a real app, this would come from an auth context.
 const MOCK_USER = { name: "John Gawin", units: ["Harmony"], email: "john.gawin@lakeland.edu" };
@@ -456,7 +456,6 @@ const StudentListItem = ({ student, onSelect, isSelected, onDelete }) => {
 const StudentCard = ({ student, onSelect, isSelected, user, onDelete }) => {
     const unitStyle = UNIT_CONFIG.find(u => u.key === student.unitName);
     const Icon = unitStyle?.icon || UserCheck;
-    const [enrollResult, setEnrollResult] = useState(null);
 
     const admitDate = new Date(student.admitDate);
     const today = new Date();

@@ -4,7 +4,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { databaseService } from '../../services/databaseService';
 
-import { getCurrentSchoolYear } from '../../utils/smartUtils';
+// unused import removed
 import { generateStudentNumber, formatStudentLabel } from '../../utils/studentUtils';
 import { ClipboardList, Download, CheckCircle, Zap, ArrowDown, Send, Trash2, X, Calculator, Target, Telescope, Bird, Leaf, Flame, Droplets, Printer, Table, Filter, Loader2, Layers, Plus, UserPlus, AlertTriangle } from 'lucide-react';
 import EditableStudentName from '../EditableStudentName';

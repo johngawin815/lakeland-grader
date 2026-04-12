@@ -39,7 +39,7 @@ export function useGradebook(courseId, userUnits) {
         const studentMap = {};
         allStudents.forEach(s => { studentMap[s.id] = s; });
 
-        const enrolledStudentIds = new Set(enrollments.map(e => e.studentId));
+        // Build student list with unitName, sorted by unit then name
 
 
         // 2. Build student list with unitName, sorted by unit then name

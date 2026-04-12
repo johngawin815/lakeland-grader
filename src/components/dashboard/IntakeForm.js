@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Save, ChevronDown, ChevronUp, Heart, Users, School, BookOpen } from 'lucide-react';
+import { Save, ChevronDown, ChevronUp, Heart, Users, School } from 'lucide-react';
 import { STATE_OPTIONS } from '../../data/stateGraduationRequirements';
 
 const IntakeForm = ({ onSave, units, defaultUnit }) => {
