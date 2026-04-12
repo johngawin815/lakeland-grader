@@ -69,8 +69,9 @@ export default function CurriculumMaps() {
         {activeSubject === 'social' && <SocialStudiesContent />}
         {activeSubject === 'english' && <EnglishContent />}
         
+        {activeSubject === 'math' && <MathContent />}
+        
         {/* Placeholders for future subjects */}
-        {activeSubject === 'math' && <PlaceholderContent title="Math Curriculum" Icon={Calculator} colorClass="text-blue-600" />}
         {activeSubject === 'science' && <PlaceholderContent title="Science Curriculum" Icon={FlaskConical} colorClass="text-green-600" />}
         {activeSubject === 'lower' && <PlaceholderContent title="Lower Elementary" Icon={Shapes} colorClass="text-orange-500" />}
         {activeSubject === 'upper' && <PlaceholderContent title="Upper Elementary" Icon={Layers} colorClass="text-purple-600" />}
@@ -687,3 +688,298 @@ function EnglishContent() {
         </>
     );
 }
+
+function MathContent() {
+    const AZURE_BASE = "https://lrsstoragehub.blob.core.windows.net/curriculum-resources/";
+    const getRes = (folder, file) => `${AZURE_BASE}${folder}/${file}`;
+    
+    // Common Classes
+    const tableClass = "w-full min-w-[1200px] border-collapse text-[13px] table-fixed print:min-w-0 print:w-full";
+    const blockClass = "bg-white max-w-[1400px] mx-auto mb-10 rounded-xl shadow-sm border border-gray-200 overflow-x-auto print:shadow-none print:border-none print:overflow-visible print:mb-8";
+    const thSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold text-gray-900 border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)] print:static print:shadow-none print:border-r";
+    const thMonthClass = "text-white p-3 uppercase text-lg font-extrabold tracking-wider border-r border-white/20 print:text-black print:border-black";
+    const thWeekClass = "bg-gray-700 text-gray-100 text-[11px] font-semibold p-1.5 text-center border-r border-gray-600 w-[11%]";
+    const tdClass = "p-2 border-b border-r border-gray-300 align-top h-[120px] bg-white w-[11%]";
+    const tdSubjectClass = "w-[120px] sticky left-0 bg-gray-50 z-20 font-extrabold border-r-4 border-gray-400 text-center align-middle shadow-[2px_0_5px_rgba(0,0,0,0.05)] print:static print:shadow-none print:border-r";
+    const breakClass = "bg-slate-100 text-slate-400 text-center align-middle font-bold italic border border-dashed border-slate-300";
+    
+    const Topic = ({ name, code, desc, pdf, vid }) => (
+        <div className="flex flex-col gap-1.5">
+            <span className="font-bold text-gray-800 leading-tight text-xs">{name}</span>
+            <div className="flex flex-wrap gap-1">
+                {pdf && <a href={pdf} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800 border border-green-300 hover:bg-green-200 transition-colors"><FileText className="w-3 h-3"/> PDF</a>}
+                {vid && <a href={vid} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 transition-colors"><Video className="w-3 h-3"/> Video</a>}
+            </div>
+            {code && <span className="inline-block bg-gray-100 text-red-700 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border border-gray-200 mt-1 cursor-help relative group w-fit">
+                {code}
+                <span className="invisible group-hover:visible absolute bottom-[110%] left-1/2 -translate-x-1/2 bg-gray-800 text-white p-2 rounded text-[11px] w-44 z-50 text-center shadow-lg font-sans whitespace-normal pointer-events-none">
+                    {desc}
+                </span>
+            </span>}
+        </div>
+    );
+
+    return (
+        <>
+        {/* ==================== AUG & SEPT ==================== */}
+        <div className={blockClass}>
+            <table className={tableClass}>
+                <thead>
+                    <tr>
+                        <th className={thSubjectClass} rowSpan="2">Strand</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>August</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>September</th>
+                    </tr>
+                    <tr>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-indigo-700`}>MS Math (6-8)</td>
+                        <td className={tdClass}><Topic name="Ratios" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.youtube.com/watch?v=L2G563dF9cM" code="6.RP.A" desc="Understand ratio concepts and use ratio reasoning to solve problems." /></td>
+                        <td className={tdClass}><Topic name="Unit Rates" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic" code="6.RP.A" desc="Understand the concept of a unit rate associated with a ratio." /></td>
+                        <td className={tdClass}><Topic name="Proportions" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-ratio-proportion" code="7.RP.A" desc="Analyze proportional relationships and use them to solve real-world problems." /></td>
+                        <td className={tdClass}><Topic name="Fractions/Div" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-arithmetic-operations" code="6.NS.A" desc="Apply and extend previous understandings of division to divide fractions." /></td>
+                        <td className={tdClass}><Topic name="Decimals" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-arithmetic-operations" code="6.NS.B" desc="Compute fluently with multi-digit numbers and find common factors." /></td>
+                        <td className={tdClass}><Topic name="Rational Nums" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-negative-number-topic" code="6.NS.C" desc="Apply previous understandings of numbers to the system of rational numbers." /></td>
+                        <td className={tdClass}><Topic name="Add/Sub Rational" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-negative-numbers-add-and-subtract" code="7.NS.A" desc="Add and subtract rational numbers." /></td>
+                        <td className={tdClass}><Topic name="Mult/Div Rational" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-negative-numbers-multiply-and-divide" code="7.NS.A" desc="Multiply and divide rational numbers." /></td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-sky-700`}>Algebra (9-12)</td>
+                        <td className={tdClass}><Topic name="Eq & Inequalities" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:solve-equations-inequalities" code="A1.REI.A" desc="Understand solving equations as a process of reasoning." /></td>
+                        <td className={tdClass}><Topic name="Linear Eq (1 Var)" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:solve-equations-inequalities" code="A1.REI.B" desc="Solve equations and inequalities in one variable." /></td>
+                        <td className={tdClass}><Topic name="Systems of Eq" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:systems-of-equations" code="A1.REI.C" desc="Solve systems of linear equations." /></td>
+                        <td className={tdClass}><Topic name="Graphing Eq" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:linear-equations-graphs" code="A1.REI.D" desc="Represent and solve equations / inequalities graphically." /></td>
+                        <td className={tdClass}><Topic name="Func Intro" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:functions" code="A1.IF.A" desc="Understand the concept of a function and use function notation." /></td>
+                        <td className={tdClass}><Topic name="Interpreting Func" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:functions" code="A1.IF.B" desc="Interpret functions that arise in applications in terms of the context." /></td>
+                        <td className={tdClass}><Topic name="Building Func" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:functions" code="A1.BF.A" desc="Build a function that models a relationship between two quantities." /></td>
+                        <td className={tdClass}><Topic name="Linear vs Exp" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:exponential-growth-decay" code="A1.LQE.A" desc="Construct and compare linear, quadratic, and exponential models." /></td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-purple-700`}>Geometry (9-12)</td>
+                        <td className={tdClass}><Topic name="Geo Basics" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-foundations" code="G.CO.A" desc="Experiment with transformations in the plane." /></td>
+                        <td className={tdClass}><Topic name="Transformations" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-transformations" code="G.CO.A" desc="Represent transformations in the plane." /></td>
+                        <td className={tdClass}><Topic name="Congruence" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-congruence" code="G.CO.B" desc="Understand congruence in terms of rigid motions." /></td>
+                        <td className={tdClass}><Topic name="Proof Basics" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-congruence" code="G.CO.C" desc="Prove geometric theorems." /></td>
+                        <td className={tdClass}><Topic name="Triangles" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-congruence" code="G.CO.C" desc="Prove theorems about triangles." /></td>
+                        <td className={tdClass}><Topic name="Parallelograms" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-congruence" code="G.CO.C" desc="Prove theorems about parallelograms." /></td>
+                        <td className={tdClass}><Topic name="Constructions" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-congruence" code="G.CO.D" desc="Make geometric constructions." /></td>
+                        <td className={tdClass}><Topic name="Similarity" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-similarity" code="G.SRT.A" desc="Understand similarity in terms of similarity transformations." /></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {/* ==================== OCT & NOV ==================== */}
+        <div className={blockClass}>
+            <table className={tableClass}>
+                <thead>
+                    <tr>
+                        <th className={thSubjectClass} rowSpan="2">Strand</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>October</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>November</th>
+                    </tr>
+                    <tr>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-indigo-700`}>MS Math (6-8)</td>
+                        <td className={tdClass}><Topic name="Expressions" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-expressions-and-variables" code="6.EEI.A" desc="Apply and extend previous understandings of arithmetic to algebraic expressions." /></td>
+                        <td className={tdClass}><Topic name="Eq (1 Var)" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-equations-and-inequalities" code="6.EEI.B" desc="Reason about and solve one-variable equations and inequalities." /></td>
+                        <td className={tdClass}><Topic name="Prop of Ops" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-variables-expressions" code="7.EEI.A" desc="Use properties of operations to generate equivalent expressions." /></td>
+                        <td className={tdClass}><Topic name="Multi-Step Eqs" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-variables-expressions" code="7.EEI.B" desc="Solve multi-step real-life and mathematical problems posed with positive and negative rational numbers." /></td>
+                        <td className={tdClass}><Topic name="Exponents" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-numbers-operations" code="8.EEI.A" desc="Work with radicals and integer exponents." /></td>
+                        <td className={tdClass}><Topic name="Sci Notation" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-numbers-operations" code="8.EEI.A" desc="Use numbers expressed in the form of a single digit times an integer power of 10." /></td>
+                        <td className={tdClass}><Topic name="Proportional Rel" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-linear-equations-functions" code="8.EEI.B" desc="Understand the connections between proportional relationships, lines, and linear equations." /></td>
+                        <td className={breakClass}>🍂 Break</td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-sky-700`}>Algebra (9-12)</td>
+                        <td className={tdClass}><Topic name="Structure in Exp" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:foundation-algebra" code="A1.SSE.A" desc="Interpret the structure of expressions." /></td>
+                        <td className={tdClass}><Topic name="Polynomials" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratics-multiplying-factoring" code="A1.APR.A" desc="Perform arithmetic operations on polynomials." /></td>
+                        <td className={tdClass}><Topic name="Creating Eq" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:solve-equations-inequalities" code="A1.CED.A" desc="Create equations that describe numbers or relationships." /></td>
+                        <td className={tdClass}><Topic name="Factoring" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratics-multiplying-factoring" code="A1.SSE.B" desc="Write expressions in equivalent forms to solve problems." /></td>
+                        <td className={tdClass}><Topic name="Quadratics Intro" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations" code="A1.REI.D" desc="Solve quadratic equations." /></td>
+                        <td className={tdClass}><Topic name="Quad Formula" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations" code="A1.REI.D" desc="Solve quadratic equations by inspection, taking square roots, completing the square, the quadratic formula." /></td>
+                        <td className={tdClass}><Topic name="Graphing Quads" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:quadratic-functions-equations" code="A1.IF.C" desc="Analyze functions using different representations." /></td>
+                        <td className={breakClass}>🍂 Break</td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-purple-700`}>Geometry (9-12)</td>
+                        <td className={tdClass}><Topic name="Sim Proofs" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-similarity" code="G.SRT.B" desc="Prove theorems involving similarity." /></td>
+                        <td className={tdClass}><Topic name="Right Triangles" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-trig" code="G.SRT.C" desc="Define trigonometric ratios and solve problems involving right triangles." /></td>
+                        <td className={tdClass}><Topic name="Trig Ratios" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-trig" code="G.SRT.C" desc="Understand that by similarity, side ratios in right triangles are properties of the angles." /></td>
+                        <td className={tdClass}><Topic name="Angles of Elev" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-trig" code="G.SRT.C" desc="Use trigonometric ratios and the Pythagorean Theorem to solve right triangles in applied problems." /></td>
+                        <td className={tdClass}><Topic name="Circles Basics" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-circles" code="G.C.A" desc="Understand and apply theorems about circles." /></td>
+                        <td className={tdClass}><Topic name="Arcs/Angles" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-circles" code="G.C.A" desc="Identify and describe relationships among inscribed angles, radii, and chords." /></td>
+                        <td className={tdClass}><Topic name="Circle Measurement" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-circles" code="G.C.B" desc="Find arc lengths and areas of sectors of circles." /></td>
+                        <td className={breakClass}>🍂 Break</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {/* ==================== DEC & JAN ==================== */}
+        <div className={blockClass}>
+            <table className={tableClass}>
+                <thead>
+                    <tr>
+                        <th className={thSubjectClass} rowSpan="2">Strand</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>December</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>January</th>
+                    </tr>
+                    <tr>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-indigo-700`}>MS Math (6-8)</td>
+                        <td className={tdClass}><Topic name="Linear Eqs" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-linear-equations-functions" code="8.EEI.C" desc="Analyze and solve linear equations and pairs of simultaneous linear equations." /></td>
+                        <td className={tdClass}><Topic name="Functions" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-linear-equations-functions" code="8.F.A" desc="Define, evaluate, and compare functions." /></td>
+                        <td className={breakClass}>📝 Exams</td>
+                        <td className={breakClass}>❄️ Break</td>
+                        <td className={breakClass}>❄️ Break</td>
+                        <td className={tdClass}><Topic name="Func Modeling" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-linear-equations-functions" code="8.F.B" desc="Use functions to model relationships between quantities." /></td>
+                        <td className={tdClass}><Topic name="Geometry Base" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-geometry" code="8.G.A" desc="Understand congruence and similarity using physical models, transparencies, or geometry software." /></td>
+                        <td className={tdClass}><Topic name="Transformations" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-geometry" code="8.G.A" desc="Describe the effect of dilations, translations, rotations, and reflections on two-dimensional figures." /></td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-sky-700`}>Algebra (9-12)</td>
+                        <td className={tdClass}><Topic name="Data Stats" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:data" code="A1.DS.A" desc="Summarize, represent, and interpret data on a single count or measurement variable." /></td>
+                        <td className={tdClass}><Topic name="2 Var Data" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:data" code="A1.DS.B" desc="Summarize, represent, and interpret data on two categorical and quantitative variables." /></td>
+                        <td className={breakClass}>📝 Exams</td>
+                        <td className={breakClass}>❄️ Break</td>
+                        <td className={breakClass}>❄️ Break</td>
+                        <td className={tdClass}><Topic name="Linear Models" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:data" code="A1.DS.C" desc="Interpret linear models." /></td>
+                        <td className={tdClass}><Topic name="Complex Nums" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:complex" code="A2.NQ.A" desc="Perform arithmetic operations with complex numbers." /></td>
+                        <td className={tdClass}><Topic name="Poly Identities" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:poly" code="A2.APR.A" desc="Use polynomial identities to solve problems." /></td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-purple-700`}>Geometry (9-12)</td>
+                        <td className={tdClass}><Topic name="Expressing Props" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-analytic-geometry" code="G.GPE.A" desc="Translate between the geometric description and the equation for a conic section." /></td>
+                        <td className={tdClass}><Topic name="Coords / Proofs" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-analytic-geometry" code="G.GPE.B" desc="Use coordinates to prove simple geometric theorems algebraically." /></td>
+                        <td className={breakClass}>📝 Exams</td>
+                        <td className={breakClass}>❄️ Break</td>
+                        <td className={breakClass}>❄️ Break</td>
+                        <td className={tdClass}><Topic name="Distance" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-analytic-geometry" code="G.GPE.B" desc="Use coordinates to compute perimeters of polygons and areas of triangles." /></td>
+                        <td className={tdClass}><Topic name="Vol 2D/3D" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-solid-geometry" code="G.GMD.A" desc="Explain volume formulas and use them to solve problems." /></td>
+                        <td className={tdClass}><Topic name="Cross Sections" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry/hs-geo-solid-geometry" code="G.GMD.B" desc="Visualize relationships between two-dimensional and three-dimensional objects." /></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {/* ==================== FEB & MAR ==================== */}
+        <div className={blockClass}>
+            <table className={tableClass}>
+                <thead>
+                    <tr>
+                        <th className={thSubjectClass} rowSpan="2">Strand</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>February</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>March</th>
+                    </tr>
+                    <tr>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-indigo-700`}>MS Math (6-8)</td>
+                        <td className={tdClass}><Topic name="Pythagorean Thm" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-geometry" code="8.G.B" desc="Understand and apply the Pythagorean Theorem." /></td>
+                        <td className={tdClass}><Topic name="Distance Coord" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-geometry" code="8.G.B" desc="Apply the Pythagorean Theorem to find the distance between two points in a coordinate system." /></td>
+                        <td className={tdClass}><Topic name="Volume Cylinders" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-geometry" code="8.G.C" desc="Solve real-world and mathematical problems involving volume of cylinders, cones, and spheres." /></td>
+                        <td className={tdClass}><Topic name="Volume Spheres" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-geometry" code="8.G.C" desc="Know the formulas for the volumes of cones, cylinders, and spheres and use them to solve real-world and mathematical problems." /></td>
+                        <td className={tdClass}><Topic name="Stats Arrays" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-data-statistics" code="6.DSP.A" desc="Develop understanding of statistical variability." /></td>
+                        <td className={tdClass}><Topic name="Distributions" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-data-statistics" code="6.DSP.B" desc="Summarize and describe distributions." /></td>
+                        <td className={tdClass}><Topic name="Samples" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-probability-statistics" code="7.DSP.A" desc="Use random sampling to draw inferences about a population." /></td>
+                        <td className={breakClass}>🌱 Break</td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-sky-700`}>Algebra (9-12)</td>
+                        <td className={tdClass}><Topic name="Rational Expr" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:rational" code="A2.APR.B" desc="Rewrite rational expressions." /></td>
+                        <td className={tdClass}><Topic name="Creating Eq II" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:eq" code="A2.CED.A" desc="Create equations that describe numbers or relationships." /></td>
+                        <td className={tdClass}><Topic name="Eq & Inequalities" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:eq" code="A2.REI.A" desc="Understand solving equations as a process of reasoning." /></td>
+                        <td className={tdClass}><Topic name="Systems II" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:eq" code="A2.REI.B" desc="Solve systems of equations." /></td>
+                        <td className={tdClass}><Topic name="Graphing II" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:eq" code="A2.REI.C" desc="Represent and solve equations / inequalities graphically." /></td>
+                        <td className={tdClass}><Topic name="Func Interpreting" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:functions" code="A2.IF.A" desc="Interpret functions that arise in applications." /></td>
+                        <td className={tdClass}><Topic name="Func Analyzing" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:functions" code="A2.IF.B" desc="Analyze functions using different representations." /></td>
+                        <td className={breakClass}>🌱 Break</td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-purple-700`}>Geometry (9-12)</td>
+                        <td className={tdClass}><Topic name="Prob Basics" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/statistics-probability" code="S.CP.A" desc="Understand independence and conditional probability." /></td>
+                        <td className={tdClass}><Topic name="Cond Prob" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/statistics-probability" code="S.CP.A" desc="Understand independence and conditional probability and use them to interpret data." /></td>
+                        <td className={tdClass}><Topic name="Prob Rules" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/statistics-probability" code="S.CP.B" desc="Use the rules of probability to compute probabilities of compound events." /></td>
+                        <td className={tdClass}><Topic name="Permutations" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/statistics-probability" code="S.CP.B" desc="Use permutations and combinations to compute probabilities of compound events and solve problems." /></td>
+                        <td className={tdClass}><Topic name="Combinations" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/statistics-probability" code="S.CP.B" desc="Compute probabilities using combinations." /></td>
+                        <td className={tdClass}><Topic name="Expected Val" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/statistics-probability" code="S.MD.A" desc="Calculate expected values and use them to solve problems." /></td>
+                        <td className={tdClass}><Topic name="Decisions" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/statistics-probability" code="S.MD.B" desc="Use probability to evaluate outcomes of decisions." /></td>
+                        <td className={breakClass}>🌱 Break</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {/* ==================== APR & MAY ==================== */}
+        <div className={blockClass}>
+            <table className={tableClass}>
+                <thead>
+                    <tr>
+                        <th className={thSubjectClass} rowSpan="2">Strand</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>April</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>May</th>
+                    </tr>
+                    <tr>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                        <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-indigo-700`}>MS Math (6-8)</td>
+                        <td className={tdClass}><Topic name="Populations" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-probability-statistics" code="7.DSP.B" desc="Draw informal comparative inferences about two populations." /></td>
+                        <td className={tdClass}><Topic name="Probability Models" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-probability-statistics" code="7.DSP.C" desc="Investigate chance processes and develop, use, and evaluate probability models." /></td>
+                        <td className={tdClass}><Topic name="Compound Events" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-seventh-grade-math/cc-7th-probability-statistics" code="7.DSP.C" desc="Find probabilities of compound events using organized lists, tables, tree diagrams, and simulation." /></td>
+                        <td className={tdClass}><Topic name="Bivariate Data" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-data" code="8.DSP.A" desc="Investigate patterns of association in bivariate data." /></td>
+                        <td className={tdClass}><Topic name="Scatter Plots" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-data" code="8.DSP.A" desc="Construct and interpret scatter plots for bivariate measurement data." /></td>
+                        <td className={tdClass}><Topic name="Line of Best Fit" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/cc-eighth-grade-math/cc-8th-data" code="8.DSP.A" desc="Use the equation of a linear model to solve problems in the context of bivariate data." /></td>
+                        <td className={tdClass}><Topic name="Project Setup" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math" code="Review" desc="End-of-year review project." /></td>
+                        <td className={tdClass}><Topic name="Final Review" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math" code="Review" desc="Comprehensive MS Math Review." /></td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-sky-700`}>Algebra (9-12)</td>
+                        <td className={tdClass}><Topic name="Func Building II" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:functions" code="A2.BF.A" desc="Build a function that models a relationship between two quantities." /></td>
+                        <td className={tdClass}><Topic name="New Funcs" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:functions" code="A2.BF.B" desc="Build new functions from existing functions." /></td>
+                        <td className={tdClass}><Topic name="Exp/Log Models" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:logs" code="A2.LQE.A" desc="Construct and compare linear, quadratic, and exponential models." /></td>
+                        <td className={tdClass}><Topic name="Logarithms" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:logs" code="A2.LQE.A" desc="For exponential models, express as a logarithm." /></td>
+                        <td className={tdClass}><Topic name="Trig Funcs" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/trigonometry" code="A2.TF.A" desc="Extend the domain of trigonometric functions using the unit circle." /></td>
+                        <td className={tdClass}><Topic name="Model Periodic" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/trigonometry" code="A2.TF.B" desc="Model periodic phenomena with trigonometric functions." /></td>
+                        <td className={tdClass}><Topic name="Trig Identities" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/trigonometry" code="A2.TF.C" desc="Prove and apply trigonometric identities." /></td>
+                        <td className={tdClass}><Topic name="Final Review" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/algebra2" code="Review" desc="Comprehensive Algebra Review." /></td>
+                    </tr>
+                    <tr>
+                        <td className={`${tdSubjectClass} text-purple-700`}>Geometry (9-12)</td>
+                        <td className={tdClass}><Topic name="Stat Inference" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/ap-statistics" code="S.IC.A" desc="Understand and evaluate random processes underlying statistical experiments." /></td>
+                        <td className={tdClass}><Topic name="Conclusions" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/ap-statistics" code="S.IC.B" desc="Make inferences and justify conclusions from sample surveys, experiments, and observational studies." /></td>
+                        <td className={tdClass}><Topic name="Margin of Error" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/ap-statistics" code="S.IC.B" desc="Use data from a sample survey to estimate a population mean or proportion; develop a margin of error." /></td>
+                        <td className={tdClass}><Topic name="Compare Treat" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/ap-statistics" code="S.IC.B" desc="Use data from a randomized experiment to compare two treatments." /></td>
+                        <td className={tdClass}><Topic name="Evaluate Rpts" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/ap-statistics" code="S.IC.B" desc="Evaluate reports based on data." /></td>
+                        <td className={tdClass}><Topic name="Advanced Stats" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/ap-statistics" code="S.MD.B" desc="Use probability to evaluate outcomes of decisions." /></td>
+                        <td className={tdClass}><Topic name="Data Project" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/ap-statistics" code="Project" desc="End-of-year Data Project." /></td>
+                        <td className={tdClass}><Topic name="Wrap Up" pdf={getRes('math','ccmath_topic.pdf')} vid="https://www.khanacademy.org/math/geometry" code="Review" desc="Comprehensive Geometry/Stats Review." /></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        </>
+    );
+}
