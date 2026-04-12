@@ -728,7 +728,7 @@ function MathContent() {
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
                         <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>August</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>September</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#00838f]`}>September</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -780,7 +780,7 @@ function MathContent() {
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
                         <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>October</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>November</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#00838f]`}>November</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -832,7 +832,7 @@ function MathContent() {
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
                         <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>December</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>January</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#00838f]`}>January</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -884,7 +884,7 @@ function MathContent() {
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
                         <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>February</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>March</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#00838f]`}>March</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
@@ -936,7 +936,7 @@ function MathContent() {
                     <tr>
                         <th className={thSubjectClass} rowSpan="2">Strand</th>
                         <th colSpan="4" className={`${thMonthClass} bg-[#1a237e]`}>April</th>
-                        <th colSpan="4" className={`${thMonthClass} bg-[#283593]`}>May</th>
+                        <th colSpan="4" className={`${thMonthClass} bg-[#00838f]`}>May</th>
                     </tr>
                     <tr>
                         <th className={thWeekClass}>Week 1</th><th className={thWeekClass}>Week 2</th><th className={thWeekClass}>Week 3</th><th className={thWeekClass}>Week 4</th>
